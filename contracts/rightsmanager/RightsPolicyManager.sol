@@ -14,7 +14,7 @@ import { IPolicy } from "contracts/interfaces/policies/IPolicy.sol";
 import { ITreasury } from "contracts/interfaces/economics/ITreasury.sol";
 import { IRightsPolicyManager } from "contracts/interfaces/rightsmanager/IRightsPolicyManager.sol";
 import { IRightsPolicyDelegator } from "contracts/interfaces/rightsmanager/IRightsPolicyDelegator.sol";
-import { IRightsAccessAgreement} from "contracts/interfaces/rightsmanager/IRightsAccessAgreement.sol";
+import { IRightsAccessAgreement } from "contracts/interfaces/rightsmanager/IRightsAccessAgreement.sol";
 import { TreasuryHelper } from "contracts/libraries/TreasuryHelper.sol";
 import { FeesHelper } from "contracts/libraries/FeesHelper.sol";
 import { T } from "contracts/libraries/Types.sol";

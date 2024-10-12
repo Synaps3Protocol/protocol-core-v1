@@ -8,21 +8,13 @@ import { GovernableUpgradeable } from "contracts/base/upgradeable/GovernableUpgr
 import { QuorumUpgradeable } from "contracts/base/upgradeable/QuorumUpgradeable.sol";
 
 import { IPolicy } from "contracts/interfaces/policies/IPolicy.sol";
-import { IPolicyAuditorRegistrable } from "contracts/interfaces/policies/IPolicyAuditorRegistrable.sol";
-import { IPolicyAuditorVerifiable } from "contracts/interfaces/policies/IPolicyAuditorVerifiable.sol";
+import { IPolicyAuditor } from "contracts/interfaces/policies/IPolicyAuditor.sol";
 
 /// @title PolicyAudit
 /// @notice This contract audits content policies and ensures that only authorized entities can approve or revoke policy audits.
 /// It is designed to be upgradeable using UUPS and governed by a decentralized authority.
 /// @dev The contract uses OpenZeppelin's UUPS (Universal Upgradeable Proxy Standard) mechanism and Governable for governance control.
-contract PolicyAudit is
-    Initializable,
-    UUPSUpgradeable,
-    GovernableUpgradeable,
-    QuorumUpgradeable,
-    IPolicyAuditorRegistrable,
-    IPolicyAuditorVerifiable
-{
+contract PolicyAudit is Initializable, UUPSUpgradeable, GovernableUpgradeable, QuorumUpgradeable, IPolicyAuditor {
     using ERC165Checker for address;
     /// @dev The interface ID for IPolicy, used to verify that a policy contract implements the correct interface.
     bytes4 private constant INTERFACE_POLICY = type(IPolicy).interfaceId;

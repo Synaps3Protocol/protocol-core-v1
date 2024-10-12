@@ -80,10 +80,10 @@ contract RightsPolicyAuthorizer is Initializable, UUPSUpgradeable, GovernableUpg
         return delegation[holder].contains(policy) && _isValidPolicy(policy);
     }
 
-    /// @notice Retrieves all policies to which rights have been authorized by a specific content holder.
-    /// @dev This function returns an array of addresses representing the policies authorized by the content holder.
-    /// @param holder The content rights holder whose delegated policies are being queried.
-    /// @return An array of policy contract addresses that have been delegated rights by the specified content holder.
+    /// @notice Retrieves all policies authorized by a specific content holder.
+    /// @dev This function returns an array of policy addresses that have been granted rights by the holder.
+    /// @param holder The address of the content rights holder whose authorized policies are being queried.
+    /// @return An array of addresses representing the policies authorized by the content holder.
     function getAuthorizedPolicies(address holder) public view returns (address[] memory) {
         // https://docs.openzeppelin.com/contracts/5.x/api/utils#EnumerableSet-values-struct-EnumerableSet-AddressSet-
         // This operation will copy the entire storage to memory, which can be quite expensive.

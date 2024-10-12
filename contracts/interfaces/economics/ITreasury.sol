@@ -7,7 +7,6 @@ import { IBalanceWithdrawable } from "contracts/interfaces/IBalanceWithdrawable.
 /// @title ITreasury Interface
 /// @notice Defines the standard functions for a Treasury contract.
 interface ITreasury is IBalanceVerifiable, IBalanceWithdrawable {
-    
     /// @notice Retrieves the vault address where operational funds or profits are stored.
     /// @dev This address points to the vault responsible for managing protocol-level profits.
     ///      Funds stored here are typically for operational purposes or governance management.

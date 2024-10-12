@@ -11,9 +11,7 @@ import { Address } from "@openzeppelin/contracts/utils/Address.sol";
 
 import { GovernableUpgradeable } from "contracts/base/upgradeable/GovernableUpgradeable.sol";
 import { QuorumUpgradeable } from "contracts/base/upgradeable/QuorumUpgradeable.sol";
-import { IContentRegistrable } from "contracts/interfaces/assets/IContentRegistrable.sol";
-import { IContentRoleManager } from "contracts/interfaces/assets/IContentRoleManager.sol";
-import { IContentVerifiable } from "contracts/interfaces/assets/IContentVerifiable.sol";
+import { IContentReferendum } from "contracts/interfaces/assets/IContentReferendum.sol";
 
 import { C } from "contracts/libraries/Constants.sol";
 import { T } from "contracts/libraries/Types.sol";
@@ -27,9 +25,7 @@ contract ContentReferendum is
     NoncesUpgradeable,
     EIP712Upgradeable,
     QuorumUpgradeable,
-    IContentRegistrable,
-    IContentVerifiable,
-    IContentRoleManager
+    IContentReferendum
 {
     using EnumerableSet for EnumerableSet.UintSet;
     mapping(address => EnumerableSet.UintSet) private submissions;

@@ -68,7 +68,7 @@ abstract contract BasePolicy is Ledger, ReentrancyGuard, IPolicy, IBalanceWithdr
     /// @param currency The currency to associate fees with. Use address(0) for the native coin.
     function withdraw(address recipient, uint256 amount, address currency) external nonReentrant {
         // Calls the Rights Manager to withdraw the specified amount in the given currency.
-        if (getLedgerBalance(msg.sender, currency) < amount) revert  NoFundsToWithdraw();
+        if (getLedgerBalance(msg.sender, currency) < amount) revert NoFundsToWithdraw();
         // In this case the rights manager allows withdraw funds from policy balance and send it to recipient directly.
         // This happens only if the policy has balance and the sender has registered balance in ledger..
         _subLedgerEntry(msg.sender, amount, currency);

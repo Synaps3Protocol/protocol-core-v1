@@ -24,4 +24,3 @@ interface IRightsContentCustodian {
     /// @param distributor The address of the distributor who will receive custodial rights.
     function grantCustody(address distributor) external;
 }
-
