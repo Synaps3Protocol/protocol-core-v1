@@ -4,6 +4,8 @@ pragma solidity 0.8.26;
 
 import { Nonces } from "@openzeppelin/contracts/utils/Nonces.sol";
 import { ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+import { ERC165 } from "@openzeppelin/contracts/utils/introspection/ERC165.sol";
+import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { IERC20Permit } from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Permit.sol";
 import { ERC20Permit } from "@openzeppelin/contracts/token/ERC20/extensions/ERC20Permit.sol";
 import { ERC20Votes } from "@openzeppelin/contracts/token/ERC20/extensions/ERC20Votes.sol";
@@ -11,9 +13,13 @@ import { ERC20Burnable } from "@openzeppelin/contracts/token/ERC20/extensions/ER
 
 // https://eips.ethereum.org/EIPS/eip-2612 - permit
 // https://eips.ethereum.org/EIPS/eip-1363 - payable
-contract MMC is ERC20, ERC20Permit, ERC20Burnable, ERC20Votes {
+contract MMC is ERC20, ERC20Permit, ERC20Burnable, ERC20Votes, ERC165 {
     constructor(uint256 totalSupply) ERC20("Multimedia Coin", "MMC") ERC20Permit("Multimedia Coin") {
         _mint(msg.sender, totalSupply * (10 ** 18));
+    }
+
+    function supportsInterface(bytes4 interfaceId) public view virtual override returns (bool) {
+        return interfaceId == type(IERC20).interfaceId || super.supportsInterface(interfaceId);
     }
 
     /// @inheritdoc IERC20Permit

@@ -1,36 +1,46 @@
 pragma solidity 0.8.26;
 
 import "forge-std/Test.sol";
-import { DeployToken } from "script/02_DeployToken.s.sol";
-import { DeployTreasury } from "script/01_DeployTreasury.s.sol";
-import { DeploySyndication } from "script/04_DeploySyndication.s.sol";
-import { DeployDistributor } from "script/05_DeployDistributor.s.sol";
+import { DeployTreasury } from "script/01_Deploy_Economics_Treasury.s.sol";
+import { DeployFeesManager } from "script/02_Deploy_Economics_FeesManager.s.sol";
+import { DeployToken } from "script/03_Deploy_Economics_Token.s.sol";
+import { DeployDistributor } from "script/04_Deploy_Syndication_Distributor.s.sol";
+import { DeployDistributorReferendum } from "script/06_Deploy_Syndication_DistributorReferendum.s.sol";
 
 contract BaseTest is Test {
     address admin = vm.envAddress("PUBLIC_KEY");
+    // 01_DeployTreasury
+    function deployTreasury() public returns (address) {
+        // set default admin as deployer..
+        DeployTreasury treasuryDeployer = new DeployTreasury();
+        return treasuryDeployer.run();
+    }
+    // 02_DeployFeesManager
+    function deployFeesManager() public returns (address) {
+        // set default admin as deployer..
+        DeployToken mmcDeployer = new DeployToken();
+        return mmcDeployer.run();
+    }
 
+    // 03_DeployToken
+    function deployToken() public returns (address) {
+        // set default admin as deployer..
+        DeployToken mmcDeployer = new DeployToken();
+        return mmcDeployer.run();
+    }
+    // 04_DeployDistributor
     function deployDistributor(string memory endpoint) public returns (address) {
         DeployDistributor distDeployer = new DeployDistributor();
         distDeployer.setEndpoint(endpoint);
         return distDeployer.run();
     }
 
-    function deploySyndication(address treasury) public returns (address) {
+    // 05_DeployDistributorReferendum
+    function deployDistributorReferendum(address treasury, address feesManager) public returns (address) {
         // set default admin as deployer..
-        DeploySyndication synDeployer = new DeploySyndication();
+        DeployDistributorReferendum synDeployer = new DeployDistributorReferendum();
         synDeployer.setTreasuryAddress(treasury);
+        synDeployer.setFeesManagerAddress(feesManager);
         return synDeployer.run();
-    }
-
-    function deployToken() public returns (address) {
-        // set default admin as deployer..
-        DeployToken mmcDeployer = new DeployToken();
-        return mmcDeployer.run();
-    }
-
-    function deployTreasury() public returns (address) {
-        // set default admin as deployer..
-        DeployTreasury treasuryDeployer = new DeployTreasury();
-        return treasuryDeployer.run();
     }
 }

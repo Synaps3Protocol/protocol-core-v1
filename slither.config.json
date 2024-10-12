@@ -1,0 +1,6 @@
+{
+    "filter_paths": "node_modules",
+    "exclude_optimization": false,
+    "exclude_informational": false,
+    "exclude_low": false
+}

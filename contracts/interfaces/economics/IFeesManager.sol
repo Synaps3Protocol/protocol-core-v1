@@ -1,0 +1,29 @@
+// SPDX-License-Identifier: MIT
+pragma solidity 0.8.26;
+
+import { T } from "contracts/libraries/Types.sol";
+
+interface IFeesManager {
+    /// @notice Sets a new fee for a specific context and currency.
+    /// @param ctx The context for which the new fee is being set (e.g., registration, access).
+    /// @param fee The new fee to set (can be flat fee or basis points depending on the context).
+    /// @param currency The currency associated with the fee (can be ERC-20 or native currency).
+    function setFees(T.Context ctx, uint256 fee, address currency) external;
+
+    /// @notice Retrieves the fees for a specified context and currency.
+    /// @param ctx The context for which to retrieve the fees.
+    /// @param currency The address of the currency for which to retrieve the fees.
+    /// @return uint256 The fees for the specified context and currency.
+    function getFees(T.Context ctx, address currency) external view returns (uint256);
+
+    /// @notice Checks if a currency is supported for a given context.
+    /// @param ctx The context under which the currency is being checked.
+    /// @param currency The address of the currency to check.
+    /// @return True if the currency is supported for the specified context, otherwise False.
+    function isCurrencySupported(T.Context ctx, address currency) external view returns (bool);
+
+    /// @notice Returns the list of supported currencies for a given context.
+    /// @param ctx The context under which the currencies are being queried.
+    /// @return An array of addresses of the supported currencies for the specified context.
+    function supportedCurrencies(T.Context ctx) external view returns (address[] memory);
+}

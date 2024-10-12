@@ -15,7 +15,11 @@ abstract contract GovernableUpgradeable is Initializable, AccessControlUpgradeab
         address _governor;
     }
 
+    /// @notice The keccak256 hash representing the governance role.
+    /// @dev This constant is used to identify accounts with the governance permissions within the system.
     bytes32 private constant GOV_ROLE = keccak256("GOV_ROLE");
+    /// @notice The keccak256 hash representing the moderator role.
+    /// @dev This constant is used to identify accounts with the moderator permissions within the system.
     bytes32 private constant MOD_ROLE = keccak256("MOD_ROLE");
     // ERC-7201: Namespaced Storage Layout is another convention that can be used to avoid storage layout errors
     // keccak256(abi.encode(uint256(keccak256("watchit.governable.governor")) - 1)) & ~bytes32(uint256(0xff))
