@@ -6,14 +6,13 @@ pragma solidity 0.8.26;
 /// @notice This library provides common type definitions for use in other contracts.
 /// @dev This library defines types and structures that can be imported and used in other contracts.
 library T {
-    enum ContractTypes {
-        __, // Undefined type
-        SYN, // Syndication contract
-        OWN, // Syndication contract
-        TRE, // Treasury contract
-        REF, // Content referendum
-        RM, // Rights Management contract
-        MMC
+    /// @notice Enum to represent different operational contexts within the protocol.
+    /// @dev This enum is used to define the specific context in which certain operations, such as fees or rights management, are executed.
+    /// Depending on the context, different logic or parameters may apply.
+    enum Context {
+        __, // Undefined type, default state for uninitialized or invalid contexts.
+        SYN, // Syndication context, used when handling distributor syndication-related operations like registering distributors, managing fees, or syndicating content.
+        RMA // Rights Management Agreement (RMA) context, used for operations involving access control, rights delegation, or any actions involving the authorization of content rights.
     }
 
     /// @title Agreement

@@ -50,11 +50,11 @@ contract DistributorFactory is UpgradeableBeacon, Pausable {
         // avoid duplicated endpoints
         bytes32 hashed = keccak256(abi.encode(endpoint));
         if (registry[hashed] != address(0)) revert DistributorAlreadyRegistered();
+        // check-effects-interaction..
+        registry[hashed] = msg.sender;
         // initialize storage layout using Distributor contract impl..
         bytes memory data = abi.encodeWithSignature("initialize(string,address)", endpoint, msg.sender);
         address newContract = address(new BeaconProxy(address(this), data));
-        // register manager...
-        registry[hashed] = msg.sender;
         return newContract;
     }
 }

@@ -26,7 +26,7 @@ library TreasuryHelper {
     /// @param to The address to which the ERC20 tokens will be transferred.
     /// @param amount The amount of ERC20 tokens to transfer.
     function _erc20Transfer(address token, address to, uint256 amount) internal {
-        IERC20(token).transfer(to, amount);
+        IERC20(token).safeTransfer(to, amount);
     }
 
     /// @notice Checks the allowance that the contract has been granted by the owner for a specific ERC20 token.
@@ -54,6 +54,9 @@ library TreasuryHelper {
         }
 
         if (amount > allowance(from, token)) revert FailDuringTransfer("Invalid allowance.");
+        // disable slitter use 'arbitraty transfer form' since the use of `safeDeposit` is handled in a safe manner.
+        // eg. msg.sender.safeDeposit(total, currency); <- Use msg.sender as from in transferFrom.
+        // slither-disable-next-line arbitrary-send-erc20
         IERC20(token).safeTransferFrom(from, address(this), amount);
         return amount;
     }
@@ -73,7 +76,7 @@ library TreasuryHelper {
     /// @param amount The amount of tokens to transfer.
     /// @param token The address of the ERC20 token to transfer or address(0) for native token.
     function transfer(address to, uint256 amount, address token) internal {
-        if (amount == 0) return;
+        if (amount == 0) revert FailDuringTransfer("Invalid zero amount to transfer.");
         if (balanceOf(address(this), token) < amount) revert FailDuringTransfer("Insufficient balance.");
         if (token == address(0)) return _nativeTransfer(to, amount);
         _erc20Transfer(token, to, amount);

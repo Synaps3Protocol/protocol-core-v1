@@ -85,13 +85,6 @@ abstract contract QuorumUpgradeable is Initializable {
         $._status[entry] = Status.Waiting;
     }
 
-    /// @dev As standard to avoid doubts about if a upgradeable contract
-    /// need to be initalized, all the contracts specify the init even
-    /// if the initialization is harmless..
-    function __Quorum_init() internal onlyInitializing {}
-
-    function __Quorum_init_unchained() internal onlyInitializing {}
-
     /// @notice Internal function to get the registry storage.
     /// @return $ The registry storage.
     function _getRegistryStorage() private pure returns (RegistryStorage storage $) {
