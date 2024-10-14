@@ -86,6 +86,8 @@ contract RightsContentCustodian is Initializable, UUPSUpgradeable, GovernableUpg
     /// @param holder The address of the content rights holder whose custodial address is being retrieved.
     /// @return The addresses of the active custodian responsible for the content associated with the specified holder.
     function getCustody(address holder) public view returns (address[] memory) {
+        // TODO collect the custody based on deman
+        // TODO if custodians are blocked we need an auxiliar mechanism and return the higher rated distributor
         return custodying[holder].values();
     }
 

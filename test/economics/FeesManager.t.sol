@@ -16,7 +16,6 @@ contract FeesManagerTest is BaseTest {
 
     function test_SetFees_ValidSyndicationFees() public {
         uint256 expected = 1e18;
-        // test syndication 
         IFeesManager(manager).setFees(T.Context.SYN, expected, token);
         assertEq(IFeesManager(manager).getFees(T.Context.SYN, token), expected);
     }

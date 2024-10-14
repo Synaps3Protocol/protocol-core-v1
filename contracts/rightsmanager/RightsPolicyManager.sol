@@ -13,7 +13,7 @@ import { GovernableUpgradeable } from "contracts/base/upgradeable/GovernableUpgr
 import { IPolicy } from "contracts/interfaces/policies/IPolicy.sol";
 import { ITreasury } from "contracts/interfaces/economics/ITreasury.sol";
 import { IRightsPolicyManager } from "contracts/interfaces/rightsmanager/IRightsPolicyManager.sol";
-import { IRightsPolicyDelegator } from "contracts/interfaces/rightsmanager/IRightsPolicyDelegator.sol";
+import { IRightsPolicyAuthorizer } from "contracts/interfaces/rightsmanager/IRightsPolicyAuthorizer.sol";
 import { IRightsAccessAgreement } from "contracts/interfaces/rightsmanager/IRightsAccessAgreement.sol";
 import { TreasuryHelper } from "contracts/libraries/TreasuryHelper.sol";
 import { FeesHelper } from "contracts/libraries/FeesHelper.sol";
@@ -33,7 +33,7 @@ contract RightsPolicyManager is
 
     ITreasury public treasury;
     IRightsAccessAgreement public rightsAgreement;
-    IRightsPolicyDelegator public rightsDelegator;
+    IRightsPolicyAuthorizer public rightsAuthorizer;
 
     /// @dev Mapping to store the access control list for each content ID and account.
     mapping(address => EnumerableSet.AddressSet) acl;
@@ -63,7 +63,7 @@ contract RightsPolicyManager is
 
     /// @notice Initializes the contract with the necessary dependencies.
     /// @param treasury_ The address of the treasury contract to manage funds.
-    function initialize(address treasury_, address rightsAgreement_, address rightsDelegator_) public initializer {
+    function initialize(address treasury_, address rightsAgreement_, address rightsAuthorizer_) public initializer {
         __Ledger_init();
         __UUPSUpgradeable_init();
         __ReentrancyGuard_init();
@@ -71,7 +71,7 @@ contract RightsPolicyManager is
 
         treasury = ITreasury(treasury_);
         rightsAgreement = IRightsAccessAgreement(rightsAgreement_);
-        rightsDelegator = IRightsPolicyDelegator(rightsDelegator_);
+        rightsAuthorizer = IRightsPolicyAuthorizer(rightsAuthorizer_);
     }
 
     /// @notice Disburses funds from the contract to the vault.
@@ -130,7 +130,7 @@ contract RightsPolicyManager is
         // retrieves the agreement and marks it as settled..
         T.Agreement memory a7t = rightsAgreement.settleAgreement(proof);
         // only authorized policies by holder could be registered..
-        if (!rightsDelegator.isPolicyAuthorized(policyAddress, a7t.holder))
+        if (!rightsAuthorizer.isPolicyAuthorized(policyAddress, a7t.holder))
             revert InvalidNotRightsDelegated(policyAddress, a7t.holder);
 
         // deposit the total amount to contract during policy registration..

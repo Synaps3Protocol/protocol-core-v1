@@ -9,17 +9,19 @@ import { DeployDistributorReferendum } from "script/06_Deploy_Syndication_Distri
 
 contract BaseTest is Test {
     address admin = vm.envAddress("PUBLIC_KEY");
+
     // 01_DeployTreasury
     function deployTreasury() public returns (address) {
         // set default admin as deployer..
         DeployTreasury treasuryDeployer = new DeployTreasury();
         return treasuryDeployer.run();
     }
+
     // 02_DeployFeesManager
     function deployFeesManager() public returns (address) {
         // set default admin as deployer..
-        DeployToken mmcDeployer = new DeployToken();
-        return mmcDeployer.run();
+        DeployFeesManager feesManagerDeployer = new DeployFeesManager();
+        return feesManagerDeployer.run();
     }
 
     // 03_DeployToken
@@ -28,6 +30,7 @@ contract BaseTest is Test {
         DeployToken mmcDeployer = new DeployToken();
         return mmcDeployer.run();
     }
+
     // 04_DeployDistributor
     function deployDistributor(string memory endpoint) public returns (address) {
         DeployDistributor distDeployer = new DeployDistributor();
@@ -38,9 +41,9 @@ contract BaseTest is Test {
     // 05_DeployDistributorReferendum
     function deployDistributorReferendum(address treasury, address feesManager) public returns (address) {
         // set default admin as deployer..
-        DeployDistributorReferendum synDeployer = new DeployDistributorReferendum();
-        synDeployer.setTreasuryAddress(treasury);
-        synDeployer.setFeesManagerAddress(feesManager);
-        return synDeployer.run();
+        DeployDistributorReferendum distReferendumDeployer = new DeployDistributorReferendum();
+        distReferendumDeployer.setTreasuryAddress(treasury);
+        distReferendumDeployer.setFeesManagerAddress(feesManager);
+        return distReferendumDeployer.run();
     }
 }
