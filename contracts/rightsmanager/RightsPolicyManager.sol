@@ -63,6 +63,8 @@ contract RightsPolicyManager is
 
     /// @notice Initializes the contract with the necessary dependencies.
     /// @param treasury_ The address of the treasury contract to manage funds.
+    /// @param rightsAgreement_ The address of the rights access agreement contract.
+    /// @param rightsAuthorizer_ The address of the rights policy authorizer contract.
     function initialize(address treasury_, address rightsAgreement_, address rightsAuthorizer_) public initializer {
         __Ledger_init();
         __UUPSUpgradeable_init();

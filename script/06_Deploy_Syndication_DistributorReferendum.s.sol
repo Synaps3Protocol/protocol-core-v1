@@ -7,21 +7,21 @@ import { DistributorReferendum } from "contracts/syndication/DistributorReferend
 
 contract DeployDistributorReferendum is DeployBase {
     address treasury;
-    address feesManager;
+    address tollgate;
 
     function setTreasuryAddress(address treasury_) external {
         treasury = treasury_;
     }
 
-    function setFeesManagerAddress(address feesManager_) external {
-        feesManager = feesManager_;
+    function setTollgateAddress(address tollgate_) external {
+        tollgate = tollgate_;
     }
 
     function run() external BroadcastedByAdmin returns (address) {
         // Deploy the upgradeable contract
         address _proxyAddress = Upgrades.deployUUPSProxy(
             "DistributorReferendum.sol",
-            abi.encodeCall(DistributorReferendum.initialize, (treasury, feesManager))
+            abi.encodeCall(DistributorReferendum.initialize, (treasury, tollgate))
         );
 
         return _proxyAddress;

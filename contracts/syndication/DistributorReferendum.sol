@@ -10,7 +10,7 @@ import { GovernableUpgradeable } from "contracts/base/upgradeable/GovernableUpgr
 import { QuorumUpgradeable } from "contracts/base/upgradeable/QuorumUpgradeable.sol";
 
 import { ITreasury } from "contracts/interfaces/economics/ITreasury.sol";
-import { IFeesManager } from "contracts/interfaces/economics/IFeesManager.sol";
+import { ITollgate } from "contracts/interfaces/economics/ITollgate.sol";
 import { IDistributor } from "contracts/interfaces/syndication/IDistributor.sol";
 import { IDistributorReferendum } from "contracts/interfaces/syndication/IDistributorReferendum.sol";
 import { TreasuryHelper } from "contracts/libraries/TreasuryHelper.sol";
@@ -27,7 +27,7 @@ contract DistributorReferendum is
     using TreasuryHelper for address;
     using ERC165Checker for address;
 
-    IFeesManager public feesManager;
+    ITollgate public tollgate;
     ITreasury public treasury;
 
     uint256 public enrollmentPeriod; // Period for enrollment
@@ -71,13 +71,14 @@ contract DistributorReferendum is
     }
 
     /// @notice Initializes the contract with the given multimedia coin (MMC), treasury, enrollment fee, and initial penalty rate.
-    /// @param treasury_ The address of the treasury contract, which manages fund handling and storage.
-    function initialize(address treasury_, address feesManager_) public initializer {
+    /// @param treasury_ The address of the treasury contract, which manages fund handling and storage for the platform.
+    /// @param tollgate_ The address of the tollgate contract, responsible for fee and currency management.
+    function initialize(address treasury_, address tollgate_) public initializer {
         __UUPSUpgradeable_init();
         __Governable_init(msg.sender);
         __ReentrancyGuard_init();
         treasury = ITreasury(treasury_);
-        feesManager = IFeesManager(feesManager_);
+        tollgate = ITollgate(tollgate_);
         // 6 months initially..
         enrollmentPeriod = 180 days;
     }
@@ -105,7 +106,7 @@ contract DistributorReferendum is
     /// @param currency The currency used to pay enrollment.
     function register(address distributor, address currency) external payable withValidDistributor(distributor) {
         // !IMPORTANT if fees manager does not support the currency, will revert..
-        uint256 fees = feesManager.getFees(T.Context.SYN, currency);
+        uint256 fees = tollgate.getFees(T.Context.SYN, currency);
         uint256 total = msg.sender.safeDeposit(fees, currency);
         // set the distributor active enrollment period..
         // after this time the distributor is considered inactive and cannot collect his profits...

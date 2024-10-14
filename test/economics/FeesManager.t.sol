@@ -1,23 +1,23 @@
 pragma solidity 0.8.26;
 
-import { IFeesManager } from "contracts/interfaces/economics/IFeesManager.sol";
+import { ITollgate } from "contracts/interfaces/economics/ITollgate.sol";
 import { BaseTest } from "test/BaseTest.t.sol";
 import { T } from "contracts/libraries/Types.sol";
 
-contract FeesManagerTest is BaseTest {
-    // using FeesHelper for uint256;
+contract TollgateTest is BaseTest {
+
     address manager;
     address token;
 
     function setUp() public {
         token = deployToken();
-        manager = deployFeesManager();
+        manager = deployTollgate();
     }
 
     function test_SetFees_ValidSyndicationFees() public {
         uint256 expected = 1e18;
-        IFeesManager(manager).setFees(T.Context.SYN, expected, token);
-        assertEq(IFeesManager(manager).getFees(T.Context.SYN, token), expected);
+        ITollgate(manager).setFees(T.Context.SYN, expected, token);
+        assertEq(ITollgate(manager).getFees(T.Context.SYN, token), expected);
     }
 
     // function test_SetFeesNative() public {

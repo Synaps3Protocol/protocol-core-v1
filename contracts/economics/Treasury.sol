@@ -11,47 +11,56 @@ import { ITreasury } from "contracts/interfaces/economics/ITreasury.sol";
 // https://docs.openzeppelin.com/contracts/4.x/api/finance#PaymentSplitter
 
 /// @title Treasury Contract
-/// @dev This contract is designed to manage funds and token transfers,
-/// and it implements upgradeable features using UUPS proxy pattern.
+/// @dev This contract is designed to manage the storage and distribution of funds.
 contract Treasury is Initializable, UUPSUpgradeable, GovernableUpgradeable, ITreasury {
     address public vaultAddress;
     address public poolAddress;
 
+    /// @notice Initializes the Treasury contract by setting default addresses for the vault and pool.
+    /// @dev Should be called only once during deployment.
     function initialize() public initializer {
         vaultAddress = address(this);
         poolAddress = address(this);
     }
 
-    // Getter function to return the vault address
+    /// @notice Retrieves the pool address.
+    /// @return The address of the pool.
     function getPoolAddress() public view returns (address) {
         return poolAddress;
     }
 
-    // Function to set the vault address (for governance/admin use)
+    /// @notice Sets a new pool address. Restricted to governance.
+    /// @param poolAddress_ The new address to be set as the pool.
     function setPoolAddress(address poolAddress_) external onlyGov {
         // TODO cambiar a revert
-        // require(_vaultAddress != address(0), "Invalid vault address");
+        // require(poolAddress_ != address(0), "Invalid pool address");
         poolAddress = poolAddress_;
     }
 
-    // Function to set the vault address (for governance/admin use)
+    /// @notice Sets a new vault address. Restricted to governance.
+    /// @param vaultAddress_ The new address to be set as the vault.
     function setVaultAddress(address vaultAddress_) external onlyGov {
         // TODO cambiar a revert
-        // require(_vaultAddress != address(0), "Invalid vault address");
+        // require(vaultAddress_ != address(0), "Invalid vault address");
         vaultAddress = vaultAddress_;
     }
 
-    // Getter function to return the vault address
+    /// @notice Retrieves the vault address.
+    /// @return The address of the vault.
     function getVaultAddress() public view returns (address) {
         return vaultAddress;
     }
 
-    function withdraw(address recipient, uint256 amount, address currency) public onlyGov {}
+    /// @notice Withdraws a specific amount of currency to a recipient.
+    /// @param recipient The address receiving the withdrawal.
+    /// @param amount The amount to be withdrawn.
+    /// @param currency The currency being withdrawn.
+    function withdraw(address recipient, uint256 amount, address currency) public {}
 
+    /// @notice Retrieves the balance of a specific currency held by the Treasury.
+    /// @param currency The address of the currency to query.
+    /// @return The current balance of the currency.
     function getBalance(address currency) external view returns (uint256) {}
-
-    // withdraw
-    // etc..
 
     /// @notice Function that should revert when msg.sender is not authorized to upgrade the contract.
     /// @param newImplementation The address of the new implementation contract.

@@ -8,12 +8,18 @@ import { EnumerableSet } from "@openzeppelin/contracts/utils/structs/EnumerableS
 import { UUPSUpgradeable } from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import { Initializable } from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import { GovernableUpgradeable } from "contracts/base/upgradeable/GovernableUpgradeable.sol";
-import { IFeesManager } from "contracts/interfaces/economics/IFeesManager.sol";
+import { ITollgate } from "contracts/interfaces/economics/ITollgate.sol";
 
 import { T } from "contracts/libraries/Types.sol";
 import { C } from "contracts/libraries/Constants.sol";
 
-contract FeesManager is Initializable, UUPSUpgradeable, GovernableUpgradeable, IFeesManager {
+/// @title Tollgate Contract
+/// @dev This contract acts as a financial gateway, managing fees and the currencies allowed
+/// within the platform. It ensures that only valid currencies (ERC-20 or native) are accepted
+/// and provides mechanisms to set, retrieve, and validate fees for different contexts.
+/// @notice The name "Tollgate" reflects the contract's role as a checkpoint that regulates
+/// financial access through fees and approved currencies.
+contract Tollgate is Initializable, UUPSUpgradeable, GovernableUpgradeable, ITollgate {
     using ERC165Checker for address;
     using EnumerableSet for EnumerableSet.AddressSet;
 

@@ -3,7 +3,11 @@ pragma solidity 0.8.26;
 
 import { T } from "contracts/libraries/Types.sol";
 
-interface IFeesManager {
+/// @title Tollgate Interface
+/// @dev This interface defines the essential functions for managing fees and the currencies
+/// accepted within the platform. It ensures the platform can set, retrieve, and validate fees,
+/// as well as maintain a registry of supported currencies for different operational contexts.
+interface ITollgate {
     /// @notice Sets a new fee for a specific context and currency.
     /// @param ctx The context for which the new fee is being set (e.g., registration, access).
     /// @param fee The new fee to set (can be flat fee or basis points depending on the context).

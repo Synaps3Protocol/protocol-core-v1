@@ -8,7 +8,7 @@ import { Initializable } from "@openzeppelin/contracts-upgradeable/proxy/utils/I
 import { UUPSUpgradeable } from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 
 import { IRightsAccessAgreement } from "contracts/interfaces/rightsmanager/IRightsAccessAgreement.sol";
-import { IFeesManager } from "contracts/interfaces/economics/IFeesManager.sol";
+import { ITollgate } from "contracts/interfaces/economics/ITollgate.sol";
 import { FeesHelper } from "contracts/libraries/FeesHelper.sol";
 import { T } from "contracts/libraries/Types.sol";
 
@@ -18,7 +18,7 @@ contract RightsAccessAgreement is Initializable, UUPSUpgradeable, GovernableUpgr
     /// so the code within a logic contract’s constructor or global declaration
     /// will never be executed in the context of the proxy’s state
     /// https://docs.openzeppelin.com/upgrades-plugins/1.x/proxies#the-constructor-caveat
-    IFeesManager public feesManager;
+    ITollgate public tollgate;
     // @dev Holds a bounded key expressing the agreement between the parts.
     // The key is derived using keccak256 hashing of the account and the rights holder.
     // This mapping stores active agreements, indexed by their unique proof.
@@ -40,11 +40,11 @@ contract RightsAccessAgreement is Initializable, UUPSUpgradeable, GovernableUpgr
         _disableInitializers();
     }
 
-    function initialize(address feesManager_) public initializer {
+    function initialize(address tollgate_) public initializer {
         __UUPSUpgradeable_init();
         __Governable_init(msg.sender);
         // we need to collect the fees during the agreement creation.
-        feesManager = IFeesManager(feesManager_);
+        tollgate = ITollgate(tollgate_);
     }
 
     /// @notice Settles the agreement associated with the given proof, preparing it for payment processing.
@@ -141,7 +141,7 @@ contract RightsAccessAgreement is Initializable, UUPSUpgradeable, GovernableUpgr
     /// @return treasury The calculated fee for the treasury.
     function _calcFees(uint256 total, address currency) private view returns (uint256) {
         //!IMPORTANT if fees manager does not support the currency, will revert..
-        uint256 fees = feesManager.getFees(T.Context.RMA, currency);
+        uint256 fees = tollgate.getFees(T.Context.RMA, currency);
         return total.perOf(fees); // bps
     }
 }

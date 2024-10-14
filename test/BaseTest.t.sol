@@ -2,7 +2,7 @@ pragma solidity 0.8.26;
 
 import "forge-std/Test.sol";
 import { DeployTreasury } from "script/01_Deploy_Economics_Treasury.s.sol";
-import { DeployFeesManager } from "script/02_Deploy_Economics_FeesManager.s.sol";
+import { DeployTollgate } from "script/02_Deploy_Economics_Tollgate.s.sol";
 import { DeployToken } from "script/03_Deploy_Economics_Token.s.sol";
 import { DeployDistributor } from "script/04_Deploy_Syndication_Distributor.s.sol";
 import { DeployDistributorReferendum } from "script/06_Deploy_Syndication_DistributorReferendum.s.sol";
@@ -17,11 +17,11 @@ contract BaseTest is Test {
         return treasuryDeployer.run();
     }
 
-    // 02_DeployFeesManager
-    function deployFeesManager() public returns (address) {
+    // 02_DeployTollgate
+    function deployTollgate() public returns (address) {
         // set default admin as deployer..
-        DeployFeesManager feesManagerDeployer = new DeployFeesManager();
-        return feesManagerDeployer.run();
+        DeployTollgate tollgateDeployer = new DeployTollgate();
+        return tollgateDeployer.run();
     }
 
     // 03_DeployToken
@@ -39,11 +39,11 @@ contract BaseTest is Test {
     }
 
     // 05_DeployDistributorReferendum
-    function deployDistributorReferendum(address treasury, address feesManager) public returns (address) {
+    function deployDistributorReferendum(address treasury, address tollgate) public returns (address) {
         // set default admin as deployer..
         DeployDistributorReferendum distReferendumDeployer = new DeployDistributorReferendum();
         distReferendumDeployer.setTreasuryAddress(treasury);
-        distReferendumDeployer.setFeesManagerAddress(feesManager);
+        distReferendumDeployer.setTollgateAddress(tollgate);
         return distReferendumDeployer.run();
     }
 }
