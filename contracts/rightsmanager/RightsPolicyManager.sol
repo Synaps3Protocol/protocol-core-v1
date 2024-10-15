@@ -35,7 +35,7 @@ contract RightsPolicyManager is
     IRightsAccessAgreement public rightsAgreement;
     IRightsPolicyAuthorizer public rightsAuthorizer;
 
-    /// @dev Mapping to store the access control list for each content ID and account.
+    /// @dev Mapping to store the access control list for each content holder and account.
     mapping(address => EnumerableSet.AddressSet) acl;
 
     /// @notice Emitted when access rights are granted to an account based on a policy.
@@ -137,9 +137,9 @@ contract RightsPolicyManager is
 
         // deposit the total amount to contract during policy registration..
         // the available amount is registerd to policy to later allow withdrawals..
-        // IMPORTANT: the process of funds registration to accounts should be done in policies logic.
+        // IMPORTANT: the process of distribution registration to accounts should be done in policies logic.
         msg.sender.safeDeposit(a7t.total, a7t.currency);
-        // validate policy then register funds and access policy..
+        // validate policy execution register funds and access policy..
         try IPolicy(policyAddress).exec(a7t) {
             // if-only-if policy execution is successful
             _sumLedgerEntry(policyAddress, a7t.available, a7t.currency);

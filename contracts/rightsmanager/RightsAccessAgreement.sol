@@ -138,10 +138,13 @@ contract RightsAccessAgreement is Initializable, UUPSUpgradeable, GovernableUpgr
     /// @param newImplementation The address of the new implementation contract.
     function _authorizeUpgrade(address newImplementation) internal override onlyAdmin {}
 
-    /// @return treasury The calculated fee for the treasury.
+    /// @notice Calculates the fee based on the provided total amount and currency.
+    /// @dev Reverts if the currency is not supported by the fees manager.
+    /// @param total The total amount from which the fee will be calculated.
+    /// @param currency The address of the currency for which the fee is being calculated.
     function _calcFees(uint256 total, address currency) private view returns (uint256) {
         //!IMPORTANT if fees manager does not support the currency, will revert..
         uint256 fees = tollgate.getFees(T.Context.RMA, currency);
-        return total.perOf(fees); // bps
+        return total.perOf(fees); // bps repr enforced by tollgate..
     }
 }
