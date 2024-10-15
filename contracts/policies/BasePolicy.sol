@@ -15,7 +15,7 @@ import { ReentrancyGuard } from "@openzeppelin/contracts/utils/ReentrancyGuard.s
 abstract contract BasePolicy is Ledger, ReentrancyGuard, IPolicy, IBalanceWithdrawable {
     // Immutable public variables to store the addresses of the Rights Manager and Ownership.
     address public immutable RIGHTS_POLICY_MANAGER;
-    address public immutable OWNERSHIP;
+    address public immutable CONTENT_OWNERSHIP;
     bool private setupReady;
 
     /// @dev Error thrown when attempting to access content without proper authorization.
@@ -56,10 +56,10 @@ abstract contract BasePolicy is Ledger, ReentrancyGuard, IPolicy, IBalanceWithdr
 
     /// @notice Constructor to initialize the Rights Manager and Ownership contract addresses.
     /// @param rightsPolicyManager Address of the rights policy manager contract.
-    /// @param ownershipAddress Address of the Ownership contract.
-    constructor(address rightsPolicyManager, address ownershipAddress) {
+    /// @param contentOwnership Address of the Ownership contract.
+    constructor(address rightsPolicyManager, address contentOwnership) {
         RIGHTS_POLICY_MANAGER = rightsPolicyManager; // Assign the Rights Manager address.
-        OWNERSHIP = ownershipAddress; // Assign the Ownership address.
+        CONTENT_OWNERSHIP = contentOwnership; // Assign the Ownership address.
     }
 
     /// @notice Withdraws tokens from the contract to a specified recipient's address.
@@ -81,7 +81,7 @@ abstract contract BasePolicy is Ledger, ReentrancyGuard, IPolicy, IBalanceWithdr
     /// @param contentId The content ID to retrieve the holder.
     /// @return The address of the content holder.
     function getHolder(uint256 contentId) public view returns (address) {
-        return IContentOwnership(OWNERSHIP).ownerOf(contentId); // Returns the registered owner.
+        return IContentOwnership(CONTENT_OWNERSHIP).ownerOf(contentId); // Returns the registered owner.
     }
 
     // /// @notice Allocates the specified amount across a distribution array and returns the unallocated remaining amount.
