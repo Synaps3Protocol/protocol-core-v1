@@ -12,6 +12,7 @@ import { ITollgate } from "contracts/interfaces/economics/ITollgate.sol";
 
 import { T } from "contracts/libraries/Types.sol";
 import { C } from "contracts/libraries/Constants.sol";
+import { FeesHelper } from "contracts/libraries/FeesHelper.sol";
 
 /// @title Tollgate Contract
 /// @dev This contract acts as a financial gateway, managing fees and the currencies allowed
@@ -20,6 +21,7 @@ import { C } from "contracts/libraries/Constants.sol";
 /// @notice The name "Tollgate" reflects the contract's role as a checkpoint that regulates
 /// financial access through fees and approved currencies.
 contract Tollgate is Initializable, UUPSUpgradeable, GovernableUpgradeable, ITollgate {
+    using FeesHelper for uint256;
     using ERC165Checker for address;
     using EnumerableSet for EnumerableSet.AddressSet;
 
@@ -29,12 +31,15 @@ contract Tollgate is Initializable, UUPSUpgradeable, GovernableUpgradeable, ITol
 
     /// @notice Emitted when fees are set.
     /// @param fee The amount of fees being set.
+    /// @param ctx The context where the fees are set.
     /// @param currency The currency of the fees being set.
     /// @param setBy The address that set the fees.
     event FeesSet(uint256 fee, T.Context ctx, address indexed currency, address indexed setBy);
     /// @notice Error to be thrown when an unsupported currency is used.
     /// @param currency The address of the unsupported currency.
     error InvalidUnsupportedCurrency(address currency);
+    /// @notice Error to be thrown when basis point fees are invalid.
+    error InvalidBasisPointRange(T.Context ctx, uint256 bps);
     /// @notice Error thrown when trying to operate with an unsupported currency.
     /// @param currency The address of the unsupported currency.
     error InvalidCurrency(address currency);
@@ -44,6 +49,14 @@ contract Tollgate is Initializable, UUPSUpgradeable, GovernableUpgradeable, ITol
     modifier onlyValidCurrency(address currency) {
         // if not native coin then should be a valid erc20 token
         if (currency != address(0) && !currency.supportsInterface(INTERFACE_ID_ERC20)) revert InvalidCurrency(currency);
+        _;
+    }
+
+    /// @notice Ensures valid fee representation based on the context.
+    /// @param ctx The context for which the fee is being set.
+    /// @param fee The fee to validate.
+    modifier onlyValidFeeRepresentation(T.Context ctx, uint256 fee) {
+        if (T.Context.RMA == ctx && !fee.isBasePoint()) revert InvalidBasisPointRange(ctx, fees);
         _;
     }
 
@@ -97,10 +110,13 @@ contract Tollgate is Initializable, UUPSUpgradeable, GovernableUpgradeable, ITol
     /// @param fee The new fee to set (can be flat fee or basis points depending on the context).
     /// @param currency The currency associated with the fee (can be ERC-20 or native currency).
     /// @dev Only the governance account can call this function to set or update fees.
-    function setFees(T.Context ctx, uint256 fee, address currency) external onlyGov onlyValidCurrency(currency) {
-        if (isCurrencySupported(ctx, currency)) return;
-        registeredCurrencies[ctx].add(currency);
+    function setFees(
+        T.Context ctx,
+        uint256 fee,
+        address currency
+    ) external onlyGov onlyValidFeeRepresentation(ctx, fee) onlyValidCurrency(currency) {
         currencyFees[currency][ctx] = fee;
+        registeredCurrencies[ctx].add(currency); // set avoid duplication..
         emit FeesSet(fee, ctx, currency, msg.sender);
     }
 

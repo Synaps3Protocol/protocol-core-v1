@@ -56,7 +56,7 @@ contract DistributorReferendum is
 
     /// @notice Modifier to ensure that the given distributor contract supports the IDistributor interface.
     /// @param distributor The distributor contract address.
-    modifier withValidDistributor(address distributor) {
+    modifier onlyValidDistributor(address distributor) {
         if (!distributor.supportsInterface(INTERFACE_ID_IDISTRIBUTOR)) revert InvalidDistributorContract(distributor);
         _;
     }
@@ -106,7 +106,7 @@ contract DistributorReferendum is
     /// @notice Registers a distributor by sending a payment to the contract.
     /// @param distributor The address of the distributor to register.
     /// @param currency The currency used to pay enrollment.
-    function register(address distributor, address currency) external payable withValidDistributor(distributor) {
+    function register(address distributor, address currency) external payable onlyValidDistributor(distributor) {
         // !IMPORTANT if fees manager does not support the currency, will revert..
         uint256 fees = tollgate.getFees(T.Context.SYN, currency);
         uint256 total = msg.sender.safeDeposit(fees, currency);
@@ -120,7 +120,7 @@ contract DistributorReferendum is
 
     /// @notice Revokes the registration of a distributor.
     /// @param distributor The address of the distributor to revoke.
-    function revoke(address distributor) external onlyGov withValidDistributor(distributor) {
+    function revoke(address distributor) external onlyGov onlyValidDistributor(distributor) {
         enrollmentsCount--;
         _revoke(uint160(distributor));
         emit Revoked(distributor);
@@ -128,7 +128,7 @@ contract DistributorReferendum is
 
     /// @notice Approves a distributor's registration.
     /// @param distributor The address of the distributor to approve.
-    function approve(address distributor) external onlyGov withValidDistributor(distributor) {
+    function approve(address distributor) external onlyGov onlyValidDistributor(distributor) {
         // reset ledger..
         enrollmentsCount++;
         _approve(uint160(distributor));
@@ -158,7 +158,7 @@ contract DistributorReferendum is
     /// @dev This function verifies the active status of the distributor.
     /// @param distributor The distributor's address to check.
     /// @return bool True if the distributor is active, false otherwise.
-    function isActive(address distributor) public view withValidDistributor(distributor) returns (bool) {
+    function isActive(address distributor) public view onlyValidDistributor(distributor) returns (bool) {
         // this mechanisms helps to verify the availability of the distributor forcing recurrent registrations and status verification.
         return _status(uint160(distributor)) == Status.Active && enrollmentTime[distributor] > block.timestamp;
     }
@@ -167,7 +167,7 @@ contract DistributorReferendum is
     /// @dev This function verifies the waiting status of the distributor.
     /// @param distributor The distributor's address to check.
     /// @return bool True if the distributor is waiting, false otherwise.
-    function isWaiting(address distributor) public view withValidDistributor(distributor) returns (bool) {
+    function isWaiting(address distributor) public view onlyValidDistributor(distributor) returns (bool) {
         return _status(uint160(distributor)) == Status.Waiting;
     }
 
@@ -175,7 +175,7 @@ contract DistributorReferendum is
     /// @dev This function verifies the blocked status of the distributor.
     /// @param distributor The distributor's address to check.
     /// @return bool True if the distributor is blocked, false otherwise.
-    function isBlocked(address distributor) public view withValidDistributor(distributor) returns (bool) {
+    function isBlocked(address distributor) public view onlyValidDistributor(distributor) returns (bool) {
         return _status(uint160(distributor)) == Status.Blocked;
     }
 
