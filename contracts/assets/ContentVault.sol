@@ -16,7 +16,7 @@ import { IContentVault } from "contracts/interfaces/assets/IContentVault.sol";
 /// and inherits Governable for governance control.
 contract ContentVault is Initializable, UUPSUpgradeable, GovernableUpgradeable, IContentVault {
     /// @notice The Ownership contract that tracks content holders.
-    IContentOwnership public ownership;
+    IContentOwnership public contentOwnership;
     /// @dev Mapping to store encrypted content, identified by content ID.
     mapping(uint256 => bytes) private secured;
     /// @notice Error thrown when a non-owner tries to modify or access the content.
@@ -26,7 +26,7 @@ contract ContentVault is Initializable, UUPSUpgradeable, GovernableUpgradeable, 
     /// @param contentId The identifier of the content.
     /// @dev Reverts if the sender is not the owner of the content based on the Ownership contract.
     modifier onlyHolder(uint256 contentId) {
-        if (ownership.ownerOf(contentId) != msg.sender) revert InvalidContentHolder();
+        if (contentOwnership.ownerOf(contentId) != msg.sender) revert InvalidContentHolder();
         _;
     }
 
@@ -40,13 +40,13 @@ contract ContentVault is Initializable, UUPSUpgradeable, GovernableUpgradeable, 
     }
 
     /// @notice Initializes the contract with the necessary dependencies, including the Ownership contract.
-    /// @param ownership_ The address of the Ownership contract, which manages ownership records and verification.
+    /// @param contentOwnership_ The address of the Ownership contract, which manages ownership records and verification.
     /// @dev This function can only be called once during the contract's initialization. It sets up UUPS upgradeability
     /// mechanisms and governance controls, linking the Ownership contract for future use.
-    function initialize(address ownership_) public initializer {
+    function initialize(address contentOwnership_) public initializer {
         __UUPSUpgradeable_init();
         __Governable_init(msg.sender);
-        ownership = IContentOwnership(ownership_);
+        contentOwnership = IContentOwnership(contentOwnership_);
     }
 
     /// @notice Retrieves the encrypted content for a given content ID.
@@ -55,6 +55,8 @@ contract ContentVault is Initializable, UUPSUpgradeable, GovernableUpgradeable, 
     /// @dev This function is used to access encrypted data stored in the vault,
     /// which can include various types of encrypted information such as LIT chain data or shared key-encrypted data.
     function getContent(uint256 contentId) public view returns (bytes memory) {
+        // In common scenarios, only custodians are allowed to access the secured content.
+        // However, this does not prevent access since all data on a smart contract is publicly readable.
         return secured[contentId];
     }
 

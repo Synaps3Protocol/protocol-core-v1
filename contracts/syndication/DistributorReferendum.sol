@@ -65,6 +65,8 @@ contract DistributorReferendum is
     /// @notice This constructor prevents the implementation contract from being initialized.
     /// @dev See https://forum.openzeppelin.com/t/uupsupgradeable-vulnerability-post-mortem/15680
     /// https://forum.openzeppelin.com/t/what-does-disableinitializers-function-mean/28730/5
+    /// https://forum.openzeppelin.com/t/uupsupgradeable-vulnerability-post-mortem/15680
+    /// https://docs.openzeppelin.com/upgrades-plugins/1.x/writing-upgradeable#potentially-unsafe-operations
     /// @custom:oz-upgrades-unsafe-allow constructor
     constructor() {
         _disableInitializers();

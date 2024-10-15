@@ -5,10 +5,10 @@ pragma solidity 0.8.26;
 /// @notice Interface for managing custodial rights of content under the Rights Manager.
 /// @dev This interface handles the retrieval and management of custodial records for content holders and distributors.
 interface IRightsContentCustodian {
-    /// @notice Retrieves the custodial address for a given content holder.
-    /// @param holder The address of the content rights holder whose custodial address is being retrieved.
-    /// @return The addresses of the active custodian responsible for the content associated with the specified holder.
-    function getCustody(address holder) external view returns (address[] memory);
+    /// @notice Retrieves the custodians' addresses for a given content holder.
+    /// @param holder The address of the content rights holder whose custodians' addresses are being retrieved.
+    /// @return An array of addresses representing the active custodians responsible for the content associated with the specified holder.
+    function getCustodians(address holder) external view returns (address[] memory);
 
     /// @notice Retrieves the total number of content items in custody for a given distributor.
     /// @param distributor The address of the distributor whose custodial content count is being requested.
