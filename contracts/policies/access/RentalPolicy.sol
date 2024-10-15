@@ -19,7 +19,7 @@ contract RentalPolicy is BasePolicy {
     }
 
     // Mapping to store content data by content ID.
-    mapping(uint256 => Content) public contents;
+    mapping(uint256 => Content) private contents;
 
     // Mapping to track rental expiration timestamps for each account and content.
     mapping(address => mapping(uint256 => uint256)) private rentals;

@@ -2,7 +2,6 @@
 // NatSpec format convention - https://docs.soliditylang.org/en/v0.5.10/natspec-format.html
 pragma solidity 0.8.26;
 
-import { IERC165 } from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
 import { Initializable } from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import { UUPSUpgradeable } from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import { EnumerableSet } from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
@@ -36,7 +35,7 @@ contract RightsPolicyManager is
     IRightsPolicyAuthorizer public rightsAuthorizer;
 
     /// @dev Mapping to store the access control list for each content holder and account.
-    mapping(address => EnumerableSet.AddressSet) acl;
+    mapping(address => EnumerableSet.AddressSet) private acl;
 
     /// @notice Emitted when access rights are granted to an account based on a policy.
     /// @param account The address of the account granted access.
@@ -88,7 +87,7 @@ contract RightsPolicyManager is
     }
 
     /// @notice Withdraws tokens from the contract to a specified recipient's address.
-    /// @dev This function withdraws funds from the caller's balance (checked via msg.sender) and transfers them to the recipient.
+    /// @dev This function withdraws funds from the caller's balance and transfers them to the recipient.
     /// @param recipient The address that will receive the withdrawn tokens.
     /// @param amount The amount of tokens to withdraw.
     /// @param currency The currency to associate fees with. Use address(0) for the native coin.
@@ -124,8 +123,7 @@ contract RightsPolicyManager is
     }
 
     /// @notice Finalizes the agreement by registering the agreed-upon policy, effectively closing the agreement.
-    /// @dev This function verifies the policy's authorization, executes the agreement, processes financial transactions,
-    ///      and registers the policy in the system, representing the formal closure of the agreement.
+    /// @dev This function verifies the policy's authorization, executes the agreement and registers the policy.
     /// @param proof The unique identifier of the agreement to be enforced.
     /// @param policyAddress The address of the policy contract managing the agreement.
     function registerPolicy(bytes32 proof, address policyAddress) public payable nonReentrant {

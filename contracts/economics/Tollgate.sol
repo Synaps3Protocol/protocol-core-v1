@@ -11,7 +11,6 @@ import { GovernableUpgradeable } from "contracts/base/upgradeable/GovernableUpgr
 import { ITollgate } from "contracts/interfaces/economics/ITollgate.sol";
 
 import { T } from "contracts/libraries/Types.sol";
-import { C } from "contracts/libraries/Constants.sol";
 import { FeesHelper } from "contracts/libraries/FeesHelper.sol";
 
 /// @title Tollgate Contract
@@ -48,7 +47,9 @@ contract Tollgate is Initializable, UUPSUpgradeable, GovernableUpgradeable, ITol
     /// @param currency The address of the currency to check.
     modifier onlyValidCurrency(address currency) {
         // if not native coin then should be a valid erc20 token
-        if (currency != address(0) && !currency.supportsInterface(INTERFACE_ID_ERC20)) revert InvalidCurrency(currency);
+        if (currency != address(0) && !currency.supportsInterface(INTERFACE_ID_ERC20)) {
+            revert InvalidCurrency(currency);
+        }
         _;
     }
 

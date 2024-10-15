@@ -30,9 +30,9 @@ contract DistributorReferendum is
     ITollgate public tollgate;
     ITreasury public treasury;
 
-    uint256 public enrollmentPeriod; // Period for enrollment
-    uint256 public enrollmentsCount; // Count of enrollments
-    mapping(address => uint256) public enrollmentTime; // Timestamp for enrollment periods
+    uint256 private enrollmentPeriod; // Period for enrollment
+    uint256 private enrollmentsCount; // Count of enrollments
+    mapping(address => uint256) private enrollmentTime; // Timestamp for enrollment periods
     bytes4 private constant INTERFACE_ID_IDISTRIBUTOR = type(IDistributor).interfaceId;
 
     /// @notice Event emitted when a distributor is registered
@@ -57,7 +57,9 @@ contract DistributorReferendum is
     /// @notice Modifier to ensure that the given distributor contract supports the IDistributor interface.
     /// @param distributor The distributor contract address.
     modifier onlyValidDistributor(address distributor) {
-        if (!distributor.supportsInterface(INTERFACE_ID_IDISTRIBUTOR)) revert InvalidDistributorContract(distributor);
+        if (!distributor.supportsInterface(INTERFACE_ID_IDISTRIBUTOR)) {
+            revert InvalidDistributorContract(distributor);
+        }
         _;
     }
 
@@ -72,7 +74,7 @@ contract DistributorReferendum is
         _disableInitializers();
     }
 
-    /// @notice Initializes the contract with the given multimedia coin (MMC), treasury, enrollment fee, and initial penalty rate.
+    /// @notice Initializes the contract with the given treasury and tollgate.
     /// @param treasury_ The address of the treasury contract, which manages fund handling and storage for the platform.
     /// @param tollgate_ The address of the tollgate contract, responsible for fee and currency management.
     function initialize(address treasury_, address tollgate_) public initializer {
@@ -141,7 +143,7 @@ contract DistributorReferendum is
         return enrollmentPeriod;
     }
 
-    /// @notice Retrieves the enrollment time for a distributor, taking into account the current block time and the expiration period.
+    /// @notice Retrieves the enrollment time for a distributor.
     /// @param distributor The address of the distributor.
     /// @return The enrollment time in seconds.
     function getEnrollmentTime(address distributor) public view returns (uint256) {
@@ -159,7 +161,7 @@ contract DistributorReferendum is
     /// @param distributor The distributor's address to check.
     /// @return bool True if the distributor is active, false otherwise.
     function isActive(address distributor) public view onlyValidDistributor(distributor) returns (bool) {
-        // this mechanisms helps to verify the availability of the distributor forcing recurrent registrations and status verification.
+        // this mechanisms helps to verify the availability of the distributor forcing recurrent registrations.
         return _status(uint160(distributor)) == Status.Active && enrollmentTime[distributor] > block.timestamp;
     }
 

@@ -2,16 +2,13 @@
 // NatSpec format convention - https://docs.soliditylang.org/en/v0.5.10/natspec-format.html
 pragma solidity 0.8.26;
 
-import { IERC165 } from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
 import { Initializable } from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import { EnumerableSet } from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 import { UUPSUpgradeable } from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import { GovernableUpgradeable } from "contracts/base/upgradeable/GovernableUpgradeable.sol";
 
-import { IPolicy } from "contracts/interfaces/policies/IPolicy.sol";
 import { IRightsPolicyAuthorizer } from "contracts/interfaces/rightsmanager/IRightsPolicyAuthorizer.sol";
 import { IPolicyAuditorVerifiable } from "contracts/interfaces/policies/IPolicyAuditorVerifiable.sol";
-import { T } from "contracts/libraries/Types.sol";
 
 contract RightsPolicyAuthorizer is Initializable, UUPSUpgradeable, GovernableUpgradeable, IRightsPolicyAuthorizer {
     using EnumerableSet for EnumerableSet.AddressSet;
@@ -24,7 +21,7 @@ contract RightsPolicyAuthorizer is Initializable, UUPSUpgradeable, GovernableUpg
 
     /// @dev Mapping to store the delegated rights for each policy contract (address)
     /// by each content holder (address).
-    mapping(address => EnumerableSet.AddressSet) delegation;
+    mapping(address => EnumerableSet.AddressSet) private delegation;
     /// @notice Emitted when rights are granted to a policy for content.
     /// @param policy The policy contract address granted rights.
     /// @param holder The address of the content rights holder.
@@ -50,10 +47,10 @@ contract RightsPolicyAuthorizer is Initializable, UUPSUpgradeable, GovernableUpg
 
     /// @notice Initializes the contract with the necessary dependencies.
     /// @param policyAudit_ The address of the audit contract, which verifies policies audit.
-    /// @dev This function can only be called once during the contract's deployment and sets up core components including the Ledger, Fees, and Treasurer.
     function initialize(address policyAudit_) public initializer {
         __UUPSUpgradeable_init();
         __Governable_init(msg.sender);
+        // audit contract to validate the approval from mods
         policyAudit = IPolicyAuditorVerifiable(policyAudit_);
     }
 

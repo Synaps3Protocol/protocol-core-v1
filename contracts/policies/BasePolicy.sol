@@ -50,7 +50,9 @@ abstract contract BasePolicy is Ledger, ReentrancyGuard, IPolicy, IBalanceWithdr
     ///      Use this to restrict access to functions that depend on the contract's initial setup.
     /// @custom:modifiers withValidSetup
     modifier initialized() {
-        if (!setupReady) revert InvalidPolicyInitialization(address(this));
+        if (!setupReady) {
+            revert InvalidPolicyInitialization(address(this));
+        }
         _;
     }
 
@@ -84,7 +86,6 @@ abstract contract BasePolicy is Ledger, ReentrancyGuard, IPolicy, IBalanceWithdr
         return IContentOwnership(CONTENT_OWNERSHIP).ownerOf(contentId); // Returns the registered owner.
     }
 
-    // /// @notice Allocates the specified amount across a distribution array and returns the unallocated remaining amount.
     // /// @dev Distributes the amount based on the provided shares array.
     // /// @param amount The total amount to be allocated.
     // /// @param currency The address of the currency being allocated.

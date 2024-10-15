@@ -7,7 +7,7 @@ import { BasePolicy } from "contracts/policies/BasePolicy.sol";
 import { T } from "contracts/libraries/Types.sol";
 
 /// @title SubscriptionPolicy
-/// @notice Implements a subscription-based content access policy, allowing users to subscribe to content catalogs for a set duration.
+/// @notice Implements a subscription-based content access policy.
 contract SubscriptionPolicy is BasePolicy {
     using SafeERC20 for IERC20;
 
@@ -19,7 +19,7 @@ contract SubscriptionPolicy is BasePolicy {
     }
 
     // Mapping from content holder (address) to their subscription package details.
-    mapping(address => Package) public packages;
+    mapping(address => Package) private packages;
 
     // Mapping to track subscription expiration for each user (account) and content holder.
     mapping(address => mapping(address => uint256)) private subscriptions;

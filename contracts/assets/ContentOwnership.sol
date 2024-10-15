@@ -36,7 +36,9 @@ contract ContentOwnership is
     /// It also ensures that the recipient is the one who initially submitted the content for approval.
     modifier onlyApprovedContent(address to, uint256 contentId) {
         // Revert if the content is not approved or if the recipient is not the original submitter
-        if (!contentReferendum.isApproved(to, contentId)) revert InvalidNotApprovedContent();
+        if (!contentReferendum.isApproved(to, contentId)) {
+            revert InvalidNotApprovedContent();
+        }
         _;
     }
 

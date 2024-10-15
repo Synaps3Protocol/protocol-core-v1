@@ -2,7 +2,6 @@
 // NatSpec format convention - https://docs.soliditylang.org/en/v0.5.10/natspec-format.html
 pragma solidity 0.8.26;
 
-import { IERC165 } from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
 import { GovernableUpgradeable } from "contracts/base/upgradeable/GovernableUpgradeable.sol";
 import { Initializable } from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import { UUPSUpgradeable } from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
@@ -22,7 +21,7 @@ contract RightsAccessAgreement is Initializable, UUPSUpgradeable, GovernableUpgr
     // @dev Holds a bounded key expressing the agreement between the parts.
     // The key is derived using keccak256 hashing of the account and the rights holder.
     // This mapping stores active agreements, indexed by their unique proof.
-    mapping(bytes32 => T.Agreement) agreements;
+    mapping(bytes32 => T.Agreement) private agreements;
 
     /// @notice Emitted when an agreement is created.
     /// @param proof The unique identifier (hash or proof) of the created agreement.
@@ -57,7 +56,7 @@ contract RightsAccessAgreement is Initializable, UUPSUpgradeable, GovernableUpgr
         return agreements[proof];
     }
 
-    /// @notice Creates a new agreement between the account and the content holder, returning a unique agreement identifier.
+    /// @notice Creates a new agreement between the account and the content holder.
     /// @dev This function handles the creation of a new agreement by negotiating terms, calculating fees,
     /// and generating a unique proof of the agreement.
     /// @param total The total amount involved in the agreement.

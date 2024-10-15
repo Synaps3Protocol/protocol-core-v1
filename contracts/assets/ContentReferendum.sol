@@ -7,7 +7,6 @@ import { EIP712Upgradeable } from "@openzeppelin/contracts-upgradeable/utils/cry
 import { NoncesUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/NoncesUpgradeable.sol";
 import { Initializable } from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import { EnumerableSet } from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
-import { Address } from "@openzeppelin/contracts/utils/Address.sol";
 
 import { GovernableUpgradeable } from "contracts/base/upgradeable/GovernableUpgradeable.sol";
 import { QuorumUpgradeable } from "contracts/base/upgradeable/QuorumUpgradeable.sol";

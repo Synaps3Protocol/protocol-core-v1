@@ -22,7 +22,9 @@ contract ContentVault is Initializable, UUPSUpgradeable, GovernableUpgradeable, 
     /// @param contentId The identifier of the content.
     /// @dev Reverts if the sender is not the owner of the content based on the Ownership contract.
     modifier onlyHolder(uint256 contentId) {
-        if (contentOwnership.ownerOf(contentId) != msg.sender) revert InvalidContentHolder();
+        if (contentOwnership.ownerOf(contentId) != msg.sender) {
+            revert InvalidContentHolder();
+        }
         _;
     }
 

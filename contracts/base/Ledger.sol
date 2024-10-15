@@ -9,7 +9,7 @@ import { ILedger } from "contracts/interfaces/ILedger.sol";
 /// @dev This contract defines internal functions to manipulate ledger balances and retrieve account data.
 abstract contract Ledger is ILedger {
     // Mapping to store balances per account and currency.
-    mapping(address => mapping(address => uint256)) ledger;
+    mapping(address => mapping(address => uint256)) private ledger;
 
     /// @inheritdoc ILedger
     /// @notice Retrieves the registered currency balance for the specified account.

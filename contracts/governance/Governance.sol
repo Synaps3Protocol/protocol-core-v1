@@ -2,8 +2,6 @@
 // Compatible with OpenZeppelin Contracts ^5.0.0
 pragma solidity 0.8.26;
 
-import { Time } from "@openzeppelin/contracts/utils/types/Time.sol";
-import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { Governor } from "@openzeppelin/contracts/governance/Governor.sol";
 import { ERC20Votes } from "@openzeppelin/contracts/token/ERC20/extensions/ERC20Votes.sol";
 import { TimelockController } from "@openzeppelin/contracts/governance/TimelockController.sol";
@@ -42,8 +40,8 @@ contract Governance is
      *   - Proposal Threshold: 0 tokens (the minimum number of tokens required to propose a new proposal).
      */
     constructor(
-        ERC20Votes _mmc,
-        TimelockController _timelock
+        address _mmc,
+        address _timelock
     )
         Governor("MMCGovernance")
         GovernorVotes(_mmc)

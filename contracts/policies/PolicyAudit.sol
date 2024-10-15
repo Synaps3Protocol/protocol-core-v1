@@ -11,9 +11,7 @@ import { IPolicy } from "contracts/interfaces/policies/IPolicy.sol";
 import { IPolicyAuditor } from "contracts/interfaces/policies/IPolicyAuditor.sol";
 
 /// @title PolicyAudit
-/// @notice This contract audits content policies and ensures that only authorized entities can approve or revoke policy audits.
-/// It is designed to be upgradeable using UUPS and governed by a decentralized authority.
-/// @dev The contract uses OpenZeppelin's UUPS (Universal Upgradeable Proxy Standard) mechanism and Governable for governance control.
+/// @notice This contract audits content policies and ensures that only authorized entities can approve or revoke.
 contract PolicyAudit is Initializable, UUPSUpgradeable, GovernableUpgradeable, QuorumUpgradeable, IPolicyAuditor {
     using ERC165Checker for address;
     /// @dev The interface ID for IPolicy, used to verify that a policy contract implements the correct interface.
@@ -47,7 +45,6 @@ contract PolicyAudit is Initializable, UUPSUpgradeable, GovernableUpgradeable, Q
     }
 
     /// @dev Constructor that disables initializers to prevent the implementation contract from being initialized.
-    /// @notice This constructor ensures the implementation contract cannot be initialized, as recommended for UUPS implementations.
     /// @custom:oz-upgrades-unsafe-allow constructor
     constructor() {
         _disableInitializers();

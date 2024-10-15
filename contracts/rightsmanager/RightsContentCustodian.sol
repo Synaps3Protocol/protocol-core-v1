@@ -14,9 +14,9 @@ contract RightsContentCustodian is Initializable, UUPSUpgradeable, GovernableUpg
     IDistributorVerifiable public distributorReferendum;
 
     /// @dev Mapping to store the custodial address for each content rights holder.
-    mapping(address => EnumerableSet.AddressSet) custodying;
+    mapping(address => EnumerableSet.AddressSet) private custodying;
     /// @dev Mapping to store a registry of rights holders associated with each distributor.
-    mapping(address => EnumerableSet.AddressSet) registry;
+    mapping(address => EnumerableSet.AddressSet) private registry;
 
     /// @notice Emitted when distribution custodial rights are granted to a distributor.
     /// @param newCustody The new distributor custodial address.
@@ -41,7 +41,7 @@ contract RightsContentCustodian is Initializable, UUPSUpgradeable, GovernableUpg
     }
 
     /// @notice Initializes the contract with the necessary dependencies.
-    /// @param distributorReferendum_ The address of the syndication contract, which verifies distributor agreements and manages syndication logic.
+    /// @param distributorReferendum_ The address of the distributior referendum contract.
     function initialize(address distributorReferendum_) public initializer {
         __UUPSUpgradeable_init();
         __Governable_init(msg.sender);
@@ -84,7 +84,6 @@ contract RightsContentCustodian is Initializable, UUPSUpgradeable, GovernableUpg
 
     /// @notice Retrieves the custodians' addresses for a given content holder.
     /// @param holder The address of the content rights holder whose custodians' addresses are being retrieved.
-    /// @return An array of addresses representing the active custodians responsible for the content associated with the specified holder.
     function getCustodians(address holder) public view returns (address[] memory) {
         // TODO collect the custody based on deman
         // TODO if custodians are blocked we need an auxiliar mechanism and return the higher rated distributor
