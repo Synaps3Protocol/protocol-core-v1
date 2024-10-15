@@ -14,7 +14,7 @@ import { ReentrancyGuard } from "@openzeppelin/contracts/utils/ReentrancyGuard.s
 /// restrictions based on content holders.
 abstract contract BasePolicy is Ledger, ReentrancyGuard, IPolicy, IBalanceWithdrawable {
     // Immutable public variables to store the addresses of the Rights Manager and Ownership.
-    address public immutable RIGHTS_MANAGER;
+    address public immutable RIGHTS_POLICY_MANAGER;
     address public immutable OWNERSHIP;
     bool private setupReady;
 
@@ -27,7 +27,7 @@ abstract contract BasePolicy is Ledger, ReentrancyGuard, IPolicy, IBalanceWithdr
 
     /// @dev Modifier to restrict function calls to the Rights Manager address.
     modifier onlyRM() {
-        if (msg.sender != address(RIGHTS_MANAGER)) {
+        if (msg.sender != address(RIGHTS_POLICY_MANAGER)) {
             revert InvalidCallOnlyRightsManagerAllowed();
         }
         _;
@@ -55,10 +55,10 @@ abstract contract BasePolicy is Ledger, ReentrancyGuard, IPolicy, IBalanceWithdr
     }
 
     /// @notice Constructor to initialize the Rights Manager and Ownership contract addresses.
-    /// @param rightsManagerAddress Address of the Rights Manager contract.
+    /// @param rightsPolicyManager Address of the rights policy manager contract.
     /// @param ownershipAddress Address of the Ownership contract.
-    constructor(address rightsManagerAddress, address ownershipAddress) {
-        RIGHTS_MANAGER = rightsManagerAddress; // Assign the Rights Manager address.
+    constructor(address rightsPolicyManager, address ownershipAddress) {
+        RIGHTS_POLICY_MANAGER = rightsPolicyManager; // Assign the Rights Manager address.
         OWNERSHIP = ownershipAddress; // Assign the Ownership address.
     }
 
@@ -72,7 +72,7 @@ abstract contract BasePolicy is Ledger, ReentrancyGuard, IPolicy, IBalanceWithdr
         // In this case the rights manager allows withdraw funds from policy balance and send it to recipient directly.
         // This happens only if the policy has balance and the sender has registered balance in ledger..
         _subLedgerEntry(msg.sender, amount, currency);
-        IBalanceWithdrawable fundsManager = IBalanceWithdrawable(RIGHTS_MANAGER);
+        IBalanceWithdrawable fundsManager = IBalanceWithdrawable(RIGHTS_POLICY_MANAGER);
         fundsManager.withdraw(recipient, amount, currency);
         emit FundsWithdrawn(recipient, amount, currency);
     }
