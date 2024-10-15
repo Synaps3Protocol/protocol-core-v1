@@ -66,15 +66,11 @@ release:
 
 .PHONY: syncenv ## pull environments to dotenv vault
 syncenv: 
-	@npx dotenv-vault@latest pull $(stage) -y
+	@npx dotenv-vault@latest pull  -y
 
 .PHONY: pushenv ## push environments to dotenv vault
 pushenv: 
-	@npx dotenv-vault@latest push $(stage) -y
-
-.PHONY: loginenv ## get dotenv vault stage keys
-loginenv: 
-	@npx dotenv-vault@latest login $(me) -y
+	@npx dotenv-vault@latest push  -y
 
 .PHONY: keysenv ## get dotenv vault stage keys
 keysenv: 
