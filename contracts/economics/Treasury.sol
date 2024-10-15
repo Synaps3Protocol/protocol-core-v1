@@ -23,12 +23,6 @@ contract Treasury is Initializable, UUPSUpgradeable, GovernableUpgradeable, ITre
         poolAddress = address(this);
     }
 
-    /// @notice Retrieves the pool address.
-    /// @return The address of the pool.
-    function getPoolAddress() public view returns (address) {
-        return poolAddress;
-    }
-
     /// @notice Sets a new pool address. Restricted to governance.
     /// @param poolAddress_ The new address to be set as the pool.
     function setPoolAddress(address poolAddress_) external onlyGov {
@@ -43,6 +37,12 @@ contract Treasury is Initializable, UUPSUpgradeable, GovernableUpgradeable, ITre
         // TODO cambiar a revert
         // require(vaultAddress_ != address(0), "Invalid vault address");
         vaultAddress = vaultAddress_;
+    }
+
+    /// @notice Retrieves the pool address.
+    /// @return The address of the pool.
+    function getPoolAddress() public view returns (address) {
+        return poolAddress;
     }
 
     /// @notice Retrieves the vault address.
