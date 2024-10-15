@@ -7,8 +7,21 @@ import { DeployToken } from "script/03_Deploy_Economics_Token.s.sol";
 import { DeployDistributor } from "script/04_Deploy_Syndication_Distributor.s.sol";
 import { DeployDistributorReferendum } from "script/06_Deploy_Syndication_DistributorReferendum.s.sol";
 
+import { IGovernable } from "contracts/interfaces/IGovernable.sol";
+
 contract BaseTest is Test {
     address admin = vm.envAddress("PUBLIC_KEY");
+    address user = vm.addr(2);
+    address governor = vm.addr(1);
+
+    // Helper function to governor to contract.
+    function setGovernorTo(address governable) public {
+        // setup governor account for testing purposes
+        // some methods are restricted to be called by governance only
+        vm.prank(admin); // only admin can set initially a governor
+        IGovernable(governable).setGovernance(governor);
+    }
+
 
     // 01_DeployTreasury
     function deployTreasury() public returns (address) {
