@@ -9,11 +9,7 @@ import { IContentOwnership } from "contracts/interfaces/assets/IContentOwnership
 import { IContentVault } from "contracts/interfaces/assets/IContentVault.sol";
 
 /// @title ContentVault
-/// @notice This contract stores encrypted content and ensures only the rightful content holder
-/// can access or modify the content. It is designed to be upgradeable through UUPS and governed by a
-/// decentralized authority.
-/// @dev The contract uses the OpenZeppelin UUPS (Universal Upgradeable Proxy Standard) upgrade mechanism
-/// and inherits Governable for governance control.
+/// @notice This contract stores encrypted content and ensures only the rightful content holder can access or modify the content. 
 contract ContentVault is Initializable, UUPSUpgradeable, GovernableUpgradeable, IContentVault {
     /// @notice The Ownership contract that tracks content holders.
     IContentOwnership public contentOwnership;
