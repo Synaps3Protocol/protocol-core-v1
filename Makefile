@@ -4,6 +4,7 @@ export
 .DEFAULT_GOAL := all
 network=amoy
 report=lcov
+stage=development
 
 # https://github.com/crytic/slither?tab=readme-ov-file#detectors
 # https://book.getfoundry.sh/getting-started/installation
@@ -66,11 +67,11 @@ release:
 
 .PHONY: syncenv ## pull environments to dotenv vault
 syncenv: 
-	@npx dotenv-vault@latest pull  -y
+	@npx dotenv-vault@latest pull $(stage) -y
 
 .PHONY: pushenv ## push environments to dotenv vault
 pushenv: 
-	@npx dotenv-vault@latest push  -y
+	@npx dotenv-vault@latest push $(stage) -y
 
 .PHONY: keysenv ## get dotenv vault stage keys
 keysenv: 
