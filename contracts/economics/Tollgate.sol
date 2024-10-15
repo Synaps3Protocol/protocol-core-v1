@@ -55,6 +55,9 @@ contract Tollgate is Initializable, UUPSUpgradeable, GovernableUpgradeable, ITol
     /// @notice Ensures valid fee representation based on the context.
     /// @param ctx The context for which the fee is being set.
     /// @param fee The fee to validate.
+    /// @dev This modifier ensures that fees are represented correctly based on the context,
+    ///      avoiding calculation errors. Specifically, it checks if the fee is expressed in
+    ///      basis points (bps) when the context is RMA. If not, it reverts with an appropriate error.
     modifier onlyValidFeeRepresentation(T.Context ctx, uint256 fee) {
         if (T.Context.RMA == ctx && !fee.isBasePoint()) revert InvalidBasisPointRange(ctx, fees);
         _;
