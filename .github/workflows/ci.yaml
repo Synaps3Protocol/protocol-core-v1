@@ -6,8 +6,26 @@ on:
   pull_request:
 
 jobs:
-  ci:
-    name: Static Analysis and Test 
+  static:
+    name: Static Analysis
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          cache: "npm"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run static analysis
+        run: make lint
+
+  test:
+    name: Test 
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -31,12 +49,9 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Run static analysis
-        run: make lint
-
       - name: Run security tests
         uses: crytic/slither-action@v0.4.0
 
       - name: Test
         run: make test
-
+    
