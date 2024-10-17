@@ -3,6 +3,8 @@ export
 
 .DEFAULT_GOAL := all
 network=amoy
+report=lcov
+stage=development
 
 # https://github.com/crytic/slither?tab=readme-ov-file#detectors
 # https://book.getfoundry.sh/getting-started/installation
@@ -35,14 +37,12 @@ force-compile:
 # https://jestjs.io/docs/cli#--coverageboolean
 .PHONY: test ## run tests
 test:
-	@forge test --via-ir --gas-report --show-progress -vvv --force
+	@forge test --via-ir --gas-report --show-progress -vvv  --force
 
 .PHONY: coverage ## run tests coverage report
 coverage:
-	mkdir -p coverage
-	forge coverage --report lcov --no-match-path "test/foundry/invariants/*"
-	lcov --remove lcov.info -o coverage/lcov.info 'test/*' 'script/*' --rc lcov_branch_coverage=1
-	genhtml coverage/lcov.info -o coverage --rc lcov_branch_coverage=1
+	@forge clean
+	@forge coverage --report $(report)
 
 .PHONY: secreport ## generate a security analysis report using aderyn
 secreport:
@@ -72,10 +72,6 @@ syncenv:
 .PHONY: pushenv ## push environments to dotenv vault
 pushenv: 
 	@npx dotenv-vault@latest push $(stage) -y
-
-.PHONY: loginenv ## get dotenv vault stage keys
-loginenv: 
-	@npx dotenv-vault@latest login $(me) -y
 
 .PHONY: keysenv ## get dotenv vault stage keys
 keysenv: 

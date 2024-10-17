@@ -5,17 +5,16 @@ pragma solidity 0.8.26;
 import { Ledger } from "contracts/base/Ledger.sol";
 import { IPolicy } from "contracts/interfaces/policies/IPolicy.sol";
 import { IContentOwnership } from "contracts/interfaces/assets/IContentOwnership.sol";
+import { IRightsPolicyManager } from "contracts/interfaces/rightsmanager/IRightsPolicyManager.sol";
 import { IBalanceWithdrawable } from "contracts/interfaces/IBalanceWithdrawable.sol";
 import { ReentrancyGuard } from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 
 /// @title BasePolicy
 /// @notice This abstract contract serves as a base for policies that manage access to content.
-/// It defines the use of ownership and rights manager contracts, with validations and access
-/// restrictions based on content holders.
 abstract contract BasePolicy is Ledger, ReentrancyGuard, IPolicy, IBalanceWithdrawable {
     // Immutable public variables to store the addresses of the Rights Manager and Ownership.
-    address public immutable RIGHTS_POLICY_MANAGER;
-    address public immutable CONTENT_OWNERSHIP;
+    IRightsPolicyManager public immutable RIGHTS_POLICY_MANAGER;
+    IContentOwnership public immutable CONTENT_OWNERSHIP;
     bool private setupReady;
 
     /// @dev Error thrown when attempting to access content without proper authorization.
@@ -24,6 +23,12 @@ abstract contract BasePolicy is Ledger, ReentrancyGuard, IPolicy, IBalanceWithdr
     error InvalidCallOnlyRightsManagerAllowed();
     /// @dev Error thrown when attempting to access unregistered content.
     error InvalidPolicyInitialization(address);
+
+    /// @dev This error is thrown when there is a failure in the execution process.
+    error InvalidExecution(string reason);
+
+    /// @dev This error is thrown when there is an issue with the initial setup or configuration.
+    error InvalidSetup(string reason);
 
     /// @dev Modifier to restrict function calls to the Rights Manager address.
     modifier onlyRM() {
@@ -50,16 +55,15 @@ abstract contract BasePolicy is Ledger, ReentrancyGuard, IPolicy, IBalanceWithdr
     ///      Use this to restrict access to functions that depend on the contract's initial setup.
     /// @custom:modifiers withValidSetup
     modifier initialized() {
-        if (!setupReady) revert InvalidPolicyInitialization(address(this));
+        if (!setupReady) {
+            revert InvalidPolicyInitialization(address(this));
+        }
         _;
     }
 
-    /// @notice Constructor to initialize the Rights Manager and Ownership contract addresses.
-    /// @param rightsPolicyManager Address of the rights policy manager contract.
-    /// @param contentOwnership Address of the Ownership contract.
     constructor(address rightsPolicyManager, address contentOwnership) {
-        RIGHTS_POLICY_MANAGER = rightsPolicyManager; // Assign the Rights Manager address.
-        CONTENT_OWNERSHIP = contentOwnership; // Assign the Ownership address.
+        RIGHTS_POLICY_MANAGER = IRightsPolicyManager(rightsPolicyManager); // Assign the Rights Manager address.
+        CONTENT_OWNERSHIP = IContentOwnership(contentOwnership); // Assign the Ownership address.
     }
 
     /// @notice Withdraws tokens from the contract to a specified recipient's address.
@@ -69,27 +73,23 @@ abstract contract BasePolicy is Ledger, ReentrancyGuard, IPolicy, IBalanceWithdr
     function withdraw(address recipient, uint256 amount, address currency) external nonReentrant {
         // Calls the Rights Manager to withdraw the specified amount in the given currency.
         if (getLedgerBalance(msg.sender, currency) < amount) revert NoFundsToWithdraw();
-        // In this case the rights manager allows withdraw funds from policy balance and send it to recipient directly.
-        // This happens only if the policy has balance and the sender has registered balance in ledger..
         _subLedgerEntry(msg.sender, amount, currency);
-        IBalanceWithdrawable fundsManager = IBalanceWithdrawable(RIGHTS_POLICY_MANAGER);
-        fundsManager.withdraw(recipient, amount, currency);
+        // rights policy manager allows withdraw funds from policy balance and send it to recipient directly.
+        // This happens only if the policy has balance and the sender has registered balance in ledger..
+        RIGHTS_POLICY_MANAGER.withdraw(recipient, amount, currency);
         emit FundsWithdrawn(recipient, amount, currency);
     }
 
     /// @notice Returns the content holder registered in the ownership contract.
     /// @param contentId The content ID to retrieve the holder.
-    /// @return The address of the content holder.
     function getHolder(uint256 contentId) public view returns (address) {
-        return IContentOwnership(CONTENT_OWNERSHIP).ownerOf(contentId); // Returns the registered owner.
+        return CONTENT_OWNERSHIP.ownerOf(contentId); // Returns the registered owner.
     }
 
-    // /// @notice Allocates the specified amount across a distribution array and returns the unallocated remaining amount.
     // /// @dev Distributes the amount based on the provided shares array.
     // /// @param amount The total amount to be allocated.
     // /// @param currency The address of the currency being allocated.
     // /// @param shares An array of Splits structs specifying split percentages and target addresses.
-    // /// @return The remaining unallocated amount after distribution.
     // function _allocate(
     //     uint256 amount,
     //     address currency,

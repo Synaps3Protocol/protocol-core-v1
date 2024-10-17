@@ -24,7 +24,7 @@ import { UpgradeableBeacon } from "@openzeppelin/contracts/proxy/beacon/Upgradea
 /// @dev This contract uses OpenZeppelin's Ownable and Pausable contracts for access control and pausing functionality.
 contract DistributorFactory is UpgradeableBeacon, Pausable {
     /// @notice Mapping to keep track of registered distributor endpoints.
-    mapping(bytes32 => address) public registry;
+    mapping(bytes32 => address) private registry;
     /// @notice Error to be thrown when attempting to register an already registered distributor.
     error DistributorAlreadyRegistered();
 

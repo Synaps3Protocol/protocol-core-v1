@@ -7,12 +7,11 @@ pragma solidity 0.8.26;
 /// @dev This library defines types and structures that can be imported and used in other contracts.
 library T {
     /// @notice Enum to represent different operational contexts within the protocol.
-    /// @dev This enum is used to define the specific context in which certain operations, such as fees or rights management, are executed.
     /// Depending on the context, different logic or parameters may apply.
     enum Context {
         __, // Undefined type, default state for uninitialized or invalid contexts.
-        SYN, // Syndication context, used when handling distributor syndication-related operations like registering distributors, managing fees, or syndicating content.
-        RMA // Rights Management Agreement (RMA) context, used for operations involving access control, rights delegation, or any actions involving the authorization of content rights.
+        SYN, // Syndication context
+        RMA // Rights Management Agreement
     }
 
     /// @title Agreement
@@ -32,7 +31,6 @@ library T {
 
     /// @title Setup
     /// @dev Represents a setup process for initializing and authorizing a policy contract for content.
-    /// @notice This struct captures the content holder's address and any additional data (payload) needed during the setup process.
     struct Setup {
         address holder; // the content rights holder
         bytes payload; // any additional data needed during setup execution

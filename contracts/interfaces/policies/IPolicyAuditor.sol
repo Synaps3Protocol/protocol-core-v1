@@ -5,6 +5,5 @@ import { IPolicyAuditorRegistrable } from "contracts/interfaces/policies/IPolicy
 import { IPolicyAuditorVerifiable } from "contracts/interfaces/policies/IPolicyAuditorVerifiable.sol";
 
 /// @title IPolicyAuditor
-/// @notice Interface for managing the registration and verification of policy auditors within the system.
-/// @dev This interface combines functionalities related to registering and verifying policy auditors, ensuring compliance with governance processes.
+/// @notice Interface for managing the registration and verification of policies auditors within the system.
 interface IPolicyAuditor is IPolicyAuditorRegistrable, IPolicyAuditorVerifiable {}

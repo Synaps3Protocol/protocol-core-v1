@@ -9,21 +9,19 @@ import { T } from "contracts/libraries/Types.sol";
 interface IPolicy {
     /// @notice Returns the string identifier associated with the policy.
     /// @dev This function provides a way to identify the specific policy being used.
-    /// @return A string representing the name of the policy.
     function name() external pure returns (string memory);
 
     /// @notice Returns the business/strategy model implemented by the policy.
     /// @dev A description of the business model as bytes, allowing more complex representations (such as encoded data).
-    /// @return A bytes string packed with the description of the policy's business model.
     function description() external pure returns (bytes memory);
 
     /// @notice Initializes the policy with the necessary data.
-    /// @dev This function allows configuring the policy's rules or setup data at the time of deployment or initialization.
+    /// @dev This function allows configuring the policy's rules.
     /// @param setup The initialization data to set up the policy.
     function setup(T.Setup calldata setup) external;
 
     /// @notice Executes the agreement between the content holder and the account based on the policy's rules.
-    /// @dev RM contract should be the only one allowed to call this method. Handles the logic for access, validation, and any custom behavior.
+    /// @dev Rights Policies Manager contract should be the only one allowed to call this method.
     /// @param agreement An object containing the terms agreed upon between the content holder and the user.
     function exec(T.Agreement calldata agreement) external;
 
@@ -36,6 +34,5 @@ interface IPolicy {
     /// @dev The function checks if the provided account complies with the policy terms for the specified content.
     /// @param account The address of the user whose access is being verified.
     /// @param contentId The content ID against which compliance is being checked.
-    /// @return bool Returns true if the account complies with the policy terms, false otherwise.
     function comply(address account, uint256 contentId) external view returns (bool);
 }

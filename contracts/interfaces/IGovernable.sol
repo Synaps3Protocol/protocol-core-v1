@@ -16,7 +16,6 @@ interface IGovernable {
     function setEmergencyAdmin(address newEmergencyAdmin) external;
 
     /// @notice Returns the currently configured governance address.
-    /// @return address The address of the currently configured governance.
     function getGovernance() external view returns (address);
 
     /// @notice Revokes the emergency admin role from a specified address.

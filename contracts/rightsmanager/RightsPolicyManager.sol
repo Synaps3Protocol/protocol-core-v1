@@ -2,7 +2,6 @@
 // NatSpec format convention - https://docs.soliditylang.org/en/v0.5.10/natspec-format.html
 pragma solidity 0.8.26;
 
-import { IERC165 } from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
 import { Initializable } from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import { UUPSUpgradeable } from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import { EnumerableSet } from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
@@ -31,12 +30,13 @@ contract RightsPolicyManager is
     using TreasuryHelper for address;
     using FeesHelper for uint256;
 
-    ITreasury public treasury;
-    IRightsAccessAgreement public rightsAgreement;
-    IRightsPolicyAuthorizer public rightsAuthorizer;
+    /// Preventing accidental/malicious changes during contract reinitializations.
+    ITreasury public immutable TREASURY;
+    IRightsAccessAgreement public immutable RIGTHS_AGREEMENT;
+    IRightsPolicyAuthorizer public immutable RIGHTS_AUTHORIZER;
 
     /// @dev Mapping to store the access control list for each content holder and account.
-    mapping(address => EnumerableSet.AddressSet) acl;
+    mapping(address => EnumerableSet.AddressSet) private acl;
 
     /// @notice Emitted when access rights are granted to an account based on a policy.
     /// @param account The address of the account granted access.
@@ -54,26 +54,22 @@ contract RightsPolicyManager is
     /// @param reason A string providing the reason for the failure.
     error InvalidPolicyRegistration(string reason);
 
-    /// @dev Constructor that disables initializers to prevent the implementation contract from being initialized.
-    /// https://forum.openzeppelin.com/t/uupsupgradeable-vulnerability-post-mortem/15680
-    /// https://forum.openzeppelin.com/t/what-does-disableinitializers-function-mean/28730/5
-    constructor() {
+    /// @custom:oz-upgrades-unsafe-allow constructor
+    constructor(address treasury, address rightsAgreement, address rightsAuthorizer) {
+        /// https://forum.openzeppelin.com/t/uupsupgradeable-vulnerability-post-mortem/15680
+        /// https://forum.openzeppelin.com/t/what-does-disableinitializers-function-mean/28730/5
         _disableInitializers();
+        TREASURY = ITreasury(treasury);
+        RIGTHS_AGREEMENT = IRightsAccessAgreement(rightsAgreement);
+        RIGHTS_AUTHORIZER = IRightsPolicyAuthorizer(rightsAuthorizer);
     }
 
-    /// @notice Initializes the contract with the necessary dependencies.
-    /// @param treasury_ The address of the treasury contract to manage funds.
-    /// @param rightsAgreement_ The address of the rights access agreement contract.
-    /// @param rightsAuthorizer_ The address of the rights policy authorizer contract.
-    function initialize(address treasury_, address rightsAgreement_, address rightsAuthorizer_) public initializer {
+    /// @notice Initializes the proxy state.
+    function initialize() public initializer {
         __Ledger_init();
         __UUPSUpgradeable_init();
         __ReentrancyGuard_init();
         __Governable_init(msg.sender);
-
-        treasury = ITreasury(treasury_);
-        rightsAgreement = IRightsAccessAgreement(rightsAgreement_);
-        rightsAuthorizer = IRightsPolicyAuthorizer(rightsAuthorizer_);
     }
 
     /// @notice Disburses funds from the contract to the vault.
@@ -82,13 +78,13 @@ contract RightsPolicyManager is
     function disburse(address currency) external onlyGov nonReentrant {
         // transfer all the funds to the treasury..
         uint256 amount = address(this).balanceOf(currency);
-        address target = treasury.getVaultAddress();
+        address target = TREASURY.getVaultAddress();
         target.transfer(amount, currency); // sent amount to vault..
         emit FeesDisbursed(target, amount, currency);
     }
 
     /// @notice Withdraws tokens from the contract to a specified recipient's address.
-    /// @dev This function withdraws funds from the caller's balance (checked via msg.sender) and transfers them to the recipient.
+    /// @dev This function withdraws funds from the caller's balance and transfers them to the recipient.
     /// @param recipient The address that will receive the withdrawn tokens.
     /// @param amount The amount of tokens to withdraw.
     /// @param currency The currency to associate fees with. Use address(0) for the native coin.
@@ -102,9 +98,6 @@ contract RightsPolicyManager is
     /// @notice Retrieves the first active policy for a specific account and content id in LIFO order.
     /// @param account The address of the account to evaluate.
     /// @param contentId The ID of the content to evaluate policies for.
-    /// @return A tuple containing:
-    /// - A boolean indicating whether an active policy was found (`true`) or not (`false`).
-    /// - The address of the active policy if found, or `address(0)` if no active policy is found.
     function getActivePolicy(address account, uint256 contentId) public view returns (bool, address) {
         address[] memory policies = getPolicies(account);
         uint256 i = policies.length - 1;
@@ -124,15 +117,14 @@ contract RightsPolicyManager is
     }
 
     /// @notice Finalizes the agreement by registering the agreed-upon policy, effectively closing the agreement.
-    /// @dev This function verifies the policy's authorization, executes the agreement, processes financial transactions,
-    ///      and registers the policy in the system, representing the formal closure of the agreement.
+    /// @dev This function verifies the policy's authorization, executes the agreement and registers the policy.
     /// @param proof The unique identifier of the agreement to be enforced.
     /// @param policyAddress The address of the policy contract managing the agreement.
     function registerPolicy(bytes32 proof, address policyAddress) public payable nonReentrant {
         // retrieves the agreement and marks it as settled..
-        T.Agreement memory a7t = rightsAgreement.settleAgreement(proof);
+        T.Agreement memory a7t = RIGTHS_AGREEMENT.settleAgreement(proof);
         // only authorized policies by holder could be registered..
-        if (!rightsAuthorizer.isPolicyAuthorized(policyAddress, a7t.holder))
+        if (!RIGHTS_AUTHORIZER.isPolicyAuthorized(policyAddress, a7t.holder))
             revert InvalidNotRightsDelegated(policyAddress, a7t.holder);
 
         // deposit the total amount to contract during policy registration..
@@ -146,14 +138,25 @@ contract RightsPolicyManager is
             _registerPolicy(a7t.account, policyAddress);
             emit AccessGranted(a7t.account, proof, policyAddress);
         } catch Error(string memory reason) {
-            // catch revert, require with a reason..
+            // catch revert with a reason string argument..
+            // revert(string) and require(false, “reason”)
             revert InvalidPolicyRegistration(reason);
+        } catch (bytes memory custom) {
+            // still we don't have a custom error catch to handle this
+            // and we need a way to inform the explicit reason why the policy execution failed
+            // https://github.com/ethereum/solidity/issues/11278
+            bytes4 expectedCustom = bytes4(custom);
+            bytes4 execError = bytes4(keccak256("InvalidExecution(string)"));
+            bytes4 setupError = bytes4(keccak256("InvalidSetup(string)"));
+            if (execError == expectedCustom || setupError == expectedCustom) {
+                (, string memory reason) = abi.decode(custom, (bytes4, string));
+                revert InvalidPolicyRegistration(reason);
+            }
         }
     }
 
     /// @notice Retrieves the list of policys associated with a specific account and content ID.
     /// @param account The address of the account for which policies are being retrieved.
-    /// @return An array of addresses representing the policies associated with the account and content ID.
     function getPolicies(address account) public view returns (address[] memory) {
         // https://docs.openzeppelin.com/contracts/5.x/api/utils#EnumerableSet-values-struct-EnumerableSet-AddressSet-
         // This operation will copy the entire storage to memory, which can be quite expensive.
@@ -177,7 +180,6 @@ contract RightsPolicyManager is
     /// @param account The address of the account to verify access for.
     /// @param contentId The ID of the content for which access is being checked.
     /// @param policy The address of the license policy contract used to verify access.
-    /// @return Returns true if the account is granted access to the content based on the license, false otherwise.
     function _verifyPolicy(address account, uint256 contentId, address policy) private view returns (bool) {
         // if not registered license policy..
         if (policy == address(0)) return false;

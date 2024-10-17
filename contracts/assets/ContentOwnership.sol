@@ -7,6 +7,7 @@ import { Initializable } from "@openzeppelin/contracts-upgradeable/proxy/utils/I
 import { UUPSUpgradeable } from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import { ERC721Upgradeable } from "@openzeppelin/contracts-upgradeable/token/ERC721/ERC721Upgradeable.sol";
 import { AccessControlUpgradeable } from "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
+// solhint-disable-next-line max-line-length
 import { ERC721EnumerableUpgradeable } from "@openzeppelin/contracts-upgradeable/token/ERC721/extensions/ERC721EnumerableUpgradeable.sol";
 
 import { GovernableUpgradeable } from "contracts/base/upgradeable/GovernableUpgradeable.sol";
@@ -25,9 +26,18 @@ contract ContentOwnership is
     ERC721EnumerableUpgradeable,
     IContentOwnership
 {
-    IContentVerifiable public contentReferendum;
+    /// Preventing accidental/malicious changes during contract reinitializations.
+    IContentVerifiable public CONTENT_REFERENDUM;
+
+    /// @dev Emitted when a new content item is registered on the platform.
+    /// @param owner The address of the content creator or owner who registered the content.
+    /// @param contentId The unique identifier for the registered content.
     event RegisteredContent(address indexed owner, uint256 contentId);
+
+    /// @dev Error indicating that an operation attempted to reference content that has not been approved.
+    /// This error is triggered when the content being accessed or referenced is not in an approved state.
     error InvalidNotApprovedContent();
+
     /// @notice Modifier to ensure content is approved before distribution.
     /// @param to The address attempting to distribute the content.
     /// @param contentId The ID of the content to be distributed.
@@ -36,43 +46,31 @@ contract ContentOwnership is
     /// It also ensures that the recipient is the one who initially submitted the content for approval.
     modifier onlyApprovedContent(address to, uint256 contentId) {
         // Revert if the content is not approved or if the recipient is not the original submitter
-        if (!contentReferendum.isApproved(to, contentId)) revert InvalidNotApprovedContent();
+        if (!CONTENT_REFERENDUM.isApproved(to, contentId)) {
+            revert InvalidNotApprovedContent();
+        }
         _;
     }
 
-    // 3- Las condiciones adicionales como acceso por país, etc! Deben ser dados en el IP register url,
-    // si no tiene estas condiciones, simplemente no se validan..
-
-    // Evaluar si al registrar el token en Watchit se puede hacer algo similar a lo que hace story con los token URI,
-
-    // Cuando se haga mint, obtener la información del token originario, digamos que sea un NFT externo y hacer un
-    // remint en nuestro contrato con los detalles del contrato origen?
-
-    /// @dev Constructor that disables initializers to prevent the implementation contract from being initialized.
-    /// @notice This constructor prevents the implementation contract from being initialized.
-    /// @dev See https://forum.openzeppelin.com/t/uupsupgradeable-vulnerability-post-mortem/15680
-    /// https://forum.openzeppelin.com/t/what-does-disableinitializers-function-mean/28730/5
     /// @custom:oz-upgrades-unsafe-allow constructor
-    constructor() {
+    constructor(address contentReferendum) {
+        /// https://forum.openzeppelin.com/t/what-does-disableinitializers-function-mean/28730/5
+        /// https://forum.openzeppelin.com/t/uupsupgradeable-vulnerability-post-mortem/15680
         _disableInitializers();
+        // we need to verify the status of each content before allow register it.
+        CONTENT_REFERENDUM = IContentVerifiable(contentReferendum);
     }
 
-    /// @notice Initializes the contract with the given dependencies, including the Referendum contract for governance-related verifications.
-    /// @param contentReferendum_ The address of the Content Referendum contract, which is responsible for verifying governance decisions related to content.
-    /// @dev This function can only be called once during the contract's deployment. It sets up UUPS upgradeability,
-    /// ERC721 token functionality, and governance mechanisms. The Referendum contract is linked to handle governance verifications.
-    function initialize(address contentReferendum_) public initializer {
+    /// @notice Initializes the proxy state.
+    function initialize() public initializer {
         __UUPSUpgradeable_init();
         __ERC721Enumerable_init();
-        __ERC721_init("Ownership", "OWN");
+        __ERC721_init("SynapseIP", "SYN");
         __Governable_init(msg.sender);
-        // we need to verify the status of each content before allow register it.
-        contentReferendum = IContentVerifiable(contentReferendum_);
     }
 
     /// @notice Checks if the contract supports a specific interface.
     /// @param interfaceId The interface ID to check.
-    /// @return True if the contract supports the interface, false otherwise.
     function supportsInterface(
         bytes4 interfaceId
     )

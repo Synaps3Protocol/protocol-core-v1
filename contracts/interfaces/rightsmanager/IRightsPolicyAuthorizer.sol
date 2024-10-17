@@ -3,19 +3,18 @@ pragma solidity 0.8.26;
 
 /// @title IRightsPolicyAuthorizer
 /// @notice Interface for authorizing and managing policies related to content rights.
-/// @dev This interface allows content holders to authorize and revoke policies that manage their content-related rights.
+/// @dev This interface allows content holders to authorize and revoke policies
+/// that manage their content-related rights.
 interface IRightsPolicyAuthorizer {
     /// @notice Retrieves all policies authorized by a specific content holder.
     /// @dev This function returns an array of policy addresses that have been granted rights by the holder.
     /// @param holder The address of the content rights holder whose authorized policies are being queried.
-    /// @return An array of addresses representing the policies authorized by the content holder.
     function getAuthorizedPolicies(address holder) external view returns (address[] memory);
 
     /// @notice Checks if a specific policy contract has been authorized by a content holder.
     /// @dev Verifies if the specified policy has permission to manage rights for the given holder’s content.
     /// @param policy The address of the policy contract to check.
     /// @param holder The address of the content rights holder to verify authorization.
-    /// @return bool Returns true if the policy is authorized, false otherwise.
     function isPolicyAuthorized(address policy, address holder) external view returns (bool);
 
     /// @notice Authorizes a policy contract, granting it rights to manage the content associated with the holder.

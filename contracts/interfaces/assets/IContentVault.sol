@@ -13,6 +13,5 @@ interface IContentVault {
     /// @notice Retrieves the secured content for a given content ID.
     /// @dev Returns the encrypted content stored in the vault.
     /// @param contentId The ID of the content to retrieve.
-    /// @return The encrypted content as a bytes array.
     function getContent(uint256 contentId) external view returns (bytes memory);
 }

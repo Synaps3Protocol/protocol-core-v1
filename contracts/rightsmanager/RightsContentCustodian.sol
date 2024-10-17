@@ -11,12 +11,13 @@ import { IRightsContentCustodian } from "contracts/interfaces/rightsmanager/IRig
 
 contract RightsContentCustodian is Initializable, UUPSUpgradeable, GovernableUpgradeable, IRightsContentCustodian {
     using EnumerableSet for EnumerableSet.AddressSet;
-    IDistributorVerifiable public distributorReferendum;
+    /// Preventing accidental/malicious changes during contract reinitializations.
+    IDistributorVerifiable public immutable DISTRIBUTOR_REFERENDUM;
 
     /// @dev Mapping to store the custodial address for each content rights holder.
-    mapping(address => EnumerableSet.AddressSet) custodying;
+    mapping(address => EnumerableSet.AddressSet) private custodying;
     /// @dev Mapping to store a registry of rights holders associated with each distributor.
-    mapping(address => EnumerableSet.AddressSet) registry;
+    mapping(address => EnumerableSet.AddressSet) private registry;
 
     /// @notice Emitted when distribution custodial rights are granted to a distributor.
     /// @param newCustody The new distributor custodial address.
@@ -28,25 +29,24 @@ contract RightsContentCustodian is Initializable, UUPSUpgradeable, GovernableUpg
     /// @notice Modifier to check if the distributor is active and not blocked.
     /// @param distributor The distributor address to check.
     modifier onlyActiveDistributor(address distributor) {
-        if (distributor == address(0) || !distributorReferendum.isActive(distributor))
+        if (distributor == address(0) || !DISTRIBUTOR_REFERENDUM.isActive(distributor))
             revert InvalidInactiveDistributor();
         _;
     }
 
-    /// @dev Constructor that disables initializers to prevent the implementation contract from being initialized.
-    /// https://forum.openzeppelin.com/t/uupsupgradeable-vulnerability-post-mortem/15680
-    /// https://forum.openzeppelin.com/t/what-does-disableinitializers-function-mean/28730/5
-    constructor() {
+    /// @custom:oz-upgrades-unsafe-allow constructor
+    constructor(address distributorReferendum) {
+        /// https://forum.openzeppelin.com/t/uupsupgradeable-vulnerability-post-mortem/15680
+        /// https://forum.openzeppelin.com/t/what-does-disableinitializers-function-mean/28730/5
         _disableInitializers();
+        // we need to verify the status of each distributor before allow custodian assigment.
+        DISTRIBUTOR_REFERENDUM = IDistributorVerifiable(distributorReferendum);
     }
 
-    /// @notice Initializes the contract with the necessary dependencies.
-    /// @param distributorReferendum_ The address of the syndication contract, which verifies distributor agreements and manages syndication logic.
-    function initialize(address distributorReferendum_) public initializer {
+    /// @notice Initializes the proxy state.
+    function initialize() public initializer {
         __UUPSUpgradeable_init();
         __Governable_init(msg.sender);
-        // we need to verify the status of each distributor before allow custodian assigment.
-        distributorReferendum = IDistributorVerifiable(distributorReferendum_);
     }
 
     /// @notice Grants custodial rights over the content held by a holder to a distributor.
@@ -63,7 +63,6 @@ contract RightsContentCustodian is Initializable, UUPSUpgradeable, GovernableUpg
 
     /// @notice Retrieves the total number of content items in custody for a given distributor.
     /// @param distributor The address of the distributor whose custodial content count is being requested.
-    /// @return The total number of content items that the specified distributor currently has in custody.
     function getCustodyCount(address distributor) public view returns (uint256) {
         return registry[distributor].length();
     }
@@ -71,7 +70,6 @@ contract RightsContentCustodian is Initializable, UUPSUpgradeable, GovernableUpg
     /// @notice Retrieves the custody records associated with a specific distributor.
     /// @dev This function returns an array of content IDs that the given distributor has in custody.
     /// @param distributor The address of the distributor whose custody records are to be retrieved.
-    /// @return An array of unsigned integers representing the content IDs associated with the given distributor.
     function getCustodyRegistry(address distributor) public view returns (address[] memory) {
         // https://docs.openzeppelin.com/contracts/5.x/api/utils#EnumerableSet-values-struct-EnumerableSet-AddressSet-
         // This operation will copy the entire storage to memory, which can be quite expensive.
@@ -84,7 +82,6 @@ contract RightsContentCustodian is Initializable, UUPSUpgradeable, GovernableUpg
 
     /// @notice Retrieves the custodians' addresses for a given content holder.
     /// @param holder The address of the content rights holder whose custodians' addresses are being retrieved.
-    /// @return An array of addresses representing the active custodians responsible for the content associated with the specified holder.
     function getCustodians(address holder) public view returns (address[] memory) {
         // TODO collect the custody based on deman
         // TODO if custodians are blocked we need an auxiliar mechanism and return the higher rated distributor

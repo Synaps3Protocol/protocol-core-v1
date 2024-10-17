@@ -11,7 +11,6 @@ import { GovernableUpgradeable } from "contracts/base/upgradeable/GovernableUpgr
 import { ITollgate } from "contracts/interfaces/economics/ITollgate.sol";
 
 import { T } from "contracts/libraries/Types.sol";
-import { C } from "contracts/libraries/Constants.sol";
 import { FeesHelper } from "contracts/libraries/FeesHelper.sol";
 
 /// @title Tollgate Contract
@@ -39,7 +38,7 @@ contract Tollgate is Initializable, UUPSUpgradeable, GovernableUpgradeable, ITol
     /// @param currency The address of the unsupported currency.
     error InvalidUnsupportedCurrency(address currency);
     /// @notice Error to be thrown when basis point fees are invalid.
-    error InvalidBasisPointRange(T.Context ctx, uint256 bps);
+    error InvalidBasisPointRange(uint256 bps);
     /// @notice Error thrown when trying to operate with an unsupported currency.
     /// @param currency The address of the unsupported currency.
     error InvalidCurrency(address currency);
@@ -48,7 +47,9 @@ contract Tollgate is Initializable, UUPSUpgradeable, GovernableUpgradeable, ITol
     /// @param currency The address of the currency to check.
     modifier onlyValidCurrency(address currency) {
         // if not native coin then should be a valid erc20 token
-        if (currency != address(0) && !currency.supportsInterface(INTERFACE_ID_ERC20)) revert InvalidCurrency(currency);
+        if (currency != address(0) && !currency.supportsInterface(INTERFACE_ID_ERC20)) {
+            revert InvalidCurrency(currency);
+        }
         _;
     }
 
@@ -56,10 +57,11 @@ contract Tollgate is Initializable, UUPSUpgradeable, GovernableUpgradeable, ITol
     /// @param ctx The context for which the fee is being set.
     /// @param fee The fee to validate.
     /// @dev This modifier ensures that fees are represented correctly based on the context,
-    ///      avoiding calculation errors. Specifically, it checks if the fee is expressed in
-    ///      basis points (bps) when the context is RMA. If not, it reverts with an appropriate error.
+    ///      avoiding calculation errors.
     modifier onlyValidFeeRepresentation(T.Context ctx, uint256 fee) {
-        if (T.Context.RMA == ctx && !fee.isBasePoint()) revert InvalidBasisPointRange(ctx, fees);
+        if (T.Context.RMA == ctx && !fee.isBasePoint()) {
+            revert InvalidBasisPointRange(fee);
+        }
         _;
     }
 
@@ -80,7 +82,6 @@ contract Tollgate is Initializable, UUPSUpgradeable, GovernableUpgradeable, ITol
 
     /// @notice Returns the list of supported currencies for a given context.
     /// @param ctx The context under which the currencies are being queried.
-    /// @return An array of addresses of the supported currencies for the specified context.
     function supportedCurrencies(T.Context ctx) public view returns (address[] memory) {
         // https://docs.openzeppelin.com/contracts/5.x/api/utils#EnumerableSet-values-struct-EnumerableSet-AddressSet-
         // This operation will copy the entire storage to memory, which can be quite expensive.
@@ -94,7 +95,6 @@ contract Tollgate is Initializable, UUPSUpgradeable, GovernableUpgradeable, ITol
     /// @notice Checks if a currency is supported for a given context.
     /// @param ctx The context under which the currency is being checked.
     /// @param currency The address of the currency to check.
-    /// @return True if the currency is supported for the specified context, otherwise False.
     function isCurrencySupported(T.Context ctx, address currency) public view returns (bool) {
         return registeredCurrencies[ctx].contains(currency);
     }
@@ -102,7 +102,6 @@ contract Tollgate is Initializable, UUPSUpgradeable, GovernableUpgradeable, ITol
     /// @notice Retrieves the fees for a specified context and currency.
     /// @param ctx The context for which to retrieve the fees.
     /// @param currency The address of the currency for which to retrieve the fees.
-    /// @return uint256 The fees for the specified context and currency.
     function getFees(T.Context ctx, address currency) public view returns (uint256) {
         if (!isCurrencySupported(ctx, currency)) revert InvalidUnsupportedCurrency(currency);
         return currencyFees[currency][ctx];

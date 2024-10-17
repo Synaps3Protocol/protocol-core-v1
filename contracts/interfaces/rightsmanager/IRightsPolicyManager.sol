@@ -5,10 +5,10 @@ import { ITreasurer } from "contracts/interfaces/economics/ITreasurer.sol";
 import { IBalanceWithdrawable } from "contracts/interfaces/IBalanceWithdrawable.sol";
 
 /// @title IRightsPolicyManager
-/// @notice Interface for controlling access and managing policies related to content rights in the RightsManager context.
+/// @notice Interface for managing content rights policies.
 /// @dev This interface handles retrieving active policies, managing lists of policies, and registering policies.
 interface IRightsPolicyManager is IBalanceWithdrawable, ITreasurer {
-    /// @notice Retrieves the first active policy for a specific account, rights holder, and content in LIFO order.
+    /// @notice Retrieves the first active policy for a specific account and content in LIFO order.
     /// @param account The address of the account to evaluate.
     /// @param contentId The ID of the content to evaluate policies for.
     /// @return A boolean indicating if a policy is active, and the address of the active policy.

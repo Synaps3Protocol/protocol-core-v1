@@ -67,7 +67,6 @@ abstract contract GovernableUpgradeable is Initializable, AccessControlUpgradeab
     }
 
     /// @notice Returns the current governor address.
-    /// @return The address of the current governor.
     function getGovernance() external view returns (address) {
         GovernorStorage storage $ = _getGovernorStorage();
         return $._governor;
@@ -83,7 +82,6 @@ abstract contract GovernableUpgradeable is Initializable, AccessControlUpgradeab
     }
 
     ///@notice Internal function to get the governor storage.
-    ///@return $ The governor storage.
     function _getGovernorStorage() private pure returns (GovernorStorage storage $) {
         assembly {
             $.slot := GOVERNOR_SLOT

@@ -40,13 +40,11 @@ contract Treasury is Initializable, UUPSUpgradeable, GovernableUpgradeable, ITre
     }
 
     /// @notice Retrieves the pool address.
-    /// @return The address of the pool.
     function getPoolAddress() public view returns (address) {
         return poolAddress;
     }
 
     /// @notice Retrieves the vault address.
-    /// @return The address of the vault.
     function getVaultAddress() public view returns (address) {
         return vaultAddress;
     }
@@ -59,7 +57,6 @@ contract Treasury is Initializable, UUPSUpgradeable, GovernableUpgradeable, ITre
 
     /// @notice Retrieves the balance of a specific currency held by the Treasury.
     /// @param currency The address of the currency to query.
-    /// @return The current balance of the currency.
     function getBalance(address currency) external view returns (uint256) {}
 
     /// @notice Function that should revert when msg.sender is not authorized to upgrade the contract.

@@ -2,8 +2,6 @@
 // Compatible with OpenZeppelin Contracts ^5.0.0
 pragma solidity 0.8.26;
 
-import { Time } from "@openzeppelin/contracts/utils/types/Time.sol";
-import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { Governor } from "@openzeppelin/contracts/governance/Governor.sol";
 import { ERC20Votes } from "@openzeppelin/contracts/token/ERC20/extensions/ERC20Votes.sol";
 import { TimelockController } from "@openzeppelin/contracts/governance/TimelockController.sol";
@@ -11,6 +9,7 @@ import { GovernorVotes } from "@openzeppelin/contracts/governance/extensions/Gov
 import { GovernorSettings } from "@openzeppelin/contracts/governance/extensions/GovernorSettings.sol";
 import { GovernorCountingSimple } from "@openzeppelin/contracts/governance/extensions/GovernorCountingSimple.sol";
 import { GovernorTimelockControl } from "@openzeppelin/contracts/governance/extensions/GovernorTimelockControl.sol";
+// solhint-disable-next-line max-line-length
 import { GovernorVotesQuorumFraction } from "@openzeppelin/contracts/governance/extensions/GovernorVotesQuorumFraction.sol";
 
 /**
@@ -52,20 +51,14 @@ contract Governance is
         GovernorTimelockControl(_timelock)
     {}
 
-    /**
-     * @notice Returns the state of a proposal.
-     * @param proposalId The ID of the proposal.
-     * @return The state of the proposal.
-     */
+    /// @notice Returns the state of a proposal.
+    /// @param proposalId The ID of the proposal.
     function state(uint256 proposalId) public view override(Governor, GovernorTimelockControl) returns (ProposalState) {
         return super.state(proposalId);
     }
 
-    /**
-     * @notice Checks if a proposal needs to be queued.
-     * @param proposalId The ID of the proposal.
-     * @return True if the proposal needs to be queued, false otherwise.
-     */
+    /// @notice Checks if a proposal needs to be queued.
+    /// @param proposalId The ID of the proposal.
     function proposalNeedsQueuing(
         uint256 proposalId
     ) public view virtual override(Governor, GovernorTimelockControl) returns (bool) {

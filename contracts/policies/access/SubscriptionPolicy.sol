@@ -7,7 +7,7 @@ import { BasePolicy } from "contracts/policies/BasePolicy.sol";
 import { T } from "contracts/libraries/Types.sol";
 
 /// @title SubscriptionPolicy
-/// @notice Implements a subscription-based content access policy, allowing users to subscribe to content catalogs for a set duration.
+/// @notice Implements a subscription-based content access policy.
 contract SubscriptionPolicy is BasePolicy {
     using SafeERC20 for IERC20;
 
@@ -19,7 +19,7 @@ contract SubscriptionPolicy is BasePolicy {
     }
 
     // Mapping from content holder (address) to their subscription package details.
-    mapping(address => Package) public packages;
+    mapping(address => Package) private packages;
 
     // Mapping to track subscription expiration for each user (account) and content holder.
     mapping(address => mapping(address => uint256)) private subscriptions;
@@ -30,21 +30,19 @@ contract SubscriptionPolicy is BasePolicy {
     constructor(address rmAddress, address ownershipAddress) BasePolicy(rmAddress, ownershipAddress) {}
 
     /// @notice Returns the name of the policy.
-    /// @return The name of the policy, "SubscriptionPolicy".
     function name() external pure returns (string memory) {
         return "SubscriptionPolicy";
     }
 
     /// @notice Returns the business/strategy model implemented by the policy.
-    /// @return A detailed description of the subscription policy as bytes.
     function description() external pure returns (bytes memory) {
         return
             abi.encodePacked(
-                "This policy implements a subscription-based model where users pay a fixed fee ",
-                "to access a content holder's catalog for a specified duration.\n\n",
-                "1) Flexible subscription duration, defined by the content holder.\n",
-                "2) Recurring revenue streams for content holders.\n",
-                "3) Immediate access to content catalog during the subscription period.\n",
+                "This policy implements a subscription-based model where users pay a fixed fee "
+                "to access a content holder's catalog for a specified duration.\n\n"
+                "1) Flexible subscription duration, defined by the content holder.\n"
+                "2) Recurring revenue streams for content holders.\n"
+                "3) Immediate access to content catalog during the subscription period.\n"
                 "4) Automated payment processing."
             );
     }
@@ -56,8 +54,8 @@ contract SubscriptionPolicy is BasePolicy {
         );
 
         // require(isValidCurrency(currency), "Subscription: Invalid currency.");
-        require(subscriptionDuration > 0, "Subscription: Invalid subscription duration.");
-        require(price > 0, "Subscription: Invalid subscription price.");
+        if (subscriptionDuration == 0) revert InvalidSetup("Subscription: Invalid subscription duration.");
+        if (price == 0) revert InvalidSetup("Subscription: Invalid subscription price.");
         // expected content rights holder sending subscription params..
         packages[setup.holder] = Package(subscriptionDuration, price, currency);
     }
@@ -67,7 +65,7 @@ contract SubscriptionPolicy is BasePolicy {
     function exec(T.Agreement calldata agreement) external onlyRM initialized {
         Package memory pkg = packages[agreement.holder];
         // we need to be sure the user paid for the total of the price..
-        require(agreement.total >= pkg.price, "Insufficient funds for subscription");
+        if (agreement.total < pkg.price) revert InvalidExecution("Insufficient funds for subscription");
         uint256 subTime = block.timestamp + pkg.subscriptionDuration;
         // subscribe to content owner's catalog (content package)
         subscriptions[agreement.account][agreement.holder] = subTime;

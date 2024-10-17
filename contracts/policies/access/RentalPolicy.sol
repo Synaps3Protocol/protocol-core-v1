@@ -19,7 +19,7 @@ contract RentalPolicy is BasePolicy {
     }
 
     // Mapping to store content data by content ID.
-    mapping(uint256 => Content) public contents;
+    mapping(uint256 => Content) private contents;
 
     // Mapping to track rental expiration timestamps for each account and content.
     mapping(address => mapping(uint256 => uint256)) private rentals;
@@ -30,25 +30,27 @@ contract RentalPolicy is BasePolicy {
     constructor(address rmAddress, address ownershipAddress) BasePolicy(rmAddress, ownershipAddress) {}
 
     /// @notice Returns the name of the policy.
-    /// @return The name of the policy, "RentalPolicy".
     function name() external pure returns (string memory) {
         return "RentalPolicy";
     }
 
     /// @notice Returns the business/strategy model implemented by the policy.
-    /// @return A detailed description of the policy's rental model.
     function description() external pure returns (bytes memory) {
         return
             abi.encodePacked(
-                "The RentalPolicy implements a content rental strategy where users pay a fixed fee to access digital content "
-                "for a limited period. The strategy is focused on temporary access, allowing content holders to monetize their assets "
-                "through short-term rentals without transferring full ownership. Key aspects of this policy include: \n\n"
-                "1) Flexible rental duration: Each content can have a customized rental period defined by the content holder. \n"
-                "2) Pay-per-use model: Users pay a one-time fee per rental, providing a cost-effective way to access content without a long-term commitment.\n "
-                "3) Automated rental management: Once the rental fee is paid, the content becomes accessible to the user for the specified duration,\n "
-                "after which access is automatically revoked.\n "
-                "4) Secure revenue distribution: The rental fee is transferred directly to the content holder through the TreasuryHelper, ensuring secure and \n"
-                "timely payments. This policy provides a straightforward and transparent way for content owners to generate revenue from their digital assets \n"
+                "This policy implements a strategy where users pay a fee to access content for a limited period.",
+                "Key aspects of this policy include: \n\n",
+                "1) Flexible rental duration: Each content can have a customized rental",
+                "period defined by the content holder. \n",
+                "2) Pay-per-use model: Users pay a one-time fee per rental, providing a",
+                "cost-effective way to access content without a long-term commitment.\n ",
+                "3) Automated rental management: Once the rental fee is paid, the content",
+                "becomes accessible to the user for the specified duration,\n ",
+                "after which access is automatically revoked.\n ",
+                "4) Secure revenue distribution: The rental fee is transferred directly to the",
+                "content holder through the TreasuryHelper, ensuring secure and \n",
+                "timely payments. This policy provides a straightforward and transparent way for content",
+                "owners to generate revenue from their digital assets \n",
                 "while giving users temporary access to premium content."
             );
     }
@@ -59,10 +61,9 @@ contract RentalPolicy is BasePolicy {
             (uint256, uint256, uint256, address)
         );
 
-        require(getHolder(contentId) != address(0), "Rental: Invalid content id.");
-        // require(isValidCurrency(currency), "Rental: Invalid currency.");
-        require(rentalDuration > 0, "Rental: Invalid rental duration.");
-        require(price > 0, "Rental: Invalid rental price.");
+        if (getHolder(contentId) == address(0)) revert InvalidSetup("Rental: Invalid content id.");
+        if (rentalDuration == 0) revert InvalidSetup("Rental: Invalid rental duration.");
+        if (price == 0) revert InvalidSetup("Rental: Invalid rental price.");
         contents[contentId] = Content(rentalDuration, price, currency);
     }
 
@@ -74,8 +75,9 @@ contract RentalPolicy is BasePolicy {
         uint256 contentId = abi.decode(agreement.payload, (uint256));
         Content memory content = contents[contentId];
 
-        require(getHolder(contentId) == agreement.holder, "Rental: Invalid content ID holder");
-        require(agreement.total > content.price, "Rental: Insufficient funds for rental");
+        if (getHolder(contentId) != agreement.holder) revert InvalidExecution("Rental: Invalid content ID holder");
+        if (agreement.total < content.price) revert InvalidExecution("Rental: Insufficient funds for rental");
+
         // We can take two approach here:
         // 1- distribute the funds
         // 2- register the total to rights holder
@@ -93,7 +95,6 @@ contract RentalPolicy is BasePolicy {
     /// @notice Verifies whether the on-chain access terms for an account and content ID are satisfied.
     /// @param account The address of the account to check.
     /// @param contentId The ID of the content to check against.
-    /// @return bool Returns `true` if the rental period is still valid, `false` otherwise.
     function comply(address account, uint256 contentId) external view override returns (bool) {
         // Check if the current time is before the rental expiration.
         return block.timestamp <= rentals[account][contentId];

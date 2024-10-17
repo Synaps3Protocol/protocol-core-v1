@@ -6,6 +6,5 @@ import { IContentRoleManager } from "contracts/interfaces/assets/IContentRoleMan
 import { IContentVerifiable } from "contracts/interfaces/assets/IContentVerifiable.sol";
 
 /// @title IContentReferendum
-/// @notice Interface that combines functionalities for managing content registration, roles, and verifications within a referendum context.
-/// @dev This interface inherits from multiple content-related interfaces, enabling content registration, role management, and verification in governance-based decisions.
+/// @notice Interface manage content registration, roles, and verifications within a referendum context.
 interface IContentReferendum is IContentRegistrable, IContentRoleManager, IContentVerifiable {}
