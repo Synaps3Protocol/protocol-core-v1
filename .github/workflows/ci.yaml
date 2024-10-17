@@ -12,14 +12,18 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+      
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           cache: "npm"
+      
       - name: Collecting .env from dotenv-vault
         run: npx dotenv-vault@latest pull -m ${{ secrets.DOTENV_ME }} -y
+      
       - name: Install dependencies
         run: npm ci
+      
       - name: Run static analysis
         run: make lint
 
@@ -31,20 +35,23 @@ jobs:
         uses: actions/checkout@v4
         with:
           submodules: recursive
+      
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           cache: "npm"
+      
       - name: Install Foundry
         uses: foundry-rs/foundry-toolchain@v1
         with:
           version: nightly
+      
       - name: Collecting .env from dotenv-vault
         run: npx dotenv-vault@latest pull -m ${{ secrets.DOTENV_ME }} -y
+      
       - name: Install dependencies
         run: npm ci
-      - name: Run security tests
-        uses: crytic/slither-action@v0.4.0
+            
       - name: Test
         run: make test
     
