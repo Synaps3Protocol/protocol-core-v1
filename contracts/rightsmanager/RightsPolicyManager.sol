@@ -149,7 +149,7 @@ contract RightsPolicyManager is
             bytes4 execError = bytes4(keccak256("InvalidExecution(string)"));
             bytes4 setupError = bytes4(keccak256("InvalidSetup(string)"));
             if (execError == expectedCustom || setupError == expectedCustom) {
-                string memory reason = abi.decode(custom[4:], (string));
+                (, string memory reason) = abi.decode(custom, (bytes4, string));
                 revert InvalidPolicyRegistration(reason);
             }
         }

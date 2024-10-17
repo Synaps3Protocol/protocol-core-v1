@@ -24,14 +24,10 @@ abstract contract BasePolicy is Ledger, ReentrancyGuard, IPolicy, IBalanceWithdr
     /// @dev Error thrown when attempting to access unregistered content.
     error InvalidPolicyInitialization(address);
 
-    /// @title InvalidExecution Error
-    /// @notice This error is thrown when there is a failure in the execution process.
-    /// @param reason A string that explains the specific reason for the execution failure.
+    /// @dev This error is thrown when there is a failure in the execution process.
     error InvalidExecution(string reason);
 
-    /// @title InvalidSetup Error
-    /// @notice This error is thrown when there is an issue with the initial setup or configuration.
-    /// @param reason A string that provides details about why the setup is invalid.
+    /// @dev This error is thrown when there is an issue with the initial setup or configuration.
     error InvalidSetup(string reason);
 
     /// @dev Modifier to restrict function calls to the Rights Manager address.
