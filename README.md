@@ -1,7 +1,7 @@
 # Synapse Protocol
 Welcome! 🎉 Synapse is redefining how creative IP distribution works. Whether it's films, music, or games, we ensure creators stay in control of their work while earning fairly. With the power of blockchain, Synapse eliminates middlemen and automates licensing, payments, and content delivery through smart contracts. This lets creators focus on their craft, knowing their content is distributed safely and transparently.
 
-![image](https://github.com/user-attachments/assets/6ca51e06-e03b-4e95-87e5-819a6066de3f)
+![image](https://github.com/user-attachments/assets/0432b7e8-bb1f-4fb4-8a2f-67406c2b543c)
 
 ## Join the Fun
 Found a bug? Got a cool idea? Open a pull request or start a discussion on GitHub. We’d love to build this together!
