@@ -27,8 +27,9 @@ contract DistributorReferendum is
     using TreasuryHelper for address;
     using ERC165Checker for address;
 
-    ITollgate public tollgate;
-    ITreasury public treasury;
+    /// Preventing accidental/malicious changes during contract reinitializations.
+    ITollgate public immutable TOLLGATE;
+    ITreasury public immutable TREASURY;
 
     uint256 private enrollmentPeriod; // Period for enrollment
     uint256 private enrollmentsCount; // Count of enrollments
@@ -63,26 +64,21 @@ contract DistributorReferendum is
         _;
     }
 
-    /// @dev Constructor that disables initializers to prevent the implementation contract from being initialized.
-    /// @notice This constructor prevents the implementation contract from being initialized.
-    /// @dev See https://forum.openzeppelin.com/t/uupsupgradeable-vulnerability-post-mortem/15680
-    /// https://forum.openzeppelin.com/t/what-does-disableinitializers-function-mean/28730/5
-    /// https://forum.openzeppelin.com/t/uupsupgradeable-vulnerability-post-mortem/15680
-    /// https://docs.openzeppelin.com/upgrades-plugins/1.x/writing-upgradeable#potentially-unsafe-operations
     /// @custom:oz-upgrades-unsafe-allow constructor
-    constructor() {
+    constructor(address treasury, address tollgate) {
+        /// https://forum.openzeppelin.com/t/what-does-disableinitializers-function-mean/28730/5
+        /// https://forum.openzeppelin.com/t/uupsupgradeable-vulnerability-post-mortem/15680
         _disableInitializers();
+        TREASURY = ITreasury(treasury);
+        TOLLGATE = ITollgate(tollgate);
     }
 
-    /// @notice Initializes the contract with the given treasury and tollgate.
-    /// @param treasury_ The address of the treasury contract, which manages fund handling and storage for the platform.
-    /// @param tollgate_ The address of the tollgate contract, responsible for fee and currency management.
-    function initialize(address treasury_, address tollgate_) public initializer {
+    /// @notice Initializes the proxy state.
+    function initialize() public initializer {
         __UUPSUpgradeable_init();
         __Governable_init(msg.sender);
         __ReentrancyGuard_init();
-        treasury = ITreasury(treasury_);
-        tollgate = ITollgate(tollgate_);
+
         // 6 months initially..
         enrollmentPeriod = 180 days;
     }
@@ -100,7 +96,7 @@ contract DistributorReferendum is
     function disburse(address currency) external onlyGov nonReentrant {
         // transfer all the funds to the treasury..
         uint256 amount = address(this).balanceOf(currency);
-        address target = treasury.getPoolAddress();
+        address target = TREASURY.getPoolAddress();
         target.transfer(amount, currency); // sent amount to vault..
         emit FeesDisbursed(target, amount, currency);
     }
@@ -110,7 +106,7 @@ contract DistributorReferendum is
     /// @param currency The currency used to pay enrollment.
     function register(address distributor, address currency) external payable onlyValidDistributor(distributor) {
         // !IMPORTANT if fees manager does not support the currency, will revert..
-        uint256 fees = tollgate.getFees(T.Context.SYN, currency);
+        uint256 fees = TOLLGATE.getFees(T.Context.SYN, currency);
         uint256 total = msg.sender.safeDeposit(fees, currency);
         // set the distributor active enrollment period..
         // after this time the distributor is considered inactive and cannot collect his profits...
@@ -138,20 +134,17 @@ contract DistributorReferendum is
     }
 
     /// @notice Retrieves the current expiration period for enrollments or registrations.
-    /// @return The expiration period, in seconds.
     function getExpirationPeriod() public view returns (uint256) {
         return enrollmentPeriod;
     }
 
     /// @notice Retrieves the enrollment time for a distributor.
     /// @param distributor The address of the distributor.
-    /// @return The enrollment time in seconds.
     function getEnrollmentTime(address distributor) public view returns (uint256) {
         return enrollmentTime[distributor];
     }
 
     /// @notice Retrieves the total number of enrollments.
-    /// @return The count of enrollments.
     function getEnrollmentCount() external view returns (uint256) {
         return enrollmentsCount;
     }
@@ -159,7 +152,6 @@ contract DistributorReferendum is
     /// @notice Checks if the entity is active.
     /// @dev This function verifies the active status of the distributor.
     /// @param distributor The distributor's address to check.
-    /// @return bool True if the distributor is active, false otherwise.
     function isActive(address distributor) public view onlyValidDistributor(distributor) returns (bool) {
         // this mechanisms helps to verify the availability of the distributor forcing recurrent registrations.
         return _status(uint160(distributor)) == Status.Active && enrollmentTime[distributor] > block.timestamp;
@@ -168,7 +160,6 @@ contract DistributorReferendum is
     /// @notice Checks if the entity is waiting.
     /// @dev This function verifies the waiting status of the distributor.
     /// @param distributor The distributor's address to check.
-    /// @return bool True if the distributor is waiting, false otherwise.
     function isWaiting(address distributor) public view onlyValidDistributor(distributor) returns (bool) {
         return _status(uint160(distributor)) == Status.Waiting;
     }
@@ -176,7 +167,6 @@ contract DistributorReferendum is
     /// @notice Checks if the entity is blocked.
     /// @dev This function verifies the blocked status of the distributor.
     /// @param distributor The distributor's address to check.
-    /// @return bool True if the distributor is blocked, false otherwise.
     function isBlocked(address distributor) public view onlyValidDistributor(distributor) returns (bool) {
         return _status(uint160(distributor)) == Status.Blocked;
     }

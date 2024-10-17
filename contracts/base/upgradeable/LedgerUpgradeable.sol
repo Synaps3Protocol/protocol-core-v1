@@ -6,8 +6,7 @@ import { Initializable } from "@openzeppelin/contracts-upgradeable/proxy/utils/I
 import { ILedger } from "contracts/interfaces/ILedger.sol";
 
 /// @title LedgerUpgradeable
-/// @notice Abstract contract for managing ledger entries that support upgradability.
-/// @dev This contract uses the storage pattern for upgradeable contracts and ensures that storage layout conflicts are avoided.
+/// @notice Abstract contract for managing accounts ledger that support upgradability.
 abstract contract LedgerUpgradeable is Initializable, ILedger {
     /// @custom:storage-location erc7201:ledgerupgradeable
     /// @dev The LedgerStorage struct holds the ledger mapping.
@@ -23,7 +22,6 @@ abstract contract LedgerUpgradeable is Initializable, ILedger {
     /// @notice Retrieves the ledger balance of an account for a specific currency.
     /// @param account The address of the account whose balance is being queried.
     /// @param currency The address of the currency to retrieve the balance for.
-    /// @return The current balance of the specified account in the specified currency.
     function getLedgerBalance(address account, address currency) public view returns (uint256) {
         LedgerStorage storage $ = _getLedgerStorage();
         return $._ledger[account][currency];
@@ -67,7 +65,6 @@ abstract contract LedgerUpgradeable is Initializable, ILedger {
     }
 
     /// @notice Internal function to get the ledger storage.
-    /// @return $ A reference to the LedgerStorage struct located at the `LEDGER_SLOT`.
     /// @dev Uses assembly to retrieve the storage at the pre-calculated storage slot.
     function _getLedgerStorage() private pure returns (LedgerStorage storage $) {
         assembly {

@@ -7,7 +7,6 @@ pragma solidity 0.8.26;
 library Bytes32Helper {
     /// @notice Converts a bytes32 value to an address.
     /// @param _bytes The bytes32 value to convert.
-    /// @return addr The converted address.
     /// @dev This function uses inline assembly to perform the conversion.
     function toAddress(bytes32 _bytes) internal pure returns (address addr) {
         assembly {
@@ -26,7 +25,6 @@ library Bytes32Helper {
 
     /// @notice Converts a bytes32 value to a uint256.
     /// @param _bytes The bytes32 value to convert.
-    /// @return The converted uint256.
     function toUint256(bytes32 _bytes) internal pure returns (uint256) {
         return uint256(_bytes);
     }

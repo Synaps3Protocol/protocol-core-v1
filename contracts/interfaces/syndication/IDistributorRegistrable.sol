@@ -19,14 +19,11 @@ interface IDistributorRegistrable {
 
     /// @notice Retrieves the enrollment time for a distributor, based on the current block time and expiration period.
     /// @param distributor The address of the distributor.
-    /// @return The enrollment time in seconds.
     function getEnrollmentTime(address distributor) external view returns (uint256);
 
     /// @notice Retrieves the total number of enrollments.
-    /// @return The count of enrollments.
     function getEnrollmentCount() external view returns (uint256);
 
     /// @notice Retrieves the current expiration period for enrollments or registrations.
-    /// @return The expiration period, in seconds.
     function getExpirationPeriod() external view returns (uint256);
 }

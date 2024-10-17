@@ -17,7 +17,10 @@ contract RightsAccessAgreement is Initializable, UUPSUpgradeable, GovernableUpgr
     /// so the code within a logic contract’s constructor or global declaration
     /// will never be executed in the context of the proxy’s state
     /// https://docs.openzeppelin.com/upgrades-plugins/1.x/proxies#the-constructor-caveat
-    ITollgate public tollgate;
+
+    /// Preventing accidental/malicious changes during contract reinitializations.
+    ITollgate public immutable TOLLGATE;
+
     // @dev Holds a bounded key expressing the agreement between the parts.
     // The key is derived using keccak256 hashing of the account and the rights holder.
     // This mapping stores active agreements, indexed by their unique proof.
@@ -32,24 +35,24 @@ contract RightsAccessAgreement is Initializable, UUPSUpgradeable, GovernableUpgr
     /// @param reason A string providing the reason for the failure.
     error NoAgreement(string reason);
 
-    /// @dev Constructor that disables initializers to prevent the implementation contract from being initialized.
-    /// https://forum.openzeppelin.com/t/uupsupgradeable-vulnerability-post-mortem/15680
-    /// https://forum.openzeppelin.com/t/what-does-disableinitializers-function-mean/28730/5
-    constructor() {
+    /// @custom:oz-upgrades-unsafe-allow constructor
+    constructor(address tollgate) {
+        /// https://forum.openzeppelin.com/t/uupsupgradeable-vulnerability-post-mortem/15680
+        /// https://forum.openzeppelin.com/t/what-does-disableinitializers-function-mean/28730/5
         _disableInitializers();
+        // we need to collect the fees during the agreement creation.
+        TOLLGATE = ITollgate(tollgate);
     }
 
-    function initialize(address tollgate_) public initializer {
+    /// Initialize the proxy state.
+    function initialize() public initializer {
         __UUPSUpgradeable_init();
         __Governable_init(msg.sender);
-        // we need to collect the fees during the agreement creation.
-        tollgate = ITollgate(tollgate_);
     }
 
     /// @notice Settles the agreement associated with the given proof, preparing it for payment processing.
     /// @dev This function retrieves the agreement and marks it as settled to trigger any associated payments.
     /// @param proof The unique identifier of the agreement to settle.
-    /// @return The agreement object associated with the provided proof.
     function settleAgreement(bytes32 proof) external returns (T.Agreement memory) {
         if (!isValidProof(proof)) revert InvalidAgreementProof();
         _closeAgreement(proof);
@@ -64,7 +67,6 @@ contract RightsAccessAgreement is Initializable, UUPSUpgradeable, GovernableUpgr
     /// @param holder The address of the content holder whose content is being accessed.
     /// @param account The address of the account proposing the agreement.
     /// @param payload Additional data required to execute the agreement.
-    /// @return bytes32 A unique identifier (agreementProof) representing the created agreement.
     function createAgreement(
         uint256 total,
         address currency,
@@ -97,7 +99,6 @@ contract RightsAccessAgreement is Initializable, UUPSUpgradeable, GovernableUpgr
     /// @notice Checks if a given proof corresponds to an active agreement.
     /// @dev Verifies the existence and active status of the agreement in storage.
     /// @param proof The unique identifier of the agreement to validate.
-    /// @return isValid True if the agreement is active, false otherwise.
     function isValidProof(bytes32 proof) public view returns (bool) {
         return agreements[proof].active;
     }
@@ -106,7 +107,6 @@ contract RightsAccessAgreement is Initializable, UUPSUpgradeable, GovernableUpgr
     /// @dev The proof is generated using keccak256 hashing of the agreement data.
     ///      This proof is then used as a unique identifier for the agreement in the storage.
     /// @param agreement The agreement object containing the terms and parties involved.
-    /// @return proof The unique identifier for the newly created agreement.
     function _createProof(T.Agreement memory agreement) internal returns (bytes32) {
         // yes, we can encode full struct as abi.encode with extra overhead..
         bytes32 proof = keccak256(
@@ -143,7 +143,7 @@ contract RightsAccessAgreement is Initializable, UUPSUpgradeable, GovernableUpgr
     /// @param currency The address of the currency for which the fee is being calculated.
     function _calcFees(uint256 total, address currency) private view returns (uint256) {
         //!IMPORTANT if fees manager does not support the currency, will revert..
-        uint256 fees = tollgate.getFees(T.Context.RMA, currency);
+        uint256 fees = TOLLGATE.getFees(T.Context.RMA, currency);
         return total.perOf(fees); // bps repr enforced by tollgate..
     }
 }

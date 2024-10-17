@@ -15,7 +15,6 @@ abstract contract Ledger is ILedger {
     /// @notice Retrieves the registered currency balance for the specified account.
     /// @param account The address of the account to retrieve the balance for.
     /// @param currency The address of the currency to retrieve the balance for.
-    /// @return The amount of the specified currency held by the account.
     function getLedgerBalance(address account, address currency) public view returns (uint256) {
         return ledger[account][currency]; // Return the ledger balance for the account and currency.
     }

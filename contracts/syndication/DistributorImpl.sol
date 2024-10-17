@@ -40,19 +40,16 @@ contract DistributorImpl is Initializable, ERC165Upgradeable, OwnableUpgradeable
 
     /// @notice Checks if the contract supports a specific interface based on its ID.
     /// @param interfaceId The ID of the interface to check.
-    /// @return True if the interface is supported, otherwise false.
     function supportsInterface(bytes4 interfaceId) public view virtual override returns (bool) {
         return interfaceId == type(IDistributor).interfaceId || super.supportsInterface(interfaceId);
     }
 
     /// @notice Retrieves the manager (owner) of the distributor contract.
-    /// @return The address of the contract owner.
     function getManager() external view returns (address) {
         return owner();
     }
 
     /// @notice Returns the current distribution endpoint URL.
-    /// @return The endpoint URL as a string.
     function getEndpoint() external view returns (string memory) {
         return endpoint;
     }
@@ -69,7 +66,6 @@ contract DistributorImpl is Initializable, ERC165Upgradeable, OwnableUpgradeable
 
     /// @notice Retrieves the contract's balance for a given currency.
     /// @param currency The token address to check the balance of (use `address(0)` for native currency).
-    /// @return The balance of the contract in the specified currency.
     /// @dev This function is restricted to the contract owner.
     function getBalance(address currency) public view onlyOwner returns (uint256) {
         return address(this).balanceOf(currency);

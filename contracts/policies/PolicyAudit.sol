@@ -83,7 +83,6 @@ contract PolicyAudit is Initializable, UUPSUpgradeable, GovernableUpgradeable, Q
 
     /// @notice Checks if a specific policy contract has been audited.
     /// @param policy The address of the policy contract to verify.
-    /// @return bool Returns true if the policy is audited, false otherwise.
     function isAudited(address policy) external view returns (bool) {
         return _status(uint160(policy)) == Status.Active;
     }

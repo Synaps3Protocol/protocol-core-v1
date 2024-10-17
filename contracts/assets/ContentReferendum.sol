@@ -101,7 +101,8 @@ contract ContentReferendum is
         );
 
         // retrieve the signer from digest and register the resultant signer as initiator.
-        bytes32 digest = _hashTypedDataV4(structHash); // expected keccak256("\x19\x01" ‖ domainSeparator ‖ hashStruct(message))
+        // expected keccak256("\x19\x01" ‖ domainSeparator ‖ hashStruct(message))
+        bytes32 digest = _hashTypedDataV4(structHash);
         address initiator = ecrecover(digest, sig.v, sig.r, sig.s);
         if (initiator == address(0) || sig.signer != initiator) revert InvalidSubmissionSignature();
         _submit(contentId, initiator);
@@ -109,7 +110,6 @@ contract ContentReferendum is
 
     /// @notice Checks if the content is active nor blocked.
     /// @param contentId The ID of the content.
-    /// @return True if the content is active, false otherwise.
     function isActive(uint256 contentId) public view returns (bool) {
         return _status(contentId) == Status.Active;
     }
@@ -117,7 +117,6 @@ contract ContentReferendum is
     /// @notice Checks if the content is approved.
     /// @param initiator The submission account address .
     /// @param contentId The ID of the content.
-    /// @return True if the content is approved, false otherwise.
     function isApproved(address initiator, uint256 contentId) public view returns (bool) {
         bool approved = isActive(contentId);
         bool validAccount = submissions[initiator].contains(contentId);
@@ -146,7 +145,7 @@ contract ContentReferendum is
     function _authorizeUpgrade(address newImplementation) internal override onlyAdmin {}
 
     /// @notice Submits content for registration and tracks the submission for the initiator.
-    /// @dev This function registers the content, records the submission under the initiator's address, and emits an event.
+    /// @dev This function registers the content, records the submission, and emits an event.
     /// @param contentId The unique identifier of the content being submitted.
     /// @param initiator The address of the entity initiating the content submission.
     function _submit(uint256 contentId, address initiator) private {

@@ -7,6 +7,5 @@ pragma solidity 0.8.26;
 interface IPolicyAuditorVerifiable {
     /// @notice Checks if a specific policy contract has been audited.
     /// @param policy The address of the policy contract to verify.
-    /// @return bool Returns true if the policy has been audited, false otherwise.
     function isAudited(address policy) external view returns (bool);
 }

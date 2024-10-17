@@ -46,7 +46,6 @@ abstract contract QuorumUpgradeable is Initializable {
 
     /// @notice Internal function to get the status of an entity.
     /// @param entry The ID of the entity.
-    /// @return Status The status of the entity.
     function _status(uint256 entry) internal view returns (Status) {
         RegistryStorage storage $ = _getRegistryStorage();
         return $._status[entry];
@@ -86,7 +85,6 @@ abstract contract QuorumUpgradeable is Initializable {
     }
 
     /// @notice Internal function to get the registry storage.
-    /// @return $ The registry storage.
     function _getRegistryStorage() private pure returns (RegistryStorage storage $) {
         assembly {
             $.slot := REGISTRY_SLOT

@@ -6,14 +6,7 @@ import { Upgrades } from "openzeppelin-foundry-upgrades/Upgrades.sol";
 import { Tollgate } from "contracts/economics/Tollgate.sol";
 
 contract DeployTollgate is DeployBase {
-
     function run() external BroadcastedByAdmin returns (address) {
-        // Deploy the upgradeable contract
-        address _proxyAddress = Upgrades.deployUUPSProxy(
-            "Tollgate.sol",
-            abi.encodeCall(Tollgate.initialize, ())
-        );
-
-        return _proxyAddress;
+        return deployUUPS("Tollgate.sol", abi.encodeCall(Tollgate.initialize, ()), "");
     }
 }

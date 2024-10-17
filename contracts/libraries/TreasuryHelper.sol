@@ -34,7 +34,6 @@ library TreasuryHelper {
     /// to this contract for spending the specified `token`.
     /// @param owner The address of the token owner who has granted the allowance.
     /// @param token The address of the ERC20 token contract.
-    /// @return The remaining number of tokens that the contract is allowed to spend on behalf of the `owner`.
     function allowance(address owner, address token) internal view returns (uint256) {
         return IERC20(token).allowance(owner, address(this));
     }
@@ -64,7 +63,6 @@ library TreasuryHelper {
     /// @notice Retrieves the balance of Native or ERC20 tokens for the specified address.
     /// @param target The address whose balance will be retrieved.
     /// @param token The address of the token to check. Use address(0) for native tokens.
-    /// @return The balance of the specified tokens at the target address.
     function balanceOf(address target, address token) internal view returns (uint256) {
         if (token == address(0)) return target.balance;
         return IERC20(token).balanceOf(target);

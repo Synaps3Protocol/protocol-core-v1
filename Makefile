@@ -37,7 +37,7 @@ force-compile:
 # https://jestjs.io/docs/cli#--coverageboolean
 .PHONY: test ## run tests
 test:
-	@forge test --via-ir --gas-report --show-progress -vvv 
+	@forge test --via-ir --gas-report --show-progress -vvv  --force
 
 .PHONY: coverage ## run tests coverage report
 coverage:

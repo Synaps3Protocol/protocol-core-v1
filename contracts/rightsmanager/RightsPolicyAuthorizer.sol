@@ -17,7 +17,9 @@ contract RightsPolicyAuthorizer is Initializable, UUPSUpgradeable, GovernableUpg
     /// so the code within a logic contract’s constructor or global declaration
     /// will never be executed in the context of the proxy’s state
     /// https://docs.openzeppelin.com/upgrades-plugins/1.x/proxies#the-constructor-caveat
-    IPolicyAuditorVerifiable public policyAudit;
+
+    /// Preventing accidental/malicious changes during contract reinitializations.
+    IPolicyAuditorVerifiable public immutable POLICY_AUDIT;
 
     /// @dev Mapping to store the delegated rights for each policy contract (address)
     /// by each content holder (address).
@@ -38,20 +40,19 @@ contract RightsPolicyAuthorizer is Initializable, UUPSUpgradeable, GovernableUpg
     /// @param reason A string explaining the reason for the invalid policy setup.
     error InvalidPolicySetup(string reason);
 
-    /// @dev Constructor that disables initializers to prevent the implementation contract from being initialized.
-    /// https://forum.openzeppelin.com/t/uupsupgradeable-vulnerability-post-mortem/15680
-    /// https://forum.openzeppelin.com/t/what-does-disableinitializers-function-mean/28730/5
-    constructor() {
+    /// @custom:oz-upgrades-unsafe-allow constructor
+    constructor(address policyAudit) {
+        /// https://forum.openzeppelin.com/t/uupsupgradeable-vulnerability-post-mortem/15680
+        /// https://forum.openzeppelin.com/t/what-does-disableinitializers-function-mean/28730/5
         _disableInitializers();
+        // audit contract to validate the approval from mods
+        POLICY_AUDIT = IPolicyAuditorVerifiable(policyAudit);
     }
 
-    /// @notice Initializes the contract with the necessary dependencies.
-    /// @param policyAudit_ The address of the audit contract, which verifies policies audit.
-    function initialize(address policyAudit_) public initializer {
+    /// @notice Initializes the proxy state.
+    function initialize() public initializer {
         __UUPSUpgradeable_init();
         __Governable_init(msg.sender);
-        // audit contract to validate the approval from mods
-        policyAudit = IPolicyAuditorVerifiable(policyAudit_);
     }
 
     /// @notice Initializes and authorizes a policy contract for content held by the holder.
@@ -80,7 +81,6 @@ contract RightsPolicyAuthorizer is Initializable, UUPSUpgradeable, GovernableUpg
     /// @notice Retrieves all policies authorized by a specific content holder.
     /// @dev This function returns an array of policy addresses that have been granted rights by the holder.
     /// @param holder The address of the content rights holder whose authorized policies are being queried.
-    /// @return An array of addresses representing the policies authorized by the content holder.
     function getAuthorizedPolicies(address holder) public view returns (address[] memory) {
         // https://docs.openzeppelin.com/contracts/5.x/api/utils#EnumerableSet-values-struct-EnumerableSet-AddressSet-
         // This operation will copy the entire storage to memory, which can be quite expensive.
@@ -100,8 +100,7 @@ contract RightsPolicyAuthorizer is Initializable, UUPSUpgradeable, GovernableUpg
     /// @dev The function ensures that the policy address is not the zero address
     ///      and that the policy has been audited.
     /// @param policy The address of the policy contract to verify.
-    /// @return bool Returns `true` if the policy is valid, otherwise `false`.
     function _isValidPolicy(address policy) private view returns (bool) {
-        return (policy != address(0) && policyAudit.isAudited(policy));
+        return (policy != address(0) && POLICY_AUDIT.isAudited(policy));
     }
 }

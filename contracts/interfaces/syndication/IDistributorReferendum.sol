@@ -6,7 +6,5 @@ import { IDistributorVerifiable } from "contracts/interfaces/syndication/IDistri
 import { ITreasurer } from "contracts/interfaces/economics/ITreasurer.sol";
 
 /// @title IDistributorReferendum
-/// @notice Interface that defines the necessary operations for managing distributor registration, verification, and treasury interactions within a governance framework.
-/// @dev This interface combines multiple functionalities, such as registering distributors, verifying their status, and managing treasury-related operations
-///      related to distributor enrollments and fees.
+/// @notice Interface that defines the necessary operations for managing distributor registration.
 interface IDistributorReferendum is IDistributorRegistrable, IDistributorVerifiable, ITreasurer {}

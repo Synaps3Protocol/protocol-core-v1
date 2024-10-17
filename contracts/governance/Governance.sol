@@ -9,6 +9,7 @@ import { GovernorVotes } from "@openzeppelin/contracts/governance/extensions/Gov
 import { GovernorSettings } from "@openzeppelin/contracts/governance/extensions/GovernorSettings.sol";
 import { GovernorCountingSimple } from "@openzeppelin/contracts/governance/extensions/GovernorCountingSimple.sol";
 import { GovernorTimelockControl } from "@openzeppelin/contracts/governance/extensions/GovernorTimelockControl.sol";
+// solhint-disable-next-line max-line-length
 import { GovernorVotesQuorumFraction } from "@openzeppelin/contracts/governance/extensions/GovernorVotesQuorumFraction.sol";
 
 /**
@@ -40,8 +41,8 @@ contract Governance is
      *   - Proposal Threshold: 0 tokens (the minimum number of tokens required to propose a new proposal).
      */
     constructor(
-        address _mmc,
-        address _timelock
+        ERC20Votes _mmc,
+        TimelockController _timelock
     )
         Governor("MMCGovernance")
         GovernorVotes(_mmc)
@@ -50,20 +51,14 @@ contract Governance is
         GovernorTimelockControl(_timelock)
     {}
 
-    /**
-     * @notice Returns the state of a proposal.
-     * @param proposalId The ID of the proposal.
-     * @return The state of the proposal.
-     */
+    /// @notice Returns the state of a proposal.
+    /// @param proposalId The ID of the proposal.
     function state(uint256 proposalId) public view override(Governor, GovernorTimelockControl) returns (ProposalState) {
         return super.state(proposalId);
     }
 
-    /**
-     * @notice Checks if a proposal needs to be queued.
-     * @param proposalId The ID of the proposal.
-     * @return True if the proposal needs to be queued, false otherwise.
-     */
+    /// @notice Checks if a proposal needs to be queued.
+    /// @param proposalId The ID of the proposal.
     function proposalNeedsQueuing(
         uint256 proposalId
     ) public view virtual override(Governor, GovernorTimelockControl) returns (bool) {
