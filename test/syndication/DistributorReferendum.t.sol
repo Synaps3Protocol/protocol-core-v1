@@ -191,7 +191,7 @@ contract DistributorReferendumTest is BaseTest {
     }
 
     function test_Revoke_DecrementEnrollmentCount() public {
-        _registerAndApproveDistributor(); // still governor prank
+        _registerAndApproveDistributor(distributor); // still governor prank
         // valid approvals, increments the total of enrollments
         vm.prank(governor);
         IDistributorRegistrable(referendum).revoke(distributor);
@@ -200,7 +200,7 @@ contract DistributorReferendumTest is BaseTest {
 
     function test_Revoke_SetBlockedState() public {
         // intially the balance = 0
-        _registerAndApproveDistributor(); // still governor prank
+        _registerAndApproveDistributor(distributor); // still governor prank
         // distribuitor get revoked by governance..
         vm.prank(governor);
         IDistributorRegistrable(referendum).revoke(distributor);
