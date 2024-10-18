@@ -55,9 +55,9 @@ contract RentalPolicy is BasePolicy {
             );
     }
 
-    function setup(T.Setup calldata setup) external onlyRM initializer {
+    function setup(T.Setup calldata init) external onlyRM initializer {
         (uint256 rentalDuration, uint256 contentId, uint256 price, address currency) = abi.decode(
-            setup.payload,
+            init.payload,
             (uint256, uint256, uint256, address)
         );
 

@@ -29,9 +29,11 @@ abstract contract LedgerUpgradeable is Initializable, ILedger {
 
     /// @dev Initializes the contract and ensures it is upgradeable.
     /// Even if the initialization is harmless, this ensures the contract follows upgradeable contract patterns.
+    /// This is the method to initialize this contract and any other extended contracts.
     function __Ledger_init() internal onlyInitializing {}
 
     /// @dev Function to initialize the contract without chaining, typically used in child contracts.
+    /// This is the method to initialize this contract as standalone.
     function __Ledger_init_unchained() internal onlyInitializing {}
 
     /// @notice Internal function to set a ledger entry for an account in a specific currency.

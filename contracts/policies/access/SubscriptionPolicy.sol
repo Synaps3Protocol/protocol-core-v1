@@ -47,9 +47,9 @@ contract SubscriptionPolicy is BasePolicy {
             );
     }
 
-    function setup(T.Setup calldata setup) external onlyRM initializer {
+    function setup(T.Setup calldata init) external onlyRM initializer {
         (uint256 subscriptionDuration, uint256 price, address currency) = abi.decode(
-            setup.payload,
+            init.payload,
             (uint256, uint256, address)
         );
 
@@ -57,7 +57,7 @@ contract SubscriptionPolicy is BasePolicy {
         if (subscriptionDuration == 0) revert InvalidSetup("Subscription: Invalid subscription duration.");
         if (price == 0) revert InvalidSetup("Subscription: Invalid subscription price.");
         // expected content rights holder sending subscription params..
-        packages[setup.holder] = Package(subscriptionDuration, price, currency);
+        packages[init.holder] = Package(subscriptionDuration, price, currency);
     }
 
     // this function should be called only by RM and its used to establish

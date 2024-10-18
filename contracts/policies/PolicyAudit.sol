@@ -53,6 +53,7 @@ contract PolicyAudit is Initializable, UUPSUpgradeable, GovernableUpgradeable, Q
     /// @notice Initializes the contract with the necessary configurations.
     /// This function is only called once upon deployment and sets up Quorum, UUPS, and Governable features.
     function initialize() public initializer {
+        __Quorum_init();
         __UUPSUpgradeable_init();
         __Governable_init(msg.sender);
     }

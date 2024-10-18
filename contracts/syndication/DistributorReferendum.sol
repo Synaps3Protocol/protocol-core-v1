@@ -75,9 +75,10 @@ contract DistributorReferendum is
 
     /// @notice Initializes the proxy state.
     function initialize() public initializer {
+        __Quorum_init();
         __UUPSUpgradeable_init();
-        __Governable_init(msg.sender);
         __ReentrancyGuard_init();
+        __Governable_init(msg.sender);
 
         // 6 months initially..
         enrollmentPeriod = 180 days;

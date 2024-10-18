@@ -63,6 +63,7 @@ contract ContentReferendum is
 
     /// @notice Initializes the contract.
     function initialize() public initializer {
+        __Quorum_init();
         __UUPSUpgradeable_init();
         __EIP712_init("Referendum", "1");
         __Governable_init(msg.sender);
