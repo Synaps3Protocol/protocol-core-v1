@@ -67,13 +67,20 @@ contract TollgateTest is BaseTest {
         assertEq(ITollgate(tollgate).getFees(T.Context.RMA, token), expectedRightsAgreement);
     }
 
+    function test_GetFees_RevertWhen_NotSupportedCurrency() public {
+        address invalidTokenAddress = vm.addr(3);
+        vm.prank(governor); // as governor set fees
+        vm.expectRevert(abi.encodeWithSignature("InvalidUnsopportedCurrency(address)", invalidTokenAddress));
+        ITollgate(tollgate).getFees(T.Context.SYN);
+    }
+
     function test_SupportedCurrencies_ReturnExpectedCurrencies() public {
         vm.startPrank(governor); // as governor set fees
         // duplicate the registration to check if the token is duplicated
         ITollgate(tollgate).setFees(T.Context.SYN, 1, token);
         ITollgate(tollgate).setFees(T.Context.SYN, 1, token);
         vm.stopPrank();
-            
+
         vm.prank(user); // user querying fees..
         address[] memory got = ITollgate(tollgate).supportedCurrencies(T.Context.SYN);
         address[] memory expected = new address[](1);
