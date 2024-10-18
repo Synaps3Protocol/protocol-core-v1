@@ -18,7 +18,7 @@ interface IPolicy {
     /// @notice Initializes the policy with the necessary data.
     /// @dev This function allows configuring the policy's rules.
     /// @param setup The initialization data to set up the policy.
-    function setup(T.Setup calldata setup) external;
+    function setup(bytes calldata setup) external;
 
     /// @notice Executes the agreement between the content holder and the account based on the policy's rules.
     /// @dev Rights Policies Manager contract should be the only one allowed to call this method.

@@ -55,13 +55,13 @@ contract RentalPolicy is BasePolicy {
             );
     }
 
-    function setup(T.Setup calldata init) external onlyRM initializer {
+    function setup(bytes calldata init) external initializer {
         (uint256 rentalDuration, uint256 contentId, uint256 price, address currency) = abi.decode(
-            init.payload,
+            init,
             (uint256, uint256, uint256, address)
         );
 
-        if (getHolder(contentId) == address(0)) revert InvalidSetup("Rental: Invalid content id.");
+        if (getHolder(contentId) != msg.sender) revert InvalidSetup("Rental: Invalid content id holder.");
         if (rentalDuration == 0) revert InvalidSetup("Rental: Invalid rental duration.");
         if (price == 0) revert InvalidSetup("Rental: Invalid rental price.");
         contents[contentId] = Content(rentalDuration, price, currency);

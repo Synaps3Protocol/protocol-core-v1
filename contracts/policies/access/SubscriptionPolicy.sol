@@ -47,17 +47,13 @@ contract SubscriptionPolicy is BasePolicy {
             );
     }
 
-    function setup(T.Setup calldata init) external onlyRM initializer {
-        (uint256 subscriptionDuration, uint256 price, address currency) = abi.decode(
-            init.payload,
-            (uint256, uint256, address)
-        );
-
+    function setup(bytes calldata init) external initializer {
+        (uint256 subscriptionDuration, uint256 price, address currency) = abi.decode(init, (uint256, uint256, address));
         // require(isValidCurrency(currency), "Subscription: Invalid currency.");
         if (subscriptionDuration == 0) revert InvalidSetup("Subscription: Invalid subscription duration.");
         if (price == 0) revert InvalidSetup("Subscription: Invalid subscription price.");
         // expected content rights holder sending subscription params..
-        packages[init.holder] = Package(subscriptionDuration, price, currency);
+        packages[msg.sender] = Package(subscriptionDuration, price, currency);
     }
 
     // this function should be called only by RM and its used to establish

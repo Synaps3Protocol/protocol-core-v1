@@ -56,7 +56,7 @@ contract TollgateTest is BaseTest {
     function test_GetFees_ValidExpectedFees() public {
         uint256 expectedSyndication = 1e18; // 1MMC expected flat fees
         uint256 expectedRightsAgreement = 10 * 100; // = 10% expected bps
-        
+
         vm.startPrank(governor); // as governor set fees
         ITollgate(tollgate).setFees(T.Context.SYN, expectedSyndication, token);
         ITollgate(tollgate).setFees(T.Context.RMA, expectedRightsAgreement, token);
@@ -67,42 +67,21 @@ contract TollgateTest is BaseTest {
         assertEq(ITollgate(tollgate).getFees(T.Context.RMA, token), expectedRightsAgreement);
     }
 
-    // function test_addSupportedCurrencyLength() public {
-    //     address currency = vm.addr(1); // example address
-    //     address currency2 = vm.addr(2); // example address
-    //     address currency3 = vm.addr(3); // example address
-    //     _addCurrency(currency);
-    //     _addCurrency(currency2);
-    //     _addCurrency(currency3);
-    //     address[] memory got = supportedCurrencies();
-    //     assertEq(got.length, 3);
-    // }
+    function test_SupportedCurrencies_ReturnExpectedCurrencies() public {
+        vm.startPrank(governor); // as governor set fees
+        // duplicate the registration to check if the token is duplicated
+        ITollgate(tollgate).setFees(T.Context.SYN, 1, token);
+        ITollgate(tollgate).setFees(T.Context.SYN, 1, token);
+        vm.stopPrank();
+            
+        vm.prank(user); // user querying fees..
+        address[] memory got = ITollgate(tollgate).supportedCurrencies(T.Context.SYN);
+        address[] memory expected = new address[](1);
+        expected[0] = token;
 
-    // function test_removeSupportedCurrencyLength() public {
-    //     address currency = vm.addr(1); // example address
-    //     address currency2 = vm.addr(2); // example address
-    //     address currency3 = vm.addr(3); // example address
-    //     _addCurrency(currency);
-    //     _addCurrency(currency2);
-    //     _addCurrency(currency3);
-    //     _removeCurrency(currency2);
-
-    //     address[] memory got = supportedCurrencies();
-    //     assertEq(got.length, 2);
-    // }
-
-    // function test_supportedCurrencies() public {
-    //     address currency = vm.addr(1); // example address
-    //     address currency2 = vm.addr(2); // example address
-    //     _addCurrency(currency);
-    //     _addCurrency(currency2);
-
-    //     address[] memory got = supportedCurrencies();
-    //     address[] memory expected = new address[](2);
-    //     expected[0] = currency;
-    //     expected[1] = currency2;
-    //     assertEq(got, expected);
-    // }
+        // only one expected since the set avoid dupes..
+        assertEq(got, expected);
+    }
 
     // function test_skipAddExisting() public {
     //     address currency = vm.addr(1); // example address
