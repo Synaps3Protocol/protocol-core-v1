@@ -2,7 +2,7 @@
 pragma solidity 0.8.26;
 
 /// @title Distributor Expirable Interface
-/// @notice This interface defines the methods for managing expiration periods 
+/// @notice This interface defines the methods for managing expiration periods
 /// related to enrollments or registrations.
 interface IDistributorExpirable {
     /// @notice Retrieves the current expiration period for enrollments or registrations.

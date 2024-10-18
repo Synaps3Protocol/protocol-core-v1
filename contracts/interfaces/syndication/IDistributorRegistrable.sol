@@ -23,5 +23,4 @@ interface IDistributorRegistrable {
 
     /// @notice Retrieves the total number of enrollments.
     function getEnrollmentCount() external view returns (uint256);
-
 }
