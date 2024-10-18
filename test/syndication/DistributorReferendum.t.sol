@@ -42,29 +42,29 @@ contract DistributorReferendumTest is BaseTest {
         vm.stopPrank();
     }
 
-    function _registerDistributorWithApproval(uint256 approval) internal {
+    function _registerDistributorWithApproval(address d9r, uint256 approval) internal {
         // manager = contract deployer
         // only manager can pay enrollment..
         vm.startPrank(admin);
         IERC20(token).approve(referendum, approval);
-        IDistributorRegistrable(referendum).register(distributor, token);
+        IDistributorRegistrable(referendum).register(d9r, token);
         vm.stopPrank();
     }
 
     function _registerDistributorWithGovernorAndApproval() internal {
         uint256 expectedFees = 100 * 1e18;
         _setFeesAsGovernor(expectedFees);
-        _registerDistributorWithApproval(expectedFees);
+        _registerDistributorWithApproval(distributor, expectedFees);
     }
 
-    function _registerAndApproveDistributor() internal {
+    function _registerAndApproveDistributor(address d9r) internal {
         // intially the balance = 0
         _setFeesAsGovernor(0);
         // register the distributor with fees = 100 MMC
-        _registerDistributorWithApproval(0);
+        _registerDistributorWithApproval(d9r, 0);
         vm.prank(governor); // as governor.
         // distribuitor approved only by governor..
-        IDistributorRegistrable(referendum).approve(distributor);
+        IDistributorRegistrable(referendum).approve(d9r);
     }
 
     /// ----------------------------------------------------------------
@@ -93,7 +93,7 @@ contract DistributorReferendumTest is BaseTest {
         // 1-set enrollment fees.
         _setFeesAsGovernor(expectedFees);
         // 2-deploy and register contract
-        _registerDistributorWithApproval(expectedFees);
+        _registerDistributorWithApproval(distributor, expectedFees);
         // get the expected disrbursement target
         address expectedTarget = ITreasury(treasury).getPoolAddress();
 
@@ -130,7 +130,7 @@ contract DistributorReferendumTest is BaseTest {
         vm.warp(currentTime); // set block.time to current time
 
         // register the distributor expecting the right enrollment time..
-        _registerDistributorWithApproval(0);
+        _registerDistributorWithApproval(distributor, 0);
         uint256 expected = currentTime + expectedExpiration;
         uint256 got = IDistributorRegistrable(referendum).getEnrollmentTime(distributor);
         assertEq(got, expected);
@@ -139,7 +139,7 @@ contract DistributorReferendumTest is BaseTest {
     function test_Register_SetWaitingState() public {
         _setFeesAsGovernor(0);
         // register the distributor expecting the right status.
-        _registerDistributorWithApproval(0);
+        _registerDistributorWithApproval(distributor, 0);
         assertEq(IDistributorVerifiable(referendum).isWaiting(distributor), true);
     }
 
@@ -149,63 +149,61 @@ contract DistributorReferendumTest is BaseTest {
         IDistributorRegistrable(referendum).register(address(0), token);
     }
 
+    function test_Approve_ApprovedEventEmitted() public {
+        // intially the balance = 0
+        _setFeesAsGovernor(0);
+        // register the distributor with fees = 100 MMC
+        _registerDistributorWithApproval(distributor, 0);
 
-    // function test_Approve_ApprovedEventEmitted() public {
-    //     // intially the balance = 0
-    //     _setFeesAsGovernor(0);
-    //     // register the distributor with fees = 100 MMC
-    //     _registerDistributorWithApproval(0);
+        vm.prank(governor); // as governor.
+        // after register a distributor a Registered event is expected
+        vm.expectEmit(true, true, false, false, address(referendum));
+        emit DistributorReferendum.Approved(distributor);
+        // distribuitor approved only by governor..
+        IDistributorRegistrable(referendum).approve(distributor);
+    }
 
-    //     vm.prank(governor); // as governor.
-    //     // after register a distributor a Registered event is expected
-    //     vm.expectEmit(true, true, false, false, address(referendum));
-    //     emit Syndication.Approved(distributor);
-    //     // distribuitor approved only by governor..
-    //     ISyndicatableRegistrable(referendum).approve(distributor);
-    // }
+    function test_Approve_SetActiveState() public {
+        _registerAndApproveDistributor(distributor);
+        assertEq(IDistributorVerifiable(referendum).isActive(distributor), true);
+    }
 
-    // function test_Approve_SetZeroEnrollmentFees() public {
-    //     // intially the balance = 0
-    //     _registerAndApproveDistributor();
-    //     assertEq(ILedger(referendum).getLedgerBalance(admin, token), 0);
-    // }
+    function test_Approve_IncrementEnrollmentCount() public {
+        address distributor2 = deployDistributor("test2.com");
+        address distributor3 = deployDistributor("test3.com");
 
-    // function test_Approve_SetActiveState() public {
-    //     _registerAndApproveDistributor();
-    //     assertEq(ISyndicatableVerifiable(referendum).isActive(distributor), true);
-    // }
+        _registerAndApproveDistributor(distributor);
+        _registerAndApproveDistributor(distributor2); // still governor prank
+        _registerAndApproveDistributor(distributor3); // still governor prank
 
-    // function test_Approve_IncrementEnrollmentCount() public {
-    //     _registerAndApproveDistributor();
-    //     // valid approvals, increments the total of enrollments
-    //     assertEq(ISyndicatableEnroller(referendum).getEnrollmentCount(), 1);
-    // }
+        // valid approvals, increments the total of enrollments
+        assertEq(IDistributorRegistrable(referendum).getEnrollmentCount(), 3);
+    }
 
-    // function test_Revoke_RevokedEventEmitted() public {
-    //     // intially the balance = 0
-    //     _registerAndApproveDistributor(); // still governor prank
-    //     vm.prank(governor);
-    //     // after register a distributor a Registered event is expected
-    //     vm.expectEmit(true, true, false, false, address(referendum));
-    //     emit Syndication.Revoked(distributor);
-    //     // distribuitor get revoked by governance..
-    //     ISyndicatableRevokable(referendum).revoke(distributor);
-    // }
+    function test_Revoke_RevokedEventEmitted() public {
+        _registerAndApproveDistributor(distributor); // still governor prank
+        vm.prank(governor);
+        // after register a distributor a Registered event is expected
+        vm.expectEmit(true, true, false, false, address(referendum));
+        emit DistributorReferendum.Revoked(distributor);
+        // distribuitor get revoked by governance..
+        IDistributorRegistrable(referendum).revoke(distributor);
+    }
 
-    // function test_Revoke_DecrementEnrollmentCount() public {
-    //     _registerAndApproveDistributor(); // still governor prank
-    //     // valid approvals, increments the total of enrollments
-    //     vm.prank(governor);
-    //     ISyndicatableRevokable(referendum).revoke(distributor);
-    //     assertEq(ISyndicatableEnroller(referendum).getEnrollmentCount(), 0);
-    // }
+    function test_Revoke_DecrementEnrollmentCount() public {
+        _registerAndApproveDistributor(); // still governor prank
+        // valid approvals, increments the total of enrollments
+        vm.prank(governor);
+        IDistributorRegistrable(referendum).revoke(distributor);
+        assertEq(IDistributorRegistrable(referendum).getEnrollmentCount(), 0);
+    }
 
-    // function test_Revoke_SetBlockedState() public {
-    //     // intially the balance = 0
-    //     _registerAndApproveDistributor(); // still governor prank
-    //     // distribuitor get revoked by governance..
-    //     vm.prank(governor);
-    //     ISyndicatableRevokable(referendum).revoke(distributor);
-    //     assertEq(ISyndicatableVerifiable(referendum).isBlocked(distributor), true);
-    // }
+    function test_Revoke_SetBlockedState() public {
+        // intially the balance = 0
+        _registerAndApproveDistributor(); // still governor prank
+        // distribuitor get revoked by governance..
+        vm.prank(governor);
+        IDistributorRegistrable(referendum).revoke(distributor);
+        assertEq(IDistributorVerifiable(referendum).isBlocked(distributor), true);
+    }
 }
