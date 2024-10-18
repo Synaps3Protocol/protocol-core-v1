@@ -28,7 +28,9 @@ contract DistributorReferendum is
     using ERC165Checker for address;
 
     /// Preventing accidental/malicious changes during contract reinitializations.
+    /// @custom:oz-upgrades-unsafe-allow state-variable-immutable
     ITollgate public immutable TOLLGATE;
+    /// @custom:oz-upgrades-unsafe-allow state-variable-immutable
     ITreasury public immutable TREASURY;
 
     uint256 private enrollmentPeriod; // Period for enrollment

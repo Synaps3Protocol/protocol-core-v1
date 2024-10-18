@@ -24,6 +24,4 @@ interface IDistributorRegistrable {
     /// @notice Retrieves the total number of enrollments.
     function getEnrollmentCount() external view returns (uint256);
 
-    /// @notice Retrieves the current expiration period for enrollments or registrations.
-    function getExpirationPeriod() external view returns (uint256);
 }

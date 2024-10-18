@@ -33,14 +33,13 @@ contract ContentReferendum is
     /// @dev Event emitted when a content is submitted for referendum.
     /// @param contentId The ID of the content submitted.
     /// @param initiator The address of the initiator who submitted the content.
-    event ContentSubmitted(address initiator, uint256 indexed contentId);
-
+    event Submitted(address initiator, uint256 indexed contentId);
     /// @dev Event emitted when a content is approved.
     /// @param contentId The ID of the content approved.
-    event ContentApproved(uint256 indexed contentId);
+    event Approved(uint256 indexed contentId);
     /// @dev Event emitted when a content is revoked.
     /// @param contentId The ID of the content revoked.
-    event ContentRevoked(uint256 indexed contentId);
+    event Revoked(uint256 indexed contentId);
     /// @notice Emitted when the verified role is granted to an account.
     /// @param account The address of the account that has been granted the verified role.
     event VerifiedRoleGranted(address indexed account);
@@ -130,14 +129,14 @@ contract ContentReferendum is
     /// @param contentId The ID of the content to be revoked.
     function reject(uint256 contentId) public onlyGov {
         _revoke(contentId);
-        emit ContentRevoked(contentId);
+        emit Revoked(contentId);
     }
 
     /// @notice Approves a content proposition.
     /// @param contentId The ID of the content to be approved.
     function approve(uint256 contentId) public onlyGov {
         _approve(contentId);
-        emit ContentApproved(contentId);
+        emit Approved(contentId);
     }
 
     /// @notice Function that should revert when msg.sender is not authorized to upgrade the contract.
@@ -152,6 +151,6 @@ contract ContentReferendum is
     function _submit(uint256 contentId, address initiator) private {
         _register(contentId);
         submissions[initiator].add(contentId);
-        emit ContentSubmitted(initiator, contentId);
+        emit Submitted(initiator, contentId);
     }
 }

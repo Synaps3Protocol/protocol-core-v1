@@ -69,9 +69,8 @@ contract TollgateTest is BaseTest {
 
     function test_GetFees_RevertWhen_NotSupportedCurrency() public {
         address invalidTokenAddress = vm.addr(3);
-        vm.prank(governor); // as governor set fees
-        vm.expectRevert(abi.encodeWithSignature("InvalidUnsopportedCurrency(address)", invalidTokenAddress));
-        ITollgate(tollgate).getFees(T.Context.SYN);
+        vm.expectRevert(abi.encodeWithSignature("InvalidUnsupportedCurrency(address)", invalidTokenAddress));
+        ITollgate(tollgate).getFees(T.Context.SYN, invalidTokenAddress);
     }
 
     function test_SupportedCurrencies_ReturnExpectedCurrencies() public {
@@ -90,24 +89,12 @@ contract TollgateTest is BaseTest {
         assertEq(got, expected);
     }
 
-    // function test_skipAddExisting() public {
-    //     address currency = vm.addr(1); // example address
-    //     _addCurrency(currency);
-    //     _addCurrency(currency);
-    //     // added two time the same currency it's skipped
-    //     address[] memory got = supportedCurrencies();
-    //     assertEq(got.length, 1);
-    // }
-
-    // function testFail_RevertWhen_removeNotExisting() public {
-    //     vm.expectRevert(InvalidCurrency.selector);
-    //     address currency = vm.addr(1); // example address
-    //     _removeCurrency(currency);
-    // }
-
-    // function test_Create_ValidDistributor() public {
-    //     address distributor = deployDistributor("test.com");
-    //     assertEq(IERC165(distributor).supportsInterface(type(IDistributor).interfaceId), true);
-    //     assertEq(IDistributor(distributor).getEndpoint(), "test.com");
-    // }
+    function test_IsCurrencySupported_ReturnExpectedTrueOrFalse() public {
+        vm.prank(governor); // as governor set fees
+        // duplicate the registration to check if the token is duplicated
+        ITollgate(tollgate).setFees(T.Context.SYN, 1, token);
+        // only one expected since the set avoid dupes..
+        assertEq(ITollgate(tollgate).isCurrencySupported(T.Context.SYN, token), true);
+        assertEq(ITollgate(tollgate).isCurrencySupported(T.Context.RMA, token), false);
+    }
 }
