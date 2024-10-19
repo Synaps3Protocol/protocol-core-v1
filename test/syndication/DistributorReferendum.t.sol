@@ -69,7 +69,7 @@ contract DistributorReferendumTest is BaseTest {
 
     /// ----------------------------------------------------------------
 
-    function test_Init_TreasuryAddress() public view {
+    function test_Init_ExpriationPeriod() public view {
         // test initialized treasury address
         uint256 expected = 180 days;
         uint256 period = IDistributorExpirable(referendum).getExpirationPeriod();
@@ -81,6 +81,14 @@ contract DistributorReferendumTest is BaseTest {
         vm.prank(governor);
         IDistributorExpirable(referendum).setExpirationPeriod(expireIn);
         assertEq(IDistributorExpirable(referendum).getExpirationPeriod(), expireIn);
+    }
+
+    function test_SetExpirationPeriod_EmitPeriodSet() public {
+        uint256 expireIn = 3600; // seconds
+        vm.prank(governor);
+        vm.expectEmit(true, false, false, true, address(referendum));
+        emit DistributorReferendum.PeriodSet(expireIn, governor);
+        IDistributorExpirable(referendum).setExpirationPeriod(expireIn);
     }
 
     function test_SetExpirationPeriod_RevertWhen_Unauthorized() public {
@@ -103,6 +111,7 @@ contract DistributorReferendumTest is BaseTest {
         emit ITreasurer.FeesDisbursed(expectedTarget, expectedFees, token);
         ITreasurer(referendum).disburse(token);
         vm.stopPrank();
+        
         // zero after disburse all the balance
         assertEq(IERC20(token).balanceOf(referendum), 0);
     }

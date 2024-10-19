@@ -8,3 +8,4 @@ import { IContentVerifiable } from "contracts/interfaces/assets/IContentVerifiab
 /// @title IContentReferendum
 /// @notice Interface manage content registration, roles, and verifications within a referendum context.
 interface IContentReferendum is IContentRegistrable, IContentRoleManager, IContentVerifiable {}
+
