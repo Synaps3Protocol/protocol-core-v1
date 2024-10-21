@@ -127,10 +127,12 @@ contract RightsPolicyManager is
         if (!RIGHTS_AUTHORIZER.isPolicyAuthorized(policyAddress, a7t.holder))
             revert InvalidNotRightsDelegated(policyAddress, a7t.holder);
 
-        // deposit the total amount to contract during policy registration..
-        // the available amount is registerd to policy to later allow withdrawals..
-        // IMPORTANT: the process of distribution registration to accounts should be done in policies logic.
+        // Deposits the total amount into the contract during policy registration.
+        // The available amount is registered to the policy to enable future withdrawals.
+        // IMPORTANT: The process of distributing funds to accounts should be handled within the policy logic.
+        // The 'safeDeposit' method is used for 'msg.sender' to deposit the total amount (a7t.total) in the specified currency (a7t.currency).
         msg.sender.safeDeposit(a7t.total, a7t.currency);
+
         // validate policy execution register funds and access policy..
         try IPolicy(policyAddress).exec(a7t) {
             // if-only-if policy execution is successful
@@ -142,14 +144,10 @@ contract RightsPolicyManager is
             // revert(string) and require(false, “reason”)
             revert InvalidPolicyRegistration(reason);
         } catch (bytes memory custom) {
-            // still we don't have a custom error catch to handle this
-            // and we need a way to inform the explicit reason why the policy execution failed
-            // https://github.com/ethereum/solidity/issues/11278
-            bytes4 expectedCustom = bytes4(custom);
-            bytes4 execError = bytes4(keccak256("InvalidExecution(string)"));
-            bytes4 setupError = bytes4(keccak256("InvalidSetup(string)"));
-            // only if setup or execution error is the returned.
-            if (execError == expectedCustom || setupError == expectedCustom) {
+            // We currently don't have a custom error handler to manage this scenario.
+            // We need a way to explicitly convey the reason why the policy execution failed.
+            // Refer to the Solidity GitHub issue: https://github.com/ethereum/solidity/issues/11278
+            if (bytes4(keccak256("InvalidExecution(string)")) == bytes4(custom)) {
                 (, string memory reason) = abi.decode(custom, (bytes4, string));
                 revert InvalidPolicyRegistration(reason);
             }

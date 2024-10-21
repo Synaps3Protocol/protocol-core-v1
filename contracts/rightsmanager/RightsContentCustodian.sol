@@ -11,9 +11,12 @@ import { IRightsContentCustodian } from "contracts/interfaces/rightsmanager/IRig
 
 contract RightsContentCustodian is Initializable, UUPSUpgradeable, GovernableUpgradeable, IRightsContentCustodian {
     using EnumerableSet for EnumerableSet.AddressSet;
+
     /// Preventing accidental/malicious changes during contract reinitializations.
     IDistributorVerifiable public immutable DISTRIBUTOR_REFERENDUM;
 
+    /// @dev the max allowed amount of distributors per holder.
+    uint256 private maxDistributorRedundancy;
     /// @dev Mapping to store the custodial address for each content rights holder.
     mapping(address => EnumerableSet.AddressSet) private custodying;
     /// @dev Mapping to store a registry of rights holders associated with each distributor.
@@ -47,6 +50,7 @@ contract RightsContentCustodian is Initializable, UUPSUpgradeable, GovernableUpg
     function initialize() public initializer {
         __UUPSUpgradeable_init();
         __Governable_init(msg.sender);
+
     }
 
     /// @notice Grants custodial rights over the content held by a holder to a distributor.
@@ -55,7 +59,7 @@ contract RightsContentCustodian is Initializable, UUPSUpgradeable, GovernableUpg
     /// @param distributor The address of the distributor who will receive custodial rights.
     function grantCustody(address distributor) external onlyActiveDistributor(distributor) {
         // msg.sender expected to be the holder declaring his/her content custody..
-        // if it's first custody assignment prev = address(0)
+        if (custodying[msg.sender].length >= maxDistributorRedundancy) revert;
         custodying[msg.sender].add(distributor);
         registry[distributor].add(msg.sender);
         emit CustodialGranted(distributor, msg.sender);
@@ -80,13 +84,47 @@ contract RightsContentCustodian is Initializable, UUPSUpgradeable, GovernableUpg
         return registry[distributor].values();
     }
 
+    // TODO ver como mejorar la diferencia entre custody y custodian puede ser confuso getCustodyCount y getCustodianCount
+    // TODO isCustodian?
+    // TODO getCustodianCount
+    function getBalancedCustodian(address holder) public view returns (address) {
+        // uint256 custodying
+        //!IMPORTANT  sourc of randomness is tricky in blockchain due it deterministic nature
+        // since this is not a creitical operation, gessing is harmless, we use only to calc random weight
+        uint256 totalWeight = 0;
+        bytes32 blockHash = blockhash(block.number - 1);
+        uint256 n = custodying[msg.sender].length - 1;
+        address memory nodes[] = new address[](n);
+
+        // mover a lib array sum
+        while (true) {
+            nodes[n] =  (n + 1) * 100;
+            totalWeight += nodes[n];
+            if (n==0) break;
+            unchecked {
+                --n;
+            }
+        }
+
+    // basado en fórmula de probabilidad en una distribución categórica
+    // distribución categórica es una generalización de la distribución de Bernoulli
+        // aqui la suma total debe ser 1.. necesita progression aritmetica
+        
+        // ramdon weight alg
+        uint256 random = uint256(keccak256(abi.encodePacked(blockHash, msg.sender))) % totalWeight;
+        for (uint i = 0; i < nodes.length; i++) {
+
+            if (random < nodes[i]) {
+                return custodying[msg.sender].at(i);
+            }
+            random -= nodes[i];
+        }
+
+    }
+
     /// @notice Retrieves the custodians' addresses for a given content holder.
     /// @param holder The address of the content rights holder whose custodians' addresses are being retrieved.
     function getCustodians(address holder) public view returns (address[] memory) {
-        // TODO collect the custody based on demand, round robin?
-        // TODO un metodo que haga un check o seleccion del custodio disponible.
-        // TODO VRF generation to select the next custodian?
-        // TODO if custodians are blocked we need an auxiliar mechanism and return the higher rated distributor
         return custodying[holder].values();
     }
 
