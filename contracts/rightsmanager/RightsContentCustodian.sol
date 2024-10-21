@@ -74,8 +74,7 @@ contract RightsContentCustodian is Initializable, UUPSUpgradeable, GovernableUpg
         emit CustodialGranted(distributor, msg.sender);
     }
 
-    /// @notice Checks if the given distributor is a custodian for the specified content holder and if the distributor is valid and active.
-    /// @dev The function verifies that the distributor is associated with the content holder and is currently valid and active.
+    /// @notice Checks if the given distributor is a custodian for the specified content holder
     /// @param holder The address of the content holder.
     /// @param distributor The address of the distributor to check.
     function isCustodian(address holder, address distributor) external view returns (bool) {
@@ -161,7 +160,6 @@ contract RightsContentCustodian is Initializable, UUPSUpgradeable, GovernableUpg
     function _authorizeUpgrade(address newImplementation) internal override onlyAdmin {}
 
     /// @notice Checks if the distributor is valid and currently active.
-    /// @dev A valid and active distributor must have a non-zero address and be marked as active in the DISTRIBUTOR_REFERENDUM.
     /// @param distributor The address of the distributor to validate.
     /// @return A boolean indicating whether the distributor is valid and active.
     function _isValidActiveDistributor(address distributor) private view returns (bool) {
