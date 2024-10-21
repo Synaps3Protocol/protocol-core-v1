@@ -9,11 +9,16 @@ import { GovernableUpgradeable } from "contracts/base/upgradeable/GovernableUpgr
 import { IDistributorVerifiable } from "contracts/interfaces/syndication/IDistributorVerifiable.sol";
 import { IRightsContentCustodian } from "contracts/interfaces/rightsmanager/IRightsContentCustodian.sol";
 
+import { C } from "contracts/libraries/Constants.sol";
+
 contract RightsContentCustodian is Initializable, UUPSUpgradeable, GovernableUpgradeable, IRightsContentCustodian {
     using EnumerableSet for EnumerableSet.AddressSet;
+
     /// Preventing accidental/malicious changes during contract reinitializations.
     IDistributorVerifiable public immutable DISTRIBUTOR_REFERENDUM;
 
+    /// @dev the max allowed amount of distributors per holder.
+    uint256 private maxDistributionRedundancy;
     /// @dev Mapping to store the custodial address for each content rights holder.
     mapping(address => EnumerableSet.AddressSet) private custodying;
     /// @dev Mapping to store a registry of rights holders associated with each distributor.
@@ -25,6 +30,7 @@ contract RightsContentCustodian is Initializable, UUPSUpgradeable, GovernableUpg
     event CustodialGranted(address indexed newCustody, address indexed rightsHolder);
     /// @dev Error that is thrown when a content hash is already registered.
     error InvalidInactiveDistributor();
+    error MaxRedundancyAllowedReached();
 
     /// @notice Modifier to check if the distributor is active and not blocked.
     /// @param distributor The distributor address to check.
@@ -47,6 +53,11 @@ contract RightsContentCustodian is Initializable, UUPSUpgradeable, GovernableUpg
     function initialize() public initializer {
         __UUPSUpgradeable_init();
         __Governable_init(msg.sender);
+        // the max amount of distributors per holder..
+        // we can use this attribute to control de "stress" in the network
+        // eg: if the network is growing we can adjust this attribute to allow more
+        // redundancy and more backend distributors..
+        maxDistributionRedundancy = 3;
     }
 
     /// @notice Grants custodial rights over the content held by a holder to a distributor.
@@ -55,7 +66,10 @@ contract RightsContentCustodian is Initializable, UUPSUpgradeable, GovernableUpg
     /// @param distributor The address of the distributor who will receive custodial rights.
     function grantCustody(address distributor) external onlyActiveDistributor(distributor) {
         // msg.sender expected to be the holder declaring his/her content custody..
-        // if it's first custody assignment prev = address(0)
+        if (custodying[msg.sender].length() >= maxDistributionRedundancy) {
+            revert MaxRedundancyAllowedReached();
+        }
+
         custodying[msg.sender].add(distributor);
         registry[distributor].add(msg.sender);
         emit CustodialGranted(distributor, msg.sender);
@@ -80,13 +94,56 @@ contract RightsContentCustodian is Initializable, UUPSUpgradeable, GovernableUpg
         return registry[distributor].values();
     }
 
+    /// @notice Selects a balanced custodian for a given content rights holder based on weighted randomness.
+    /// @dev This function behaves similarly to a load balancer in a network proxy system, where each custodian
+    /// acts like a server, and the function balances the requests (custody assignments) based on a weighted
+    /// probability distribution. Custodians with higher weights have a greater chance of being selected, much
+    /// like how a load balancer directs more traffic to servers with greater capacity.
+    ///
+    /// The randomness used here is not cryptographically secure, but sufficient for this non-critical operation.
+    /// The random number is generated using the block hash and the sender's address, and is used to determine
+    /// which custodian is selected.
+    /// @param holder The address of the content rights holder whose custodian is to be selected.
+    /// @return choosen The address of the selected custodian.
+    function getBalancedCustodian(address holder) public view returns (address choosen) {
+        uint256 i = 0;
+        uint256 acc = 0;
+        bytes32 blockHash = blockhash(block.number - 1);
+        uint256 random = uint256(keccak256(abi.encodePacked(blockHash, msg.sender))) % C.BPS_MAX;
+        uint256 n = custodying[holder].length();
+        // arithmetic sucesion
+        // eg: 3 = 1+2+3 =  n(n+1) / 2 = 6
+        uint256 s = (n * (n + 1)) / 2;
+
+        while (i < n) {
+            // Calculate the weight for each node based on its index (n - i), where the first node gets
+            // the highest weight, and the weights decrease as i increases.
+            // We multiply by BPS_MAX (usually 10,000 bps = 100%) to ensure precision, and divide by
+            // the total weight sum 's' to normalize.
+            // Formula: w = ((n - i) * BPS_MAX) / s
+            //
+            // In a categorical probability distribution, nodes with higher weights have a greater chance
+            // of being selected. The random value is checked against the cumulative weight.
+            // Example distribution:
+            // |------------50------------|--------30--------|-----20------|
+            // The first node (50%) has the highest chance, followed by the second (30%) and the third (20%).
+            // += weight for node i
+            acc += (((n - i) * C.BPS_MAX) / s);
+
+            if (acc >= random) {
+                choosen = custodying[holder].at(i);
+            }
+
+            // i can't overflow n
+            unchecked {
+                i++;
+            }
+        }
+    }
+
     /// @notice Retrieves the custodians' addresses for a given content holder.
     /// @param holder The address of the content rights holder whose custodians' addresses are being retrieved.
     function getCustodians(address holder) public view returns (address[] memory) {
-        // TODO collect the custody based on demand, round robin?
-        // TODO un metodo que haga un check o seleccion del custodio disponible.
-        // TODO VRF generation to select the next custodian?
-        // TODO if custodians are blocked we need an auxiliar mechanism and return the higher rated distributor
         return custodying[holder].values();
     }
 
