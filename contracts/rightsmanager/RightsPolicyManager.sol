@@ -130,7 +130,6 @@ contract RightsPolicyManager is
         // Deposits the total amount into the contract during policy registration.
         // The available amount is registered to the policy to enable future withdrawals.
         // IMPORTANT: The process of distributing funds to accounts should be handled within the policy logic.
-        // The 'safeDeposit' method is used for 'msg.sender' to deposit the total amount (a7t.total) in the specified currency (a7t.currency).
         msg.sender.safeDeposit(a7t.total, a7t.currency);
         // validate policy execution register funds and access policy..
         try IPolicy(policyAddress).exec(a7t) {
