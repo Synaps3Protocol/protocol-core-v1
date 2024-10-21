@@ -136,7 +136,7 @@ contract RightsContentCustodian is Initializable, UUPSUpgradeable, GovernableUpg
 
             // i can't overflow n
             unchecked {
-                i++;
+                ++i;
             }
         }
     }

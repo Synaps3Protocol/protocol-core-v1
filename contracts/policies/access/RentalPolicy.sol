@@ -84,6 +84,7 @@ contract RentalPolicy is BasePolicy {
         _sumLedgerEntry(agreement.holder, agreement.available, agreement.currency);
         // Register the rental for the account with the rental duration.
         _registerRent(agreement.account, contentId, content.rentalDuration);
+        // create attestation
     }
 
     function assess(bytes calldata data) external view returns (T.Terms memory) {
