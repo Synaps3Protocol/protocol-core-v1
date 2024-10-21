@@ -6,13 +6,13 @@ pragma solidity 0.8.26;
 interface IDistributorVerifiable {
     /// @notice Checks if the entity associated with the given identifier is active.
     /// @param distributor The address of the distributor to check status.
-    function isActive(address distributor) external returns (bool);
+    function isActive(address distributor) external view returns (bool);
 
     /// @notice Checks if the entity associated with the given identifier is waiting approval.
     /// @param distributor The address of the distributor to check status.
-    function isWaiting(address distributor) external returns (bool);
+    function isWaiting(address distributor) external view returns (bool);
 
     /// @notice Checks if the entity associated with the given identifier is blocked approval.
     /// @param distributor The address of the distributor to check status.
-    function isBlocked(address distributor) external returns (bool);
+    function isBlocked(address distributor) external view returns (bool);
 }

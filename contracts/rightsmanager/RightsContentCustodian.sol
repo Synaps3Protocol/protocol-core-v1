@@ -35,8 +35,7 @@ contract RightsContentCustodian is Initializable, UUPSUpgradeable, GovernableUpg
     /// @notice Modifier to check if the distributor is active and not blocked.
     /// @param distributor The distributor address to check.
     modifier onlyActiveDistributor(address distributor) {
-        if (distributor == address(0) || !DISTRIBUTOR_REFERENDUM.isActive(distributor))
-            revert InvalidInactiveDistributor();
+        if (!_isValidActiveDistributor(distributor)) revert InvalidInactiveDistributor();
         _;
     }
 
@@ -58,6 +57,14 @@ contract RightsContentCustodian is Initializable, UUPSUpgradeable, GovernableUpg
         // eg: if the network is growing we can adjust this attribute to allow more
         // redundancy and more backend distributors..
         maxDistributionRedundancy = 3;
+    }
+
+    /// @notice Checks if the given distributor is a custodian for the specified content holder and if the distributor is valid and active.
+    /// @dev The function verifies that the distributor is associated with the content holder and is currently valid and active.
+    /// @param holder The address of the content holder.
+    /// @param distributor The address of the distributor to check.
+    function isCustodian(address holder, address distributor) external view returns (bool) {
+        return custodying[holder].contains(distributor) && _isValidActiveDistributor(distributor);
     }
 
     /// @notice Grants custodial rights over the content held by a holder to a distributor.
@@ -104,7 +111,6 @@ contract RightsContentCustodian is Initializable, UUPSUpgradeable, GovernableUpg
     /// The random number is generated using the block hash and the sender's address, and is used to determine
     /// which custodian is selected.
     /// @param holder The address of the content rights holder whose custodian is to be selected.
-    /// @return choosen The address of the selected custodian.
     function getBalancedCustodian(address holder) public view returns (address choosen) {
         uint256 i = 0;
         uint256 acc = 0;
@@ -129,9 +135,10 @@ contract RightsContentCustodian is Initializable, UUPSUpgradeable, GovernableUpg
             // The first node (50%) has the highest chance, followed by the second (30%) and the third (20%).
             // += weight for node i
             acc += (((n - i) * C.BPS_MAX) / s);
-
-            if (acc >= random) {
-                choosen = custodying[holder].at(i);
+            address candidate = custodying[holder].at(i);
+            
+            if (acc >= random && _isValidActiveDistributor(candidate)) {
+                choosen = candidate;
             }
 
             // i can't overflow n
@@ -141,8 +148,11 @@ contract RightsContentCustodian is Initializable, UUPSUpgradeable, GovernableUpg
         }
     }
 
-    /// @notice Retrieves the custodians' addresses for a given content holder.
-    /// @param holder The address of the content rights holder whose custodians' addresses are being retrieved.
+    /// @notice Retrieves the addresses of the custodians assigned to a specific content holder.
+    /// @dev This function returns the addresses of 'all' custodians.
+    /// IMPORTANT: Be careful using this function since is not guaranteed that returned custodians are actives.
+    /// use `getBalancedCustodian` in place.
+    /// @param holder The address of the content holder whose custodians are being retrieved.
     function getCustodians(address holder) public view returns (address[] memory) {
         return custodying[holder].values();
     }
@@ -151,4 +161,12 @@ contract RightsContentCustodian is Initializable, UUPSUpgradeable, GovernableUpg
     /// @notice Only the owner can authorize the upgrade.
     /// @param newImplementation The address of the new implementation contract.
     function _authorizeUpgrade(address newImplementation) internal override onlyAdmin {}
+
+    /// @notice Checks if the distributor is valid and currently active.
+    /// @dev A valid and active distributor must have a non-zero address and be marked as active in the DISTRIBUTOR_REFERENDUM.
+    /// @param distributor The address of the distributor to validate.
+    /// @return A boolean indicating whether the distributor is valid and active.
+    function _isValidActiveDistributor(address distributor) private view returns (bool) {
+        return distributor != address(0) && DISTRIBUTOR_REFERENDUM.isActive(distributor);
+    }
 }
