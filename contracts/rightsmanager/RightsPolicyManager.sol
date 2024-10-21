@@ -132,17 +132,12 @@ contract RightsPolicyManager is
         // IMPORTANT: The process of distributing funds to accounts should be handled within the policy logic.
         // The 'safeDeposit' method is used for 'msg.sender' to deposit the total amount (a7t.total) in the specified currency (a7t.currency).
         msg.sender.safeDeposit(a7t.total, a7t.currency);
-
         // validate policy execution register funds and access policy..
         try IPolicy(policyAddress).exec(a7t) {
             // if-only-if policy execution is successful
             _sumLedgerEntry(policyAddress, a7t.available, a7t.currency);
             _registerPolicy(a7t.account, policyAddress);
             emit AccessGranted(a7t.account, proof, policyAddress);
-        } catch Error(string memory reason) {
-            // catch revert with a reason string argument..
-            // revert(string) and require(false, “reason”)
-            revert InvalidPolicyRegistration(reason);
         } catch (bytes memory custom) {
             // We currently don't have a custom error handler to manage this scenario.
             // We need a way to explicitly convey the reason why the policy execution failed.

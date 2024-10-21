@@ -61,7 +61,9 @@ contract SubscriptionPolicy is BasePolicy {
     function exec(T.Agreement calldata agreement) external onlyRM initialized {
         Package memory pkg = packages[agreement.holder];
         // we need to be sure the user paid for the total of the price..
+        if (pkg.subscriptionDuration == 0) revert InvalidExecution("Invalid not existing subscription");
         if (agreement.total < pkg.price) revert InvalidExecution("Insufficient funds for subscription");
+
         uint256 subTime = block.timestamp + pkg.subscriptionDuration;
         // subscribe to content owner's catalog (content package)
         subscriptions[agreement.account][agreement.holder] = subTime;

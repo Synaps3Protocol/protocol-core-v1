@@ -79,6 +79,7 @@ contract RightsAccessAgreement is Initializable, UUPSUpgradeable, GovernableUpgr
         uint256 available = total - deductions; // the total after fees
         // one agreement it's unique and cannot be reconstructed..
         // create a new immutable agreement to interact with register policy
+        // agreements aim to serve as attestation..
         T.Agreement memory agreement = T.Agreement(
             block.timestamp, // the agreement creation time
             total, // the transaction total amount
