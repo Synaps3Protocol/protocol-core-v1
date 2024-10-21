@@ -136,7 +136,7 @@ contract RightsContentCustodian is Initializable, UUPSUpgradeable, GovernableUpg
             // += weight for node i
             acc += (((n - i) * C.BPS_MAX) / s);
             address candidate = custodying[holder].at(i);
-            
+
             if (acc >= random && _isValidActiveDistributor(candidate)) {
                 choosen = candidate;
             }
