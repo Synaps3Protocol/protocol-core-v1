@@ -19,10 +19,10 @@ contract RightsContentCustodian is Initializable, UUPSUpgradeable, GovernableUpg
 
     /// @dev the max allowed amount of distributors per holder.
     uint256 private maxDistributionRedundancy;
-    /// @dev Mapping to store the custodial address for each content rights holder.
-    mapping(address => EnumerableSet.AddressSet) private custodying;
+    /// @dev Mapping to store the custodial (distributor) address for each content rights holder.
+    mapping(address => EnumerableSet.AddressSet) private custodiansByHolder;
     /// @dev Mapping to store a registry of rights holders associated with each distributor.
-    mapping(address => EnumerableSet.AddressSet) private registry;
+    mapping(address => EnumerableSet.AddressSet) private holdersUnderCustodian;
 
     /// @notice Emitted when distribution custodial rights are granted to a distributor.
     /// @param newCustody The new distributor custodial address.
@@ -59,37 +59,36 @@ contract RightsContentCustodian is Initializable, UUPSUpgradeable, GovernableUpg
         maxDistributionRedundancy = 3;
     }
 
-    /// @notice Checks if the given distributor is a custodian for the specified content holder and if the distributor is valid and active.
-    /// @dev The function verifies that the distributor is associated with the content holder and is currently valid and active.
-    /// @param holder The address of the content holder.
-    /// @param distributor The address of the distributor to check.
-    function isCustodian(address holder, address distributor) external view returns (bool) {
-        return custodying[holder].contains(distributor) && _isValidActiveDistributor(distributor);
-    }
-
     /// @notice Grants custodial rights over the content held by a holder to a distributor.
     /// @dev This function assigns custodial rights for the content held by a specific
     /// account to a designated distributor.
     /// @param distributor The address of the distributor who will receive custodial rights.
     function grantCustody(address distributor) external onlyActiveDistributor(distributor) {
         // msg.sender expected to be the holder declaring his/her content custody..
-        if (custodying[msg.sender].length() >= maxDistributionRedundancy) {
+        if (custodiansByHolder[msg.sender].length() >= maxDistributionRedundancy) {
             revert MaxRedundancyAllowedReached();
         }
 
-        custodying[msg.sender].add(distributor);
-        registry[distributor].add(msg.sender);
+        custodiansByHolder[msg.sender].add(distributor);
+        holdersUnderCustodian[distributor].add(msg.sender);
         emit CustodialGranted(distributor, msg.sender);
     }
 
-    /// @notice Retrieves the total number of content items in custody for a given distributor.
-    /// @param distributor The address of the distributor whose custodial content count is being requested.
-    function getCustodyCount(address distributor) public view returns (uint256) {
-        return registry[distributor].length();
+    /// @notice Checks if the given distributor is a custodian for the specified content holder and if the distributor is valid and active.
+    /// @dev The function verifies that the distributor is associated with the content holder and is currently valid and active.
+    /// @param holder The address of the content holder.
+    /// @param distributor The address of the distributor to check.
+    function isCustodian(address holder, address distributor) external view returns (bool) {
+        return custodiansByHolder[holder].contains(distributor) && _isValidActiveDistributor(distributor);
     }
 
-    /// @notice Retrieves the custody records associated with a specific distributor.
-    /// @dev This function returns an array of content IDs that the given distributor has in custody.
+    /// @notice Retrieves the total number of holders in custody for a given distributor.
+    /// @param distributor The address of the distributor whose custodial content count is being requested.
+    function getCustodyCount(address distributor) public view returns (uint256) {
+        return holdersUnderCustodian[distributor].length();
+    }
+
+    /// @notice Retrieves the holders under custody for a specific distributor.
     /// @param distributor The address of the distributor whose custody records are to be retrieved.
     function getCustodyRegistry(address distributor) public view returns (address[] memory) {
         // https://docs.openzeppelin.com/contracts/5.x/api/utils#EnumerableSet-values-struct-EnumerableSet-AddressSet-
@@ -98,7 +97,7 @@ contract RightsContentCustodian is Initializable, UUPSUpgradeable, GovernableUpg
         // Developers should keep in mind that this function has an unbounded cost,
         /// and using it as part of a state-changing function may render the function uncallable
         /// if the set grows to a point where copying to memory consumes too much gas to fit in a block.
-        return registry[distributor].values();
+        return holdersUnderCustodian[distributor].values();
     }
 
     /// @notice Selects a balanced custodian for a given content rights holder based on weighted randomness.
@@ -116,7 +115,7 @@ contract RightsContentCustodian is Initializable, UUPSUpgradeable, GovernableUpg
         uint256 acc = 0;
         bytes32 blockHash = blockhash(block.number - 1);
         uint256 random = uint256(keccak256(abi.encodePacked(blockHash, msg.sender))) % C.BPS_MAX;
-        uint256 n = custodying[holder].length();
+        uint256 n = custodiansByHolder[holder].length();
         // arithmetic sucesion
         // eg: 3 = 1+2+3 =  n(n+1) / 2 = 6
         uint256 s = (n * (n + 1)) / 2;
@@ -135,8 +134,7 @@ contract RightsContentCustodian is Initializable, UUPSUpgradeable, GovernableUpg
             // The first node (50%) has the highest chance, followed by the second (30%) and the third (20%).
             // += weight for node i
             acc += (((n - i) * C.BPS_MAX) / s);
-            address candidate = custodying[holder].at(i);
-
+            address candidate = custodiansByHolder[holder].at(i);
             if (acc >= random && _isValidActiveDistributor(candidate)) {
                 choosen = candidate;
             }
@@ -154,7 +152,7 @@ contract RightsContentCustodian is Initializable, UUPSUpgradeable, GovernableUpg
     /// use `getBalancedCustodian` in place.
     /// @param holder The address of the content holder whose custodians are being retrieved.
     function getCustodians(address holder) public view returns (address[] memory) {
-        return custodying[holder].values();
+        return custodiansByHolder[holder].values();
     }
 
     /// @dev Authorizes the upgrade of the contract.
