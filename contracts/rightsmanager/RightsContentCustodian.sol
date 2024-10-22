@@ -107,7 +107,7 @@ contract RightsContentCustodian is Initializable, UUPSUpgradeable, GovernableUpg
     /// like how a load balancer directs more traffic to servers with greater capacity.
     ///
     /// The randomness used here is not cryptographically secure, but sufficient for this non-critical operation.
-    /// The random number is generated using the block hash and the sender's address, and is used to determine
+    /// The random number is generated using the block hash and the holder's address, and is used to determine
     /// which custodian is selected.
     /// @param holder The address of the content rights holder whose custodian is to be selected.
     function getBalancedCustodian(address holder) public view returns (address choosen) {
@@ -133,7 +133,7 @@ contract RightsContentCustodian is Initializable, UUPSUpgradeable, GovernableUpg
             // |------------50------------|--------30--------|-----20------|
             // |          0 - 50          |      51 - 80     |   81 - 100  | <- acc hit range
             // The first node (50%) has the highest chance, followed by the second (30%) and the third (20%).
-            
+
             // += weight for node i
             acc += ((n - i) * C.BPS_MAX) / s;
             address candidate = custodiansByHolder[holder].at(i);

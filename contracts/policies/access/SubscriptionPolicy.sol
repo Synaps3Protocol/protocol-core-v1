@@ -47,18 +47,6 @@ contract SubscriptionPolicy is BasePolicy {
             );
     }
 
-    // En el setup del policy Que pueda definir distribución de fees? Supongamos en el caso de plataformas que estén interesadas 
-    // en desarrollar sobre el protocolo y quieran ganas fees? Indagar si existe un método o mecanismo ya conocido
-
-    // Usar un approach basado en hooks donde el owner apruebe la distribución de fees a N accounts con eip 712? Dentro del mismo policy?
-
-    // O usar hooks que se puedan agregar en el agreement con su dirección, digamos una lista de hooks a ejecutar en N order.
-
-    // HookDeDiatrivucion de fees
-    // Hook de verificación x, etc etc
-
-    // Ampliando así las capacidades de los policies?
-
     function setup(bytes calldata init) external initializer {
         (uint256 subscriptionDuration, uint256 price, address currency) = abi.decode(init, (uint256, uint256, address));
         // require(isValidCurrency(currency), "Subscription: Invalid currency.");
