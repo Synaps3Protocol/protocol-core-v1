@@ -30,6 +30,7 @@ contract RightsContentCustodian is Initializable, UUPSUpgradeable, GovernableUpg
     event CustodialGranted(address indexed newCustody, address indexed rightsHolder);
     /// @dev Error that is thrown when a content hash is already registered.
     error InvalidInactiveDistributor();
+    /// @dev Error that is thrown when a new granted distributor exceed the max redundancy.
     error MaxRedundancyAllowedReached();
 
     /// @notice Modifier to check if the distributor is active and not blocked.
@@ -113,7 +114,7 @@ contract RightsContentCustodian is Initializable, UUPSUpgradeable, GovernableUpg
         uint256 i = 0;
         uint256 acc = 0;
         bytes32 blockHash = blockhash(block.number - 1);
-        uint256 random = uint256(keccak256(abi.encodePacked(blockHash, msg.sender))) % C.BPS_MAX;
+        uint256 random = uint256(keccak256(abi.encodePacked(blockHash, holder))) % C.BPS_MAX;
         uint256 n = custodiansByHolder[holder].length();
         // arithmetic sucesion
         // eg: 3 = 1+2+3 =  n(n+1) / 2 = 6
@@ -130,9 +131,11 @@ contract RightsContentCustodian is Initializable, UUPSUpgradeable, GovernableUpg
             // of being selected. The random value is checked against the cumulative weight.
             // Example distribution:
             // |------------50------------|--------30--------|-----20------|
+            // |          0 - 50          |      51 - 80     |   81 - 100  | <- acc hit range
             // The first node (50%) has the highest chance, followed by the second (30%) and the third (20%).
+            
             // += weight for node i
-            acc += (((n - i) * C.BPS_MAX) / s);
+            acc += ((n - i) * C.BPS_MAX) / s;
             address candidate = custodiansByHolder[holder].at(i);
             if (acc >= random && _isValidActiveDistributor(candidate)) {
                 choosen = candidate;
@@ -146,8 +149,7 @@ contract RightsContentCustodian is Initializable, UUPSUpgradeable, GovernableUpg
     }
 
     /// @notice Retrieves the addresses of the custodians assigned to a specific content holder.
-    /// @dev This function returns the addresses of 'all' custodians.
-    /// IMPORTANT: Be careful using this function since is not guaranteed that returned custodians are actives.
+    /// @dev IMPORTANT: Be careful using this function since is not guaranteed that returned custodians are actives.
     /// use `getBalancedCustodian` in place.
     /// @param holder The address of the content holder whose custodians are being retrieved.
     function getCustodians(address holder) public view returns (address[] memory) {

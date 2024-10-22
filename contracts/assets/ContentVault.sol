@@ -64,6 +64,9 @@ contract ContentVault is Initializable, UUPSUpgradeable, GovernableUpgradeable, 
         secured[contentId] = encryptedContent;
     }
 
+    // TODO tests
+    // TODO dejar directo LIT? permitir multiples alg? establecer por un enum los tipos?
+
     /// @notice Function that authorizes the contract upgrade. It ensures that only the admin
     /// can authorize a contract upgrade to a new implementation.
     /// @param newImplementation The address of the new contract implementation.
