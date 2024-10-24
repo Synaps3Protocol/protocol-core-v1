@@ -5,6 +5,7 @@ pragma solidity 0.8.26;
 import { Initializable } from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import { AccessControlUpgradeable } from "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
 import { IGovernable } from "contracts/interfaces/IGovernable.sol";
+import { C } from "contracts/libraries/Constants.sol";
 
 /// @title GovernableUpgradeable
 /// @dev Abstract contract that provides governance functionality to upgradeable contracts.
@@ -15,25 +16,19 @@ abstract contract GovernableUpgradeable is Initializable, AccessControlUpgradeab
         address _governor;
     }
 
-    /// @notice The keccak256 hash representing the governance role.
-    /// @dev This constant is used to identify accounts with the governance permissions within the system.
-    bytes32 private constant GOV_ROLE = keccak256("GOV_ROLE");
-    /// @notice The keccak256 hash representing the moderator role.
-    /// @dev This constant is used to identify accounts with the moderator permissions within the system.
-    bytes32 private constant MOD_ROLE = keccak256("MOD_ROLE");
     // ERC-7201: Namespaced Storage Layout is another convention that can be used to avoid storage layout errors
     // keccak256(abi.encode(uint256(keccak256("watchit.governable.governor")) - 1)) & ~bytes32(uint256(0xff))
     bytes32 private constant GOVERNOR_SLOT = 0xbe22a97ce56bf984cece6021e328584abbd5b3cd394ccbe3b6884d525c48c400;
 
     /// @dev Modifier that checks if the caller has the GOB_ROLE.
     modifier onlyGov() {
-        _checkRole(GOV_ROLE);
+        _checkRole(C.GOV_ROLE);
         _;
     }
 
     /// @dev Modifier that checks if the caller has the MOD_ROLE.
     modifier onlyMod() {
-        _checkRole(MOD_ROLE);
+        _checkRole(C.MOD_ROLE);
         _;
     }
 
@@ -48,7 +43,7 @@ abstract contract GovernableUpgradeable is Initializable, AccessControlUpgradeab
     /// @param newGovernance The address to set as the new governor.
     function setGovernance(address newGovernance) external onlyAdmin {
         GovernorStorage storage $ = _getGovernorStorage();
-        _grantRole(GOV_ROLE, newGovernance);
+        _grantRole(C.GOV_ROLE, newGovernance);
         $._governor = newGovernance;
     }
 

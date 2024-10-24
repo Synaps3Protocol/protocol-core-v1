@@ -14,8 +14,8 @@ import { ITreasury } from "contracts/interfaces/economics/ITreasury.sol";
 import { IRightsPolicyManager } from "contracts/interfaces/rightsmanager/IRightsPolicyManager.sol";
 import { IRightsPolicyAuthorizer } from "contracts/interfaces/rightsmanager/IRightsPolicyAuthorizer.sol";
 import { IRightsAccessAgreement } from "contracts/interfaces/rightsmanager/IRightsAccessAgreement.sol";
-import { TreasuryHelper } from "contracts/libraries/TreasuryHelper.sol";
-import { FeesHelper } from "contracts/libraries/FeesHelper.sol";
+import { TreasuryOps } from "contracts/libraries/TreasuryOps.sol";
+import { FeesOps } from "contracts/libraries/FeesOps.sol";
 import { T } from "contracts/libraries/Types.sol";
 
 contract RightsPolicyManager is
@@ -27,8 +27,8 @@ contract RightsPolicyManager is
     IRightsPolicyManager
 {
     using EnumerableSet for EnumerableSet.AddressSet;
-    using TreasuryHelper for address;
-    using FeesHelper for uint256;
+    using TreasuryOps for address;
+    using FeesOps for uint256;
 
     /// Preventing accidental/malicious changes during contract reinitializations.
     ITreasury public immutable TREASURY;

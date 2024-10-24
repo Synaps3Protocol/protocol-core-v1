@@ -8,11 +8,11 @@ import { UUPSUpgradeable } from "@openzeppelin/contracts-upgradeable/proxy/utils
 
 import { IRightsAccessAgreement } from "contracts/interfaces/rightsmanager/IRightsAccessAgreement.sol";
 import { ITollgate } from "contracts/interfaces/economics/ITollgate.sol";
-import { FeesHelper } from "contracts/libraries/FeesHelper.sol";
+import { FeesOps } from "contracts/libraries/FeesOps.sol";
 import { T } from "contracts/libraries/Types.sol";
 
 contract RightsAccessAgreement is Initializable, UUPSUpgradeable, GovernableUpgradeable, IRightsAccessAgreement {
-    using FeesHelper for uint256;
+    using FeesOps for uint256;
     /// KIM: any initialization here is ephimeral and not included in bytecode..
     /// so the code within a logic contract’s constructor or global declaration
     /// will never be executed in the context of the proxy’s state

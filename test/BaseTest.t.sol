@@ -5,7 +5,8 @@ import { DeployTreasury } from "script/01_Deploy_Economics_Treasury.s.sol";
 import { DeployTollgate } from "script/02_Deploy_Economics_Tollgate.s.sol";
 import { DeployToken } from "script/03_Deploy_Economics_Token.s.sol";
 import { DeployDistributor } from "script/04_Deploy_Syndication_Distributor.s.sol";
-import { DeployDistributorReferendum } from "script/06_Deploy_Syndication_DistributorReferendum.s.sol";
+import { DeployContentReferendum } from "script/05_Deploy_Assets_ContentReferendum.s.sol";
+import { DeployDistributorReferendum } from "script/08_Deploy_Syndication_DistributorReferendum.s.sol";
 
 import { IGovernable } from "contracts/interfaces/IGovernable.sol";
 
@@ -51,7 +52,13 @@ contract BaseTest is Test {
         return distDeployer.run();
     }
 
-    // 05_DeployDistributorReferendum
+    // 05_DeployContentReferendum
+    function deployContentReferendum() public returns (address) {
+        DeployContentReferendum contentReferendumDeployer = new DeployContentReferendum();
+        return contentReferendumDeployer.run();
+    }
+
+    // 08_DeployDistributorReferendum
     function deployDistributorReferendum(address treasury, address tollgate) public returns (address) {
         // set default admin as deployer..
         DeployDistributorReferendum distReferendumDeployer = new DeployDistributorReferendum();

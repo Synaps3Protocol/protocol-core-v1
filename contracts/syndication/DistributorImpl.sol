@@ -5,16 +5,12 @@ import { Initializable } from "@openzeppelin/contracts-upgradeable/proxy/utils/I
 import { ERC165Upgradeable } from "@openzeppelin/contracts-upgradeable/utils/introspection/ERC165Upgradeable.sol";
 import { OwnableUpgradeable } from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import { IDistributor } from "contracts/interfaces/syndication/IDistributor.sol";
-import { TreasuryHelper } from "contracts/libraries/TreasuryHelper.sol";
+import { TreasuryOps } from "contracts/libraries/TreasuryOps.sol";
 
 /// @title Content Distributor Implementation
 /// @notice This contract handles all the necessary logic for managing content distributors.
-/// @dev This contract inherits from Ownable, ERC165, and implements the IDistributor interface.
-/// It also uses the TreasuryHelper library for balance and withdrawal operations.
-/// This contract is designed to be used without requiring upgrades, and it follows the ERC-7201
-/// Namespaced Storage Layout for better compatibility with upgradeable contracts.
 contract DistributorImpl is Initializable, ERC165Upgradeable, OwnableUpgradeable, IDistributor {
-    using TreasuryHelper for address;
+    using TreasuryOps for address;
 
     /// @notice The distribution endpoint URL.
     string private endpoint;

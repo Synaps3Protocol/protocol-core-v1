@@ -2,14 +2,14 @@
 pragma solidity 0.8.26;
 
 import { BasePolicy } from "contracts/policies/BasePolicy.sol";
-import { TreasuryHelper } from "contracts/libraries/TreasuryHelper.sol";
+import { TreasuryOps } from "contracts/libraries/TreasuryOps.sol";
 import { T } from "contracts/libraries/Types.sol";
 
 /// @title RentalPolicy
 /// @notice This contract implements the IPolicy interface to manage content rental terms.
 /// It allows for registering content with rental durations and prices and handles the rental process.
 contract RentalPolicy is BasePolicy {
-    using TreasuryHelper for address;
+    using TreasuryOps for address;
 
     /// @dev Structure to hold rental details for content.
     struct Content {
@@ -48,7 +48,7 @@ contract RentalPolicy is BasePolicy {
                 "becomes accessible to the user for the specified duration,\n ",
                 "after which access is automatically revoked.\n ",
                 "4) Secure revenue distribution: The rental fee is transferred directly to the",
-                "content holder through the TreasuryHelper, ensuring secure and \n",
+                "content holder through the TreasuryOps , ensuring secure and \n",
                 "timely payments. This policy provides a straightforward and transparent way for content",
                 "owners to generate revenue from their digital assets \n",
                 "while giving users temporary access to premium content."

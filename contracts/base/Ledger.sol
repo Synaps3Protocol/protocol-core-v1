@@ -2,16 +2,15 @@
 // NatSpec format convention - https://docs.soliditylang.org/en/v0.8.24/natspec-format.html
 pragma solidity 0.8.26;
 
-import { ILedger } from "contracts/interfaces/ILedger.sol";
+import { ILedgerVerifiable } from "contracts/interfaces/ILedgerVerifiable.sol";
 
 /// @title Ledger
 /// @notice Abstract contract to manage and store ledger entries for different accounts and currencies.
 /// @dev This contract defines internal functions to manipulate ledger balances and retrieve account data.
-abstract contract Ledger is ILedger {
+abstract contract Ledger is ILedgerVerifiable {
     // Mapping to store balances per account and currency.
     mapping(address => mapping(address => uint256)) private ledger;
 
-    /// @inheritdoc ILedger
     /// @notice Retrieves the registered currency balance for the specified account.
     /// @param account The address of the account to retrieve the balance for.
     /// @param currency The address of the currency to retrieve the balance for.

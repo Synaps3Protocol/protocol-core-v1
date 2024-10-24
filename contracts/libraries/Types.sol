@@ -14,6 +14,17 @@ library T {
         RMA // Rights Management Agreement
     }
 
+    /// @title VaultType
+    /// @notice Enum representing the different access or cryptographic methods available.
+    /// This enum covers traditional cryptographic algorithms as well as decentralized key
+    /// and access management systems.
+    enum VaultType {
+        __,
+        LIT,
+        RSA,
+        EC
+    }
+
     /// @title Agreement
     /// @dev Represents an agreement between multiple parties regarding the distribution and management of content.
     /// @notice This struct captures the total amount involved, net amount after deductions, distribution fees,

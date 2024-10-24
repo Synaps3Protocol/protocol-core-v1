@@ -2,12 +2,12 @@
 
 pragma solidity 0.8.26;
 
-import { Ledger } from "contracts/base/Ledger.sol";
-import { IPolicy } from "contracts/interfaces/policies/IPolicy.sol";
+import { ReentrancyGuard } from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 import { IContentOwnership } from "contracts/interfaces/assets/IContentOwnership.sol";
 import { IRightsPolicyManager } from "contracts/interfaces/rightsmanager/IRightsPolicyManager.sol";
 import { IBalanceWithdrawable } from "contracts/interfaces/IBalanceWithdrawable.sol";
-import { ReentrancyGuard } from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
+import { IPolicy } from "contracts/interfaces/policies/IPolicy.sol";
+import { Ledger } from "contracts/base/Ledger.sol";
 
 /// @title BasePolicy
 /// @notice This abstract contract serves as a base for policies that manage access to content.

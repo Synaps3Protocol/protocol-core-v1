@@ -27,28 +27,47 @@ contract ContentReferendum is
     IContentReferendum
 {
     using EnumerableSet for EnumerableSet.UintSet;
+
+    /// @dev Mapping that tracks content submissions for each address.
+    /// Each address maps to a set of content IDs (UintSet) that have been submitted by that address.
     mapping(address => EnumerableSet.UintSet) private submissions;
-    // This role is granted to any representant trusted account. eg: Verified Accounts, etc.
-    bytes32 private constant VERIFIED_ROLE = keccak256("VERIFIED_ROLE");
+
     /// @dev Event emitted when a content is submitted for referendum.
-    /// @param contentId The ID of the content submitted.
+    /// @param contentId The ID of the content that has been submitted.
     /// @param initiator The address of the initiator who submitted the content.
-    event Submitted(address initiator, uint256 indexed contentId);
+    /// @param timestamp The timestamp indicating when the content was submitted.
+    event Submitted(address indexed initiator, uint256 timestamp, uint256 contentId);
+
     /// @dev Event emitted when a content is approved.
-    /// @param contentId The ID of the content approved.
-    event Approved(uint256 indexed contentId);
+    /// @param contentId The ID of the content that has been approved.
+    /// @param timestamp The timestamp indicating when the content was approved.
+    event Approved(uint256 contentId, uint256 timestamp);
+
     /// @dev Event emitted when a content is revoked.
-    /// @param contentId The ID of the content revoked.
-    event Revoked(uint256 indexed contentId);
-    /// @notice Emitted when the verified role is granted to an account.
+    /// @param contentId The ID of the content that has been revoked.
+    /// @param timestamp The timestamp indicating when the content was revoked.
+    event Revoked(uint256 contentId, uint256 timestamp);
+
+    /// @dev Event emitted when a content is rejected.
+    /// @param contentId The ID of the content that has been rejected.
+    /// @param timestamp The timestamp indicating when the content was revoked.
+    event Rejected(uint256 contentId, uint256 timestamp);
+
+    /// @notice Event emitted when the verified role is granted to an account.
     /// @param account The address of the account that has been granted the verified role.
     event VerifiedRoleGranted(address indexed account);
 
-    /// @notice Emitted when the verified role is revoked from an account.
-    /// @param account The address of the account from which the verified role has been revoked.
+    /// @notice Event emitted when the verified role is revoked from an account.
+    /// @param account The address of the account that has lost the verified role.
     event VerifiedRoleRevoked(address indexed account);
-    // Error to be thrown when the submission initiator is invalid.
+
+    /// @dev Error thrown when the content submission is invalid (e.g., incorrect or missing data).
+    error InvalidSubmissionContent();
+
+    /// @dev Error thrown when the signature of the content submission is invalid.
     error InvalidSubmissionSignature();
+
+    /// @dev Error thrown when the initiator of the submission is invalid (e.g., not authorized to submit content).
     error InvalidSubmissionInitiator();
 
     /// @dev Constructor that disables initializers to prevent the implementation contract from being initialized.
@@ -72,7 +91,7 @@ contract ContentReferendum is
     /// @param account The address of the account to verify.
     /// @dev Only governance is allowed to grant the role.
     function grantVerifiedRole(address account) external onlyGov {
-        _grantRole(VERIFIED_ROLE, account);
+        _grantRole(C.VERIFIED_ROLE, account);
         emit VerifiedRoleGranted(account);
     }
 
@@ -80,7 +99,7 @@ contract ContentReferendum is
     /// @param account The address of the account to revoke.
     /// @dev Only governance is allowed to revoke the role.
     function revokeVerifiedRole(address account) external onlyGov {
-        _revokeRole(VERIFIED_ROLE, account);
+        _revokeRole(C.VERIFIED_ROLE, account);
         emit VerifiedRoleRevoked(account);
     }
 
@@ -120,23 +139,30 @@ contract ContentReferendum is
     function isApproved(address initiator, uint256 contentId) public view returns (bool) {
         bool approved = isActive(contentId);
         bool validAccount = submissions[initiator].contains(contentId);
-        bool verifiedRole = hasRole(VERIFIED_ROLE, initiator);
+        bool verifiedRole = hasRole(C.VERIFIED_ROLE, initiator);
         // is approved with a valid submission account or is verified account..
         return (approved && validAccount) || verifiedRole;
     }
 
-    /// @notice Reject a content proposition.
+    /// @notice Revoke an approved content.
     /// @param contentId The ID of the content to be revoked.
+    function revoke(uint256 contentId) public onlyGov {
+        _revoke(contentId); // bundled check-effects-interaction
+        emit Revoked(contentId, block.timestamp);
+    }
+
+    /// @notice Reject a content proposition.
+    /// @param contentId The ID of the content to be rejected.
     function reject(uint256 contentId) public onlyGov {
-        _revoke(contentId);
-        emit Revoked(contentId);
+        _block(contentId); // bundled check-effects-interaction
+        emit Rejected(contentId, block.timestamp);
     }
 
     /// @notice Approves a content proposition.
     /// @param contentId The ID of the content to be approved.
     function approve(uint256 contentId) public onlyGov {
-        _approve(contentId);
-        emit Approved(contentId);
+        _approve(contentId); // bundled check-effects-interaction
+        emit Approved(contentId, block.timestamp);
     }
 
     /// @notice Function that should revert when msg.sender is not authorized to upgrade the contract.
@@ -149,8 +175,8 @@ contract ContentReferendum is
     /// @param contentId The unique identifier of the content being submitted.
     /// @param initiator The address of the entity initiating the content submission.
     function _submit(uint256 contentId, address initiator) private {
-        _register(contentId);
+        _register(contentId); // bundled check-effects-interaction
         submissions[initiator].add(contentId);
-        emit Submitted(initiator, contentId);
+        emit Submitted(initiator, block.timestamp, contentId);
     }
 }
