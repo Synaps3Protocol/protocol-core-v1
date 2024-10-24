@@ -127,7 +127,6 @@ abstract contract BasePolicy is Ledger, Governable, ReentrancyGuard, IPolicy, IB
     /// @notice Determines whether access is granted based on the provided criteria.
     /// @dev This function evaluates the provided criteria and returns true if access is granted, false otherwise.
     /// This method must be overidden by policies that require custom criteria evaluation.
-    /// @param criteria The data containing the criteria for evaluating access.
     function isAccessGranted(bytes memory) internal view virtual returns (bool) {
         // by default we don't need to check any additional information...
         return true;
