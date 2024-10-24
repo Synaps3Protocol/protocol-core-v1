@@ -11,7 +11,7 @@ import { C } from "contracts/libraries/Constants.sol";
 /// @notice This contract manages roles for governance, moderators, and admin permissions.
 abstract contract Governable is AccessControl, IGovernable {
     /// @notice Address of the current governor.
-    address governor;
+    address public governor;
 
     /// @dev Modifier that checks if the caller has the GOB_ROLE (Governor Role).
     modifier onlyGov() {

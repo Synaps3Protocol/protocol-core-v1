@@ -34,6 +34,6 @@ interface IPolicy {
     /// @notice Verifies whether the on-chain access terms are satisfied for an account.
     /// @dev The function checks if the provided account complies with the policy terms.
     /// @param account The address of the user whose access is being verified.
-    /// @param criteria The data containing the criteria for evaluating access (could include user info, content ID, etc.).
+    /// @param criteria The data containing the criteria for evaluating access.
     function isCompliant(address account, bytes calldata criteria) external view returns (bool);
 }

@@ -13,7 +13,6 @@ import { IRightsPolicyManager } from "contracts/interfaces/rightsmanager/IRights
 import { IBalanceWithdrawable } from "contracts/interfaces/IBalanceWithdrawable.sol";
 import { IPolicy } from "contracts/interfaces/policies/IPolicy.sol";
 import { Ledger } from "contracts/base/Ledger.sol";
-import { T } from "contracts/libraries/Types.sol";
 
 /// @title BasePolicy
 /// @notice This abstract contract serves as a base for policies that manage access to content.
@@ -88,7 +87,8 @@ abstract contract BasePolicy is Ledger, Governable, ReentrancyGuard, IPolicy, IB
     /// @notice Verifies whether the on-chain access terms are satisfied for an account.
     /// @dev The function checks if the provided account complies with the policy terms.
     /// @param account The address of the user whose access is being verified.
-    /// @param criteria The data containing the criteria for evaluating access (could include user info, content ID, etc.)
+    /// @param criteria The data containing the criteria for evaluating access
+    /// eg. could include user info, content ID, etc.
     function isCompliant(address account, bytes calldata criteria) external view returns (bool) {
         uint64 attestationId = attestations[account];
         if (attestationId == 0) return false;
@@ -126,9 +126,9 @@ abstract contract BasePolicy is Ledger, Governable, ReentrancyGuard, IPolicy, IB
 
     /// @notice Determines whether access is granted based on the provided criteria.
     /// @dev This function evaluates the provided criteria and returns true if access is granted, false otherwise.
-    /// This method must be overidden by policies that requier custom criteria evaluation.
-    /// @param criteria The data containing the criteria for evaluating access (could include user info, content ID, etc.).
-    function isAccessGranted(bytes memory criteria) internal view virtual returns (bool) {
+    /// This method must be overidden by policies that require custom criteria evaluation.
+    /// @param criteria The data containing the criteria for evaluating access.
+    function isAccessGranted(bytes memory) internal view virtual returns (bool) {
         // by default we don't need to check any additional information...
         return true;
     }
