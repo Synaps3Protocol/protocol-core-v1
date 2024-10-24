@@ -30,11 +30,12 @@ library T {
     /// @notice This struct captures the total amount involved, net amount after deductions, distribution fees,
     /// and the relevant addresses involved in the agreement.
     struct Agreement {
-        uint256 time; // the agreement creation date
+        uint256 createdAt; // the agreement creation date
+        uint256 expireAt; // The agreement expiration time
         uint256 total; // the transaction total amount
         uint256 available; // the remaining amount after fees
         address currency; // the currency used in transaction
-        address account; // the account related to agreement
+        address recipient; // the account related to agreement
         address holder; // the content rights holder
         bytes payload; // any additional data needed during agreement execution
         bool active; // the agreement status

@@ -41,18 +41,14 @@ contract RightsPolicyManager is
     /// @notice Emitted when access rights are granted to an account based on a policy.
     /// @param account The address of the account granted access.
     /// @param proof A unique identifier for the agreement or transaction.
-    /// @param policy The policy contract address governing the access.
-    event AccessGranted(address indexed account, bytes32 indexed proof, address indexed policy);
+    /// @param attestation The attestaton id to track the access.
+    event AccessGranted(address indexed account, bytes32 indexed proof, uint64 attestation);
 
     /// @dev Error thrown when attempting to operate on a policy that has not
     /// been delegated rights for the specified content.
     /// @param policy The address of the policy contract attempting to access rights.
     /// @param holder The content rights holder.
     error InvalidNotRightsDelegated(address policy, address holder);
-
-    /// @dev Error thrown when a policy registration fails to execute.
-    /// @param reason A string providing the reason for the failure.
-    error InvalidPolicyRegistration(string reason);
 
     /// @custom:oz-upgrades-unsafe-allow constructor
     constructor(address treasury, address rightsAgreement, address rightsAuthorizer) {
@@ -95,15 +91,30 @@ contract RightsPolicyManager is
         emit FundsWithdrawn(recipient, amount, currency);
     }
 
-    /// @notice Retrieves the first active policy for a specific account and content id in LIFO order.
+    /// @notice Verifies if the policy is active for the specified account based on the criteria provided.
     /// @param account The address of the account to evaluate.
-    /// @param contentId The ID of the content to evaluate policies for.
-    function getActivePolicy(address account, uint256 contentId) public view returns (bool, address) {
+    /// @param policyAddress The address of the policy being checked.
+    /// @param criteria The data used to evaluate if the policy is active.
+    function isActivePolicy(
+        address account,
+        address policyAddress,
+        bytes calldata criteria
+    ) public view returns (bool) {
+        // verify if the policy were registered for account address and comply with the criteria
+        IPolicy policy = IPolicy(policyAddress);
+        bool registeredPolicy = acl[account].contains(policyAddress);
+        return registeredPolicy && policy.isCompliant(account, criteria);
+    }
+
+    /// @notice Retrieves the first active policy for a specific account in LIFO order.
+    /// @param account The address of the account to evaluate.
+    /// @param criteria The data used to evaluate if the policy is active.
+    function getActivePolicy(address account, bytes calldata criteria) public view returns (bool, address) {
         address[] memory policies = getPolicies(account);
         uint256 i = policies.length - 1;
 
         while (true) {
-            bool comply = _verifyPolicy(account, contentId, policies[i]);
+            bool comply = isActivePolicy(account, policies[i], criteria);
             if (comply) return (true, policies[i]);
             if (i == 0) break;
             // i == 0 avoids underflow, we can safely decrement using unchecked
@@ -120,32 +131,28 @@ contract RightsPolicyManager is
     /// @dev This function verifies the policy's authorization, executes the agreement and registers the policy.
     /// @param proof The unique identifier of the agreement to be enforced.
     /// @param policyAddress The address of the policy contract managing the agreement.
-    function registerPolicy(bytes32 proof, address policyAddress) public payable nonReentrant {
+    function registerPolicy(
+        bytes32 proof,
+        address policyAddress
+    ) public payable nonReentrant returns (uint64 attestationId) {
         // retrieves the agreement and marks it as settled..
-        T.Agreement memory a7t = RIGTHS_AGREEMENT.settleAgreement(proof);
+        T.Agreement memory agreement = RIGTHS_AGREEMENT.settleAgreement(proof);
         // only authorized policies by holder could be registered..
-        if (!RIGHTS_AUTHORIZER.isPolicyAuthorized(policyAddress, a7t.holder))
-            revert InvalidNotRightsDelegated(policyAddress, a7t.holder);
+        if (!RIGHTS_AUTHORIZER.isPolicyAuthorized(policyAddress, agreement.holder))
+            revert InvalidNotRightsDelegated(policyAddress, agreement.holder);
 
         // Deposits the total amount into the contract during policy registration.
-        // The available amount is registered to the policy to enable future withdrawals.
         // IMPORTANT: The process of distributing funds to accounts should be handled within the policy logic.
-        msg.sender.safeDeposit(a7t.total, a7t.currency);
-        // validate policy execution register funds and access policy..
-        try IPolicy(policyAddress).exec(a7t) {
-            // if-only-if policy execution is successful
-            _sumLedgerEntry(policyAddress, a7t.available, a7t.currency);
-            _registerPolicy(a7t.account, policyAddress);
-            emit AccessGranted(a7t.account, proof, policyAddress);
-        } catch (bytes memory custom) {
-            // We currently don't have a custom error handler to manage this scenario.
-            // We need a way to explicitly convey the reason why the policy execution failed.
-            // Refer to the Solidity GitHub issue: https://github.com/ethereum/solidity/issues/11278
-            if (bytes4(keccak256("InvalidExecution(string)")) == bytes4(custom)) {
-                (, string memory reason) = abi.decode(custom, (bytes4, string));
-                revert InvalidPolicyRegistration(reason);
-            }
-        }
+        msg.sender.safeDeposit(agreement.total, agreement.currency);
+        // execute policy to get an attestation as receipt of the agreement.
+        attestationId = IPolicy(policyAddress).enforce(agreement);
+
+        // After successful policy execution:
+        // The available amount is registered to the policy to enable future withdrawals.
+        // The policy is registered to the account..
+        _sumLedgerEntry(policyAddress, agreement.available, agreement.currency);
+        _registerPolicy(agreement.recipient, policyAddress);
+        emit AccessGranted(agreement.recipient, proof, attestationId);
     }
 
     /// @notice Retrieves the list of policys associated with a specific account and content ID.
@@ -168,21 +175,6 @@ contract RightsPolicyManager is
         // an account could be bounded to different policies to access contents
         acl[account].add(policy);
     }
-
-    /// @notice Verifies whether access is allowed for a specific account and content based on a given license.
-    /// @param account The address of the account to verify access for.
-    /// @param contentId The ID of the content for which access is being checked.
-    /// @param policy The address of the license policy contract used to verify access.
-    function _verifyPolicy(address account, uint256 contentId, address policy) private view returns (bool) {
-        // if not registered license policy..
-        if (policy == address(0)) return false;
-        IPolicy policy_ = IPolicy(policy);
-        return policy_.comply(account, contentId);
-    }
-
-    // TODO potential improvement getChainedPolicies
-    // allowing concatenate policies to evaluate compliance...
-    // This approach supports complex access control scenarios where multiple factors need to be considered.
 
     /// @dev Authorizes the upgrade of the contract.
     /// @notice Only the owner can authorize the upgrade.

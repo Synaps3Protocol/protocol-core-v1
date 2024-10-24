@@ -31,9 +31,6 @@ contract RightsAccessAgreement is Initializable, UUPSUpgradeable, GovernableUpgr
     event AgreementCreated(bytes32 indexed proof);
     // @notice Thrown when the provided proof is invalid.
     error InvalidAgreementProof();
-    /// @dev Error thrown when a proposed agreement fails to execute.
-    /// @param reason A string providing the reason for the failure.
-    error NoAgreement(string reason);
 
     /// @custom:oz-upgrades-unsafe-allow constructor
     constructor(address tollgate) {
@@ -75,21 +72,21 @@ contract RightsAccessAgreement is Initializable, UUPSUpgradeable, GovernableUpgr
         bytes calldata payload
     ) public returns (bytes32) {
         uint256 deductions = _calcFees(total, currency);
-        if (deductions > total) revert NoAgreement("The fees are too high.");
         uint256 available = total - deductions; // the total after fees
         // one agreement it's unique and cannot be reconstructed..
         // create a new immutable agreement to interact with register policy
         // agreements aim to serve as attestation..
-        T.Agreement memory agreement = T.Agreement(
-            block.timestamp, // the agreement creation time
-            total, // the transaction total amount
-            available, // the remaining amount after fees
-            currency, // the currency used in transaction
-            account, // the account related to agreement
-            holder, // the content rights holder
-            payload, // any additional data needed during agreement execution
-            true // the agreement status, true for active, false for closed.
-        );
+        T.Agreement memory agreement = T.Agreement({
+            createdAt: block.timestamp, // the agreement creation time
+            expireAt: block.timestamp + 12 hours, // default expire agreement after 12 hours
+            total: total, // the transaction total amount
+            available: available, // the remaining amount after fees
+            currency: currency, // the currency used in transaction
+            recipient: account, // the account related to agreement
+            holder: holder, // the content rights holder
+            payload: payload, // any additional data needed during agreement execution
+            active: true // the agreement status, true for active, false for closed.
+        });
 
         // keccak256(abi.encodePacked(....))
         bytes32 proof = _createProof(agreement);
@@ -101,7 +98,8 @@ contract RightsAccessAgreement is Initializable, UUPSUpgradeable, GovernableUpgr
     /// @dev Verifies the existence and active status of the agreement in storage.
     /// @param proof The unique identifier of the agreement to validate.
     function isValidProof(bytes32 proof) public view returns (bool) {
-        return agreements[proof].active;
+        T.Agreement memory agreement = agreements[proof];
+        return agreement.active && block.timestamp < agreement.expireAt;
     }
 
     /// @notice Creates and stores a new agreement proof.
@@ -112,10 +110,10 @@ contract RightsAccessAgreement is Initializable, UUPSUpgradeable, GovernableUpgr
         // yes, we can encode full struct as abi.encode with extra overhead..
         bytes32 proof = keccak256(
             abi.encodePacked(
-                agreement.time,
+                agreement.createdAt,
                 agreement.total,
                 agreement.holder,
-                agreement.account,
+                agreement.recipient,
                 agreement.currency,
                 agreement.payload
             )

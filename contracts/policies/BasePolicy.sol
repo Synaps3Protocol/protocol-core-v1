@@ -2,20 +2,30 @@
 
 pragma solidity 0.8.26;
 
+import { ISP } from "@ethsign/sign-protocol-evm/src/interfaces/ISP.sol";
+import { Attestation } from "@ethsign/sign-protocol-evm/src/models/Attestation.sol";
+import { DataLocation } from "@ethsign/sign-protocol-evm/src/models/DataLocation.sol";
+
+import { Governable } from "contracts/base//Governable.sol";
 import { ReentrancyGuard } from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 import { IContentOwnership } from "contracts/interfaces/assets/IContentOwnership.sol";
 import { IRightsPolicyManager } from "contracts/interfaces/rightsmanager/IRightsPolicyManager.sol";
 import { IBalanceWithdrawable } from "contracts/interfaces/IBalanceWithdrawable.sol";
 import { IPolicy } from "contracts/interfaces/policies/IPolicy.sol";
 import { Ledger } from "contracts/base/Ledger.sol";
+import { T } from "contracts/libraries/Types.sol";
 
 /// @title BasePolicy
 /// @notice This abstract contract serves as a base for policies that manage access to content.
-abstract contract BasePolicy is Ledger, ReentrancyGuard, IPolicy, IBalanceWithdrawable {
+abstract contract BasePolicy is Ledger, Governable, ReentrancyGuard, IPolicy, IBalanceWithdrawable {
     // Immutable public variables to store the addresses of the Rights Manager and Ownership.
+    ISP public immutable SPI_INSTANCE;
     IRightsPolicyManager public immutable RIGHTS_POLICY_MANAGER;
     IContentOwnership public immutable CONTENT_OWNERSHIP;
+
     bool private setupReady;
+    uint64 public schemaId;
+    mapping(address => uint64) private attestations;
 
     /// @dev Error thrown when attempting to access content without proper authorization.
     error InvalidContentHolder();
@@ -26,6 +36,7 @@ abstract contract BasePolicy is Ledger, ReentrancyGuard, IPolicy, IBalanceWithdr
 
     /// @dev This error is thrown when there is a failure in the execution process.
     error InvalidExecution(string reason);
+    error InvalidAttestation();
 
     /// @dev This error is thrown when there is an issue with the initial setup or configuration.
     error InvalidSetup(string reason);
@@ -61,9 +72,36 @@ abstract contract BasePolicy is Ledger, ReentrancyGuard, IPolicy, IBalanceWithdr
         _;
     }
 
-    constructor(address rightsPolicyManager, address contentOwnership) {
-        RIGHTS_POLICY_MANAGER = IRightsPolicyManager(rightsPolicyManager); // Assign the Rights Manager address.
-        CONTENT_OWNERSHIP = IContentOwnership(contentOwnership); // Assign the Ownership address.
+    constructor(address rightsPolicyManager, address contentOwnership, address spiAddress) Governable(msg.sender) {
+        SPI_INSTANCE = ISP(spiAddress);
+        RIGHTS_POLICY_MANAGER = IRightsPolicyManager(rightsPolicyManager);
+        CONTENT_OWNERSHIP = IContentOwnership(contentOwnership);
+    }
+
+    /// @notice Sets a new schema ID for the attestation process.
+    /// @dev Can only be called by an account with the `DEFAULT_ADMIN_ROLE`.
+    /// @param schemaId_ The new schema ID to be set.
+    function setSchemaID(uint64 schemaId_) external onlyAdmin {
+        schemaId = schemaId_;
+    }
+
+    /// @notice Verifies whether the on-chain access terms are satisfied for an account.
+    /// @dev The function checks if the provided account complies with the policy terms.
+    /// @param account The address of the user whose access is being verified.
+    /// @param criteria The data containing the criteria for evaluating access (could include user info, content ID, etc.)
+    function isCompliant(address account, bytes calldata criteria) external view returns (bool) {
+        uint64 attestationId = attestations[account];
+        if (attestationId == 0) return false;
+
+        // check attestation conditions..
+        Attestation memory a = SPI_INSTANCE.getAttestation(attestationId);
+        // is the same expected criteria as the registered in attestation?
+        // is the attestation expired?
+        // who emmited the attestation?
+        if (keccak256(criteria) != keccak256(a.data)) return false;
+        if (a.validUntil > 0 && block.timestamp > a.validUntil) return false;
+        if (a.attester != address(this)) return false;
+        return isAccessGranted(criteria);
     }
 
     /// @notice Withdraws tokens from the contract to a specified recipient's address.
@@ -84,6 +122,47 @@ abstract contract BasePolicy is Ledger, ReentrancyGuard, IPolicy, IBalanceWithdr
     /// @param contentId The content ID to retrieve the holder.
     function getHolder(uint256 contentId) public view returns (address) {
         return CONTENT_OWNERSHIP.ownerOf(contentId); // Returns the registered owner.
+    }
+
+    /// @notice Determines whether access is granted based on the provided criteria.
+    /// @dev This function evaluates the provided criteria and returns true if access is granted, false otherwise.
+    /// This method must be overidden by policies that requier custom criteria evaluation.
+    /// @param criteria The data containing the criteria for evaluating access (could include user info, content ID, etc.).
+    function isAccessGranted(bytes memory criteria) internal view virtual returns (bool) {
+        // by default we don't need to check any additional information...
+        return true;
+    }
+
+    /// @dev Internal function to commit an agreement and create an attestation.
+    /// The attestation will be stored on-chain and will have a validity period.
+    /// @param recipient The list of recipients who will receive the attestation.
+    /// @param expireAt The timestamp at which the attestation will expire.
+    /// @param data Any data to transport in attestation payload.
+    function _commit(address recipient, uint256 expireAt, bytes memory data) internal returns (uint64) {
+        bytes[] memory recipients = new bytes[](1);
+        recipients[0] = abi.encode(recipient);
+
+        // build an attestation
+        // based on the policy agreement
+        Attestation memory a = Attestation({
+            schemaId: schemaId,
+            linkedAttestationId: 0,
+            attestTimestamp: 0,
+            revokeTimestamp: 0,
+            validUntil: uint64(expireAt),
+            // The attester expected always is the policy
+            attester: address(this),
+            dataLocation: DataLocation.ONCHAIN,
+            recipients: recipients,
+            revoked: false,
+            data: data
+        });
+
+        // Call the SPI instance to register the attestation in the system
+        // SPI_INSTANCE.attest() stores the attestation and returns an ID for tracking
+        uint64 attestationId = SPI_INSTANCE.attest(a, "", "", "");
+        attestations[recipient] = attestationId;
+        return attestationId;
     }
 
     // /// @dev Distributes the amount based on the provided shares array.
