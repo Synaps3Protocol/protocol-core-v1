@@ -21,13 +21,11 @@ contract SubscriptionPolicy is BasePolicy {
     // Mapping from content holder (address) to their subscription package details.
     mapping(address => Package) private packages;
 
-    // Mapping to track subscription expiration for each user (account) and content holder.
-    mapping(address => mapping(address => uint256)) private subscriptions;
-
-    /// @notice Constructor for the SubscriptionPolicy contract.
-    /// @param rmAddress Address of the Rights Manager (RM) contract.
-    /// @param ownershipAddress Address of the Ownership contract.
-    constructor(address rmAddress, address ownershipAddress) BasePolicy(rmAddress, ownershipAddress) {}
+    constructor(
+        address rmAddress,
+        address ownershipAddress,
+        address spiAddress
+    ) BasePolicy(rmAddress, ownershipAddress, spiAddress) {}
 
     /// @notice Returns the name of the policy.
     function name() external pure returns (string memory) {
@@ -47,9 +45,8 @@ contract SubscriptionPolicy is BasePolicy {
             );
     }
 
-    function setup(bytes calldata init) external initializer {
+    function initialize(bytes calldata init) external initializer {
         (uint256 subscriptionDuration, uint256 price, address currency) = abi.decode(init, (uint256, uint256, address));
-        // require(isValidCurrency(currency), "Subscription: Invalid currency.");
         if (subscriptionDuration == 0) revert InvalidSetup("Subscription: Invalid subscription duration.");
         if (price == 0) revert InvalidSetup("Subscription: Invalid subscription price.");
         // expected content rights holder sending subscription params..
@@ -58,26 +55,25 @@ contract SubscriptionPolicy is BasePolicy {
 
     // this function should be called only by RM and its used to establish
     // any logic or validation needed to set the authorization parameters
-    function exec(T.Agreement calldata agreement) external onlyRM initialized {
+    function enforce(T.Agreement calldata agreement) external onlyRM initialized returns (uint64) {
         Package memory pkg = packages[agreement.holder];
         // we need to be sure the user paid for the total of the price..
         if (pkg.subscriptionDuration == 0) revert InvalidExecution("Invalid not existing subscription");
         if (agreement.total < pkg.price) revert InvalidExecution("Insufficient funds for subscription");
 
-        uint256 subTime = block.timestamp + pkg.subscriptionDuration;
         // subscribe to content owner's catalog (content package)
-        subscriptions[agreement.account][agreement.holder] = subTime;
+        uint256 subExpire = block.timestamp + pkg.subscriptionDuration;
         _sumLedgerEntry(agreement.holder, agreement.available, agreement.currency);
+        // the agreement is stored in an attestation signed registry
+        // the recipients is the list of benefitians of the agreement
+        // we create a data payload as the relation between the holder and the recipient..
+        bytes memory data = abi.encode(agreement.holder, agreement.recipient);
+        return _commit(agreement.recipient, subExpire, data);
     }
 
-    function assess(bytes calldata data) external view returns (T.Terms memory) {
-        address holder = abi.decode(data, (address));
+    function resolveTerms(bytes calldata criteria) external view returns (T.Terms memory) {
+        address holder = abi.decode(criteria, (address));
         Package memory pkg = packages[holder];
         return T.Terms(pkg.currency, pkg.price, "");
-    }
-
-    function comply(address account, uint256 contentId) external view override returns (bool) {
-        address holder = getHolder(contentId);
-        return block.timestamp <= subscriptions[account][holder];
     }
 }

@@ -20,7 +20,7 @@ contract Treasury is Initializable, UUPSUpgradeable, GovernableUpgradeable, ITre
     /// @dev Should be called only once during deployment.
     function initialize() public initializer {
         vaultAddress = address(this);
-        poolAddress = address(this);
+        poolAddress = vaultAddress;
     }
 
     /// @notice Sets a new pool address. Restricted to governance.

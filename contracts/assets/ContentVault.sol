@@ -8,14 +8,16 @@ import { GovernableUpgradeable } from "contracts/base/upgradeable/GovernableUpgr
 import { IContentOwnership } from "contracts/interfaces/assets/IContentOwnership.sol";
 import { IContentVault } from "contracts/interfaces/assets/IContentVault.sol";
 
-/// @title ContentVault
-/// @notice This contract stores encrypted content and ensures only the rightful
-/// content holder can access or modify the content.
+import { T } from "contracts/libraries/Types.sol";
+
+/// @notice This contract is designed as a secure and decentralized area to exchange complementary data related to
+/// content access, such as encrypted keys, license keys, or metadata. It does not store the actual content itself,
+/// but manages the complementary data necessary to access that content.
 contract ContentVault is Initializable, UUPSUpgradeable, GovernableUpgradeable, IContentVault {
     /// Preventing accidental/malicious changes during contract reinitializations.
     IContentOwnership public immutable CONTENT_OWNSERSHIP;
     /// @dev Mapping to store encrypted content, identified by content ID.
-    mapping(uint256 => bytes) private secured;
+    mapping(uint256 => mapping(T.VaultType => bytes)) private secured;
     /// @notice Error thrown when a non-owner tries to modify or access the content.
     error InvalidContentHolder();
 
@@ -46,26 +48,18 @@ contract ContentVault is Initializable, UUPSUpgradeable, GovernableUpgradeable, 
 
     /// @notice Retrieves the encrypted content for a given content ID.
     /// @param contentId The identifier of the content.
-    /// @dev This function is used to access encrypted data stored in the vault,
-    /// which can include various types of encrypted information such as LIT chain data or shared key-encrypted data.
-    function getContent(uint256 contentId) public view returns (bytes memory) {
-        // In common scenarios, only custodians are allowed to access the secured content.
-        // However, this does not prevent access since all data on a smart contract is publicly readable.
-        return secured[contentId];
+    /// @param vault The vault type used to retrieve the content (e.g., LIT, RSA, EC).
+    function getContent(uint256 contentId, T.VaultType vault) public view returns (bytes memory) {
+        return secured[contentId][vault];
     }
 
     /// @notice Stores encrypted content in the vault under a specific content ID.
     /// @param contentId The identifier of the content.
-    /// @param encryptedContent The encrypted content to store, represented as bytes.
-    /// @dev Only the rightful content holder can set or modify the content.
-    /// This allows for dynamic secure storage, handling encrypted data like public key encrypted content or
-    /// hash-encrypted data.
-    function setContent(uint256 contentId, bytes memory encryptedContent) public onlyHolder(contentId) {
-        secured[contentId] = encryptedContent;
+    /// @param vault The vault type to associate with the encrypted content (e.g., LIT, RSA, EC).
+    /// @param data The secure content to store, represented as bytes.
+    function setContent(uint256 contentId, T.VaultType vault, bytes memory data) public onlyHolder(contentId) {
+        secured[contentId][vault] = data;
     }
-
-    // TODO tests
-    // TODO dejar directo LIT? permitir multiples alg? establecer por un enum los tipos?
 
     /// @notice Function that authorizes the contract upgrade. It ensures that only the admin
     /// can authorize a contract upgrade to a new implementation.

@@ -16,4 +16,8 @@ interface IContentRegistrable {
     /// @notice Rejects a proposition in the referendum.
     /// @param contentId The ID of the content to be rejected.
     function reject(uint256 contentId) external;
+
+    /// @notice Revoke an approved content.
+    /// @param contentId The ID of the content to be revoked.
+    function revoke(uint256 contentId) external;
 }

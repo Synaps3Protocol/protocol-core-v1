@@ -8,16 +8,20 @@ import { Initializable } from "@openzeppelin/contracts-upgradeable/proxy/utils/I
  * @title QuorumUpgradeable
  * @dev Abstract contract for managing registration status in a Finite State Machine (FSM).
  *
- *   Default (0: Pending)
- *      |
- *      v
- *   Register (1: Waiting)
- *      |               \
- *      v                v
- *   Quit (0: Pending)  Approve (2: Active)
- *                          |
- *                          v
- *                      Revoke (3: Blocked)
+ *                Default
+ *              (0: Pending)
+ *                    |
+ *                    v
+ *                 Register
+ *       ------ (1: Waiting) -------
+ *      /              |            \
+ *     v               v             v
+ *    Quit          Approve        Block
+ * (0: Pending)   (2: Active)   (3: Blocked)
+ *                     |
+ *                     v
+ *                   Revoke
+ *                (3: Blocked)
  */
 abstract contract QuorumUpgradeable is Initializable {
     /// @notice Enum to represent the status of an entity.
@@ -60,12 +64,21 @@ abstract contract QuorumUpgradeable is Initializable {
         return $._status[entry];
     }
 
-    /// @notice Internal function to revoke an entity's approval.
-    /// @dev The revoke operation is expected after the entry was approved first.
+    /// @notice Internal function to revoke an entity's approval status.
+    /// @dev This operation should only be called after the entry has been approved.
     /// @param entry The ID of the entity.
     function _revoke(uint256 entry) internal {
         RegistryStorage storage $ = _getRegistryStorage();
         if (_status(entry) != Status.Active) revert InvalidInactiveState();
+        $._status[entry] = Status.Blocked;
+    }
+
+    /// @notice Internal function to block an entity before approval.
+    /// @dev This operation should be called when the entry is in a pending state, before being approved.
+    /// @param entry The ID of the entity.
+    function _block(uint256 entry) internal {
+        RegistryStorage storage $ = _getRegistryStorage();
+        if (_status(entry) != Status.Waiting) revert NotWaitingApproval();
         $._status[entry] = Status.Blocked;
     }
 

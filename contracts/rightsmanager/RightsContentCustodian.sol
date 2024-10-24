@@ -57,6 +57,7 @@ contract RightsContentCustodian is Initializable, UUPSUpgradeable, GovernableUpg
         // we can use this attribute to control de "stress" in the network
         // eg: if the network is growing we can adjust this attribute to allow more
         // redundancy and more backend distributors..
+        // TODO add method to set this attribute
         maxDistributionRedundancy = 3;
     }
 
@@ -149,8 +150,7 @@ contract RightsContentCustodian is Initializable, UUPSUpgradeable, GovernableUpg
     }
 
     /// @notice Retrieves the addresses of the custodians assigned to a specific content holder.
-    /// @dev IMPORTANT: Be careful using this function since is not guaranteed that returned custodians are actives.
-    /// use `getBalancedCustodian` in place.
+    /// @dev Is not guaranteed that returned custodians are actives. use `getBalancedCustodian` in place.
     /// @param holder The address of the content holder whose custodians are being retrieved.
     function getCustodians(address holder) public view returns (address[] memory) {
         return custodiansByHolder[holder].values();

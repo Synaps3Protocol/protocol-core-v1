@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.26;
 
-/// @title Dynamic Bytes Library
+/// @title Dynamic Bytes Ops Library
 /// @notice Provides functions to convert bytes to other data types.
 /// @dev Contains functions to convert a bytes array to an address with proper alignment.
-library BytesHelper {
+library BytesOps {
     /// @notice Converts a dynamic bytes array to an address.
     /// @param _bytes The bytes array to convert.
     function toAddress(bytes memory _bytes) internal pure returns (address addr) {

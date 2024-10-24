@@ -4,9 +4,9 @@ pragma solidity >=0.8.24;
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
-/// @title TreasuryHelper
+/// @title TreasuryOps
 /// @notice Library to assist with treasury operations.
-library TreasuryHelper {
+library TreasuryOps {
     using SafeERC20 for IERC20;
 
     /// @notice Error to be thrown when a transfer fails.

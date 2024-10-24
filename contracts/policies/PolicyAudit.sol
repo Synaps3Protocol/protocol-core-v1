@@ -58,6 +58,8 @@ contract PolicyAudit is Initializable, UUPSUpgradeable, GovernableUpgradeable, Q
         __Governable_init(msg.sender);
     }
 
+    // TODO list of validf policies
+
     /// @notice Submits an audit request for the given policy.
     /// This registers the policy for audit within the system.
     /// @param policy The address of the policy to be submitted for auditing.

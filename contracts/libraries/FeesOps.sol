@@ -3,7 +3,9 @@ pragma solidity 0.8.26;
 
 import { C } from "contracts/libraries/Constants.sol";
 
-library FeesHelper {
+/// @title FeesOps
+/// @notice Library for handling fee-related calculations and operations.
+library FeesOps {
     /// @notice Checks if the given fee value is expressed in basis points (bps).
     /// @param fees The fee amount to check.
     function isBasePoint(uint256 fees) internal pure returns (bool) {

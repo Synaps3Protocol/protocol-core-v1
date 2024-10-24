@@ -3,11 +3,11 @@
 pragma solidity 0.8.26;
 
 import { Initializable } from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
-import { ILedger } from "contracts/interfaces/ILedger.sol";
+import { ILedgerVerifiable } from "contracts/interfaces/ILedgerVerifiable.sol";
 
 /// @title LedgerUpgradeable
 /// @notice Abstract contract for managing accounts ledger that support upgradability.
-abstract contract LedgerUpgradeable is Initializable, ILedger {
+abstract contract LedgerUpgradeable is Initializable, ILedgerVerifiable {
     /// @custom:storage-location erc7201:ledgerupgradeable
     /// @dev The LedgerStorage struct holds the ledger mapping.
     struct LedgerStorage {
@@ -18,7 +18,6 @@ abstract contract LedgerUpgradeable is Initializable, ILedger {
     /// The `LEDGER_SLOT` constant is used to point to the location of the storage.
     bytes32 private constant LEDGER_SLOT = 0xcb711bda070b7bbcc2b711ef3993cc17677144f4419b29e303bef375c5f40f00;
 
-    /// @inheritdoc ILedger
     /// @notice Retrieves the ledger balance of an account for a specific currency.
     /// @param account The address of the account whose balance is being queried.
     /// @param currency The address of the currency to retrieve the balance for.
