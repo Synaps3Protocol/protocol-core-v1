@@ -42,7 +42,7 @@ contract RightsPolicyManager is
     /// @param account The address of the account granted access.
     /// @param proof A unique identifier for the agreement or transaction.
     /// @param attestation The attestaton id to track the access.
-    event AccessGranted(address indexed account, bytes32 indexed proof, uint64 attestation);
+    event PolicyRegistered(address indexed account, bytes32 indexed proof, uint64 attestation);
 
     /// @dev Error thrown when attempting to operate on a policy that has not
     /// been delegated rights for the specified content.
@@ -91,30 +91,37 @@ contract RightsPolicyManager is
         emit FundsWithdrawn(recipient, amount, currency);
     }
 
-    /// @notice Verifies if the policy is active for the specified account based on the criteria provided.
-    /// @param account The address of the account to evaluate.
-    /// @param policyAddress The address of the policy being checked.
-    /// @param criteria The data used to evaluate if the policy is active.
-    function isActivePolicy(
-        address account,
-        address policyAddress,
-        bytes calldata criteria
-    ) public view returns (bool) {
+    /// @notice Verifies if a specific policy is compliant for the provided account and criteria.
+    /// @param account The address of the user whose compliance is being evaluated.
+    /// @param holder The holder of the rights to validate the relationship with.
+    /// @param policyAddress The address of the policy contract to check compliance against.
+    function isCompliantPolicy(address account, address holder, address policyAddress) public view returns (bool) {
         // verify if the policy were registered for account address and comply with the criteria
         IPolicy policy = IPolicy(policyAddress);
         bool registeredPolicy = acl[account].contains(policyAddress);
-        return registeredPolicy && policy.isCompliant(account, criteria);
+        return registeredPolicy && policy.isCompliant(account, holder);
+    }
+
+    /// @notice Verifies if a specific policy is compliant for the provided account and criteria.
+    /// @param account The address of the user whose compliance is being evaluated.
+    /// @param contentId The identifier of the content to validate the policy status.
+    /// @param policyAddress The address of the policy contract to check compliance against.
+    function isActivePolicy(address account, uint256 contentId, address policyAddress) public view returns (bool) {
+        // verify if the policy were registered for account address and comply with the criteria
+        IPolicy policy = IPolicy(policyAddress);
+        bool registeredPolicy = acl[account].contains(policyAddress);
+        return registeredPolicy && policy.isAccessAllowed(account, contentId);
     }
 
     /// @notice Retrieves the first active policy for a specific account in LIFO order.
     /// @param account The address of the account to evaluate.
-    /// @param criteria The data used to evaluate if the policy is active.
-    function getActivePolicy(address account, bytes calldata criteria) public view returns (bool, address) {
+    /// @param contentId The identifier of the content to validate the policy status.
+    function getActivePolicy(address account, uint256 contentId) public view returns (bool, address) {
         address[] memory policies = getPolicies(account);
         uint256 i = policies.length - 1;
 
         while (true) {
-            bool comply = isActivePolicy(account, policies[i], criteria);
+            bool comply = isActivePolicy(account, contentId, policies[i]);
             if (comply) return (true, policies[i]);
             if (i == 0) break;
             // i == 0 avoids underflow, we can safely decrement using unchecked
@@ -152,7 +159,7 @@ contract RightsPolicyManager is
         // The policy is registered to the account..
         _sumLedgerEntry(policyAddress, agreement.available, agreement.currency);
         _registerPolicy(agreement.recipient, policyAddress);
-        emit AccessGranted(agreement.recipient, proof, attestationId);
+        emit PolicyRegistered(agreement.recipient, proof, attestationId);
     }
 
     /// @notice Retrieves the list of policys associated with a specific account and content ID.

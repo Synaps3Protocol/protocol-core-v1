@@ -1,15 +1,12 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.26;
 
-import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import { BasePolicy } from "contracts/policies/BasePolicy.sol";
 import { T } from "contracts/libraries/Types.sol";
 
 /// @title SubscriptionPolicy
 /// @notice Implements a subscription-based content access policy.
 contract SubscriptionPolicy is BasePolicy {
-    using SafeERC20 for IERC20;
 
     /// @dev Structure to define a subscription package.
     struct Package {
@@ -66,14 +63,18 @@ contract SubscriptionPolicy is BasePolicy {
         _sumLedgerEntry(agreement.holder, agreement.available, agreement.currency);
         // the agreement is stored in an attestation signed registry
         // the recipients is the list of benefitians of the agreement
-        // we create a data payload as the relation between the holder and the recipient..
-        bytes memory data = abi.encode(agreement.holder, agreement.recipient);
-        return _commit(agreement.recipient, subExpire, data);
+        return _commit(agreement, subExpire);
     }
 
     function resolveTerms(bytes calldata criteria) external view returns (T.Terms memory) {
         address holder = abi.decode(criteria, (address));
         Package memory pkg = packages[holder];
         return T.Terms(pkg.currency, pkg.price, "");
+    }
+
+    function isAccessValid(address, uint256) internal pure override returns (bool) {
+        // since the subscription is enforced directly by attestment expiration
+        // by default, we don't need to add any additional check here
+        return true;
     }
 }

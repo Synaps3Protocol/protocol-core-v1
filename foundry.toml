@@ -11,11 +11,12 @@ cache_path = 'cache'
 gas_reports = ["*"]
 # offline = false
 ffi = true
-ast = true
+# ast = true
 build_info = true
 optimizer = true
 optimizer_runs = 20_000
 auto_detect_solc = true
+auto_detect_remappings = true
 evm_version = "cancun"
 extra_output = ["storageLayout"]
 fs_permissions = [{ access = "read", path = "./"}]

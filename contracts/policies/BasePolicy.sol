@@ -13,6 +13,7 @@ import { IRightsPolicyManager } from "contracts/interfaces/rightsmanager/IRights
 import { IBalanceWithdrawable } from "contracts/interfaces/IBalanceWithdrawable.sol";
 import { IPolicy } from "contracts/interfaces/policies/IPolicy.sol";
 import { Ledger } from "contracts/base/Ledger.sol";
+import { T } from "contracts/libraries/Types.sol";
 
 /// @title BasePolicy
 /// @notice This abstract contract serves as a base for policies that manage access to content.
@@ -85,11 +86,10 @@ abstract contract BasePolicy is Ledger, Governable, ReentrancyGuard, IPolicy, IB
     }
 
     /// @notice Verifies whether the on-chain access terms are satisfied for an account.
-    /// @dev The function checks if the provided account complies with the policy terms.
+    /// @dev The function checks if the provided account complies with the attestation.
     /// @param account The address of the user whose access is being verified.
-    /// @param criteria The data containing the criteria for evaluating access
-    /// eg. could include user info, content ID, etc.
-    function isCompliant(address account, bytes calldata criteria) external view returns (bool) {
+    /// @param holder The holder of the rights to validate the relationship with.
+    function isCompliant(address account, address holder) public view returns (bool) {
         uint64 attestationId = attestations[account];
         if (attestationId == 0) return false;
 
@@ -98,10 +98,24 @@ abstract contract BasePolicy is Ledger, Governable, ReentrancyGuard, IPolicy, IB
         // is the same expected criteria as the registered in attestation?
         // is the attestation expired?
         // who emmited the attestation?
-        if (keccak256(criteria) != keccak256(a.data)) return false;
         if (a.validUntil > 0 && block.timestamp > a.validUntil) return false;
         if (a.attester != address(this)) return false;
-        return isAccessGranted(criteria);
+        // we need to check if the original expected criteria
+        bytes memory criteria = abi.encode(holder, account);
+        return keccak256(criteria) == keccak256(a.data);
+    }
+
+    /// @notice Determines whether access is granted based on the provided contentId.
+    /// @dev This function evaluates the provided contentId and returns true if access is granted, false otherwise.
+    /// @param account The address of the user whose access is being verified.
+    /// @param contentId The identifier of the content for which access is being checked.
+    function isAccessAllowed(address account, uint256 contentId) public view returns (bool) {
+        address holder = getHolder(contentId);
+        if (holder == address(0)) return false;
+        // recreate the expected criteria to validate attestation
+        // if an attestation match means that the contract emmited an access
+        // we need to check if the original expected criteria
+        return isCompliant(account, holder) && isAccessValid(account, contentId);
     }
 
     /// @notice Withdraws tokens from the contract to a specified recipient's address.
@@ -124,22 +138,16 @@ abstract contract BasePolicy is Ledger, Governable, ReentrancyGuard, IPolicy, IB
         return CONTENT_OWNERSHIP.ownerOf(contentId); // Returns the registered owner.
     }
 
-    /// @notice Determines whether access is granted based on the provided criteria.
-    /// @dev This function evaluates the provided criteria and returns true if access is granted, false otherwise.
-    /// This method must be overidden by policies that require custom criteria evaluation.
-    function isAccessGranted(bytes memory) internal view virtual returns (bool) {
-        // by default we don't need to check any additional information...
-        return true;
-    }
-
     /// @dev Internal function to commit an agreement and create an attestation.
-    /// The attestation will be stored on-chain and will have a validity period.
-    /// @param recipient The list of recipients who will receive the attestation.
+    ///      The attestation will be stored on-chain and will have a validity period.
+    /// @param agreement The agreement structure containing necessary details for the attestation.
     /// @param expireAt The timestamp at which the attestation will expire.
-    /// @param data Any data to transport in attestation payload.
-    function _commit(address recipient, uint256 expireAt, bytes memory data) internal returns (uint64) {
+    function _commit(T.Agreement memory agreement, uint256 expireAt) internal returns (uint64) {
+        // the recipient to register the attestation
         bytes[] memory recipients = new bytes[](1);
-        recipients[0] = abi.encode(recipient);
+        recipients[0] = abi.encode(agreement.recipient);
+        // we create a data payload as the relation between the holder and the recipient..
+        bytes memory data = abi.encode(agreement.holder, agreement.recipient);
 
         // build an attestation
         // based on the policy agreement
@@ -160,9 +168,15 @@ abstract contract BasePolicy is Ledger, Governable, ReentrancyGuard, IPolicy, IB
         // Call the SPI instance to register the attestation in the system
         // SPI_INSTANCE.attest() stores the attestation and returns an ID for tracking
         uint64 attestationId = SPI_INSTANCE.attest(a, "", "", "");
-        attestations[recipient] = attestationId;
+        attestations[agreement.recipient] = attestationId;
         return attestationId;
     }
+
+    /// @notice Abstract method to validate access based on the policy's specific context.
+    /// @dev Each policy must override this function to define its own validation logic.
+    /// @param account The address of the user whose access is being validated.
+    /// @param contentId The identifier of the content for which access is being validated.
+    function isAccessValid(address account, uint256 contentId) internal view virtual returns (bool);
 
     // /// @dev Distributes the amount based on the provided shares array.
     // /// @param amount The total amount to be allocated.

@@ -34,6 +34,12 @@ interface IPolicy {
     /// @notice Verifies whether the on-chain access terms are satisfied for an account.
     /// @dev The function checks if the provided account complies with the policy terms.
     /// @param account The address of the user whose access is being verified.
-    /// @param criteria The data containing the criteria for evaluating access.
-    function isCompliant(address account, bytes calldata criteria) external view returns (bool);
+    /// @param holder The holder of the rights to validate the relationship with.
+    function isCompliant(address account, address holder) external view returns (bool);
+
+    /// @notice Determines whether access is granted based on the provided contentId.
+    /// @dev This function evaluates the provided contentId and returns true if access is granted, false otherwise.
+    /// @param account The address of the user whose access is being verified.
+    /// @param contentId The identifier of the content for which access is being checked.
+    function isAccessAllowed(address account, uint256 contentId) external view returns (bool);
 }
