@@ -1,41 +1,66 @@
+## Foundry
 
-[![CI](https://github.com/Synaps3Protocol/protocol-core-v1/actions/workflows/ci.yaml/badge.svg)](https://github.com/Synaps3Protocol/protocol-core-v1/actions/workflows/ci.yaml)
-[![COV](https://raw.githubusercontent.com/Synaps3Protocol/protocol-core-v1/main/.github/workflows/cov-badge.svg)](https://github.com/Synaps3Protocol/protocol-core-v1/actions/workflows/ci.yaml)
+**Foundry is a blazing fast, portable and modular toolkit for Ethereum application development written in Rust.**
 
-# Synapse Protocol
-Welcome! 🎉 Synapse is redefining how creative IP distribution works. Whether it's films, music, or games, we ensure creators stay in control of their work while earning fairly. With the power of blockchain, Synapse eliminates middlemen and automates licensing, payments, and content delivery through smart contracts. This lets creators focus on their craft, knowing their content is distributed safely and transparently.
+Foundry consists of:
 
-![image](https://github.com/user-attachments/assets/0fa8ca72-e17a-48dd-a1ca-7f8cbe6d3d9f)
+-   **Forge**: Ethereum testing framework (like Truffle, Hardhat and DappTools).
+-   **Cast**: Swiss army knife for interacting with EVM smart contracts, sending transactions and getting chain data.
+-   **Anvil**: Local Ethereum node, akin to Ganache, Hardhat Network.
+-   **Chisel**: Fast, utilitarian, and verbose solidity REPL.
 
+## Documentation
 
+https://book.getfoundry.sh/
 
-## Join the Fun
-Found a bug? Got a cool idea? Open a pull request or start a discussion on GitHub. We’d love to build this together!
+## Usage
 
-## Development
+### Build
 
-Some available capabilities for dev support:
+```shell
+$ forge build
+```
 
-* **Run Tests**: `make test`  
-* **Compile Contracts**: `make compile`  
-* **Force Compile Contracts**: `make force-compile`  
-* **Test Coverage Report**: `make coverage`  
-* **Generate Security Report**: `make secreport`  
-* **Run Security Tests**: `make sectest`  
-* **Format Code**: `make format`  
-* **Lint Code**: `make lint`   
+### Test
 
-Note: Run `make help` to see additional capabilities.
+```shell
+$ forge test
+```
 
-## References
+### Format
 
-- Code Maturity: https://github.com/crytic/building-secure-contracts/blob/master/development-guidelines/code_maturity.md
+```shell
+$ forge fmt
+```
 
-- Style Guide: https://docs.soliditylang.org/en/latest/style-guide.html
+### Gas Snapshots
 
+```shell
+$ forge snapshot
+```
 
+### Anvil
 
+```shell
+$ anvil
+```
 
+### Deploy
 
+```shell
+$ forge script script/Counter.s.sol:CounterScript --rpc-url <your_rpc_url> --private-key <your_private_key>
+```
 
+### Cast
 
+```shell
+$ cast <subcommand>
+```
+
+### Help
+
+```shell
+$ forge --help
+$ anvil --help
+$ cast --help
+```
