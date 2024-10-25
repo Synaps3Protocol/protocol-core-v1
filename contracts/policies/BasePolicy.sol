@@ -101,7 +101,7 @@ abstract contract BasePolicy is Ledger, Governable, ReentrancyGuard, IPolicy, IB
         if (a.validUntil > 0 && block.timestamp > a.validUntil) return false;
         if (a.attester != address(this)) return false;
         // we need to check if the original expected criteria
-        bytes memory criteria = abi.encode(holder, account);
+        bytes memory criteria = abi.encode(account, holder);
         return keccak256(criteria) == keccak256(a.data);
     }
 
@@ -112,7 +112,7 @@ abstract contract BasePolicy is Ledger, Governable, ReentrancyGuard, IPolicy, IB
     function isAccessAllowed(address account, uint256 contentId) public view returns (bool) {
         address holder = getHolder(contentId);
         if (holder == address(0)) return false;
-        // recreate the expected criteria to validate attestation
+        // recreate the expected criteria to validate attestation (agreement)
         // if an attestation match means that the contract emmited an access
         // we need to check if the original expected criteria
         return isCompliant(account, holder) && isAccessValid(account, contentId);
@@ -147,7 +147,7 @@ abstract contract BasePolicy is Ledger, Governable, ReentrancyGuard, IPolicy, IB
         bytes[] memory recipients = new bytes[](1);
         recipients[0] = abi.encode(agreement.recipient);
         // we create a data payload as the relation between the holder and the recipient..
-        bytes memory data = abi.encode(agreement.holder, agreement.recipient);
+        bytes memory data = abi.encode(agreement.recipient, agreement.holder);
 
         // build an attestation
         // based on the policy agreement
