@@ -35,7 +35,7 @@ contract BaseTest is Test {
     function deployTollgate() public returns (address) {
         // set default admin as deployer..
         DeployTollgate tollgateDeployer = new DeployTollgate();
-        return tollgateDeployer.run();
+        return tollgateDeployer.run(true);
     }
 
     // 03_DeployToken

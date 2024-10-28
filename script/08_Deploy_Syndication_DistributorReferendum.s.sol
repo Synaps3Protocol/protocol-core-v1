@@ -1,8 +1,10 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.26;
 
-import { DeployBase } from "script/00_Deploy_Base.s.sol";
+import { Upgrades } from "openzeppelin-foundry-upgrades/Upgrades.sol";
+import { Options } from "openzeppelin-foundry-upgrades/Options.sol";
 import { DistributorReferendum } from "contracts/syndication/DistributorReferendum.sol";
+import { DeployBase } from "script/00_Deploy_Base.s.sol";
 
 contract DeployDistributorReferendum is DeployBase {
     address treasury;
@@ -17,11 +19,14 @@ contract DeployDistributorReferendum is DeployBase {
     }
 
     function run() external BroadcastedByAdmin returns (address) {
+        Options memory options; // struct with defailt values
+        options.constructorData = abi.encode(treasury, tollgate);
+
         return
-            deployUUPS(
+            Upgrades.deployUUPSProxy(
                 "DistributorReferendum.sol",
                 abi.encodeCall(DistributorReferendum.initialize, ()),
-                abi.encode(treasury, tollgate)
+                options
             );
     }
 }

@@ -20,6 +20,7 @@ clean:
 	@rm -rf artifacts
 	@rm -rf node_modules
 	@rm -rf cache_forge
+	@npm cache clean --force
 	@forge clean
 
 .PHONY: forge-clean ## clean forge
@@ -41,7 +42,7 @@ force-compile:
 
 .PHONY: test ## run tests
 test:
-	@forge test --gas-report -vvv --force --ffi --via-ir
+	@forge test --show-progress --gas-report -vvv 
 
 .PHONY: coverage ## run tests coverage report
 coverage:
