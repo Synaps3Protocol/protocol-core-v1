@@ -22,5 +22,4 @@ library BytesOps {
             addr := shr(96, data)
         }
     }
-
 }

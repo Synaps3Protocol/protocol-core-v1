@@ -6,7 +6,7 @@ import { IBalanceWithdrawable } from "contracts/interfaces/IBalanceWithdrawable.
 
 /// @title IRightsPolicyManager
 /// @notice Interface for managing content rights policies.
-/// @dev This interface handles retrieving active compliant policy, managing lists of policies, and registering policies.
+/// @dev This interface handles retrieving/managing/registering policies.
 interface IRightsPolicyManager is IBalanceWithdrawable, ITreasurer {
     /// @notice Verifies if a specific policy is compliant for the provided account and criteria.
     /// @param account The address of the user whose compliance is being evaluated.

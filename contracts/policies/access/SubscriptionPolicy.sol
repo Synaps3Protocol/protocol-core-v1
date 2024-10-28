@@ -78,5 +78,4 @@ contract SubscriptionPolicy is BasePolicy {
         // by default, we don't need to add any additional check here
         return true;
     }
-
 }

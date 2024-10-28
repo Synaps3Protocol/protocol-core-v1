@@ -117,11 +117,11 @@ contract DistributorReferendum is
         // !IMPORTANT if fees manager does not support the currency, will revert..
         uint256 fees = TOLLGATE.getFees(T.Context.SYN, currency);
         uint256 total = msg.sender.safeDeposit(fees, currency);
+        // Set the distributor as pending approval
+        _register(uint160(distributor));
         // set the distributor active enrollment period..
         // after this time the distributor is considered inactive and cannot collect his profits...
         enrollmentTime[distributor] = block.timestamp + enrollmentPeriod;
-        // Set the distributor as pending approval
-        _register(uint160(distributor));
         emit Registered(distributor, block.timestamp, total);
     }
 
@@ -162,6 +162,7 @@ contract DistributorReferendum is
     /// @dev This function verifies the active status of the distributor.
     /// @param distributor The distributor's address to check.
     function isActive(address distributor) public view onlyValidDistributor(distributor) returns (bool) {
+        // TODO a renovation mechanism is needed to update the enrollment time
         // this mechanisms helps to verify the availability of the distributor forcing recurrent registrations.
         return _status(uint160(distributor)) == Status.Active && enrollmentTime[distributor] > block.timestamp;
     }
