@@ -26,6 +26,11 @@ clean:
 forge-clean:
 	rm -rf .gitmodules && rm -rf .git/modules/* && rm -rf lib && touch .gitmodules && git add . && git commit -m "modules"
 
+.PHONY: forge-update ## upgrade forge
+forge-update:
+	@foundryup
+	@forge update
+
 .PHONY: compile ## compile contracts
 compile:
 	@forge build
@@ -37,7 +42,7 @@ force-compile:
 # https://jestjs.io/docs/cli#--coverageboolean
 .PHONY: test ## run tests
 test:
-	@forge test --via-ir --gas-report --show-progress -vvv  --force
+	@forge test --gas-report --show-progress -vvv  
 
 .PHONY: coverage ## run tests coverage report
 coverage:

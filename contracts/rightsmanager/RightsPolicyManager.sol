@@ -42,7 +42,7 @@ contract RightsPolicyManager is
     /// @param account The address of the account granted access.
     /// @param proof A unique identifier for the agreement or transaction.
     /// @param attestation The attestaton id to track the access.
-    event PolicyRegistered(address indexed account, bytes32 indexed proof, uint64 attestation);
+    event PolicyRegistered(address indexed account, bytes32 proof, uint256 attestation);
 
     /// @dev Error thrown when attempting to operate on a policy that has not
     /// been delegated rights for the specified content.
@@ -93,13 +93,12 @@ contract RightsPolicyManager is
 
     /// @notice Verifies if a specific policy is compliant for the provided account and criteria.
     /// @param account The address of the user whose compliance is being evaluated.
-    /// @param holder The holder of the rights to validate the relationship with.
     /// @param policyAddress The address of the policy contract to check compliance against.
-    function isCompliantPolicy(address account, address holder, address policyAddress) public view returns (bool) {
+    function isCompliantPolicy(address account, address policyAddress) public view returns (bool) {
         // verify if the policy were registered for account address and comply with the criteria
         IPolicy policy = IPolicy(policyAddress);
         bool registeredPolicy = acl[account].contains(policyAddress);
-        return registeredPolicy && policy.isCompliant(account, holder);
+        return registeredPolicy && policy.isCompliant(account);
     }
 
     /// @notice Verifies if a specific policy is compliant for the provided account and criteria.
@@ -141,7 +140,7 @@ contract RightsPolicyManager is
     function registerPolicy(
         bytes32 proof,
         address policyAddress
-    ) public payable nonReentrant returns (uint64 attestationId) {
+    ) public payable nonReentrant returns (uint256 attestationId) {
         // retrieves the agreement and marks it as settled..
         T.Agreement memory agreement = RIGTHS_AGREEMENT.settleAgreement(proof);
         // only authorized policies by holder could be registered..
@@ -153,13 +152,11 @@ contract RightsPolicyManager is
         msg.sender.safeDeposit(agreement.total, agreement.currency);
         // execute policy to get an attestation as receipt of the agreement.
         attestationId = IPolicy(policyAddress).enforce(agreement);
-
         // After successful policy execution:
         // The available amount is registered to the policy to enable future withdrawals.
-        // The policy is registered to the account..
+        // The policy is registered to the parties..
         _sumLedgerEntry(policyAddress, agreement.available, agreement.currency);
-        _registerPolicy(agreement.recipient, policyAddress);
-        emit PolicyRegistered(agreement.recipient, proof, attestationId);
+        _registerBatchPolicies(proof, attestationId, policyAddress, agreement.parties);
     }
 
     /// @notice Retrieves the list of policys associated with a specific account and content ID.
@@ -174,13 +171,22 @@ contract RightsPolicyManager is
         return acl[account].values();
     }
 
-    /// @notice Registers a new policy for a specific account and policy, maintaining a chain of precedence.
-    /// @param account The address of the account to be granted access through the policy.
-    /// @param policy The address of the policy contract responsible for validating the conditions of the license.
-    function _registerPolicy(address account, address policy) private {
-        // Add the new policy as the most recent, following LIFO precedence
-        // an account could be bounded to different policies to access contents
-        acl[account].add(policy);
+    /// @notice Registers a new policy for a list of accounts, granting access based on a specific policy contract.
+    /// @param parties The addresses of the accounts to be granted access through the policy.
+    /// @param policyAddress The address of the policy contract responsible for validating the access conditions.
+    /// @param attestationId A unique identifier for the attestation associated with the policy registration.
+    /// @param proof A cryptographic proof that verifies the authenticity of the agreement.
+    function _registerBatchPolicies(
+        bytes32 proof,
+        uint256 attestationId,
+        address policyAddress,
+        address[] memory parties
+    ) private {
+        uint256 len = parties.length;
+        for (uint256 i = 0; i < len; i++) {
+            acl[parties[i]].add(policyAddress);
+            emit PolicyRegistered(parties[i], proof, attestationId);
+        }
     }
 
     /// @dev Authorizes the upgrade of the contract.

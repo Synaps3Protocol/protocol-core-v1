@@ -20,7 +20,10 @@ contract DeployBase is Script {
     ) internal returns (address) {
         // Deploy the upgradeable contract
         Options memory options; // struct with defailt values
-        options.constructorData = constructorData;
+        if (constructorData.length > 0) {
+            options.constructorData = constructorData;
+        }
+        
         return Upgrades.deployUUPSProxy(contractName, initData, options);
     }
 }

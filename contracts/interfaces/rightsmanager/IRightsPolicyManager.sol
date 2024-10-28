@@ -10,16 +10,15 @@ import { IBalanceWithdrawable } from "contracts/interfaces/IBalanceWithdrawable.
 interface IRightsPolicyManager is IBalanceWithdrawable, ITreasurer {
     /// @notice Verifies if a specific policy is compliant for the provided account and criteria.
     /// @param account The address of the user whose compliance is being evaluated.
-    /// @param holder The holder of the rights to validate the relationship with.
     /// @param policyAddress The address of the policy contract to check compliance against.
-    function isCompliantPolicy(address account, address holder, address policyAddress) external view returns (bool);
+    function isCompliantPolicy(address account, address policyAddress) external view returns (bool);
 
-     /// @notice Verifies if a specific policy is compliant for the provided account and criteria.
+    /// @notice Verifies if a specific policy is compliant for the provided account and criteria.
     /// @param account The address of the user whose compliance is being evaluated.
     /// @param contentId The identifier of the content to validate the policy status.
     /// @param policyAddress The address of the policy contract to check compliance against.
-    function isActivePolicy(address account, uint256 contentId,address policyAddress ) external view returns (bool);
-   
+    function isActivePolicy(address account, uint256 contentId, address policyAddress) external view returns (bool);
+
     /// @notice Retrieves the first active policy for a specific account in LIFO order.
     /// @param account The address of the account to evaluate.
     /// @param contentId The identifier of the content to validate the policy status.
@@ -32,5 +31,5 @@ interface IRightsPolicyManager is IBalanceWithdrawable, ITreasurer {
     /// @notice Finalizes the agreement by registering the agreed-upon policy, effectively closing the agreement.
     /// @param proof The unique identifier of the agreement to be enforced.
     /// @param policyAddress The address of the policy contract managing the agreement.
-    function registerPolicy(bytes32 proof, address policyAddress) external payable returns (uint64);
+    function registerPolicy(bytes32 proof, address policyAddress) external payable returns (uint256);
 }

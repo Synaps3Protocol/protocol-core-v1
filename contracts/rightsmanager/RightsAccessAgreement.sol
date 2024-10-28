@@ -27,10 +27,12 @@ contract RightsAccessAgreement is Initializable, UUPSUpgradeable, GovernableUpgr
     mapping(bytes32 => T.Agreement) private agreements;
 
     /// @notice Emitted when an agreement is created.
+    /// @param initiator The account that initiated or created the agreement.
     /// @param proof The unique identifier (hash or proof) of the created agreement.
-    event AgreementCreated(bytes32 indexed proof);
+    event AgreementCreated(address indexed initiator, bytes32 proof);
     // @notice Thrown when the provided proof is invalid.
     error InvalidAgreementProof();
+    error InvalidAgreementInfo(string);
 
     /// @custom:oz-upgrades-unsafe-allow constructor
     constructor(address tollgate) {
@@ -62,35 +64,39 @@ contract RightsAccessAgreement is Initializable, UUPSUpgradeable, GovernableUpgr
     /// @param total The total amount involved in the agreement.
     /// @param currency The address of the ERC20 token (or native currency) being used in the agreement.
     /// @param holder The address of the content holder whose content is being accessed.
-    /// @param account The address of the account proposing the agreement.
+    /// @param parties The addresses of the accounts involved in the agreement.
     /// @param payload Additional data required to execute the agreement.
     function createAgreement(
         uint256 total,
         address currency,
         address holder,
-        address account,
+        address[] calldata parties,
         bytes calldata payload
     ) public returns (bytes32) {
+        if (parties.length == 0) {
+            revert InvalidAgreementInfo("Agreement must include at least one party");
+        }
+
         uint256 deductions = _calcFees(total, currency);
         uint256 available = total - deductions; // the total after fees
-        // one agreement it's unique and cannot be reconstructed..
-        // create a new immutable agreement to interact with register policy
-        // agreements aim to serve as attestation..
+        // each agreement is unique and immutable, ensuring that it cannot be modified or reconstructed.
+        // this design protects the agreement's terms from any future changes in fees or protocol conditions.
+        // by using this immutable approach, the agreement terms are "frozen" at the time of creation.
         T.Agreement memory agreement = T.Agreement({
-            createdAt: block.timestamp, // the agreement creation time
-            expireAt: block.timestamp + 12 hours, // default expire agreement after 12 hours
+            active: true, // the agreement status, true for active, false for closed.
             total: total, // the transaction total amount
             available: available, // the remaining amount after fees
             currency: currency, // the currency used in transaction
-            recipient: account, // the account related to agreement
+            parties: parties, // the accounts related to agreement
             holder: holder, // the content rights holder
             payload: payload, // any additional data needed during agreement execution
-            active: true // the agreement status, true for active, false for closed.
+            createdAt: block.timestamp // the agreement creation time
         });
 
         // keccak256(abi.encodePacked(....))
         bytes32 proof = _createProof(agreement);
-        emit AgreementCreated(proof);
+        agreements[proof] = agreement;
+        emit AgreementCreated(msg.sender, proof);
         return proof;
     }
 
@@ -99,29 +105,24 @@ contract RightsAccessAgreement is Initializable, UUPSUpgradeable, GovernableUpgr
     /// @param proof The unique identifier of the agreement to validate.
     function isValidProof(bytes32 proof) public view returns (bool) {
         T.Agreement memory agreement = agreements[proof];
-        return agreement.active && block.timestamp < agreement.expireAt;
+        return agreement.active;
     }
 
     /// @notice Creates and stores a new agreement proof.
     /// @dev The proof is generated using keccak256 hashing of the agreement data.
-    ///      This proof is then used as a unique identifier for the agreement in the storage.
     /// @param agreement The agreement object containing the terms and parties involved.
-    function _createProof(T.Agreement memory agreement) internal returns (bytes32) {
+    function _createProof(T.Agreement memory agreement) internal view returns (bytes32) {
         // yes, we can encode full struct as abi.encode with extra overhead..
-        bytes32 proof = keccak256(
-            abi.encodePacked(
-                agreement.createdAt,
-                agreement.total,
-                agreement.holder,
-                agreement.recipient,
-                agreement.currency,
-                agreement.payload
-            )
-        );
-
-        // activate agreement before
-        agreements[proof] = agreement;
-        return proof;
+        return
+            keccak256(
+                abi.encodePacked(
+                    blockhash(block.number - 1),
+                    agreement.createdAt,
+                    agreement.total,
+                    agreement.holder,
+                    agreement.currency
+                )
+            );
     }
 
     /// @notice Close a agreement for a given proof corresponds to an active agreement.
