@@ -2,17 +2,21 @@
 
 pragma solidity 0.8.26;
 
-import { Ledger } from "contracts/base/Ledger.sol";
-import { IPolicy } from "contracts/interfaces/policies/IPolicy.sol";
+import { Governable } from "contracts/base//Governable.sol";
+import { ReentrancyGuard } from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 import { IContentOwnership } from "contracts/interfaces/assets/IContentOwnership.sol";
 import { IRightsPolicyManager } from "contracts/interfaces/rightsmanager/IRightsPolicyManager.sol";
 import { IBalanceWithdrawable } from "contracts/interfaces/IBalanceWithdrawable.sol";
-import { ReentrancyGuard } from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
+import { IAttestationProvider } from "contracts/interfaces/IAttestationProvider.sol";
+import { IPolicy } from "contracts/interfaces/policies/IPolicy.sol";
+import { Ledger } from "contracts/base/Ledger.sol";
+import { T } from "contracts/libraries/Types.sol";
 
 /// @title BasePolicy
 /// @notice This abstract contract serves as a base for policies that manage access to content.
-abstract contract BasePolicy is Ledger, ReentrancyGuard, IPolicy, IBalanceWithdrawable {
+abstract contract BasePolicy is Ledger, Governable, ReentrancyGuard, IPolicy, IBalanceWithdrawable {
     // Immutable public variables to store the addresses of the Rights Manager and Ownership.
+    IAttestationProvider public immutable ATTESTATION_PROVIDER;
     IRightsPolicyManager public immutable RIGHTS_POLICY_MANAGER;
     IContentOwnership public immutable CONTENT_OWNERSHIP;
     bool private setupReady;
@@ -26,6 +30,7 @@ abstract contract BasePolicy is Ledger, ReentrancyGuard, IPolicy, IBalanceWithdr
 
     /// @dev This error is thrown when there is a failure in the execution process.
     error InvalidExecution(string reason);
+    error InvalidAttestation();
 
     /// @dev This error is thrown when there is an issue with the initial setup or configuration.
     error InvalidSetup(string reason);
@@ -61,9 +66,42 @@ abstract contract BasePolicy is Ledger, ReentrancyGuard, IPolicy, IBalanceWithdr
         _;
     }
 
-    constructor(address rightsPolicyManager, address contentOwnership) {
-        RIGHTS_POLICY_MANAGER = IRightsPolicyManager(rightsPolicyManager); // Assign the Rights Manager address.
-        CONTENT_OWNERSHIP = IContentOwnership(contentOwnership); // Assign the Ownership address.
+    constructor(address rightsPolicyManager, address contentOwnership, address providerAddress) Governable(msg.sender) {
+        ATTESTATION_PROVIDER = IAttestationProvider(providerAddress);
+        RIGHTS_POLICY_MANAGER = IRightsPolicyManager(rightsPolicyManager);
+        CONTENT_OWNERSHIP = IContentOwnership(contentOwnership);
+    }
+
+    /// @notice Retrieves the address of the attestation provider.
+    /// @return The address of the provider associated with the policy.
+    function getAttestationProvider() public view returns (address) {
+        return address(ATTESTATION_PROVIDER);
+    }
+
+    /// @notice Verifies whether the on-chain access terms are satisfied for an account.
+    /// @dev The function checks if the provided account complies with the attestation.
+    /// @param account The address of the user whose access is being verified.
+    function isCompliant(address account) public view returns (bool) {
+        return ATTESTATION_PROVIDER.verify(address(this), account);
+    }
+
+    /// @notice Abstract method to validate access based on the policy's specific context.
+    /// @dev Each policy must override this function to define its own validation logic.
+    /// @param account The address of the user whose access is being validated.
+    /// @param contentId The identifier of the content for which access is being validated.
+    function isAccessValid(address account, uint256 contentId) public view virtual returns (bool);
+
+    /// @notice Determines whether access is granted based on the provided contentId.
+    /// @dev This function evaluates the provided contentId and returns true if access is granted, false otherwise.
+    /// @param account The address of the user whose access is being verified.
+    /// @param contentId The identifier of the content for which access is being checked.
+    function isAccessAllowed(address account, uint256 contentId) public view returns (bool) {
+        address holder = getHolder(contentId);
+        if (holder == address(0)) return false;
+        // recreate the expected criteria to validate attestation (agreement)
+        // if an attestation match means that the contract emmited an access
+        // we need to check if the original expected criteria
+        return isCompliant(account) && isAccessValid(account, contentId);
     }
 
     /// @notice Withdraws tokens from the contract to a specified recipient's address.
@@ -84,6 +122,16 @@ abstract contract BasePolicy is Ledger, ReentrancyGuard, IPolicy, IBalanceWithdr
     /// @param contentId The content ID to retrieve the holder.
     function getHolder(uint256 contentId) public view returns (address) {
         return CONTENT_OWNERSHIP.ownerOf(contentId); // Returns the registered owner.
+    }
+
+    /// @dev Internal function to commit an agreement and create an attestation.
+    ///      The attestation will be stored on-chain and will have a validity period.
+    /// @param agreement The agreement structure containing necessary details for the attestation.
+    /// @param expireAt The timestamp at which the attestation will expire.
+    function _commit(T.Agreement memory agreement, uint256 expireAt) internal returns (uint256) {
+        // Call the SPI instance to register the attestation in the system
+        // SPI_INSTANCE.attest() stores the attestation and returns an ID for tracking
+        return ATTESTATION_PROVIDER.attest(agreement.parties, expireAt, abi.encode(agreement));
     }
 
     // /// @dev Distributes the amount based on the provided shares array.

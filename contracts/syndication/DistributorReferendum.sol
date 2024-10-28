@@ -13,7 +13,7 @@ import { ITreasury } from "contracts/interfaces/economics/ITreasury.sol";
 import { ITollgate } from "contracts/interfaces/economics/ITollgate.sol";
 import { IDistributor } from "contracts/interfaces/syndication/IDistributor.sol";
 import { IDistributorReferendum } from "contracts/interfaces/syndication/IDistributorReferendum.sol";
-import { TreasuryHelper } from "contracts/libraries/TreasuryHelper.sol";
+import { TreasuryOps } from "contracts/libraries/TreasuryOps.sol";
 import { T } from "contracts/libraries/Types.sol";
 
 contract DistributorReferendum is
@@ -24,7 +24,7 @@ contract DistributorReferendum is
     ReentrancyGuardUpgradeable,
     IDistributorReferendum
 {
-    using TreasuryHelper for address;
+    using TreasuryOps for address;
     using ERC165Checker for address;
 
     /// Preventing accidental/malicious changes during contract reinitializations.
@@ -40,21 +40,27 @@ contract DistributorReferendum is
 
     /// @notice Event emitted when a distributor is registered
     /// @param distributor The address of the registered distributor
-    event Registered(address indexed distributor, uint256 paidFees);
+    /// @param timestamp The timestamp indicating when the distributor was registered
+    /// @param paidFees The amount of fees that were paid upon registration
+    event Registered(address indexed distributor, uint256 timestamp, uint256 paidFees);
+
     /// @notice Event emitted when a distributor is approved
     /// @param distributor The address of the approved distributor
-    event Approved(address indexed distributor);
-    /// @notice Event emitted when a distributor resigns
-    /// @param distributor The address of the resigned distributor
-    event Resigned(address indexed distributor);
+    /// @param timestamp The timestamp indicating when the distributor was approved
+    event Approved(address indexed distributor, uint256 timestamp);
+
     /// @notice Event emitted when a distributor is revoked
     /// @param distributor The address of the revoked distributor
-    event Revoked(address indexed distributor);
-    /// @notice Emitted when a new period is set.
-    /// @param newPeriod The new period that is set (in seconds, blocks, etc.).
-    /// @param setBy The address that set the new period.
-    event PeriodSet(uint256 newPeriod, address indexed setBy);
+    /// @param timestamp The timestamp indicating when the distributor was revoked
+    event Revoked(address indexed distributor, uint256 timestamp);
+
+    /// @notice Emitted when a new period is set
+    /// @param setBy The address that set the new period
+    /// @param newPeriod The new period that is set, could be in seconds, blocks, or any other unit
+    event PeriodSet(address indexed setBy, uint256 newPeriod);
+
     /// @notice Error thrown when a distributor contract is invalid
+    /// @param invalid The address of the distributor contract that is invalid
     error InvalidDistributorContract(address invalid);
 
     /// @notice Modifier to ensure that the given distributor contract supports the IDistributor interface.
@@ -90,7 +96,7 @@ contract DistributorReferendum is
     /// @param newPeriod The new expiration period, in seconds.
     function setExpirationPeriod(uint256 newPeriod) external onlyGov {
         enrollmentPeriod = newPeriod;
-        emit PeriodSet(newPeriod, msg.sender);
+        emit PeriodSet(msg.sender, newPeriod);
     }
 
     /// @notice Disburses funds from the contract to a specified address.
@@ -111,12 +117,12 @@ contract DistributorReferendum is
         // !IMPORTANT if fees manager does not support the currency, will revert..
         uint256 fees = TOLLGATE.getFees(T.Context.SYN, currency);
         uint256 total = msg.sender.safeDeposit(fees, currency);
+        // Set the distributor as pending approval
+        _register(uint160(distributor));
         // set the distributor active enrollment period..
         // after this time the distributor is considered inactive and cannot collect his profits...
         enrollmentTime[distributor] = block.timestamp + enrollmentPeriod;
-        // Set the distributor as pending approval
-        _register(uint160(distributor));
-        emit Registered(distributor, total);
+        emit Registered(distributor, block.timestamp, total);
     }
 
     /// @notice Revokes the registration of a distributor.
@@ -124,7 +130,7 @@ contract DistributorReferendum is
     function revoke(address distributor) external onlyGov onlyValidDistributor(distributor) {
         enrollmentsCount--;
         _revoke(uint160(distributor));
-        emit Revoked(distributor);
+        emit Revoked(distributor, block.timestamp);
     }
 
     /// @notice Approves a distributor's registration.
@@ -133,7 +139,7 @@ contract DistributorReferendum is
         // reset ledger..
         enrollmentsCount++;
         _approve(uint160(distributor));
-        emit Approved(distributor);
+        emit Approved(distributor, block.timestamp);
     }
 
     /// @notice Retrieves the current expiration period for enrollments or registrations.
@@ -156,6 +162,7 @@ contract DistributorReferendum is
     /// @dev This function verifies the active status of the distributor.
     /// @param distributor The distributor's address to check.
     function isActive(address distributor) public view onlyValidDistributor(distributor) returns (bool) {
+        // TODO a renovation mechanism is needed to update the enrollment time
         // this mechanisms helps to verify the availability of the distributor forcing recurrent registrations.
         return _status(uint160(distributor)) == Status.Active && enrollmentTime[distributor] > block.timestamp;
     }

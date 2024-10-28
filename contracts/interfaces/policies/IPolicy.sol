@@ -17,22 +17,32 @@ interface IPolicy {
 
     /// @notice Initializes the policy with the necessary data.
     /// @dev This function allows configuring the policy's rules.
-    /// @param setup The initialization data to set up the policy.
-    function setup(bytes calldata setup) external;
+    /// @param init The initialization data to set up the policy.
+    function initialize(bytes calldata init) external;
 
     /// @notice Executes the agreement between the content holder and the account based on the policy's rules.
     /// @dev Rights Policies Manager contract should be the only one allowed to call this method.
     /// @param agreement An object containing the terms agreed upon between the content holder and the user.
-    function exec(T.Agreement calldata agreement) external;
+    function enforce(T.Agreement calldata agreement) external returns (uint256);
 
-    /// @notice Assesses the provided data to retrieve the access terms.
-    /// @dev This function decodes the data and returns the corresponding terms for the holder.
-    /// @param data The data in the policy context to assess.
-    function assess(bytes calldata data) external view returns (T.Terms memory);
+    /// @notice Resolves the provided data to retrieve the access terms.
+    /// @dev This function decodes the criteria and returns the corresponding terms for the holder.
+    /// @param criteria The data in the policy context used to resolve the terms.
+    /// @return T.Terms A struct containing the terms, such as price and currency, for the holder.
+    function resolveTerms(bytes calldata criteria) external view returns (T.Terms memory);
 
-    /// @notice Verifies whether the on-chain access terms are satisfied for a user and content ID.
-    /// @dev The function checks if the provided account complies with the policy terms for the specified content.
+    /// @notice Retrieves the address of the attestation provider.
+    /// @return The address of the provider associated with the policy.
+    function getAttestationProvider() external view returns (address);
+
+    /// @notice Verifies whether the on-chain access terms are satisfied for an account.
+    /// @dev The function checks if the provided account complies with the policy terms.
     /// @param account The address of the user whose access is being verified.
-    /// @param contentId The content ID against which compliance is being checked.
-    function comply(address account, uint256 contentId) external view returns (bool);
+    function isCompliant(address account) external view returns (bool);
+
+    /// @notice Determines whether access is granted based on the provided contentId.
+    /// @dev This function evaluates the provided contentId and returns true if access is granted, false otherwise.
+    /// @param account The address of the user whose access is being verified.
+    /// @param contentId The identifier of the content for which access is being checked.
+    function isAccessAllowed(address account, uint256 contentId) external view returns (bool);
 }

@@ -20,11 +20,17 @@ clean:
 	@rm -rf artifacts
 	@rm -rf node_modules
 	@rm -rf cache_forge
+	@npm cache clean --force
 	@forge clean
 
 .PHONY: forge-clean ## clean forge
 forge-clean:
 	rm -rf .gitmodules && rm -rf .git/modules/* && rm -rf lib && touch .gitmodules && git add . && git commit -m "modules"
+
+.PHONY: forge-update ## upgrade forge
+forge-update:
+	@foundryup
+	@forge update
 
 .PHONY: compile ## compile contracts
 compile:
@@ -34,10 +40,9 @@ compile:
 force-compile:
 	@forge clean && forge build
 
-# https://jestjs.io/docs/cli#--coverageboolean
 .PHONY: test ## run tests
 test:
-	@forge test --via-ir --gas-report --show-progress -vvv  --force
+	@forge test --show-progress --gas-report -vvv 
 
 .PHONY: coverage ## run tests coverage report
 coverage:
@@ -86,7 +91,6 @@ deploy:
 .PHONY: verify ## verify contract
 verify: 
 	@forge verify-contract $(address) $(contract) --api-key $(network) --chain $(network)
-
 
 rebuild: clean
 all: test lint

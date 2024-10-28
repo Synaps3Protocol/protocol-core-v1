@@ -31,10 +31,3 @@ Note: Run `make help` to see additional capabilities.
 - Code Maturity: https://github.com/crytic/building-secure-contracts/blob/master/development-guidelines/code_maturity.md
 
 - Style Guide: https://docs.soliditylang.org/en/latest/style-guide.html
-
-
-
-
-
-
-

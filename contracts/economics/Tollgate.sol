@@ -11,7 +11,7 @@ import { GovernableUpgradeable } from "contracts/base/upgradeable/GovernableUpgr
 import { ITollgate } from "contracts/interfaces/economics/ITollgate.sol";
 
 import { T } from "contracts/libraries/Types.sol";
-import { FeesHelper } from "contracts/libraries/FeesHelper.sol";
+import { FeesOps } from "contracts/libraries/FeesOps.sol";
 
 /// @title Tollgate Contract
 /// @dev This contract acts as a financial gateway, managing fees and the currencies allowed
@@ -20,7 +20,7 @@ import { FeesHelper } from "contracts/libraries/FeesHelper.sol";
 /// @notice The name "Tollgate" reflects the contract's role as a checkpoint that regulates
 /// financial access through fees and approved currencies.
 contract Tollgate is Initializable, UUPSUpgradeable, GovernableUpgradeable, ITollgate {
-    using FeesHelper for uint256;
+    using FeesOps for uint256;
     using ERC165Checker for address;
     using EnumerableSet for EnumerableSet.AddressSet;
 

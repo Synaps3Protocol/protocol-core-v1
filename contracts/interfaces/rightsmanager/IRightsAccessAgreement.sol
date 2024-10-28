@@ -16,13 +16,13 @@ interface IRightsAccessAgreement {
     /// @param total The total amount involved in the agreement.
     /// @param currency The address of the ERC20 token (or native currency) being used in the agreement.
     /// @param holder The address of the content holder whose content is being accessed.
-    /// @param account The address of the account proposing the agreement.
+    /// @param parties The addresses of the accounts involved in the agreement.
     /// @param data Additional data required to execute the policy.
     function createAgreement(
         uint256 total,
         address currency,
         address holder,
-        address account,
+        address[] calldata parties,
         bytes calldata data
     ) external returns (bytes32);
 

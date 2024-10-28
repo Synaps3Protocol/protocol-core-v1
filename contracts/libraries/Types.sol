@@ -14,19 +14,30 @@ library T {
         RMA // Rights Management Agreement
     }
 
+    /// @title VaultType
+    /// @notice Enum representing the different access or cryptographic methods available.
+    /// This enum covers traditional cryptographic algorithms as well as decentralized key
+    /// and access management systems.
+    enum VaultType {
+        __,
+        LIT,
+        RSA,
+        EC
+    }
+
     /// @title Agreement
     /// @dev Represents an agreement between multiple parties regarding the distribution and management of content.
     /// @notice This struct captures the total amount involved, net amount after deductions, distribution fees,
     /// and the relevant addresses involved in the agreement.
     struct Agreement {
-        uint256 time; // the agreement creation date
+        bool active; // the agreement status
+        address currency; // the currency used in transaction
+        address holder; // the content rights holder
+        uint256 createdAt; // the agreement creation date
         uint256 total; // the transaction total amount
         uint256 available; // the remaining amount after fees
-        address currency; // the currency used in transaction
-        address account; // the account related to agreement
-        address holder; // the content rights holder
+        address[] parties; // the accounts related to agreement
         bytes payload; // any additional data needed during agreement execution
-        bool active; // the agreement status
     }
 
     /// @title Setup
