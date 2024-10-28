@@ -92,7 +92,6 @@ deploy:
 verify: 
 	@forge verify-contract $(address) $(contract) --api-key $(network) --chain $(network)
 
-
 rebuild: clean
 all: test lint
 

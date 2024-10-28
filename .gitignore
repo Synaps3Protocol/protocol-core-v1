@@ -26,3 +26,5 @@ ignition/deployments/chain-31337
 .env.me
 .flaskenv*
 !.env.project
+.env*
+!.env.vault
