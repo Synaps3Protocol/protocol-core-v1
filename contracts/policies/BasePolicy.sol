@@ -85,6 +85,12 @@ abstract contract BasePolicy is Ledger, Governable, ReentrancyGuard, IPolicy, IB
         return ATTESTOR.verify(address(this), account);
     }
 
+    /// @notice Abstract method to validate access based on the policy's specific context.
+    /// @dev Each policy must override this function to define its own validation logic.
+    /// @param account The address of the user whose access is being validated.
+    /// @param contentId The identifier of the content for which access is being validated.
+    function isAccessValid(address account, uint256 contentId) public view virtual returns (bool);
+
     /// @notice Determines whether access is granted based on the provided contentId.
     /// @dev This function evaluates the provided contentId and returns true if access is granted, false otherwise.
     /// @param account The address of the user whose access is being verified.
@@ -122,17 +128,11 @@ abstract contract BasePolicy is Ledger, Governable, ReentrancyGuard, IPolicy, IB
     ///      The attestation will be stored on-chain and will have a validity period.
     /// @param agreement The agreement structure containing necessary details for the attestation.
     /// @param expireAt The timestamp at which the attestation will expire.
-    function commit(T.Agreement memory agreement, uint256 expireAt) internal returns (uint256) {
+    function _commit(T.Agreement memory agreement, uint256 expireAt) internal returns (uint256) {
         // Call the SPI instance to register the attestation in the system
         // SPI_INSTANCE.attest() stores the attestation and returns an ID for tracking
         return ATTESTOR.attest(agreement.parties, expireAt, abi.encode(agreement));
     }
-
-    /// @notice Abstract method to validate access based on the policy's specific context.
-    /// @dev Each policy must override this function to define its own validation logic.
-    /// @param account The address of the user whose access is being validated.
-    /// @param contentId The identifier of the content for which access is being validated.
-    function isAccessValid(address account, uint256 contentId) internal view virtual returns (bool);
 
     // /// @dev Distributes the amount based on the provided shares array.
     // /// @param amount The total amount to be allocated.

@@ -120,7 +120,8 @@ contract RightsAccessAgreement is Initializable, UUPSUpgradeable, GovernableUpgr
                     agreement.createdAt,
                     agreement.total,
                     agreement.holder,
-                    agreement.currency
+                    agreement.currency,
+                    agreement.payload
                 )
             );
     }

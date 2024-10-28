@@ -7,6 +7,6 @@ import { Upgrades } from "openzeppelin-foundry-upgrades/Upgrades.sol";
 
 contract DeployTreasury is DeployBase {
     function run() external BroadcastedByAdmin returns (address) {
-        return deployUUPS("Treasury.sol", abi.encodeCall(Treasury.initialize, ()), "");
+        return Upgrades.deployUUPSProxy("Treasury.sol", abi.encodeCall(Treasury.initialize, ()));
     }
 }

@@ -7,6 +7,6 @@ import { Tollgate } from "contracts/economics/Tollgate.sol";
 
 contract DeployTollgate is DeployBase {
     function run() external BroadcastedByAdmin returns (address) {
-        return deployUUPS("Tollgate.sol", abi.encodeCall(Tollgate.initialize, ()), "");
+        return Upgrades.deployUUPSProxy("Tollgate.sol", abi.encodeCall(Tollgate.initialize, ()));
     }
 }

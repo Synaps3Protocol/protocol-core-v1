@@ -64,7 +64,7 @@ contract SubscriptionPolicy is BasePolicy {
         _sumLedgerEntry(agreement.holder, agreement.available, agreement.currency);
         // the agreement is stored in an attestation signed registry
         // the recipients is the list of benefitians of the agreement
-        return commit(agreement, subExpire);
+        return _commit(agreement, subExpire);
     }
 
     function resolveTerms(bytes calldata criteria) external view returns (T.Terms memory) {
@@ -73,7 +73,7 @@ contract SubscriptionPolicy is BasePolicy {
         return T.Terms(pkg.currency, pkg.price, "");
     }
 
-    function isAccessValid(address, uint256) internal pure override returns (bool) {
+    function isAccessValid(address, uint256) public pure override returns (bool) {
         // since the subscription is enforced directly by attestment expiration
         // by default, we don't need to add any additional check here
         return true;
