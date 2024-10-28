@@ -16,7 +16,7 @@ import { T } from "contracts/libraries/Types.sol";
 /// @notice This abstract contract serves as a base for policies that manage access to content.
 abstract contract BasePolicy is Ledger, Governable, ReentrancyGuard, IPolicy, IBalanceWithdrawable {
     // Immutable public variables to store the addresses of the Rights Manager and Ownership.
-    IAttestationProvider public immutable ATTESTOR;
+    IAttestationProvider public immutable ATTESTATION_PROVIDER;
     IRightsPolicyManager public immutable RIGHTS_POLICY_MANAGER;
     IContentOwnership public immutable CONTENT_OWNERSHIP;
     bool private setupReady;
@@ -66,8 +66,8 @@ abstract contract BasePolicy is Ledger, Governable, ReentrancyGuard, IPolicy, IB
         _;
     }
 
-    constructor(address rightsPolicyManager, address contentOwnership, address attestorAddress) Governable(msg.sender) {
-        ATTESTOR = IAttestationProvider(attestorAddress);
+    constructor(address rightsPolicyManager, address contentOwnership, address providerAddress) Governable(msg.sender) {
+        ATTESTATION_PROVIDER = IAttestationProvider(providerAddress);
         RIGHTS_POLICY_MANAGER = IRightsPolicyManager(rightsPolicyManager);
         CONTENT_OWNERSHIP = IContentOwnership(contentOwnership);
     }
@@ -75,14 +75,14 @@ abstract contract BasePolicy is Ledger, Governable, ReentrancyGuard, IPolicy, IB
     /// @notice Retrieves the address of the attestation provider.
     /// @return The address of the provider associated with the policy.
     function getAttestationProvider() public view returns (address) {
-        return address(ATTESTOR);
+        return address(ATTESTATION_PROVIDER);
     }
 
     /// @notice Verifies whether the on-chain access terms are satisfied for an account.
     /// @dev The function checks if the provided account complies with the attestation.
     /// @param account The address of the user whose access is being verified.
     function isCompliant(address account) public view returns (bool) {
-        return ATTESTOR.verify(address(this), account);
+        return ATTESTATION_PROVIDER.verify(address(this), account);
     }
 
     /// @notice Abstract method to validate access based on the policy's specific context.
@@ -131,7 +131,7 @@ abstract contract BasePolicy is Ledger, Governable, ReentrancyGuard, IPolicy, IB
     function _commit(T.Agreement memory agreement, uint256 expireAt) internal returns (uint256) {
         // Call the SPI instance to register the attestation in the system
         // SPI_INSTANCE.attest() stores the attestation and returns an ID for tracking
-        return ATTESTOR.attest(agreement.parties, expireAt, abi.encode(agreement));
+        return ATTESTATION_PROVIDER.attest(agreement.parties, expireAt, abi.encode(agreement));
     }
 
     // /// @dev Distributes the amount based on the provided shares array.
