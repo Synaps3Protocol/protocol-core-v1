@@ -7,9 +7,5 @@
     "solhint-plugin-prettier": "^0.1.0"
   },
   "dependencies": {
-    "@openzeppelin/contracts": "^5.1.0",
-    "@openzeppelin/contracts-upgradeable": "^5.1.0",
-    "@openzeppelin/upgrades-core": "^1.40.0",
-    "solidity-ast": "^0.4.59"
   }
 }
