@@ -35,6 +35,10 @@ interface IPolicy {
     /// @return The address of the provider associated with the policy.
     function getAttestationProvider() external view returns (address);
 
+    /// @notice Retrieves the attestation associated with a specific account.
+    /// @param recipient The address of the account involved in the attestation.
+    function getAttestation(address recipient) external view returns (uint256);
+
     /// @notice Verifies whether the on-chain access terms are satisfied for an account.
     /// @dev The function checks if the provided account complies with the policy terms.
     /// @param account The address of the user whose access is being verified.

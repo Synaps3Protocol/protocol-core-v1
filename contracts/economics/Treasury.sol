@@ -26,7 +26,7 @@ contract Treasury is Initializable, UUPSUpgradeable, GovernableUpgradeable, ITre
     /// @notice Sets a new pool address. Restricted to governance.
     /// @param poolAddress_ The new address to be set as the pool.
     function setPoolAddress(address poolAddress_) external onlyGov {
-        // TODO cambiar a revert
+        // TODO revert
         // require(poolAddress_ != address(0), "Invalid pool address");
         poolAddress = poolAddress_;
     }
@@ -34,7 +34,7 @@ contract Treasury is Initializable, UUPSUpgradeable, GovernableUpgradeable, ITre
     /// @notice Sets a new vault address. Restricted to governance.
     /// @param vaultAddress_ The new address to be set as the vault.
     function setVaultAddress(address vaultAddress_) external onlyGov {
-        // TODO cambiar a revert
+        // TODO revert
         // require(vaultAddress_ != address(0), "Invalid vault address");
         vaultAddress = vaultAddress_;
     }

@@ -17,9 +17,9 @@ interface IDistributorRegistrable {
     /// @param distributor The address of the distributor to revoke.
     function revoke(address distributor) external;
 
-    /// @notice Retrieves the enrollment time for a distributor, based on the current block time and expiration period.
+    /// @notice Retrieves the enrollment deadline for a distributor.
     /// @param distributor The address of the distributor.
-    function getEnrollmentTime(address distributor) external view returns (uint256);
+    function getEnrollmentDeadline(address distributor) external view returns (uint256);
 
     /// @notice Retrieves the total number of enrollments.
     function getEnrollmentCount() external view returns (uint256);

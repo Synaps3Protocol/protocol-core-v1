@@ -8,11 +8,14 @@ import { UUPSUpgradeable } from "@openzeppelin/contracts-upgradeable/proxy/utils
 
 import { IRightsAccessAgreement } from "contracts/interfaces/rightsmanager/IRightsAccessAgreement.sol";
 import { ITollgate } from "contracts/interfaces/economics/ITollgate.sol";
+import { TreasuryOps } from "contracts/libraries/TreasuryOps.sol";
 import { FeesOps } from "contracts/libraries/FeesOps.sol";
 import { T } from "contracts/libraries/Types.sol";
 
 contract RightsAccessAgreement is Initializable, UUPSUpgradeable, GovernableUpgradeable, IRightsAccessAgreement {
     using FeesOps for uint256;
+    using TreasuryOps for address;
+
     /// KIM: any initialization here is ephimeral and not included in bytecode..
     /// so the code within a logic contract’s constructor or global declaration
     /// will never be executed in the context of the proxy’s state
@@ -32,7 +35,7 @@ contract RightsAccessAgreement is Initializable, UUPSUpgradeable, GovernableUpgr
     event AgreementCreated(address indexed initiator, bytes32 proof);
     // @notice Thrown when the provided proof is invalid.
     error InvalidAgreementProof();
-    error InvalidAgreementInfo(string);
+    error InvalidAgreementOp(string);
 
     /// @custom:oz-upgrades-unsafe-allow constructor
     constructor(address tollgate) {
@@ -54,46 +57,56 @@ contract RightsAccessAgreement is Initializable, UUPSUpgradeable, GovernableUpgr
     /// @param proof The unique identifier of the agreement to settle.
     function settleAgreement(bytes32 proof) external returns (T.Agreement memory) {
         if (!isValidProof(proof)) revert InvalidAgreementProof();
-        _closeAgreement(proof);
-        return agreements[proof];
+        return _closeAgreement(proof);
+    }
+
+    function previewAgreement(
+        uint256 value,
+        address currency,
+        address holder,
+        address[] calldata parties,
+        bytes calldata payload
+    ) public view returns (T.Agreement memory) {
+        if (parties.length == 0) {
+            revert InvalidAgreementOp("Agreement must include at least one party");
+        }
+
+        uint256 deductions = _calcFees(value, currency);
+        uint256 available = value - deductions; // the total after fees
+        // each agreement is unique and immutable, ensuring that it cannot be modified or reconstructed.
+        // this design protects the agreement's terms from any future changes in fees or protocol conditions.
+        // by using this immutable approach, the agreement terms are "frozen" at the time of creation.
+        return
+            T.Agreement({
+                active: true, // the agreement status, true for active, false for closed.
+                value: value, // the transaction amount
+                available: available, // the remaining amount after fees
+                currency: currency, // the currency used in transaction
+                parties: parties, // the accounts related to agreement
+                holder: holder, // the content rights holder
+                payload: payload, // any additional data needed during agreement execution
+                initiator: msg.sender, // the tx initiator
+                createdAt: block.timestamp // the agreement creation time
+            });
     }
 
     /// @notice Creates a new agreement between the account and the content holder.
     /// @dev This function handles the creation of a new agreement by negotiating terms, calculating fees,
     /// and generating a unique proof of the agreement.
-    /// @param total The total amount involved in the agreement.
     /// @param currency The address of the ERC20 token (or native currency) being used in the agreement.
     /// @param holder The address of the content holder whose content is being accessed.
     /// @param parties The addresses of the accounts involved in the agreement.
     /// @param payload Additional data required to execute the agreement.
     function createAgreement(
-        uint256 total,
         address currency,
         address holder,
         address[] calldata parties,
         bytes calldata payload
     ) public returns (bytes32) {
-        if (parties.length == 0) {
-            revert InvalidAgreementInfo("Agreement must include at least one party");
-        }
+        // we check the allowance here and during policy registration..
+        uint256 value = msg.sender.allowance(currency);
+        T.Agreement memory agreement = previewAgreement(value, currency, holder, parties, payload);
 
-        uint256 deductions = _calcFees(total, currency);
-        uint256 available = total - deductions; // the total after fees
-        // each agreement is unique and immutable, ensuring that it cannot be modified or reconstructed.
-        // this design protects the agreement's terms from any future changes in fees or protocol conditions.
-        // by using this immutable approach, the agreement terms are "frozen" at the time of creation.
-        T.Agreement memory agreement = T.Agreement({
-            active: true, // the agreement status, true for active, false for closed.
-            total: total, // the transaction total amount
-            available: available, // the remaining amount after fees
-            currency: currency, // the currency used in transaction
-            parties: parties, // the accounts related to agreement
-            holder: holder, // the content rights holder
-            payload: payload, // any additional data needed during agreement execution
-            createdAt: block.timestamp // the agreement creation time
-        });
-
-        // keccak256(abi.encodePacked(....))
         bytes32 proof = _createProof(agreement);
         agreements[proof] = agreement;
         emit AgreementCreated(msg.sender, proof);
@@ -118,7 +131,7 @@ contract RightsAccessAgreement is Initializable, UUPSUpgradeable, GovernableUpgr
                 abi.encodePacked(
                     blockhash(block.number - 1),
                     agreement.createdAt,
-                    agreement.total,
+                    agreement.value,
                     agreement.holder,
                     agreement.currency,
                     agreement.payload
@@ -129,8 +142,15 @@ contract RightsAccessAgreement is Initializable, UUPSUpgradeable, GovernableUpgr
     /// @notice Close a agreement for a given proof corresponds to an active agreement.
     /// @dev Set the status as inactive of the agreement in storage.
     /// @param proof The unique identifier of the agreement to validate.
-    function _closeAgreement(bytes32 proof) internal {
-        agreements[proof].active = false;
+    function _closeAgreement(bytes32 proof) internal returns (T.Agreement storage) {
+        // retrieve the agreement to storage to inactivate it and return it
+        T.Agreement storage agreement = agreements[proof];
+        if (agreement.initiator != msg.sender) {
+            revert InvalidAgreementOp("Only initiator can close the agreement.");
+        }
+        
+        agreement.active = false;
+        return agreement;
     }
 
     /// @dev Authorizes the upgrade of the contract.

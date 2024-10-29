@@ -29,5 +29,5 @@ interface IRightsAccessAgreement {
     /// @notice Checks if a given proof corresponds to an active agreement.
     /// @dev Verifies the existence and active status of the agreement in storage.
     /// @param proof The unique identifier of the agreement to validate.
-    function isValidProof(bytes32 proof) external view returns (bool);
+    function amount(bytes32 proof) external view returns (bool);
 }

@@ -149,7 +149,7 @@ contract RightsPolicyManager is
 
         // Deposits the total amount into the contract during policy registration.
         // IMPORTANT: The process of distributing funds to accounts should be handled within the policy logic.
-        msg.sender.safeDeposit(agreement.total, agreement.currency);
+        msg.sender.safeDeposit(agreement.value, agreement.currency);
         // execute policy to get an attestation as receipt of the agreement.
         attestationId = IPolicy(policyAddress).enforce(agreement);
         // After successful policy execution:

@@ -106,7 +106,7 @@ contract DistributorReferendumTest is BaseTest {
         // register the distributor expecting the right enrollment time..
         _registerDistributorWithApproval(distributor, 0);
         uint256 expected = currentTime + expectedExpiration;
-        uint256 got = IDistributorRegistrable(referendum).getEnrollmentTime(distributor);
+        uint256 got = IDistributorRegistrable(referendum).getEnrollmentDeadline(distributor);
         assertEq(got, expected);
     }
 

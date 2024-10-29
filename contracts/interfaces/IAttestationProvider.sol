@@ -17,12 +17,9 @@ interface IAttestationProvider {
     function attest(address[] calldata recipients, uint256 expireAt, bytes calldata data) external returns (uint256);
 
     /// @notice Verifies the validity of an attestation for a given attester and recipient.
+    /// @param attestationId The id of the attestation to verify.
     /// @param attester The address of the original creator of the attestation.
     /// @param recipient The address of the recipient whose attestation is being verified.
-    function verify(address attester, address recipient) external view returns (bool);
+    function verify( uint256 attestationId, address attester, address recipient) external view returns (bool);
 
-    /// @notice Retrieves the attestation associated with a specific account and attester.
-    /// @param recipient The address of the account involved in the attestation.
-    /// @param attester The address of the original creator of the attestation.
-    function getAttestation(address attester, address recipient) external view returns (uint256);
 }

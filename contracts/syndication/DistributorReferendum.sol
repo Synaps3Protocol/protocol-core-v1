@@ -35,7 +35,7 @@ contract DistributorReferendum is
 
     uint256 private enrollmentPeriod; // Period for enrollment
     uint256 private enrollmentsCount; // Count of enrollments
-    mapping(address => uint256) private enrollmentTime; // Timestamp for enrollment periods
+    mapping(address => uint256) private enrollmentDeadline; // Timestamp for enrollment periods
     bytes4 private constant INTERFACE_ID_IDISTRIBUTOR = type(IDistributor).interfaceId;
 
     /// @notice Event emitted when a distributor is registered
@@ -121,7 +121,7 @@ contract DistributorReferendum is
         _register(uint160(distributor));
         // set the distributor active enrollment period..
         // after this time the distributor is considered inactive and cannot collect his profits...
-        enrollmentTime[distributor] = block.timestamp + enrollmentPeriod;
+        enrollmentDeadline[distributor] = block.timestamp + enrollmentPeriod;
         emit Registered(distributor, block.timestamp, total);
     }
 
@@ -147,10 +147,10 @@ contract DistributorReferendum is
         return enrollmentPeriod;
     }
 
-    /// @notice Retrieves the enrollment time for a distributor.
+    /// @notice Retrieves the enrollment deadline for a distributor.
     /// @param distributor The address of the distributor.
-    function getEnrollmentTime(address distributor) public view returns (uint256) {
-        return enrollmentTime[distributor];
+    function getEnrollmentDeadline(address distributor) public view returns (uint256) {
+        return enrollmentDeadline[distributor];
     }
 
     /// @notice Retrieves the total number of enrollments.
@@ -164,7 +164,7 @@ contract DistributorReferendum is
     function isActive(address distributor) public view onlyValidDistributor(distributor) returns (bool) {
         // TODO a renovation mechanism is needed to update the enrollment time
         // this mechanisms helps to verify the availability of the distributor forcing recurrent registrations.
-        return _status(uint160(distributor)) == Status.Active && enrollmentTime[distributor] > block.timestamp;
+        return _status(uint160(distributor)) == Status.Active && enrollmentDeadline[distributor] > block.timestamp;
     }
 
     /// @notice Checks if the entity is waiting.

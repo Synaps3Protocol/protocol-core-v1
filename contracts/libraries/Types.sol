@@ -33,8 +33,9 @@ library T {
         bool active; // the agreement status
         address currency; // the currency used in transaction
         address holder; // the content rights holder
+        address initiator; // the initiator of the transaction
         uint256 createdAt; // the agreement creation date
-        uint256 total; // the transaction total amount
+        uint256 value; // the transaction total amount
         uint256 available; // the remaining amount after fees
         address[] parties; // the accounts related to agreement
         bytes payload; // any additional data needed during agreement execution

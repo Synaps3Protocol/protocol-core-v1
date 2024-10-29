@@ -19,7 +19,10 @@ abstract contract BasePolicy is Ledger, Governable, ReentrancyGuard, IPolicy, IB
     IAttestationProvider public immutable ATTESTATION_PROVIDER;
     IRightsPolicyManager public immutable RIGHTS_POLICY_MANAGER;
     IContentOwnership public immutable CONTENT_OWNERSHIP;
+
     bool private setupReady;
+    /// @dev attestation registry
+    mapping(address => uint256) public attestations;
 
     /// @dev Error thrown when attempting to access content without proper authorization.
     error InvalidContentHolder();
@@ -78,18 +81,20 @@ abstract contract BasePolicy is Ledger, Governable, ReentrancyGuard, IPolicy, IB
         return address(ATTESTATION_PROVIDER);
     }
 
+    /// @notice Retrieves the attestation associated with a specific account.
+    /// @param recipient The address of the account involved in the attestation.
+    function getAttestation(address recipient) external view returns (uint256) {
+        return attestations[recipient];
+    }
+
     /// @notice Verifies whether the on-chain access terms are satisfied for an account.
     /// @dev The function checks if the provided account complies with the attestation.
     /// @param account The address of the user whose access is being verified.
     function isCompliant(address account) public view returns (bool) {
-        return ATTESTATION_PROVIDER.verify(address(this), account);
+        uint256 attestationId = attestations[account];
+        if (attestationId == 0) return false; // must be registered
+        return ATTESTATION_PROVIDER.verify(attestationId, address(this), account);
     }
-
-    /// @notice Abstract method to validate access based on the policy's specific context.
-    /// @dev Each policy must override this function to define its own validation logic.
-    /// @param account The address of the user whose access is being validated.
-    /// @param contentId The identifier of the content for which access is being validated.
-    function isAccessValid(address account, uint256 contentId) public view virtual returns (bool);
 
     /// @notice Determines whether access is granted based on the provided contentId.
     /// @dev This function evaluates the provided contentId and returns true if access is granted, false otherwise.
@@ -98,11 +103,14 @@ abstract contract BasePolicy is Ledger, Governable, ReentrancyGuard, IPolicy, IB
     function isAccessAllowed(address account, uint256 contentId) public view returns (bool) {
         address holder = getHolder(contentId);
         if (holder == address(0)) return false;
-        // recreate the expected criteria to validate attestation (agreement)
-        // if an attestation match means that the contract emmited an access
-        // we need to check if the original expected criteria
         return isCompliant(account) && isAccessValid(account, contentId);
     }
+
+    /// @notice Abstract method to validate access based on the policy's specific context.
+    /// @dev Each policy must override this function to define its own validation logic.
+    /// @param account The address of the user whose access is being validated.
+    /// @param contentId The identifier of the content for which access is being validated.
+    function isAccessValid(address account, uint256 contentId) public view virtual returns (bool);
 
     /// @notice Withdraws tokens from the contract to a specified recipient's address.
     /// @param recipient The address that will receive the withdrawn tokens.
@@ -131,7 +139,18 @@ abstract contract BasePolicy is Ledger, Governable, ReentrancyGuard, IPolicy, IB
     function _commit(T.Agreement memory agreement, uint256 expireAt) internal returns (uint256) {
         // Call the SPI instance to register the attestation in the system
         // SPI_INSTANCE.attest() stores the attestation and returns an ID for tracking
-        return ATTESTATION_PROVIDER.attest(agreement.parties, expireAt, abi.encode(agreement));
+        uint256 attestationId = ATTESTATION_PROVIDER.attest(agreement.parties, expireAt, abi.encode(agreement));
+        _updateRecipientRecords(attestationId, agreement.parties);
+        return attestationId;
+    }
+
+    /// @notice Updates the attestation records for each recipient.
+    /// @param attestationId The ID of the attestation.
+    /// @param recipients The list of recipients to update.
+    function _updateRecipientRecords(uint256 attestationId, address[] memory recipients) private {
+        for (uint256 i = 0; i < recipients.length; i++) {
+            attestations[recipients[i]] = attestationId;
+        }
     }
 
     // /// @dev Distributes the amount based on the provided shares array.
