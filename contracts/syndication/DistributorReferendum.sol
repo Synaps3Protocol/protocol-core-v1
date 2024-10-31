@@ -7,6 +7,7 @@ import { UUPSUpgradeable } from "@openzeppelin/contracts-upgradeable/proxy/utils
 import { Initializable } from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import { ReentrancyGuardUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol";
 import { GovernableUpgradeable } from "contracts/base/upgradeable/GovernableUpgradeable.sol";
+import { FeesCollectorUpgradeable } from "contracts/base/upgradeable/FeesCollectorUpgradeable.sol";
 import { QuorumUpgradeable } from "contracts/base/upgradeable/QuorumUpgradeable.sol";
 
 import { ITreasury } from "contracts/interfaces/economics/ITreasury.sol";
@@ -22,6 +23,7 @@ contract DistributorReferendum is
     QuorumUpgradeable,
     GovernableUpgradeable,
     ReentrancyGuardUpgradeable,
+    FeesCollectorUpgradeable,
     IDistributorReferendum
 {
     using TreasuryOps for address;
@@ -35,7 +37,7 @@ contract DistributorReferendum is
 
     uint256 private enrollmentPeriod; // Period for enrollment
     uint256 private enrollmentsCount; // Count of enrollments
-    mapping(address => uint256) private enrollmentTime; // Timestamp for enrollment periods
+    mapping(address => uint256) private enrollmentDeadline; // Timestamp for enrollment periods
     bytes4 private constant INTERFACE_ID_IDISTRIBUTOR = type(IDistributor).interfaceId;
 
     /// @notice Event emitted when a distributor is registered
@@ -87,7 +89,7 @@ contract DistributorReferendum is
         __UUPSUpgradeable_init();
         __ReentrancyGuard_init();
         __Governable_init(msg.sender);
-
+        __FeesCollector_init(address(TREASURY));
         // 6 months initially..
         enrollmentPeriod = 180 days;
     }
@@ -99,30 +101,20 @@ contract DistributorReferendum is
         emit PeriodSet(msg.sender, newPeriod);
     }
 
-    /// @notice Disburses funds from the contract to a specified address.
-    /// @param currency The address of the ERC20 token to disburse tokens.
-    /// @dev This function can only be called by governance or an authorized entity.
-    function disburse(address currency) external onlyGov nonReentrant {
-        // transfer all the funds to the treasury..
-        uint256 amount = address(this).balanceOf(currency);
-        address target = TREASURY.getPoolAddress();
-        target.transfer(amount, currency); // sent amount to vault..
-        emit FeesDisbursed(target, amount, currency);
-    }
-
     /// @notice Registers a distributor by sending a payment to the contract.
     /// @param distributor The address of the distributor to register.
     /// @param currency The currency used to pay enrollment.
-    function register(address distributor, address currency) external payable onlyValidDistributor(distributor) {
+    function register(address distributor, address currency) external onlyValidDistributor(distributor) {
         // !IMPORTANT if fees manager does not support the currency, will revert..
         uint256 fees = TOLLGATE.getFees(T.Context.SYN, currency);
-        uint256 total = msg.sender.safeDeposit(fees, currency);
-        // Set the distributor as pending approval
+        uint256 depositedAmount = msg.sender.safeDeposit(fees, currency);
+        // register fees and set distributor as pending approval
+        _sumLedgerEntry(address(this), fees, currency);
         _register(uint160(distributor));
         // set the distributor active enrollment period..
         // after this time the distributor is considered inactive and cannot collect his profits...
-        enrollmentTime[distributor] = block.timestamp + enrollmentPeriod;
-        emit Registered(distributor, block.timestamp, total);
+        enrollmentDeadline[distributor] = block.timestamp + enrollmentPeriod;
+        emit Registered(distributor, block.timestamp, depositedAmount);
     }
 
     /// @notice Revokes the registration of a distributor.
@@ -136,7 +128,6 @@ contract DistributorReferendum is
     /// @notice Approves a distributor's registration.
     /// @param distributor The address of the distributor to approve.
     function approve(address distributor) external onlyGov onlyValidDistributor(distributor) {
-        // reset ledger..
         enrollmentsCount++;
         _approve(uint160(distributor));
         emit Approved(distributor, block.timestamp);
@@ -147,10 +138,10 @@ contract DistributorReferendum is
         return enrollmentPeriod;
     }
 
-    /// @notice Retrieves the enrollment time for a distributor.
+    /// @notice Retrieves the enrollment deadline for a distributor.
     /// @param distributor The address of the distributor.
-    function getEnrollmentTime(address distributor) public view returns (uint256) {
-        return enrollmentTime[distributor];
+    function getEnrollmentDeadline(address distributor) public view returns (uint256) {
+        return enrollmentDeadline[distributor];
     }
 
     /// @notice Retrieves the total number of enrollments.
@@ -164,7 +155,7 @@ contract DistributorReferendum is
     function isActive(address distributor) public view onlyValidDistributor(distributor) returns (bool) {
         // TODO a renovation mechanism is needed to update the enrollment time
         // this mechanisms helps to verify the availability of the distributor forcing recurrent registrations.
-        return _status(uint160(distributor)) == Status.Active && enrollmentTime[distributor] > block.timestamp;
+        return _status(uint160(distributor)) == Status.Active && enrollmentDeadline[distributor] > block.timestamp;
     }
 
     /// @notice Checks if the entity is waiting.

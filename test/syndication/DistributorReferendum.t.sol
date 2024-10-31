@@ -3,7 +3,6 @@ pragma solidity 0.8.26;
 import "forge-std/Test.sol";
 import { IERC20 } from "@openzeppelin/contracts/interfaces/IERC20.sol";
 import { ITreasury } from "contracts/interfaces/economics/ITreasury.sol";
-import { ITreasurer } from "contracts/interfaces/economics/ITreasurer.sol";
 import { ITollgate } from "contracts/interfaces/economics/ITollgate.sol";
 import { IGovernable } from "contracts/interfaces/IGovernable.sol";
 import { IDistributorVerifiable } from "contracts/interfaces/syndication/IDistributorVerifiable.sol";
@@ -60,60 +59,58 @@ contract DistributorReferendumTest is BaseTest {
         IDistributorExpirable(referendum).setExpirationPeriod(10);
     }
 
-    function test_Disburse_ValidDisbursement() public {
+    function test_Register_RegisteredEventEmitted() public {
+        uint256 expectedFees = 100 * 1e18;
+        _setFeesAsGovernor(expectedFees); // free enrollment: test purpose
+        // after register a distributor a Registered event is expected
+        vm.warp(1641070803);
+        vm.startPrank(admin);
+        // approve fees payment: admin default account
+        IERC20(token).approve(referendum, expectedFees);
+        vm.expectEmit(true, false, false, true, address(referendum));
+        emit DistributorReferendum.Registered(distributor, 1641070803, expectedFees);
+        IDistributorRegistrable(referendum).register(distributor, token);
+        vm.stopPrank();
+    }
+
+    function test_Registrer_ValidFees() public {
         uint256 expectedFees = 100 * 1e18; // 100 MMC
         // 1-set enrollment fees.
         _setFeesAsGovernor(expectedFees);
         // 2-deploy and register contract
         _registerDistributorWithApproval(distributor, expectedFees);
-        // get the expected disrbursement target
-        address expectedTarget = ITreasury(treasury).getPoolAddress();
-
-        // 3-after disburse funds to treasury a valid event should be emitted
-        vm.startPrank(governor);
-        vm.expectEmit(true, false, false, true, address(referendum));
-        emit ITreasurer.FeesDisbursed(expectedTarget, expectedFees, token);
-        ITreasurer(referendum).disburse(token);
-        vm.stopPrank();
-
         // zero after disburse all the balance
-        assertEq(IERC20(token).balanceOf(referendum), 0);
-    }
-
-    function test_Register_RegisteredEventEmitted() public {
-        _setFeesAsGovernor(0); // free enrollment: test purpose
-        // after register a distributor a Registered event is expected
-        vm.warp(1641070803);
-        vm.expectEmit(true, false, false, true, address(referendum));
-        emit DistributorReferendum.Registered(distributor, 1641070803, 0);
-        IDistributorRegistrable(referendum).register(distributor, token);
+        assertEq(IERC20(token).balanceOf(referendum), expectedFees);
     }
 
     function test_Register_RevertIf_InvalidAllowance() public {
         uint256 expectedFees = 100 * 1e18; // 100 MMC
         _setFeesAsGovernor(expectedFees);
         // expected revert if not valid allowance
-        vm.expectRevert(abi.encodeWithSignature("FailDuringTransfer(string)", "Invalid allowance."));
+        vm.expectRevert(abi.encodeWithSignature("FailDuringDeposit(string)", "Amount exceeds allowance."));
         IDistributorRegistrable(referendum).register(distributor, token);
     }
 
     function test_Register_SetValidEnrollmentTime() public {
-        _setFeesAsGovernor(0);
-        uint256 expectedExpiration = IDistributorExpirable(referendum).getExpirationPeriod();
+        IDistributorRegistrable registrable = IDistributorRegistrable(referendum);
+        IDistributorExpirable expirable = IDistributorExpirable(referendum);
+
+        _setFeesAsGovernor(1 * 1e18);
+        uint256 expectedExpiration = expirable.getExpirationPeriod();
         uint256 currentTime = 1727976358;
         vm.warp(currentTime); // set block.time to current time
 
         // register the distributor expecting the right enrollment time..
-        _registerDistributorWithApproval(distributor, 0);
+        _registerDistributorWithApproval(distributor, 1 * 1e18);
         uint256 expected = currentTime + expectedExpiration;
-        uint256 got = IDistributorRegistrable(referendum).getEnrollmentTime(distributor);
+        uint256 got = registrable.getEnrollmentDeadline(distributor);
         assertEq(got, expected);
     }
 
     function test_Register_SetWaitingState() public {
-        _setFeesAsGovernor(0);
+        _setFeesAsGovernor(1 * 1e18);
         // register the distributor expecting the right status.
-        _registerDistributorWithApproval(distributor, 0);
+        _registerDistributorWithApproval(distributor, 1 * 1e18);
         assertTrue(IDistributorVerifiable(referendum).isWaiting(distributor));
     }
 
@@ -124,10 +121,8 @@ contract DistributorReferendumTest is BaseTest {
     }
 
     function test_Approve_ApprovedEventEmitted() public {
-        // intially the balance = 0
-        _setFeesAsGovernor(0);
-        // register the distributor with fees = 100 MMC
-        _registerDistributorWithApproval(distributor, 0);
+        _setFeesAsGovernor(1 * 1e18);
+        _registerDistributorWithApproval(distributor, 1 * 1e18);
 
         vm.prank(governor); // as governor.
         vm.warp(1641070802);
@@ -175,7 +170,6 @@ contract DistributorReferendumTest is BaseTest {
     }
 
     function test_Revoke_SetBlockedState() public {
-        // intially the balance = 0
         _registerAndApproveDistributor(distributor); // still governor prank
         // distribuitor get revoked by governance..
         vm.prank(governor);
@@ -207,9 +201,9 @@ contract DistributorReferendumTest is BaseTest {
 
     function _registerAndApproveDistributor(address d9r) internal {
         // intially the balance = 0
-        _setFeesAsGovernor(0);
+        _setFeesAsGovernor(1 * 1e18);
         // register the distributor with fees = 100 MMC
-        _registerDistributorWithApproval(d9r, 0);
+        _registerDistributorWithApproval(d9r, 1 * 1e18);
         vm.prank(governor); // as governor.
         // distribuitor approved only by governor..
         IDistributorRegistrable(referendum).approve(d9r);

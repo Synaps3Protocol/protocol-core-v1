@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: MIT
 // NatSpec format convention - https://docs.soliditylang.org/en/v0.8.24/natspec-format.html
 pragma solidity 0.8.26;
-
 import { ILedgerVerifiable } from "contracts/interfaces/ILedgerVerifiable.sol";
 
 /// @title Ledger

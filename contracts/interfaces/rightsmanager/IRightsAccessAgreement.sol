@@ -7,27 +7,44 @@ import { T } from "contracts/libraries/Types.sol";
 /// @notice Interface for managing agreements related to content rights access.
 /// @dev This interface handles the creation, retrieval, and execution of agreements within the RightsManager context.
 interface IRightsAccessAgreement {
-    /// @notice Settles the agreement associated with the given proof, preparing it for payment processing.
-    /// @dev This function retrieves the agreement and marks it as settled to trigger any associated payments.
-    /// @param proof The unique identifier of the agreement to settle.
-    function settleAgreement(bytes32 proof) external returns (T.Agreement memory);
+    /// @notice Settles an agreement by marking it inactive and transferring funds to the counterparty.
+    /// @param proof The unique identifier of the agreement.
+    /// @param counterparty The address that will receive the funds upon settlement.
+    function settleAgreement(bytes32 proof, address counterparty) external returns (T.Agreement memory);
 
-    /// @notice Creates a new agreement between the account and the content holder.
-    /// @param total The total amount involved in the agreement.
-    /// @param currency The address of the ERC20 token (or native currency) being used in the agreement.
-    /// @param holder The address of the content holder whose content is being accessed.
-    /// @param parties The addresses of the accounts involved in the agreement.
-    /// @param data Additional data required to execute the policy.
+    /// @notice Creates and stores a new agreement.
+    /// @param amount The total amount committed.
+    /// @param currency The currency used for the agreement.
+    /// @param broker The authorized account to manage the agreement.
+    /// @param parties The parties in the agreement.
+    /// @param payload Additional data for execution.
     function createAgreement(
-        uint256 total,
+        uint256 amount,
         address currency,
-        address holder,
+        address broker,
         address[] calldata parties,
-        bytes calldata data
+        bytes calldata payload
     ) external returns (bytes32);
 
-    /// @notice Checks if a given proof corresponds to an active agreement.
-    /// @dev Verifies the existence and active status of the agreement in storage.
-    /// @param proof The unique identifier of the agreement to validate.
-    function isValidProof(bytes32 proof) external view returns (bool);
+    /// @notice Previews an agreement by calculating fees and returning the agreement terms without committing them.
+    /// @param amount The total amount committed.
+    /// @param currency The currency used for the agreement.
+    /// @param broker The authorized account to manage the agreement.
+    /// @param parties The parties in the agreement.
+    /// @param payload Additional data for execution.
+    function previewAgreement(
+        uint256 amount,
+        address currency,
+        address broker,
+        address[] calldata parties,
+        bytes calldata payload
+    ) external view returns (T.Agreement memory);
+
+    /// @notice Retrieves the details of an agreement based on the provided proof.
+    /// @param proof The unique identifier (hash) of the agreement.
+    function getAgreement(bytes32 proof) external view returns (T.Agreement memory);
+
+    /// @notice Allows the initiator to quit the agreement and receive the committed funds.
+    /// @param proof The unique identifier of the agreement.
+    function quitAgreement(bytes32 proof) external returns (T.Agreement memory);
 }

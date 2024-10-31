@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.26;
 
-interface ITreasurer {
+interface IFeesCollector {
     /// @notice Emitted when fees are disbursed to the treasury.
     /// @param target The address receiving the disbursed fees.
     /// @param amount The amount of fees being disbursed.
@@ -10,6 +10,5 @@ interface ITreasurer {
 
     /// @notice Disburses funds from the contract to the treasury.
     /// @param currency The address of the ERC20 token to disburse tokens.
-    /// @dev This function can only be called by governance or an authorized entity.
-    function disburse(address currency) external;
+    function disburse(address currency) external returns (uint256);
 }

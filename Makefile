@@ -42,7 +42,7 @@ force-compile:
 
 .PHONY: test ## run tests
 test:
-	@forge test --show-progress --gas-report -vvv 
+	@forge test --show-progress --gas-report -vvv --force
 
 .PHONY: coverage ## run tests coverage report
 coverage:
