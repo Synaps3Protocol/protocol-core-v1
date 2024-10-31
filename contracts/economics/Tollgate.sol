@@ -96,7 +96,7 @@ contract Tollgate is Initializable, UUPSUpgradeable, GovernableUpgradeable, ITol
     /// @param ctx The context under which the currency is being checked.
     /// @param currency The address of the currency to check.
     function isCurrencySupported(T.Context ctx, address currency) public view returns (bool) {
-        return registeredCurrencies[ctx].contains(currency);
+        return registeredCurrencies[ctx].contains(currency) && currencyFees[currency][ctx] > 0;
     }
 
     /// @notice Retrieves the fees for a specified context and currency.

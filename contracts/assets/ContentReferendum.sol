@@ -87,7 +87,6 @@ contract ContentReferendum is
         __Governable_init(msg.sender);
     }
 
-
     // TODO split to other contract ContentRoles..
     /// @notice Grants the verified role to a specific account.
     /// @param account The address of the account to verify.

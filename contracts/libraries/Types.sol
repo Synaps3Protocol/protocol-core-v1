@@ -6,10 +6,12 @@ pragma solidity 0.8.26;
 /// @notice This library provides common type definitions for use in other contracts.
 /// @dev This library defines types and structures that can be imported and used in other contracts.
 library T {
+    /// @title Context
     /// @notice Enum to represent different operational contexts within the protocol.
     /// Depending on the context, different logic or parameters may apply.
+    /// eg: Fees are set based on the context of the protocol operation.
     enum Context {
-        __, // Undefined type, default state for uninitialized or invalid contexts.
+        __,
         SYN, // Syndication context
         RMA // Rights Management Agreement
     }
@@ -31,11 +33,12 @@ library T {
     /// and the relevant addresses involved in the agreement.
     struct Agreement {
         bool active; // the agreement status
+        address broker; // the authorized account to manage the agreement.
         address currency; // the currency used in transaction
-        address holder; // the content rights holder
         address initiator; // the initiator of the transaction
         uint256 createdAt; // the agreement creation date
-        uint256 value; // the transaction total amount
+        uint256 amount; // the transaction total amount
+        uint256 fees; // the agreement protocol fees
         uint256 available; // the remaining amount after fees
         address[] parties; // the accounts related to agreement
         bytes payload; // any additional data needed during agreement execution

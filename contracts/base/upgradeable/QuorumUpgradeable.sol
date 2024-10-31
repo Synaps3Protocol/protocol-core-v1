@@ -37,9 +37,9 @@ abstract contract QuorumUpgradeable is Initializable {
         mapping(uint256 => Status) _status; // Mapping to store the status of entities
     }
 
-    // ERC-7201: Namespaced Storage Layout to avoid storage layout errors
-    // keccak256(abi.encode(uint256(keccak256("watchit.quorum.status")) - 1)) & ~bytes32(uint256(0xff))
-    bytes32 private constant REGISTRY_SLOT = 0x78a5d34d6f19765a8d11b74cebcafd0494288384b72923088bc4746147d1ae00;
+    /// @dev Storage slot for LedgerStorage, calculated using a unique namespace to avoid conflicts.
+    /// The `REGISTRY_SLOT` constant is used to point to the location of the storage.
+    bytes32 private constant REGISTRY_SLOT = 0xab2e790410e6bf96b790a9a4b672cdae750d86f2912b5d75f93f046f0fc9a700;
 
     /// @notice Error to be thrown when an entity is inactive.
     error InvalidInactiveState();

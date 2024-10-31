@@ -2,17 +2,28 @@
 // NatSpec format convention - https://docs.soliditylang.org/en/v0.5.10/natspec-format.html
 pragma solidity 0.8.26;
 
-import { GovernableUpgradeable } from "contracts/base/upgradeable/GovernableUpgradeable.sol";
 import { Initializable } from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import { UUPSUpgradeable } from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
+import { GovernableUpgradeable } from "contracts/base/upgradeable/GovernableUpgradeable.sol";
+// solhint-disable-next-line max-line-length
+import { ReentrancyGuardTransientUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardTransientUpgradeable.sol";
+import { FeesCollectorUpgradeable } from "contracts/base/upgradeable/FeesCollectorUpgradeable.sol";
 
 import { IRightsAccessAgreement } from "contracts/interfaces/rightsmanager/IRightsAccessAgreement.sol";
 import { ITollgate } from "contracts/interfaces/economics/ITollgate.sol";
+import { ITreasury } from "contracts/interfaces/economics/ITreasury.sol";
 import { TreasuryOps } from "contracts/libraries/TreasuryOps.sol";
 import { FeesOps } from "contracts/libraries/FeesOps.sol";
 import { T } from "contracts/libraries/Types.sol";
 
-contract RightsAccessAgreement is Initializable, UUPSUpgradeable, GovernableUpgradeable, IRightsAccessAgreement {
+contract RightsAccessAgreement is
+    Initializable,
+    UUPSUpgradeable,
+    GovernableUpgradeable,
+    ReentrancyGuardTransientUpgradeable,
+    FeesCollectorUpgradeable,
+    IRightsAccessAgreement
+{
     using FeesOps for uint256;
     using TreasuryOps for address;
 
@@ -22,6 +33,7 @@ contract RightsAccessAgreement is Initializable, UUPSUpgradeable, GovernableUpgr
     /// https://docs.openzeppelin.com/upgrades-plugins/1.x/proxies#the-constructor-caveat
 
     /// Preventing accidental/malicious changes during contract reinitializations.
+    ITreasury public immutable TREASURY;
     ITollgate public immutable TOLLGATE;
 
     // @dev Holds a bounded key expressing the agreement between the parts.
@@ -33,37 +45,137 @@ contract RightsAccessAgreement is Initializable, UUPSUpgradeable, GovernableUpgr
     /// @param initiator The account that initiated or created the agreement.
     /// @param proof The unique identifier (hash or proof) of the created agreement.
     event AgreementCreated(address indexed initiator, bytes32 proof);
-    // @notice Thrown when the provided proof is invalid.
+
+    /// @notice Emitted when an agreement is settled by the designated broker or authorized account.
+    /// @param broker The account that facilitated the agreement settlement.
+    /// @param proof The unique identifier (hash or proof) of the settled agreement.
+    event AgreementSettled(address indexed broker, address indexed counterparty, bytes32 proof);
+
+    /// @notice Emitted when an agreement is canceled by the broker or another authorized account.
+    /// @param initiator The account that initiated the cancellation.
+    /// @param proof The unique identifier (hash or proof) of the canceled agreement.
+    event AgreementCancelled(address indexed initiator, bytes32 proof);
+
+    /// @dev Custom error thrown when the provided proof for an agreement is invalid.
     error InvalidAgreementProof();
-    error InvalidAgreementOp(string);
+
+    /// @dev Custom error thrown for invalid operations on an agreement, with a descriptive message.
+    /// @param message A string explaining the invalid operation.
+    error InvalidAgreementOp(string message);
+
+    /// @notice Ensures the agreement associated with the provided `proof` is valid and active.
+    modifier onlyValidAgreement(bytes32 proof) {
+        T.Agreement memory agreement = getAgreement(proof);
+        if (!agreement.active || agreement.initiator == address(0)) {
+            revert InvalidAgreementOp("Invalida inactive agreement.");
+        }
+        _;
+    }
 
     /// @custom:oz-upgrades-unsafe-allow constructor
-    constructor(address tollgate) {
+    constructor(address treasury, address tollgate) {
         /// https://forum.openzeppelin.com/t/uupsupgradeable-vulnerability-post-mortem/15680
         /// https://forum.openzeppelin.com/t/what-does-disableinitializers-function-mean/28730/5
         _disableInitializers();
         // we need to collect the fees during the agreement creation.
         TOLLGATE = ITollgate(tollgate);
+        TREASURY = ITreasury(treasury);
     }
 
     /// Initialize the proxy state.
     function initialize() public initializer {
         __UUPSUpgradeable_init();
         __Governable_init(msg.sender);
+        __FeesCollector_init(address(TREASURY));
+        __ReentrancyGuardTransient_init();
     }
 
-    /// @notice Settles the agreement associated with the given proof, preparing it for payment processing.
-    /// @dev This function retrieves the agreement and marks it as settled to trigger any associated payments.
-    /// @param proof The unique identifier of the agreement to settle.
-    function settleAgreement(bytes32 proof) external returns (T.Agreement memory) {
-        if (!isValidProof(proof)) revert InvalidAgreementProof();
-        return _closeAgreement(proof);
-    }
-
-    function previewAgreement(
-        uint256 value,
+    /// @notice Creates and stores a new agreement.
+    /// @param amount The total amount committed.
+    /// @param currency The currency used for the agreement.
+    /// @param broker The authorized account to manage the agreement.
+    /// @param parties The parties in the agreement.
+    /// @param payload Additional data for execution.
+    function createAgreement(
+        uint256 amount,
         address currency,
-        address holder,
+        address broker,
+        address[] calldata parties,
+        bytes calldata payload
+    ) external returns (bytes32 proof) {
+        // IMPORTANT: The process of distributing funds to accounts should be handled within the policy logic.
+        uint256 confirmed = msg.sender.safeDeposit(amount, currency);
+        T.Agreement memory agreement = previewAgreement(confirmed, currency, broker, parties, payload);
+        // only the initiator can operate with this agreement proof, or transfer the proof to the other party..
+        // each agreement is unique and immutable, ensuring that it cannot be modified or reconstructed.
+        proof = _createProof(agreement);
+        _storeAgreement(proof, agreement);
+        emit AgreementCreated(msg.sender, proof);
+    }
+
+    /// @notice Allows the initiator to quit the agreement and receive the committed funds.
+    /// @param proof The unique identifier of the agreement.
+    function quitAgreement(bytes32 proof) external onlyValidAgreement(proof) nonReentrant returns (T.Agreement memory) {
+        T.Agreement memory agreement = getAgreement(proof);
+        if (agreement.initiator != msg.sender) {
+            revert InvalidAgreementOp("Only initiator can close the agreement.");
+        }
+
+        // a partial rollback amount is registered in treasury..
+        uint256 available = agreement.available; // initiator rollback
+        address initiator = agreement.initiator; // the original initiator
+        uint256 fees = agreement.fees; // keep fees as penalty
+        address currency = agreement.currency;
+
+        _closeAgreement(proof); // close the agreement
+        _sumLedgerEntry(address(this), fees, currency);
+        _registerFundsInTreasury(initiator, available, currency);
+
+        emit AgreementCancelled(initiator, proof);
+        return agreement;
+    }
+
+    /// @notice Retrieves the details of an agreement based on the provided proof.
+    /// @param proof The unique identifier (hash) of the agreement.
+    function getAgreement(bytes32 proof) public view returns (T.Agreement memory) {
+        return agreements[proof];
+    }
+
+    /// @notice Settles an agreement by marking it inactive and transferring funds to the counterparty.
+    /// @param proof The unique identifier of the agreement.
+    /// @param counterparty The address that will receive the funds upon settlement.
+    function settleAgreement(
+        bytes32 proof,
+        address counterparty
+    ) public onlyValidAgreement(proof) returns (T.Agreement memory) {
+        // retrieve the agreement to storage to inactivate it and return it
+        T.Agreement memory agreement = getAgreement(proof);
+        if (agreement.broker != msg.sender) {
+            revert InvalidAgreementOp("Only broker can settle the agreement.");
+        }
+
+        uint256 fees = agreement.fees; // protocol
+        uint256 available = agreement.available; // holder earnings
+        address currency = agreement.currency;
+
+        _closeAgreement(proof); // after settled the agreement is complete..
+        _sumLedgerEntry(address(this), fees, currency);
+        _registerFundsInTreasury(counterparty, available, currency);
+
+        emit AgreementSettled(msg.sender, counterparty, proof);
+        return agreement;
+    }
+
+    /// @notice Previews an agreement by calculating fees and returning the agreement terms without committing them.
+    /// @param amount The total amount committed.
+    /// @param currency The currency used for the agreement.
+    /// @param broker The authorized account to manage the agreement.
+    /// @param parties The parties in the agreement.
+    /// @param payload Additional data for execution.
+    function previewAgreement(
+        uint256 amount,
+        address currency,
+        address broker,
         address[] calldata parties,
         bytes calldata payload
     ) public view returns (T.Agreement memory) {
@@ -71,92 +183,61 @@ contract RightsAccessAgreement is Initializable, UUPSUpgradeable, GovernableUpgr
             revert InvalidAgreementOp("Agreement must include at least one party");
         }
 
-        uint256 deductions = _calcFees(value, currency);
-        uint256 available = value - deductions; // the total after fees
-        // each agreement is unique and immutable, ensuring that it cannot be modified or reconstructed.
+        // agreements transport value..
+        // imagine an agreement like a bonus, gift card, prepaid card or check..
+        uint256 deductions = _calcFees(amount, currency);
+        uint256 available = amount - deductions; // the total after fees
         // this design protects the agreement's terms from any future changes in fees or protocol conditions.
         // by using this immutable approach, the agreement terms are "frozen" at the time of creation.
         return
             T.Agreement({
                 active: true, // the agreement status, true for active, false for closed.
-                value: value, // the transaction amount
-                available: available, // the remaining amount after fees
+                broker: broker, // the authorized account to manage the agreement
                 currency: currency, // the currency used in transaction
-                parties: parties, // the accounts related to agreement
-                holder: holder, // the content rights holder
-                payload: payload, // any additional data needed during agreement execution
                 initiator: msg.sender, // the tx initiator
-                createdAt: block.timestamp // the agreement creation time
+                amount: amount, // the transaction amount
+                fees: deductions, // the protocol fees of the agreement
+                available: available, // the remaining amount after fees
+                createdAt: block.timestamp, // the agreement creation time
+                parties: parties, // the accounts related to agreement
+                payload: payload // any additional data needed during agreement execution
             });
-    }
-
-    /// @notice Creates a new agreement between the account and the content holder.
-    /// @dev This function handles the creation of a new agreement by negotiating terms, calculating fees,
-    /// and generating a unique proof of the agreement.
-    /// @param currency The address of the ERC20 token (or native currency) being used in the agreement.
-    /// @param holder The address of the content holder whose content is being accessed.
-    /// @param parties The addresses of the accounts involved in the agreement.
-    /// @param payload Additional data required to execute the agreement.
-    function createAgreement(
-        address currency,
-        address holder,
-        address[] calldata parties,
-        bytes calldata payload
-    ) public returns (bytes32) {
-        // we check the allowance here and during policy registration..
-        uint256 value = msg.sender.allowance(currency);
-        T.Agreement memory agreement = previewAgreement(value, currency, holder, parties, payload);
-
-        bytes32 proof = _createProof(agreement);
-        agreements[proof] = agreement;
-        emit AgreementCreated(msg.sender, proof);
-        return proof;
-    }
-
-    /// @notice Checks if a given proof corresponds to an active agreement.
-    /// @dev Verifies the existence and active status of the agreement in storage.
-    /// @param proof The unique identifier of the agreement to validate.
-    function isValidProof(bytes32 proof) public view returns (bool) {
-        T.Agreement memory agreement = agreements[proof];
-        return agreement.active;
-    }
-
-    /// @notice Creates and stores a new agreement proof.
-    /// @dev The proof is generated using keccak256 hashing of the agreement data.
-    /// @param agreement The agreement object containing the terms and parties involved.
-    function _createProof(T.Agreement memory agreement) internal view returns (bytes32) {
-        // yes, we can encode full struct as abi.encode with extra overhead..
-        return
-            keccak256(
-                abi.encodePacked(
-                    blockhash(block.number - 1),
-                    agreement.createdAt,
-                    agreement.value,
-                    agreement.holder,
-                    agreement.currency,
-                    agreement.payload
-                )
-            );
-    }
-
-    /// @notice Close a agreement for a given proof corresponds to an active agreement.
-    /// @dev Set the status as inactive of the agreement in storage.
-    /// @param proof The unique identifier of the agreement to validate.
-    function _closeAgreement(bytes32 proof) internal returns (T.Agreement storage) {
-        // retrieve the agreement to storage to inactivate it and return it
-        T.Agreement storage agreement = agreements[proof];
-        if (agreement.initiator != msg.sender) {
-            revert InvalidAgreementOp("Only initiator can close the agreement.");
-        }
-        
-        agreement.active = false;
-        return agreement;
     }
 
     /// @dev Authorizes the upgrade of the contract.
     /// @notice Only the owner can authorize the upgrade.
     /// @param newImplementation The address of the new implementation contract.
     function _authorizeUpgrade(address newImplementation) internal override onlyAdmin {}
+
+    /// @dev Generates a unique proof for an agreement using keccak256 hashing.
+    function _createProof(T.Agreement memory agreement) private view returns (bytes32) {
+        // yes, we can encode full struct as abi.encode with extra overhead..
+        return
+            keccak256(
+                abi.encodePacked(
+                    blockhash(block.number - 1),
+                    agreement.createdAt,
+                    agreement.fees,
+                    agreement.amount,
+                    agreement.broker,
+                    agreement.currency,
+                    agreement.payload
+                )
+            );
+    }
+
+    /// @dev Set the agreement relation with proof in storage.
+    function _storeAgreement(bytes32 proof, T.Agreement memory agreement) private {
+        agreements[proof] = agreement; // store agreement..
+    }
+
+    /// @dev Marks an agreement as inactive, effectively closing it.
+    function _closeAgreement(bytes32 proof) private returns (T.Agreement storage) {
+        // retrieve the agreement to storage to inactivate it and return it
+        T.Agreement storage agreement = agreements[proof];
+        agreement.active = false;
+        return agreement;
+    }
 
     /// @notice Calculates the fee based on the provided total amount and currency.
     /// @dev Reverts if the currency is not supported by the fees manager.
@@ -166,5 +247,17 @@ contract RightsAccessAgreement is Initializable, UUPSUpgradeable, GovernableUpgr
         //!IMPORTANT if fees manager does not support the currency, will revert..
         uint256 fees = TOLLGATE.getFees(T.Context.RMA, currency);
         return total.perOf(fees); // bps repr enforced by tollgate..
+    }
+
+    /// @notice Registers a specified amount of currency in the treasury on behalf of the recipient.
+    /// @dev This function increases the allowance for the treasury to access the specified `amount` of `currency`
+    ///      and then deposits the funds into the treasury for the given `recipient`.
+    /// @param recipient The address that will receive the registered funds in the treasury.
+    /// @param amount The amount of currency to be registered in the treasury.
+    /// @param currency The address of the ERC20 token used for the registration, or `address(0)` for native currency.
+    function _registerFundsInTreasury(address recipient, uint256 amount, address currency) private {
+        // during the closing of the deal the earnings are registered in treasury..
+        address(TREASURY).increaseAllowance(amount, currency);
+        TREASURY.deposit(recipient, amount, currency);
     }
 }
