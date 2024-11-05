@@ -110,6 +110,7 @@ abstract contract BasePolicy is ReentrancyGuard, IPolicy {
     /// @param account The address of the user whose access is being verified.
     function isCompliant(address account) public view returns (bool) {
         uint256 attestationId = attestations[account];
+        // default attestation values ares 0 <- means not registered
         if (attestationId == 0) return false; // must be registered
         return ATTESTATION_PROVIDER.verify(attestationId, address(this), account);
     }

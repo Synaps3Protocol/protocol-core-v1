@@ -11,7 +11,6 @@ import { ERC721EnumerableUpgradeable } from "@openzeppelin/contracts-upgradeable
 import { AccessControlledUpgradeable } from "contracts/base/upgradeable/AccessControlledUpgradeable.sol";
 import { IContentVerifiable } from "contracts/interfaces/content/IContentVerifiable.sol";
 import { IContentOwnership } from "contracts/interfaces/content/IContentOwnership.sol";
-import { IAccessManager } from "contracts/interfaces/access/IAccessManager.sol";
 
 // TODO imp ERC404
 // TODO imp EIP4337 accounting
