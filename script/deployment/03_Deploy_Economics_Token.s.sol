@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.26;
 
-import { DeployBase } from "script/00_Deploy_Base.s.sol";
+import { DeployBase } from "script/deployment/00_Deploy_Base.s.sol";
 import { MMC } from "contracts/economics/MMC.sol";
 
 contract DeployToken is DeployBase {

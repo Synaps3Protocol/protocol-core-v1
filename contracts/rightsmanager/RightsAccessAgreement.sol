@@ -4,7 +4,7 @@ pragma solidity 0.8.26;
 
 import { Initializable } from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import { UUPSUpgradeable } from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
-import { GovernableUpgradeable } from "contracts/base/upgradeable/GovernableUpgradeable.sol";
+import { AccessControlledUpgradeable } from "contracts/base/upgradeable/AccessControlledUpgradeable.sol";
 // solhint-disable-next-line max-line-length
 import { ReentrancyGuardTransientUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardTransientUpgradeable.sol";
 import { FeesCollectorUpgradeable } from "contracts/base/upgradeable/FeesCollectorUpgradeable.sol";
@@ -19,7 +19,7 @@ import { T } from "contracts/libraries/Types.sol";
 contract RightsAccessAgreement is
     Initializable,
     UUPSUpgradeable,
-    GovernableUpgradeable,
+    AccessControlledUpgradeable,
     ReentrancyGuardTransientUpgradeable,
     FeesCollectorUpgradeable,
     IRightsAccessAgreement
@@ -32,14 +32,15 @@ contract RightsAccessAgreement is
     /// will never be executed in the context of the proxy’s state
     /// https://docs.openzeppelin.com/upgrades-plugins/1.x/proxies#the-constructor-caveat
 
-    /// Preventing accidental/malicious changes during contract reinitializations.
+    /// @custom:oz-upgrades-unsafe-allow state-variable-immutable
     ITreasury public immutable TREASURY;
+    /// @custom:oz-upgrades-unsafe-allow state-variable-immutable
     ITollgate public immutable TOLLGATE;
 
     // @dev Holds a bounded key expressing the agreement between the parts.
     // The key is derived using keccak256 hashing of the account and the rights holder.
     // This mapping stores active agreements, indexed by their unique proof.
-    mapping(bytes32 => T.Agreement) private agreements;
+    mapping(bytes32 => T.Agreement) private _agreements;
 
     /// @notice Emitted when an agreement is created.
     /// @param initiator The account that initiated or created the agreement.
@@ -83,9 +84,9 @@ contract RightsAccessAgreement is
     }
 
     /// Initialize the proxy state.
-    function initialize() public initializer {
+    function initialize(address accessManager) public initializer {
         __UUPSUpgradeable_init();
-        __Governable_init(msg.sender);
+        __AccessControlled_init(accessManager);
         __FeesCollector_init(address(TREASURY));
         __ReentrancyGuardTransient_init();
     }
@@ -138,7 +139,7 @@ contract RightsAccessAgreement is
     /// @notice Retrieves the details of an agreement based on the provided proof.
     /// @param proof The unique identifier (hash) of the agreement.
     function getAgreement(bytes32 proof) public view returns (T.Agreement memory) {
-        return agreements[proof];
+        return _agreements[proof];
     }
 
     /// @notice Settles an agreement by marking it inactive and transferring funds to the counterparty.
@@ -228,13 +229,13 @@ contract RightsAccessAgreement is
 
     /// @dev Set the agreement relation with proof in storage.
     function _storeAgreement(bytes32 proof, T.Agreement memory agreement) private {
-        agreements[proof] = agreement; // store agreement..
+        _agreements[proof] = agreement; // store agreement..
     }
 
     /// @dev Marks an agreement as inactive, effectively closing it.
     function _closeAgreement(bytes32 proof) private returns (T.Agreement storage) {
         // retrieve the agreement to storage to inactivate it and return it
-        T.Agreement storage agreement = agreements[proof];
+        T.Agreement storage agreement = _agreements[proof];
         agreement.active = false;
         return agreement;
     }

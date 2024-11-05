@@ -1,21 +1,9 @@
+// SPDX-License-Identifier: MIT
 pragma solidity 0.8.26;
 
 import "forge-std/Test.sol";
 import {QuorumUpgradeable} from "contracts/base/upgradeable/QuorumUpgradeable.sol";
 
-/* The expected flow of these tests is:
- *
- *   Default (0: Pending)
- *      |
- *      v
- *   Register (1: Waiting)
- *      |               \
- *      v                v
- *   Quit (0: Pending)  Approve (2: Active)
- *                          |
- *                          v
- *                      Revoke (3: Blocked)
- */
 contract QuorumTest is Test, QuorumUpgradeable {
     function test_DefaultStatus() public view {
         Status status = _status(123456789);

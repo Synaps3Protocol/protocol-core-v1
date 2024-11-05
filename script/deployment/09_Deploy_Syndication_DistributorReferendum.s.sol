@@ -2,7 +2,7 @@
 pragma solidity 0.8.26;
 
 import { DistributorReferendum } from "contracts/syndication/DistributorReferendum.sol";
-import { DeployBase } from "script/00_Deploy_Base.s.sol";
+import { DeployBase } from "script/deployment/00_Deploy_Base.s.sol";
 
 contract DeployDistributorReferendum is DeployBase {
     address treasury;
@@ -17,11 +17,6 @@ contract DeployDistributorReferendum is DeployBase {
     }
 
     function run() external BroadcastedByAdmin returns (address) {
-        return
-            deployUUPS(
-                "DistributorReferendum.sol",
-                abi.encodeCall(DistributorReferendum.initialize, ()),
-                abi.encode(treasury, tollgate)
-            );
+        return deployAccessManagedUUPS("DistributorReferendum.sol", abi.encode(treasury, tollgate));
     }
 }

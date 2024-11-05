@@ -1,10 +1,10 @@
+// SPDX-License-Identifier: MIT
 pragma solidity 0.8.26;
 
 import "forge-std/Test.sol";
 import { IERC20 } from "@openzeppelin/contracts/interfaces/IERC20.sol";
 import { ITreasury } from "contracts/interfaces/economics/ITreasury.sol";
 import { ITollgate } from "contracts/interfaces/economics/ITollgate.sol";
-import { IGovernable } from "contracts/interfaces/IGovernable.sol";
 import { IDistributorVerifiable } from "contracts/interfaces/syndication/IDistributorVerifiable.sol";
 import { IDistributorExpirable } from "contracts/interfaces/syndication/IDistributorExpirable.sol";
 import { IDistributorRegistrable } from "contracts/interfaces/syndication/IDistributorRegistrable.sol";
@@ -21,13 +21,14 @@ contract DistributorReferendumTest is BaseTest {
     address token;
 
     function setUp() public {
+        // setup the access manager..
+        deployAndSetAccessManager();
+
         token = deployToken();
         treasury = deployTreasury();
         tollgate = deployTollgate();
         referendum = deployDistributorReferendum(treasury, tollgate);
         distributor = deployDistributor("contentrider.com");
-        setGovernorTo(tollgate);
-        setGovernorTo(referendum);
     }
 
     /// ----------------------------------------------------------------

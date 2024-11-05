@@ -2,9 +2,8 @@
 
 pragma solidity 0.8.26;
 
-import { Governable } from "contracts/base//Governable.sol";
 import { ReentrancyGuard } from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
-import { IContentOwnership } from "contracts/interfaces/assets/IContentOwnership.sol";
+import { IContentOwnership } from "contracts/interfaces/content/IContentOwnership.sol";
 import { IRightsPolicyManager } from "contracts/interfaces/rightsmanager/IRightsPolicyManager.sol";
 import { IAttestationProvider } from "contracts/interfaces/IAttestationProvider.sol";
 import { IPolicy } from "contracts/interfaces/policies/IPolicy.sol";
@@ -12,13 +11,13 @@ import { T } from "contracts/libraries/Types.sol";
 
 /// @title BasePolicy
 /// @notice This abstract contract serves as a base for policies that manage access to content.
-abstract contract BasePolicy is Governable, ReentrancyGuard, IPolicy {
+abstract contract BasePolicy is ReentrancyGuard, IPolicy {
     // Immutable public variables to store the addresses of the Rights Manager and Ownership.
     IAttestationProvider public immutable ATTESTATION_PROVIDER;
     IRightsPolicyManager public immutable RIGHTS_POLICY_MANAGER;
     IContentOwnership public immutable CONTENT_OWNERSHIP;
 
-    bool private setupReady;
+    bool private _setupReady;
     /// @dev attestation registry
     mapping(address => uint256) public attestations;
 
@@ -64,9 +63,9 @@ abstract contract BasePolicy is Governable, ReentrancyGuard, IPolicy {
     ///      Once executed, the contract is considered initialized.
     /// @custom:modifiers setup
     modifier initializer() {
-        setupReady = false;
+        _setupReady = false;
         _;
-        setupReady = true;
+        _setupReady = true;
     }
 
     /// @notice Ensures that the contract has been properly initialized before execution.
@@ -75,13 +74,13 @@ abstract contract BasePolicy is Governable, ReentrancyGuard, IPolicy {
     ///      Use this to restrict access to functions that depend on the contract's initial setup.
     /// @custom:modifiers withValidSetup
     modifier initialized() {
-        if (!setupReady) {
+        if (!_setupReady) {
             revert InvalidPolicyInitialization(address(this));
         }
         _;
     }
 
-    constructor(address rightsPolicyManager, address contentOwnership, address providerAddress) Governable(msg.sender) {
+    constructor(address rightsPolicyManager, address contentOwnership, address providerAddress) {
         ATTESTATION_PROVIDER = IAttestationProvider(providerAddress);
         RIGHTS_POLICY_MANAGER = IRightsPolicyManager(rightsPolicyManager);
         CONTENT_OWNERSHIP = IContentOwnership(contentOwnership);

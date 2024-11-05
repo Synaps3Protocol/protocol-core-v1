@@ -7,6 +7,8 @@ Welcome! 🎉 Synapse is redefining how creative IP distribution works. Whether 
 
 ![image](https://github.com/user-attachments/assets/59610c00-672d-4eec-88dc-71b4fc8add59)
 
+MMC: 0x21173483074a46c302c4252e04c76fA90e6DdA6C
+TOLLGATE: 0x6bfF13FfD2507174174089ca49e584533fEDE18a
 
 ## Join the Fun
 Found a bug? Got a cool idea? Open a pull request or start a discussion on GitHub. We’d love to build this together!

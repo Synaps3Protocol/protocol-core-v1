@@ -4,20 +4,20 @@ pragma solidity 0.8.26;
 import { UUPSUpgradeable } from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import { Initializable } from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 
-import { GovernableUpgradeable } from "contracts/base/upgradeable/GovernableUpgradeable.sol";
-import { IContentOwnership } from "contracts/interfaces/assets/IContentOwnership.sol";
-import { IContentVault } from "contracts/interfaces/assets/IContentVault.sol";
+import { AccessControlledUpgradeable } from "contracts/base/upgradeable/AccessControlledUpgradeable.sol";
+import { IContentOwnership } from "contracts/interfaces/content/IContentOwnership.sol";
+import { IContentVault } from "contracts/interfaces/content/IContentVault.sol";
 
 import { T } from "contracts/libraries/Types.sol";
 
 /// @notice This contract is designed as a secure and decentralized area to exchange complementary data related to
 /// content access, such as encrypted keys, license keys, or metadata. It does not store the actual content itself,
 /// but manages the complementary data necessary to access that content.
-contract ContentVault is Initializable, UUPSUpgradeable, GovernableUpgradeable, IContentVault {
-    /// Preventing accidental/malicious changes during contract reinitializations.
+contract ContentVault is Initializable, UUPSUpgradeable, AccessControlledUpgradeable, IContentVault {
+    /// @custom:oz-upgrades-unsafe-allow state-variable-immutable
     IContentOwnership public immutable CONTENT_OWNSERSHIP;
     /// @dev Mapping to store encrypted content, identified by content ID.
-    mapping(uint256 => mapping(T.VaultType => bytes)) private secured;
+    mapping(uint256 => mapping(T.VaultType => bytes)) private _secured;
     /// @notice Error thrown when a non-owner tries to modify or access the content.
     error InvalidContentHolder();
 
@@ -41,16 +41,16 @@ contract ContentVault is Initializable, UUPSUpgradeable, GovernableUpgradeable, 
     }
 
     /// @notice Initializes the proxy state.
-    function initialize() public initializer {
+    function initialize(address accessManager) public initializer {
         __UUPSUpgradeable_init();
-        __Governable_init(msg.sender);
+        __AccessControlled_init(accessManager);
     }
 
     /// @notice Retrieves the encrypted content for a given content ID.
     /// @param contentId The identifier of the content.
     /// @param vault The vault type used to retrieve the content (e.g., LIT, RSA, EC).
     function getContent(uint256 contentId, T.VaultType vault) public view returns (bytes memory) {
-        return secured[contentId][vault];
+        return _secured[contentId][vault];
     }
 
     /// @notice Stores encrypted content in the vault under a specific content ID.
@@ -58,7 +58,7 @@ contract ContentVault is Initializable, UUPSUpgradeable, GovernableUpgradeable, 
     /// @param vault The vault type to associate with the encrypted content (e.g., LIT, RSA, EC).
     /// @param data The secure content to store, represented as bytes.
     function setContent(uint256 contentId, T.VaultType vault, bytes memory data) public onlyHolder(contentId) {
-        secured[contentId][vault] = data;
+        _secured[contentId][vault] = data;
     }
 
     /// @notice Function that authorizes the contract upgrade. It ensures that only the admin

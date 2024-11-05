@@ -7,7 +7,7 @@ import { ERC165Checker } from "@openzeppelin/contracts/utils/introspection/ERC16
 import { Initializable } from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import { EnumerableSet } from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 import { UUPSUpgradeable } from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
-import { GovernableUpgradeable } from "contracts/base/upgradeable/GovernableUpgradeable.sol";
+import { AccessControlledUpgradeable } from "contracts/base/upgradeable/AccessControlledUpgradeable.sol";
 import { ITollgate } from "contracts/interfaces/economics/ITollgate.sol";
 
 import { T } from "contracts/libraries/Types.sol";
@@ -19,14 +19,14 @@ import { FeesOps } from "contracts/libraries/FeesOps.sol";
 /// and provides mechanisms to set, retrieve, and validate fees for different contexts.
 /// @notice The name "Tollgate" reflects the contract's role as a checkpoint that regulates
 /// financial access through fees and approved currencies.
-contract Tollgate is Initializable, UUPSUpgradeable, GovernableUpgradeable, ITollgate {
+contract Tollgate is Initializable, UUPSUpgradeable, AccessControlledUpgradeable, ITollgate {
     using FeesOps for uint256;
     using ERC165Checker for address;
     using EnumerableSet for EnumerableSet.AddressSet;
 
     bytes4 private constant INTERFACE_ID_ERC20 = type(IERC20).interfaceId;
-    mapping(T.Context => EnumerableSet.AddressSet) private registeredCurrencies;
-    mapping(address => mapping(T.Context => uint256)) private currencyFees;
+    mapping(T.Context => EnumerableSet.AddressSet) private _registeredCurrencies;
+    mapping(address => mapping(T.Context => uint256)) private _currencyFees;
 
     /// @notice Emitted when fees are set.
     /// @param fee The amount of fees being set.
@@ -65,19 +65,17 @@ contract Tollgate is Initializable, UUPSUpgradeable, GovernableUpgradeable, ITol
         _;
     }
 
-    /// @dev Constructor that disables initializers to prevent the implementation contract from being initialized.
-    /// @notice This constructor prevents the implementation contract from being initialized.
-    /// @dev See https://forum.openzeppelin.com/t/uupsupgradeable-vulnerability-post-mortem/15680
-    /// @dev See https://forum.openzeppelin.com/t/what-does-disableinitializers-function-mean/28730/5
     /// @custom:oz-upgrades-unsafe-allow constructor
     constructor() {
+        /// https://forum.openzeppelin.com/t/what-does-disableinitializers-function-mean/28730/5
+        /// https://forum.openzeppelin.com/t/uupsupgradeable-vulnerability-post-mortem/15680
         _disableInitializers();
     }
 
-    /// @notice Initializes the contract. Should be called only once.
-    function initialize() public initializer {
+    /// @notice Initializes the proxy state.
+    function initialize(address accessManager) public initializer {
         __UUPSUpgradeable_init();
-        __Governable_init(msg.sender);
+        __AccessControlled_init(accessManager);
     }
 
     /// @notice Returns the list of supported currencies for a given context.
@@ -89,14 +87,14 @@ contract Tollgate is Initializable, UUPSUpgradeable, GovernableUpgradeable, ITol
         // Developers should keep in mind that this function has an unbounded cost,
         /// and using it as part of a state-changing function may render the function uncallable
         /// if the set grows to a point where copying to memory consumes too much gas to fit in a block.
-        return registeredCurrencies[ctx].values();
+        return _registeredCurrencies[ctx].values();
     }
 
     /// @notice Checks if a currency is supported for a given context.
     /// @param ctx The context under which the currency is being checked.
     /// @param currency The address of the currency to check.
     function isCurrencySupported(T.Context ctx, address currency) public view returns (bool) {
-        return registeredCurrencies[ctx].contains(currency) && currencyFees[currency][ctx] > 0;
+        return _registeredCurrencies[ctx].contains(currency) && _currencyFees[currency][ctx] > 0;
     }
 
     /// @notice Retrieves the fees for a specified context and currency.
@@ -104,7 +102,7 @@ contract Tollgate is Initializable, UUPSUpgradeable, GovernableUpgradeable, ITol
     /// @param currency The address of the currency for which to retrieve the fees.
     function getFees(T.Context ctx, address currency) public view returns (uint256) {
         if (!isCurrencySupported(ctx, currency)) revert InvalidUnsupportedCurrency(currency);
-        return currencyFees[currency][ctx];
+        return _currencyFees[currency][ctx];
     }
 
     /// @notice Sets a new fee for a specific context and currency.
@@ -117,8 +115,8 @@ contract Tollgate is Initializable, UUPSUpgradeable, GovernableUpgradeable, ITol
         uint256 fee,
         address currency
     ) external onlyGov onlyValidFeeRepresentation(ctx, fee) onlyValidCurrency(currency) {
-        currencyFees[currency][ctx] = fee;
-        registeredCurrencies[ctx].add(currency); // set avoid duplication..
+        _currencyFees[currency][ctx] = fee;
+        _registeredCurrencies[ctx].add(currency); // set avoid duplication..
         emit FeesSet(fee, ctx, currency, msg.sender);
     }
 

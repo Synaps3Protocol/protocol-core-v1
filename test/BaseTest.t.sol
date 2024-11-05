@@ -1,40 +1,47 @@
 pragma solidity 0.8.26;
 
 import "forge-std/Test.sol";
-import { DeployTreasury } from "script/01_Deploy_Economics_Treasury.s.sol";
-import { DeployTollgate } from "script/02_Deploy_Economics_Tollgate.s.sol";
-import { DeployToken } from "script/03_Deploy_Economics_Token.s.sol";
-import { DeployDistributor } from "script/04_Deploy_Syndication_Distributor.s.sol";
-import { DeployContentReferendum } from "script/05_Deploy_Assets_ContentReferendum.s.sol";
-import { DeployDistributorReferendum } from "script/08_Deploy_Syndication_DistributorReferendum.s.sol";
-
-import { IGovernable } from "contracts/interfaces/IGovernable.sol";
+import { DeployAccessManager } from "script/deployment/01_Deploy_Access_AccessManager.s.sol";
+import { DeployTollgate } from "script/deployment/02_Deploy_Economics_Tollgate.s.sol";
+import { DeployToken } from "script/deployment/03_Deploy_Economics_Token.s.sol";
+import { DeployTreasury } from "script/deployment/04_Deploy_Economics_Treasury.s.sol";
+import { DeployContentReferendum } from "script/deployment/05_Deploy_Assets_ContentReferendum.s.sol";
+import { DeployDistributor } from "script/deployment/08_Deploy_Syndication_Distributor.s.sol";
+import { DeployDistributorReferendum } from "script/deployment/09_Deploy_Syndication_DistributorReferendum.s.sol";
+import { IAccessManager } from "contracts/interfaces/access/IAccessManager.sol";
 
 contract BaseTest is Test {
     address admin = vm.envAddress("PUBLIC_KEY");
     address user = vm.addr(2);
     address governor = vm.addr(1);
+    address accessManager;
 
-    // Helper function to governor to contract.
-    function setGovernorTo(address governable) public {
+    function setAccessManager(address accessManager_) internal {
+        accessManager = accessManager_;
         // setup governor account for testing purposes
         // some methods are restricted to be called by governance only
         vm.prank(admin); // only admin can set initially a governor
-        IGovernable(governable).setGovernance(governor);
+        IAccessManager(accessManager).setGovernor(governor);
     }
 
+    function deployAndSetAccessManager() public returns (address) {
+        address accessManager_ = deployAccessManager();
+        setAccessManager(accessManager_);
+        return accessManager_;
+    }
 
-    // 01_DeployTreasury
-    function deployTreasury() public returns (address) {
+    // 01_DeployAccessManager
+    function deployAccessManager() public returns (address) {
         // set default admin as deployer..
-        DeployTreasury treasuryDeployer = new DeployTreasury();
-        return treasuryDeployer.run();
+        DeployAccessManager accessManagerDeployer = new DeployAccessManager();
+        return accessManagerDeployer.run();
     }
 
     // 02_DeployTollgate
     function deployTollgate() public returns (address) {
         // set default admin as deployer..
         DeployTollgate tollgateDeployer = new DeployTollgate();
+        tollgateDeployer.setAccessManager(accessManager);
         return tollgateDeployer.run();
     }
 
@@ -45,25 +52,35 @@ contract BaseTest is Test {
         return mmcDeployer.run();
     }
 
-    // 04_DeployDistributor
+    // 04_DeployTreasury
+    function deployTreasury() public returns (address) {
+        // set default admin as deployer..
+        DeployTreasury treasuryDeployer = new DeployTreasury();
+        treasuryDeployer.setAccessManager(accessManager);
+        return treasuryDeployer.run();
+    }
+
+    // 05_DeployContentReferendum
+    function deployContentReferendum() public returns (address) {
+        DeployContentReferendum contentReferendumDeployer = new DeployContentReferendum();
+        contentReferendumDeployer.setAccessManager(accessManager);
+        return contentReferendumDeployer.run();
+    }
+
+    // 08_DeployDistributor
     function deployDistributor(string memory endpoint) public returns (address) {
         DeployDistributor distDeployer = new DeployDistributor();
         distDeployer.setEndpoint(endpoint);
         return distDeployer.run();
     }
 
-    // 05_DeployContentReferendum
-    function deployContentReferendum() public returns (address) {
-        DeployContentReferendum contentReferendumDeployer = new DeployContentReferendum();
-        return contentReferendumDeployer.run();
-    }
-
-    // 08_DeployDistributorReferendum
+    // 09_DeployDistributorReferendum
     function deployDistributorReferendum(address treasury, address tollgate) public returns (address) {
         // set default admin as deployer..
         DeployDistributorReferendum distReferendumDeployer = new DeployDistributorReferendum();
         distReferendumDeployer.setTreasuryAddress(treasury);
         distReferendumDeployer.setTollgateAddress(tollgate);
+        distReferendumDeployer.setAccessManager(accessManager);
         return distReferendumDeployer.run();
     }
 }

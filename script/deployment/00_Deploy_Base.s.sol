@@ -6,11 +6,17 @@ import { Upgrades } from "openzeppelin-foundry-upgrades/Upgrades.sol";
 import { Options } from "openzeppelin-foundry-upgrades/Options.sol";
 
 contract DeployBase is Script {
+    address private accessManager;
+
     modifier BroadcastedByAdmin() {
         uint256 admin = vm.envUint("PRIVATE_KEY");
         vm.startBroadcast(admin);
         _;
         vm.stopBroadcast();
+    }
+
+    function setAccessManager(address accessManager_) external {
+        accessManager = accessManager_;
     }
 
     function deployUUPS(
@@ -25,14 +31,20 @@ contract DeployBase is Script {
         return Upgrades.deployUUPSProxy(contractName, initData, options);
     }
 
-     function deployUUPS(
-        string memory contractName,
-        bytes memory initData
-    ) internal returns (address) {
+    function deployUUPS(string memory contractName, bytes memory initData) internal returns (address) {
         Options memory options; // struct with default values
         options.unsafeSkipAllChecks = vm.envBool("UPGRADE_UNSAFE_CHECK");
         return Upgrades.deployUUPSProxy(contractName, initData, options);
     }
 
+    function deployAccessManagedUUPS(string memory contractName) internal returns (address) {
+        return deployUUPS(contractName, abi.encodeWithSignature("initialize(address)", accessManager));
+    }
 
+    function deployAccessManagedUUPS(
+        string memory contractName,
+        bytes memory constructorData
+    ) internal returns (address) {
+        return deployUUPS(contractName, abi.encodeWithSignature("initialize(address)", accessManager), constructorData);
+    }
 }

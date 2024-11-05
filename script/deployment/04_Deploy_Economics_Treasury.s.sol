@@ -1,11 +1,12 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.26;
 
-import { DeployBase } from "script/00_Deploy_Base.s.sol";
+import { DeployBase } from "script/deployment/00_Deploy_Base.s.sol";
 import { Treasury } from "contracts/economics/Treasury.sol";
 
 contract DeployTreasury is DeployBase {
+
     function run() external BroadcastedByAdmin returns (address) {
-        return deployUUPS("Treasury.sol", abi.encodeCall(Treasury.initialize, ()));
+        return deployAccessManagedUUPS("Treasury.sol");
     }
 }
