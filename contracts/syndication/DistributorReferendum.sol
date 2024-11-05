@@ -5,8 +5,9 @@ pragma solidity 0.8.26;
 import { ERC165Checker } from "@openzeppelin/contracts/utils/introspection/ERC165Checker.sol";
 import { UUPSUpgradeable } from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import { Initializable } from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
-import { ReentrancyGuardUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol";
-import { GovernableUpgradeable } from "contracts/base/upgradeable/GovernableUpgradeable.sol";
+// solhint-disable-next-line max-line-length
+import { ReentrancyGuardTransientUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardTransientUpgradeable.sol";
+import { AccessControlledUpgradeable } from "contracts/base/upgradeable/AccessControlledUpgradeable.sol";
 import { FeesCollectorUpgradeable } from "contracts/base/upgradeable/FeesCollectorUpgradeable.sol";
 import { QuorumUpgradeable } from "contracts/base/upgradeable/QuorumUpgradeable.sol";
 
@@ -21,23 +22,22 @@ contract DistributorReferendum is
     Initializable,
     UUPSUpgradeable,
     QuorumUpgradeable,
-    GovernableUpgradeable,
-    ReentrancyGuardUpgradeable,
+    AccessControlledUpgradeable,
+    ReentrancyGuardTransientUpgradeable,
     FeesCollectorUpgradeable,
     IDistributorReferendum
 {
     using TreasuryOps for address;
     using ERC165Checker for address;
 
-    /// Preventing accidental/malicious changes during contract reinitializations.
     /// @custom:oz-upgrades-unsafe-allow state-variable-immutable
     ITollgate public immutable TOLLGATE;
     /// @custom:oz-upgrades-unsafe-allow state-variable-immutable
     ITreasury public immutable TREASURY;
 
-    uint256 private enrollmentPeriod; // Period for enrollment
-    uint256 private enrollmentsCount; // Count of enrollments
-    mapping(address => uint256) private enrollmentDeadline; // Timestamp for enrollment periods
+    uint256 private _enrollmentPeriod; // Period for enrollment
+    uint256 private _enrollmentsCount; // Count of enrollments
+    mapping(address => uint256) private _enrollmentDeadline; // Timestamp for enrollment periods
     bytes4 private constant INTERFACE_ID_IDISTRIBUTOR = type(IDistributor).interfaceId;
 
     /// @notice Event emitted when a distributor is registered
@@ -84,20 +84,20 @@ contract DistributorReferendum is
     }
 
     /// @notice Initializes the proxy state.
-    function initialize() public initializer {
+    function initialize(address accessManager) public initializer {
         __Quorum_init();
         __UUPSUpgradeable_init();
-        __ReentrancyGuard_init();
-        __Governable_init(msg.sender);
+        __ReentrancyGuardTransient_init();
+        __AccessControlled_init(accessManager);
         __FeesCollector_init(address(TREASURY));
         // 6 months initially..
-        enrollmentPeriod = 180 days;
+        _enrollmentPeriod = 180 days;
     }
 
     /// @notice Sets a new expiration period for an enrollment or registration.
     /// @param newPeriod The new expiration period, in seconds.
     function setExpirationPeriod(uint256 newPeriod) external onlyGov {
-        enrollmentPeriod = newPeriod;
+        _enrollmentPeriod = newPeriod;
         emit PeriodSet(msg.sender, newPeriod);
     }
 
@@ -113,14 +113,14 @@ contract DistributorReferendum is
         _register(uint160(distributor));
         // set the distributor active enrollment period..
         // after this time the distributor is considered inactive and cannot collect his profits...
-        enrollmentDeadline[distributor] = block.timestamp + enrollmentPeriod;
+        _enrollmentDeadline[distributor] = block.timestamp + _enrollmentPeriod;
         emit Registered(distributor, block.timestamp, depositedAmount);
     }
 
     /// @notice Revokes the registration of a distributor.
     /// @param distributor The address of the distributor to revoke.
     function revoke(address distributor) external onlyGov onlyValidDistributor(distributor) {
-        enrollmentsCount--;
+        _enrollmentsCount--;
         _revoke(uint160(distributor));
         emit Revoked(distributor, block.timestamp);
     }
@@ -128,25 +128,25 @@ contract DistributorReferendum is
     /// @notice Approves a distributor's registration.
     /// @param distributor The address of the distributor to approve.
     function approve(address distributor) external onlyGov onlyValidDistributor(distributor) {
-        enrollmentsCount++;
+        _enrollmentsCount++;
         _approve(uint160(distributor));
         emit Approved(distributor, block.timestamp);
     }
 
     /// @notice Retrieves the current expiration period for enrollments or registrations.
     function getExpirationPeriod() public view returns (uint256) {
-        return enrollmentPeriod;
+        return _enrollmentPeriod;
     }
 
     /// @notice Retrieves the enrollment deadline for a distributor.
     /// @param distributor The address of the distributor.
     function getEnrollmentDeadline(address distributor) public view returns (uint256) {
-        return enrollmentDeadline[distributor];
+        return _enrollmentDeadline[distributor];
     }
 
     /// @notice Retrieves the total number of enrollments.
     function getEnrollmentCount() external view returns (uint256) {
-        return enrollmentsCount;
+        return _enrollmentsCount;
     }
 
     /// @notice Checks if the entity is active.
@@ -155,7 +155,7 @@ contract DistributorReferendum is
     function isActive(address distributor) public view onlyValidDistributor(distributor) returns (bool) {
         // TODO a renovation mechanism is needed to update the enrollment time
         // this mechanisms helps to verify the availability of the distributor forcing recurrent registrations.
-        return _status(uint160(distributor)) == Status.Active && enrollmentDeadline[distributor] > block.timestamp;
+        return _status(uint160(distributor)) == Status.Active && _enrollmentDeadline[distributor] > block.timestamp;
     }
 
     /// @notice Checks if the entity is waiting.

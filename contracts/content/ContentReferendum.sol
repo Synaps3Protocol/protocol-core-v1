@@ -8,9 +8,9 @@ import { NoncesUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/Non
 import { Initializable } from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import { EnumerableSet } from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 
-import { GovernableUpgradeable } from "contracts/base/upgradeable/GovernableUpgradeable.sol";
+import { AccessControlledUpgradeable } from "contracts/base/upgradeable/AccessControlledUpgradeable.sol";
 import { QuorumUpgradeable } from "contracts/base/upgradeable/QuorumUpgradeable.sol";
-import { IContentReferendum } from "contracts/interfaces/assets/IContentReferendum.sol";
+import { IContentReferendum } from "contracts/interfaces/content/IContentReferendum.sol";
 
 import { C } from "contracts/libraries/Constants.sol";
 import { T } from "contracts/libraries/Types.sol";
@@ -20,7 +20,7 @@ import { T } from "contracts/libraries/Types.sol";
 contract ContentReferendum is
     Initializable,
     UUPSUpgradeable,
-    GovernableUpgradeable,
+    AccessControlledUpgradeable,
     NoncesUpgradeable,
     EIP712Upgradeable,
     QuorumUpgradeable,
@@ -30,7 +30,7 @@ contract ContentReferendum is
 
     /// @dev Mapping that tracks content submissions for each address.
     /// Each address maps to a set of content IDs (UintSet) that have been submitted by that address.
-    mapping(address => EnumerableSet.UintSet) private submissions;
+    mapping(address => EnumerableSet.UintSet) private _submissions;
 
     /// @dev Event emitted when a content is submitted for referendum.
     /// @param contentId The ID of the content that has been submitted.
@@ -53,14 +53,6 @@ contract ContentReferendum is
     /// @param timestamp The timestamp indicating when the content was revoked.
     event Rejected(uint256 contentId, uint256 timestamp);
 
-    /// @notice Event emitted when the verified role is granted to an account.
-    /// @param account The address of the account that has been granted the verified role.
-    event VerifiedRoleGranted(address indexed account);
-
-    /// @notice Event emitted when the verified role is revoked from an account.
-    /// @param account The address of the account that has lost the verified role.
-    event VerifiedRoleRevoked(address indexed account);
-
     /// @dev Error thrown when the content submission is invalid (e.g., incorrect or missing data).
     error InvalidSubmissionContent();
 
@@ -80,28 +72,11 @@ contract ContentReferendum is
     }
 
     /// @notice Initializes the contract.
-    function initialize() public initializer {
+    function initialize(address accessManager) public initializer {
         __Quorum_init();
         __UUPSUpgradeable_init();
         __EIP712_init("Referendum", "1");
-        __Governable_init(msg.sender);
-    }
-
-    // TODO split to other contract ContentRoles..
-    /// @notice Grants the verified role to a specific account.
-    /// @param account The address of the account to verify.
-    /// @dev Only governance is allowed to grant the role.
-    function grantVerifiedRole(address account) external onlyGov {
-        _grantRole(C.VERIFIED_ROLE, account);
-        emit VerifiedRoleGranted(account);
-    }
-
-    /// @notice Revoke the verified role to a specific account.
-    /// @param account The address of the account to revoke.
-    /// @dev Only governance is allowed to revoke the role.
-    function revokeVerifiedRole(address account) external onlyGov {
-        _revokeRole(C.VERIFIED_ROLE, account);
-        emit VerifiedRoleRevoked(account);
+        __AccessControlled_init(accessManager);
     }
 
     /// @notice Submits a content proposition for referendum.
@@ -139,8 +114,9 @@ contract ContentReferendum is
     /// @param contentId The ID of the content.
     function isApproved(address initiator, uint256 contentId) public view returns (bool) {
         bool approved = isActive(contentId);
-        bool validAccount = submissions[initiator].contains(contentId);
-        bool verifiedRole = hasRole(C.VERIFIED_ROLE, initiator);
+        bool validAccount = _submissions[initiator].contains(contentId);
+        // TODO role manager check
+        bool verifiedRole = _hasRole(C.VERIFIED_ROLE, initiator);
         // is approved with a valid submission account or is verified account..
         return (approved && validAccount) || verifiedRole;
     }
@@ -177,7 +153,7 @@ contract ContentReferendum is
     /// @param initiator The address of the entity initiating the content submission.
     function _submit(uint256 contentId, address initiator) private {
         _register(contentId); // bundled check-effects-interaction
-        submissions[initiator].add(contentId);
+        _submissions[initiator].add(contentId);
         emit Submitted(initiator, block.timestamp, contentId);
     }
 }

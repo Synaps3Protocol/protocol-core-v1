@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: MIT
 pragma solidity 0.8.26;
 
 import { Tollgate } from "contracts/economics/Tollgate.sol";
@@ -10,9 +11,10 @@ contract TollgateTest is BaseTest {
     address token;
 
     function setUp() public {
+        
+        deployAndSetAccessManager();
         token = deployToken();
         tollgate = deployTollgate();
-        setGovernorTo(tollgate);
     }
 
     function test_SetFees_ValidFlatSyndicationFees() public {
@@ -31,7 +33,7 @@ contract TollgateTest is BaseTest {
         assertEq(ITollgate(tollgate).getFees(T.Context.RMA, token), expected);
     }
 
-        function test_SetFees_FeesSetEventEmmited() public {
+    function test_SetFees_FeesSetEventEmmited() public {
         uint256 expected = 1e18; // expected flat fees
         vm.prank(governor); // as governor set fees
         vm.expectEmit(true, true, false, true, address(tollgate));

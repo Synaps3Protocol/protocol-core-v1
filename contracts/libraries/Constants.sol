@@ -12,6 +12,9 @@ library C {
     uint16 internal constant BPS_MAX = 10_000;
 
     /// @notice The keccak256 hash representing the governance role.
+    /// @dev This constant is used to identify accounts with the admin permissions within the system.
+    bytes32 internal constant ADMIN_ROLE = keccak256("ADMIN_ROLE");
+    /// @notice The keccak256 hash representing the governance role.
     /// @dev This constant is used to identify accounts with the governance permissions within the system.
     bytes32 internal constant GOV_ROLE = keccak256("GOV_ROLE");
     /// @notice The keccak256 hash representing the moderator role.

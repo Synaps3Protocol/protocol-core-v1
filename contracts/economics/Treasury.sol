@@ -6,7 +6,7 @@ import { Initializable } from "@openzeppelin/contracts-upgradeable/proxy/utils/I
 import { UUPSUpgradeable } from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 // solhint-disable-next-line max-line-length
 import { ReentrancyGuardTransientUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardTransientUpgradeable.sol";
-import { GovernableUpgradeable } from "contracts/base/upgradeable/GovernableUpgradeable.sol";
+import { AccessControlledUpgradeable } from "contracts/base/upgradeable/AccessControlledUpgradeable.sol";
 import { LedgerUpgradeable } from "contracts/base/upgradeable/LedgerUpgradeable.sol";
 
 import { IFeesCollector } from "contracts/interfaces/economics/IFeesCollector.sol";
@@ -22,7 +22,7 @@ import { TreasuryOps } from "contracts/libraries/TreasuryOps.sol";
 contract Treasury is
     Initializable,
     UUPSUpgradeable,
-    GovernableUpgradeable,
+    AccessControlledUpgradeable,
     ReentrancyGuardTransientUpgradeable,
     LedgerUpgradeable,
     ITreasury
@@ -36,10 +36,10 @@ contract Treasury is
         _disableInitializers();
     }
 
-    function initialize() public initializer {
+    function initialize(address accessManager) public initializer {
         __UUPSUpgradeable_init();
-        __Governable_init(msg.sender);
         __ReentrancyGuardTransient_init();
+        __AccessControlled_init(accessManager);
     }
 
     /// @notice Deposits a specified amount of currency into the treasury for a given recipient.
@@ -52,7 +52,7 @@ contract Treasury is
         emit FundsDeposited(recipient, confirmed, currency);
     }
 
-    // TODO withdraw con con speed bump time lock
+    // TODO withdraw speed bump time lock
     /// @notice Withdraws tokens from the contract to a specified recipient's address.
     /// @dev This function withdraws funds from the caller's balance and transfers them to the recipient.
     /// @param recipient The address that will receive the withdrawn tokens.
@@ -66,6 +66,7 @@ contract Treasury is
     }
 
     // TODO burn fees
+    // TODO burn MMC only
     // TODO burn fees rate
 
     /// @notice Collects all accrued fees for a specified currency from a list of authorized collectors.

@@ -15,7 +15,7 @@ contract SubscriptionPolicy is BasePolicy {
     }
 
     // Mapping from content holder (address) to their subscription package details.
-    mapping(address => Package) private packages;
+    mapping(address => Package) private _packages;
 
     constructor(
         address rmAddress,
@@ -46,14 +46,14 @@ contract SubscriptionPolicy is BasePolicy {
         if (subscriptionDuration == 0) revert InvalidInitialization("Subscription: Invalid subscription duration.");
         if (price == 0) revert InvalidInitialization("SInvalidInitialization Invalid subscription price.");
         // expected content rigInvalidInitializationending subscription params..
-        packages[msg.sender] = Package(subscriptionDuration, price, currency);
+        _packages[msg.sender] = Package(subscriptionDuration, price, currency);
     }
 
     // this function should be called only by RM and its used to establish
     // any logic or validation needed to set the authorization parameters
     // de modo qu en el futuro se pueda usar otro tipo de estructuras como group
     function enforce(address holder, T.Agreement calldata agreement) external onlyRM initialized returns (uint256) {
-        Package memory pkg = packages[holder];
+        Package memory pkg = _packages[holder];
         // we need to be sure the user paid for the total of the price..
         uint256 total = agreement.parties.length * pkg.price; // total to pay for the total of subscriptions
         if (pkg.subscriptionDuration == 0) revert InvalidEnforcement("Invalid not existing subscription");
@@ -68,7 +68,7 @@ contract SubscriptionPolicy is BasePolicy {
 
     function resolveTerms(bytes calldata criteria) external view returns (T.Terms memory) {
         address holder = abi.decode(criteria, (address));
-        Package memory pkg = packages[holder];
+        Package memory pkg = _packages[holder];
         return T.Terms(pkg.currency, pkg.price, "");
     }
 }

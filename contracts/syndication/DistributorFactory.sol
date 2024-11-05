@@ -24,7 +24,7 @@ import { UpgradeableBeacon } from "@openzeppelin/contracts/proxy/beacon/Upgradea
 /// @dev This contract uses OpenZeppelin's Ownable and Pausable contracts for access control and pausing functionality.
 contract DistributorFactory is UpgradeableBeacon, Pausable {
     /// @notice Mapping to keep track of registered distributor endpoints.
-    mapping(bytes32 => address) private registry;
+    mapping(bytes32 => address) private _registry;
     /// @notice Error to be thrown when attempting to register an already registered distributor.
     error DistributorAlreadyRegistered();
 
@@ -49,9 +49,9 @@ contract DistributorFactory is UpgradeableBeacon, Pausable {
     function create(string calldata endpoint) external whenNotPaused returns (address) {
         // avoid duplicated endpoints
         bytes32 hashed = keccak256(abi.encode(endpoint));
-        if (registry[hashed] != address(0)) revert DistributorAlreadyRegistered();
+        if (_registry[hashed] != address(0)) revert DistributorAlreadyRegistered();
         // check-effects-interaction..
-        registry[hashed] = msg.sender;
+        _registry[hashed] = msg.sender;
         // initialize storage layout using Distributor contract impl..
         bytes memory data = abi.encodeWithSignature("initialize(string,address)", endpoint, msg.sender);
         address newContract = address(new BeaconProxy(address(this), data));

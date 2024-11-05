@@ -6,15 +6,14 @@ import { IERC165 } from "@openzeppelin/contracts/interfaces/IERC165.sol";
 import { Initializable } from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import { UUPSUpgradeable } from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import { ERC721Upgradeable } from "@openzeppelin/contracts-upgradeable/token/ERC721/ERC721Upgradeable.sol";
-import { AccessControlUpgradeable } from "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
 // solhint-disable-next-line max-line-length
 import { ERC721EnumerableUpgradeable } from "@openzeppelin/contracts-upgradeable/token/ERC721/extensions/ERC721EnumerableUpgradeable.sol";
-
-import { GovernableUpgradeable } from "contracts/base/upgradeable/GovernableUpgradeable.sol";
-import { IContentVerifiable } from "contracts/interfaces/assets/IContentVerifiable.sol";
-import { IContentOwnership } from "contracts/interfaces/assets/IContentOwnership.sol";
+import { AccessControlledUpgradeable } from "contracts/base/upgradeable/AccessControlledUpgradeable.sol";
+import { IContentVerifiable } from "contracts/interfaces/content/IContentVerifiable.sol";
+import { IContentOwnership } from "contracts/interfaces/content/IContentOwnership.sol";
 
 // TODO imp ERC404
+// TODO imp EIP4337 accounting
 
 /// @title Ownership ERC721 Upgradeable
 /// @notice This abstract contract manages the ownership.
@@ -22,12 +21,12 @@ contract ContentOwnership is
     Initializable,
     UUPSUpgradeable,
     ERC721Upgradeable,
-    GovernableUpgradeable,
+    AccessControlledUpgradeable,
     ERC721EnumerableUpgradeable,
     IContentOwnership
 {
-    /// Preventing accidental/malicious changes during contract reinitializations.
-    IContentVerifiable public CONTENT_REFERENDUM;
+    /// @custom:oz-upgrades-unsafe-allow state-variable-immutable
+    IContentVerifiable public immutable CONTENT_REFERENDUM;
 
     /// @dev Emitted when a new content item is registered on the platform.
     /// @param owner The address of the content creator or owner who registered the content.
@@ -62,24 +61,18 @@ contract ContentOwnership is
     }
 
     /// @notice Initializes the proxy state.
-    function initialize() public initializer {
+    function initialize(address accessManager) public initializer {
         __UUPSUpgradeable_init();
         __ERC721Enumerable_init();
         __ERC721_init("SynapseIP", "SYN");
-        __Governable_init(msg.sender);
+        __AccessControlled_init(accessManager);
     }
 
     /// @notice Checks if the contract supports a specific interface.
     /// @param interfaceId The interface ID to check.
     function supportsInterface(
         bytes4 interfaceId
-    )
-        public
-        view
-        virtual
-        override(IERC165, ERC721Upgradeable, AccessControlUpgradeable, ERC721EnumerableUpgradeable)
-        returns (bool)
-    {
+    ) public view virtual override(IERC165, ERC721Upgradeable, ERC721EnumerableUpgradeable) returns (bool) {
         return super.supportsInterface(interfaceId);
     }
 

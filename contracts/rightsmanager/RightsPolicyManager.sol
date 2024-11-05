@@ -5,7 +5,7 @@ pragma solidity 0.8.26;
 import { Initializable } from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import { UUPSUpgradeable } from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import { EnumerableSet } from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
-import { GovernableUpgradeable } from "contracts/base/upgradeable/GovernableUpgradeable.sol";
+import { AccessControlledUpgradeable } from "contracts/base/upgradeable/AccessControlledUpgradeable.sol";
 import { ERC165Checker } from "@openzeppelin/contracts/utils/introspection/ERC165Checker.sol";
 
 import { IPolicy } from "contracts/interfaces/policies/IPolicy.sol";
@@ -14,16 +14,17 @@ import { IRightsPolicyAuthorizer } from "contracts/interfaces/rightsmanager/IRig
 import { IRightsAccessAgreement } from "contracts/interfaces/rightsmanager/IRightsAccessAgreement.sol";
 import { T } from "contracts/libraries/Types.sol";
 
-contract RightsPolicyManager is Initializable, UUPSUpgradeable, GovernableUpgradeable, IRightsPolicyManager {
+contract RightsPolicyManager is Initializable, UUPSUpgradeable, AccessControlledUpgradeable, IRightsPolicyManager {
     using EnumerableSet for EnumerableSet.AddressSet;
     using ERC165Checker for address;
 
-    /// Preventing accidental/malicious changes during contract reinitializations.
+    /// @custom:oz-upgrades-unsafe-allow state-variable-immutable
     IRightsAccessAgreement public immutable RIGTHS_AGREEMENT;
+    /// @custom:oz-upgrades-unsafe-allow state-variable-immutable
     IRightsPolicyAuthorizer public immutable RIGHTS_AUTHORIZER;
 
     /// @dev Mapping to store the access control list for each content holder and account.
-    mapping(address => EnumerableSet.AddressSet) private acl;
+    mapping(address => EnumerableSet.AddressSet) private _acl;
 
     /// @notice Emitted when access rights are granted to an account based on a specific policy.
     /// @param account The address of the account to which the policy applies.
@@ -47,9 +48,9 @@ contract RightsPolicyManager is Initializable, UUPSUpgradeable, GovernableUpgrad
     }
 
     /// @notice Initializes the proxy state.
-    function initialize() public initializer {
+    function initialize(address accessManager) public initializer {
         __UUPSUpgradeable_init();
-        __Governable_init(msg.sender);
+        __AccessControlled_init(accessManager);
     }
 
     /// @notice Verifies if a specific policy is active for the provided account and criteria.
@@ -59,7 +60,7 @@ contract RightsPolicyManager is Initializable, UUPSUpgradeable, GovernableUpgrad
     function isActivePolicy(address account, uint256 contentId, address policyAddress) public view returns (bool) {
         // verify if the policy were registered for account address and comply with the criteria
         IPolicy policy = IPolicy(policyAddress);
-        bool registeredPolicy = acl[account].contains(policyAddress);
+        bool registeredPolicy = _acl[account].contains(policyAddress);
         return registeredPolicy && policy.isAccessAllowed(account, contentId);
     }
 
@@ -112,7 +113,7 @@ contract RightsPolicyManager is Initializable, UUPSUpgradeable, GovernableUpgrad
         // Developers should keep in mind that this function has an unbounded cost,
         /// and using it as part of a state-changing function may render the function uncallable
         /// if the set grows to a point where copying to memory consumes too much gas to fit in a block.
-        return acl[account].values();
+        return _acl[account].values();
     }
 
     /// @dev Authorizes the upgrade of the contract.
@@ -127,7 +128,7 @@ contract RightsPolicyManager is Initializable, UUPSUpgradeable, GovernableUpgrad
     function _registerBatchPolicies(bytes32 proof, address policyAddress, address[] memory parties) private {
         uint256 partiesLen = parties.length;
         for (uint256 i = 0; i < partiesLen; i++) {
-            acl[parties[i]].add(policyAddress);
+            _acl[parties[i]].add(policyAddress);
             emit PolicyRegistered(parties[i], proof, policyAddress);
         }
     }

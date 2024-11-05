@@ -4,7 +4,7 @@ pragma solidity 0.8.26;
 import { ERC165Checker } from "@openzeppelin/contracts/utils/introspection/ERC165Checker.sol";
 import { UUPSUpgradeable } from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import { Initializable } from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
-import { GovernableUpgradeable } from "contracts/base/upgradeable/GovernableUpgradeable.sol";
+import { AccessControlledUpgradeable } from "contracts/base/upgradeable/AccessControlledUpgradeable.sol";
 import { QuorumUpgradeable } from "contracts/base/upgradeable/QuorumUpgradeable.sol";
 
 import { IPolicy } from "contracts/interfaces/policies/IPolicy.sol";
@@ -12,7 +12,7 @@ import { IPolicyAuditor } from "contracts/interfaces/policies/IPolicyAuditor.sol
 
 /// @title PolicyAudit
 /// @notice This contract audits content policies and ensures that only authorized entities can approve or revoke.
-contract PolicyAudit is Initializable, UUPSUpgradeable, GovernableUpgradeable, QuorumUpgradeable, IPolicyAuditor {
+contract PolicyAudit is Initializable, UUPSUpgradeable, AccessControlledUpgradeable, QuorumUpgradeable, IPolicyAuditor {
     using ERC165Checker for address;
     /// @dev The interface ID for IPolicy, used to verify that a policy contract implements the correct interface.
     bytes4 private constant INTERFACE_POLICY = type(IPolicy).interfaceId;
@@ -52,10 +52,10 @@ contract PolicyAudit is Initializable, UUPSUpgradeable, GovernableUpgradeable, Q
 
     /// @notice Initializes the contract with the necessary configurations.
     /// This function is only called once upon deployment and sets up Quorum, UUPS, and Governable features.
-    function initialize() public initializer {
+    function initialize(address accessManager) public initializer {
         __Quorum_init();
         __UUPSUpgradeable_init();
-        __Governable_init(msg.sender);
+        __AccessControlled_init(accessManager);
     }
 
     // TODO list of validf policies

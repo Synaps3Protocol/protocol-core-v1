@@ -1,12 +1,12 @@
+// SPDX-License-Identifier: MIT
 pragma solidity 0.8.26;
 
 import "forge-std/Test.sol";
 import { IAccessControl } from "@openzeppelin/contracts/access/IAccessControl.sol";
-import { IContentRoleManager } from "contracts/interfaces/assets/IContentRoleManager.sol";
-import { IContentRegistrable } from "contracts/interfaces/assets/IContentRegistrable.sol";
-import { IContentVerifiable } from "contracts/interfaces/assets/IContentVerifiable.sol";
+import { IContentRegistrable } from "contracts/interfaces/content/IContentRegistrable.sol";
+import { IContentVerifiable } from "contracts/interfaces/content/IContentVerifiable.sol";
 import { INonceVerifiable } from "contracts/interfaces/INonceVerifiable.sol";
-import { ContentReferendum } from "contracts/assets/ContentReferendum.sol";
+import { ContentReferendum } from "contracts/content/ContentReferendum.sol";
 
 import { BaseTest } from "test/BaseTest.t.sol";
 import { T } from "contracts/libraries/Types.sol";
@@ -16,31 +16,33 @@ contract ContentReferendumTest is BaseTest {
     address referendum;
 
     function setUp() public {
+        // setup the access manager to use during tests..
+        deployAndSetAccessManager();
         referendum = deployContentReferendum();
-        setGovernorTo(referendum);
     }
 
-    function test_GrantVerifiedRole_ValidVerifiedRoleGrant() public {
-        vm.prank(governor);
-        IContentRoleManager(referendum).grantVerifiedRole(user);
-        assertTrue(IAccessControl(referendum).hasRole(C.VERIFIED_ROLE, user));
-    }
+    // TODO move to access manager
+    // function test_GrantVerifiedRole_ValidVerifiedRoleGrant() public {
+    //     vm.prank(governor);
+    //     IContentRoleManager(referendum).grantVerifiedRole(user);
+    //     assertTrue(IAccessControl(referendum).hasRole(C.VERIFIED_ROLE, user));
+    // }
 
-    function test_GrantVerifiedRole_RevertWhen_Unauthorized() public {
-        vm.expectRevert();
-        IContentRoleManager(referendum).grantVerifiedRole(user);
-    }
+    // function test_GrantVerifiedRole_RevertWhen_Unauthorized() public {
+    //     vm.expectRevert();
+    //     IContentRoleManager(referendum).grantVerifiedRole(user);
+    // }
 
-    function test_RevokeVerifiedRole_ValidVerifiedRoleRevoke() public {
-        vm.prank(governor);
-        IContentRoleManager(referendum).revokeVerifiedRole(user);
-        assertFalse(IAccessControl(referendum).hasRole(C.VERIFIED_ROLE, user));
-    }
+    // function test_RevokeVerifiedRole_ValidVerifiedRoleRevoke() public {
+    //     vm.prank(governor);
+    //     IContentRoleManager(referendum).revokeVerifiedRole(user);
+    //     assertFalse(IAccessControl(referendum).hasRole(C.VERIFIED_ROLE, user));
+    // }
 
-    function test_RevokeVerifiedRole_RevertWhen_Unauthorized() public {
-        vm.expectRevert();
-        IContentRoleManager(referendum).revokeVerifiedRole(user);
-    }
+    // function test_RevokeVerifiedRole_RevertWhen_Unauthorized() public {
+    //     vm.expectRevert();
+    //     IContentRoleManager(referendum).revokeVerifiedRole(user);
+    // }
 
     function test_Submit_SubmittedEventEmmitted() public {
         vm.warp(1641070800);
