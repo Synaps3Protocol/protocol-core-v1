@@ -30,7 +30,7 @@ contract DistributorFactory is UpgradeableBeacon, Pausable, IDistributorFactory 
     /// @param distributorAddress Address of the newly created distributor.
     /// @param endpoint Endpoint associated with the new distributor.
     event DistributorCreated(address indexed distributorAddress, string endpoint);
-    
+
     /// @notice Error to be thrown when attempting to register an already registered distributor.
     error DistributorAlreadyRegistered();
 

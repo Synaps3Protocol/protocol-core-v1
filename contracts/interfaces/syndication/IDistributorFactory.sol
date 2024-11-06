@@ -4,7 +4,6 @@ pragma solidity 0.8.26;
 /// @title Interface for the DistributorFactory contract.
 /// @notice Allows interaction with the DistributorFactory contract to create new distributors.
 interface IDistributorFactory {
-    
     /// @notice Function to pause the contract, preventing the creation of new distributors.
     /// @dev Can only be called by the owner of the contract.
     function pause() external;
