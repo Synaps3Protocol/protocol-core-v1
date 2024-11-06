@@ -5,8 +5,8 @@ import { DeployAccessManager } from "script/deployment/01_Deploy_Access_AccessMa
 import { DeployTollgate } from "script/deployment/02_Deploy_Economics_Tollgate.s.sol";
 import { DeployToken } from "script/deployment/03_Deploy_Economics_Token.s.sol";
 import { DeployTreasury } from "script/deployment/04_Deploy_Economics_Treasury.s.sol";
-import { DeployContentReferendum } from "script/deployment/05_Deploy_Assets_ContentReferendum.s.sol";
-import { DeployDistributor } from "script/deployment/08_Deploy_Syndication_Distributor.s.sol";
+import { DeployContentReferendum } from "script/deployment/05_Deploy_Content_ContentReferendum.s.sol";
+import { DeployDistributorFactory } from "script/deployment/08_Deploy_Syndication_DistributorFactory.s.sol";
 import { DeployDistributorReferendum } from "script/deployment/09_Deploy_Syndication_DistributorReferendum.s.sol";
 import { IAccessManager } from "contracts/interfaces/access/IAccessManager.sol";
 
@@ -69,9 +69,9 @@ contract BaseTest is Test {
 
     // 08_DeployDistributor
     function deployDistributor(string memory endpoint) public returns (address) {
-        DeployDistributor distDeployer = new DeployDistributor();
+        DeployDistributorFactory distDeployer = new DeployDistributorFactory();
         distDeployer.setEndpoint(endpoint);
-        return distDeployer.run();
+        return distDeployer.create();
     }
 
     // 09_DeployDistributorReferendum

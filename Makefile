@@ -2,7 +2,7 @@ include .env
 export
 
 .DEFAULT_GOAL := all
-network=amoy
+network=polygon-amoy
 report=lcov
 stage=development
 
@@ -85,7 +85,7 @@ keysenv:
 
 .PHONY: deploy ## deploy contract
 deploy: 
-	@forge script --chain $(network) script/$(script) --rpc-url $(network) --broadcast 
+	@forge script --chain $(network) script/$(script) --rpc-url $(network) --broadcast --verify --color always
 
 # forge verify-contract 0x21173483074a46c302c4252e04c76fA90e6DdA6C MMC --chain amoy
 .PHONY: verify ## verify contract

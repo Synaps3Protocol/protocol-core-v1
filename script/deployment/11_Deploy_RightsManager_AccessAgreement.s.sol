@@ -1,8 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.26;
+
 import { DeployBase } from "script/deployment/00_Deploy_Base.s.sol";
 
-contract DeployDistributorReferendum is DeployBase {
+contract DeployRightsAccessAgrement is DeployBase {
     address treasury;
     address tollgate;
 
@@ -15,6 +16,6 @@ contract DeployDistributorReferendum is DeployBase {
     }
 
     function run() external BroadcastedByAdmin returns (address) {
-        return deployAccessManagedUUPS("DistributorReferendum.sol", abi.encode(treasury, tollgate));
+        return deployAccessManagedUUPS("RightsAccessAgreement.sol", abi.encode(treasury, tollgate));
     }
 }

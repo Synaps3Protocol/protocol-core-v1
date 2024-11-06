@@ -5,6 +5,7 @@ pragma solidity 0.8.26;
 import { Pausable } from "@openzeppelin/contracts/utils/Pausable.sol";
 import { BeaconProxy } from "@openzeppelin/contracts/proxy/beacon/BeaconProxy.sol";
 import { UpgradeableBeacon } from "@openzeppelin/contracts/proxy/beacon/UpgradeableBeacon.sol";
+import { IDistributorFactory } from "contracts/interfaces/syndication/IDistributorFactory.sol";
 
 // Each distributor has their own contract. The problem with this approach is that each contract
 // has its own implementation. If in the future we need to improve the distributor contract,
@@ -22,9 +23,14 @@ import { UpgradeableBeacon } from "@openzeppelin/contracts/proxy/beacon/Upgradea
 /// @title Distributor factory contract.
 /// @notice Use this contract to create new distributors.
 /// @dev This contract uses OpenZeppelin's Ownable and Pausable contracts for access control and pausing functionality.
-contract DistributorFactory is UpgradeableBeacon, Pausable {
+contract DistributorFactory is UpgradeableBeacon, Pausable, IDistributorFactory {
     /// @notice Mapping to keep track of registered distributor endpoints.
     mapping(bytes32 => address) private _registry;
+    /// @notice Event emitted when a new distributor is created.
+    /// @param distributorAddress Address of the newly created distributor.
+    /// @param endpoint Endpoint associated with the new distributor.
+    event DistributorCreated(address indexed distributorAddress, string endpoint);
+    
     /// @notice Error to be thrown when attempting to register an already registered distributor.
     error DistributorAlreadyRegistered();
 
@@ -52,9 +58,11 @@ contract DistributorFactory is UpgradeableBeacon, Pausable {
         if (_registry[hashed] != address(0)) revert DistributorAlreadyRegistered();
         // check-effects-interaction..
         _registry[hashed] = msg.sender;
+
         // initialize storage layout using Distributor contract impl..
         bytes memory data = abi.encodeWithSignature("initialize(string,address)", endpoint, msg.sender);
         address newContract = address(new BeaconProxy(address(this), data));
+        emit DistributorCreated(newContract, endpoint);
         return newContract;
     }
 }

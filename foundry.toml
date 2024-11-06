@@ -24,7 +24,7 @@ fs_permissions = [{ access = "read", path = "./"}]
 verbosity = 4
 
 [rpc_endpoints]
-amoy = "${AMOY_RPC_URL}"
+polygon-amoy = "${AMOY_RPC_URL}"
 
 [etherscan]
-amoy = { key = "${AMOY_API_KEY}", url = "https://api-amoy.polygonscan.com/api" }
+polygon-amoy = { key = "${AMOY_API_KEY}", url = "https://www.oklink.com/api/explorer/v1/contract/verify/async/api/polygonAmoy" }
