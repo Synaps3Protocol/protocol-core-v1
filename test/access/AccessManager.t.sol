@@ -13,7 +13,7 @@ import { T } from "contracts/libraries/Types.sol";
 import { C } from "contracts/libraries/Constants.sol";
 
 contract AccessManagerTest is BaseTest {
-    function setUp() BroadcastedByAdmin public {
+    function setUp() public {
         // setup the access manager to use during tests..
         accessManager = deployAndSetAccessManager();
     }
@@ -24,21 +24,19 @@ contract AccessManagerTest is BaseTest {
         assertTrue(IAccessManager(accessManager).hasRole(C.VERIFIED_ROLE, user));
     }
 
-    // function test_GrantVerifiedRole_RevertWhen_Unauthorized() public {
-    //     vm.expectRevert();
-    //     IContentRoleManager(referendum).grantVerifiedRole(user);
-    // }
+    function test_GrantVerifiedRole_RevertWhen_Unauthorized() public {
+        vm.expectRevert();
+        IAccessManager(accessManager).grantRole(C.VERIFIED_ROLE, user);
+    }
 
-    // function test_RevokeVerifiedRole_ValidVerifiedRoleRevoke() public {
-    //     vm.prank(governor);
-    //     IContentRoleManager(referendum).revokeVerifiedRole(user);
-    //     assertFalse(IAccessControl(referendum).hasRole(C.VERIFIED_ROLE, user));
-    // }
+    function test_RevokeVerifiedRole_ValidVerifiedRoleRevoke() public {
+        vm.prank(governor);
+        IAccessManager(accessManager).revokeRole(C.VERIFIED_ROLE, user);
+        assertFalse(IAccessManager(accessManager).hasRole(C.VERIFIED_ROLE, user));
+    }
 
-    // function test_RevokeVerifiedRole_RevertWhen_Unauthorized() public {
-    //     vm.expectRevert();
-    //     IContentRoleManager(referendum).revokeVerifiedRole(user);
-    // }
-
-    
+    function test_RevokeVerifiedRole_RevertWhen_Unauthorized() public {
+        vm.expectRevert();
+        IAccessManager(accessManager).revokeRole(C.VERIFIED_ROLE, user);
+    }
 }

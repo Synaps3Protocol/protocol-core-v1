@@ -8,6 +8,8 @@ import { DeployTreasury } from "script/deployment/04_Deploy_Economics_Treasury.s
 import { DeployContentReferendum } from "script/deployment/05_Deploy_Content_ContentReferendum.s.sol";
 import { DeployDistributorFactory } from "script/deployment/08_Deploy_Syndication_DistributorFactory.s.sol";
 import { DeployDistributorReferendum } from "script/deployment/09_Deploy_Syndication_DistributorReferendum.s.sol";
+
+import { IDistributorFactory } from "contracts/interfaces/syndication/IDistributorFactory.sol";
 import { IAccessManager } from "contracts/interfaces/access/IAccessManager.sol";
 
 contract BaseTest is Test {
@@ -20,7 +22,7 @@ contract BaseTest is Test {
         accessManager = accessManager_;
         // setup governor account for testing purposes
         // some methods are restricted to be called by governance only
-        vm.prank(admin); // only admin can set initially a governor
+        vm.prank(admin);
         IAccessManager(accessManager).setGovernor(governor);
     }
 
@@ -70,8 +72,11 @@ contract BaseTest is Test {
     // 08_DeployDistributor
     function deployDistributor(string memory endpoint) public returns (address) {
         DeployDistributorFactory distDeployer = new DeployDistributorFactory();
-        distDeployer.setEndpoint(endpoint);
-        return distDeployer.create();
+        address distFactory = distDeployer.run();
+
+        vm.prank(admin);
+        IDistributorFactory factory = IDistributorFactory(distFactory);
+        return factory.create(endpoint);
     }
 
     // 09_DeployDistributorReferendum

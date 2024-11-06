@@ -21,11 +21,15 @@ import { DistributorImpl } from "contracts/syndication/DistributorImpl.sol";
 import { DistributorFactory } from "contracts/syndication/DistributorFactory.sol";
 
 contract OrchestrateInitialDeployment is Script {
-    function run() external {
+
+    function deployAccessManager() public returns (address) {
         // access
         DeployAccessManager accessManagerDeployer = new DeployAccessManager();
         address accessManager = accessManagerDeployer.run();
+        return accessManager;
+    }
 
+    function deployEconomics(address accessManager) public returns (address, address) {
         // economic
         DeployTollgate tollgateDeployer = new DeployTollgate();
         tollgateDeployer.setAccessManager(accessManager);
@@ -35,6 +39,10 @@ contract OrchestrateInitialDeployment is Script {
         treasuryDeployer.setAccessManager(accessManager);
         address treasury = treasuryDeployer.run();
 
+        return (treasury, tollgate);
+    }
+
+    function deployContentManagement(address accessManager) public {
         // content
         DeployContentReferendum contentReferendumDeployer = new DeployContentReferendum();
         contentReferendumDeployer.setAccessManager(accessManager);
@@ -49,7 +57,9 @@ contract OrchestrateInitialDeployment is Script {
         contentVaultDeployer.setAccessManager(accessManager);
         contentVaultDeployer.setContentOwnershipAddress(contentOwnership);
         contentVaultDeployer.run();
+    }
 
+    function deploySyndication(address accessManager, address treasury, address tollgate) public {
         // syndication
         DeployDistributorReferendum distReferendumDeployer = new DeployDistributorReferendum();
         distReferendumDeployer.setTreasuryAddress(treasury);
@@ -59,12 +69,22 @@ contract OrchestrateInitialDeployment is Script {
 
         DeployDistributorFactory distributorFactoryDeployer = new DeployDistributorFactory();
         distributorFactoryDeployer.run();
+    }
 
+    function deployPolicies(address accessManager) public returns (address) {
         // policies
         DeployPolicyAudit policyAuditDeployer = new DeployPolicyAudit();
         policyAuditDeployer.setAccessManager(accessManager);
         address policyAudit = policyAuditDeployer.run();
+        return policyAudit;
+    }
 
+    function deployRightsManager(
+        address accessManager,
+        address treasury,
+        address tollgate,
+        address policyAudit
+    ) public {
         // rights manager
         DeployRightsContentCustodian contentCustodianDeployer = new DeployRightsContentCustodian();
         contentCustodianDeployer.setAccessManager(accessManager);
@@ -86,5 +106,16 @@ contract OrchestrateInitialDeployment is Script {
         policyManagerDeployer.setRightsAuthorizerAddress(rightsAuthorizer);
         policyManagerDeployer.setAccessManager(accessManager);
         policyManagerDeployer.run();
+    }
+
+    function run() external {
+        address accessManager = deployAccessManager(); // 1
+        (address treasury, address tollgate) = deployEconomics(accessManager); // 2
+        
+        deployContentManagement(accessManager); // 3
+        deploySyndication(accessManager, treasury, tollgate); // 4
+
+        address policyAudit = deployPolicies(accessManager); // 6
+        deployRightsManager(accessManager, treasury, tollgate, policyAudit); // 7
     }
 }

@@ -115,7 +115,6 @@ contract ContentReferendum is
     function isApproved(address initiator, uint256 contentId) public view returns (bool) {
         bool approved = isActive(contentId);
         bool validAccount = _submissions[initiator].contains(contentId);
-        // TODO role manager check
         bool verifiedRole = _hasRole(C.VERIFIED_ROLE, initiator);
         // is approved with a valid submission account or is verified account..
         return (approved && validAccount) || verifiedRole;
