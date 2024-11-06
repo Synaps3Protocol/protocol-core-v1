@@ -9,7 +9,7 @@ interface IDistributor is IBalanceVerifiable, IBalanceWithdrawable {
     /// @notice Set the endpoint of the distributor.
     /// @dev This function can only be called by the owner of the contract.
     /// @param _endpoint The new distributor's endpoint.
-    function setEndpoint(string memory _endpoint) external;
+    function setEndpoint(string calldata _endpoint) external;
 
     /// @notice Retrieves the endpoint of the distributor.
     /// @dev This function allows users to view the current endpoint of the distributor.

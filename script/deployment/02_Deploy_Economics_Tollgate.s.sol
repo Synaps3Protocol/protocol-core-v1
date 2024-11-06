@@ -2,7 +2,6 @@
 pragma solidity 0.8.26;
 
 import { DeployBase } from "script/deployment/00_Deploy_Base.s.sol";
-import { Tollgate } from "contracts/economics/Tollgate.sol";
 
 contract DeployTollgate is DeployBase {
     

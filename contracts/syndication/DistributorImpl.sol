@@ -27,7 +27,7 @@ contract DistributorImpl is Initializable, ERC165Upgradeable, OwnableUpgradeable
     /// @param _endpoint The distribution endpoint URL.
     /// @param _owner The address of the owner who will manage the distributor.
     /// @dev Ensures that the provided endpoint is valid and initializes ERC165 and Ownable contracts.
-    function initialize(string memory _endpoint, address _owner) public initializer {
+    function initialize(string calldata _endpoint, address _owner) external initializer {
         if (bytes(_endpoint).length == 0) revert InvalidEndpoint();
         __ERC165_init();
         __Ownable_init(_owner);

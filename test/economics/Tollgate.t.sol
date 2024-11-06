@@ -11,7 +11,7 @@ contract TollgateTest is BaseTest {
     address token;
 
     function setUp() public {
-        
+        // setup the access manager to use during tests..
         deployAndSetAccessManager();
         token = deployToken();
         tollgate = deployTollgate();

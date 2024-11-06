@@ -58,7 +58,7 @@ contract PolicyAudit is Initializable, UUPSUpgradeable, AccessControlledUpgradea
         __AccessControlled_init(accessManager);
     }
 
-    // TODO list of validf policies
+    // TODO method to list audited policies
 
     /// @notice Submits an audit request for the given policy.
     /// This registers the policy for audit within the system.
