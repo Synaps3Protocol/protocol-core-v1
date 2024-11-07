@@ -53,8 +53,10 @@ contract SubscriptionPolicy is BasePolicy {
         Package memory pkg = _packages[holder];
         // we need to be sure the user paid for the total of the package..
         uint256 paymentPerAccount = agreement.amount / agreement.parties.length;
-        uint256 subscriptionDuration = paymentPerAccount / pkg.pricePerDay; // expected payment per day per account
-        uint256 total = (subscriptionDuration * pkg.pricePerDay) * agreement.parties.length; // total to pay for the total of subscriptions
+        // expected payment per day per account
+        uint256 subscriptionDuration = paymentPerAccount / pkg.pricePerDay;
+        // total to pay for the total of subscriptions
+        uint256 total = (subscriptionDuration * pkg.pricePerDay) * agreement.parties.length;
         if (agreement.amount < total) revert InvalidEnforcement("Insufficient funds for subscription");
 
         // subscribe to content owner's catalog (content package)

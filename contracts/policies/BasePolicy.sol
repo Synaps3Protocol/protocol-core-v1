@@ -103,9 +103,7 @@ abstract contract BasePolicy is ReentrancyGuard, IPolicy, ERC165 {
         return attestations[recipient];
     }
 
-    // @notice Checks if a given interface ID is supported by this contract.
-    /// @dev This function is an override of the ERC-165 `supportsInterface` function, allowing this contract to declare support for interfaces.
-    ///      It checks if the provided `interfaceId` matches the interface ID of `IPolicy` or if it is supported by a parent contract.
+    /// @notice Checks if a given interface ID is supported by this contract.
     /// @param interfaceId The bytes4 identifier of the interface to check for support.
     /// @return A boolean indicating whether the interface ID is supported (true) or not (false).
     function supportsInterface(bytes4 interfaceId) public view virtual override returns (bool) {

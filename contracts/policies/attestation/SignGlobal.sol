@@ -68,7 +68,7 @@ contract SignGlobal is IAttestationProvider {
 
         // check if the recipient is listed
         uint256 len = a.recipients.length;
-        for (uint i = 0; i < len; i = i.uncheckedInc()) {
+        for (uint256 i = 0; i < len; i = i.uncheckedInc()) {
             address registered = abi.decode(a.recipients[i], (address));
             if (registered == recipient) return true;
         }

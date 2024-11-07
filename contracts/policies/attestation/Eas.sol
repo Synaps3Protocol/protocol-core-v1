@@ -1,7 +1,10 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.26;
 
-import { IEAS, Attestation, MultiAttestationRequest, AttestationRequestData } from "@ethereum-attestation-service/eas-contracts/contracts/IEAS.sol";
+import { IEAS } from "@ethereum-attestation-service/eas-contracts/contracts/IEAS.sol";
+import { Attestation } from "@ethereum-attestation-service/eas-contracts/contracts/IEAS.sol";
+import { MultiAttestationRequest } from "@ethereum-attestation-service/eas-contracts/contracts/IEAS.sol";
+import { AttestationRequestData } from "@ethereum-attestation-service/eas-contracts/contracts/IEAS.sol";
 import { IAttestationProvider } from "contracts/interfaces/IAttestationProvider.sol";
 import { LoopOps } from "contracts/libraries/LoopOps.sol";
 
@@ -41,7 +44,7 @@ contract EAS is IAttestationProvider {
         for (uint256 i = 0; i < recipientsLen; i = i.uncheckedInc()) {
             requests[i] = AttestationRequestData({
                 recipient: recipients[i],
-                expirationTime: uint64(expireAt), 
+                expirationTime: uint64(expireAt),
                 revocable: false,
                 refUID: 0, // No references UI
                 data: data, // Encode a single uint256 as a parameter to the schema
@@ -80,11 +83,7 @@ contract EAS is IAttestationProvider {
         return recipient == a.recipient;
     }
 
-    function _associateUidsWithGlobal(
-        uint256 global,
-        bytes32[] memory uids,
-        address[] memory addresses
-    ) private  {
+    function _associateUidsWithGlobal(uint256 global, bytes32[] memory uids, address[] memory addresses) private {
         uint256 len = addresses.length;
         for (uint256 i = 0; i < len; i = i.uncheckedInc()) {
             /// each account hold a reference to uid bounded by global
