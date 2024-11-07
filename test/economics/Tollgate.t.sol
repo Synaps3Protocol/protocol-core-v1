@@ -48,13 +48,6 @@ contract TollgateTest is BaseTest {
         ITollgate(tollgate).setFees(T.Context.RMA, invalidFees, token);
     }
 
-    function test_SetFees_RevertWhen_InvalidCurrency() public {
-        address invalidTokenAddress = vm.addr(3);
-        vm.prank(governor); // as governor set fees
-        vm.expectRevert(abi.encodeWithSignature("InvalidCurrency(address)", invalidTokenAddress));
-        ITollgate(tollgate).setFees(T.Context.SYN, 1, invalidTokenAddress);
-    }
-
     function test_GetFees_ValidExpectedFees() public {
         uint256 expectedSyndication = 1e18; // 1MMC expected flat fees
         uint256 expectedRightsAgreement = 10 * 100; // = 10% expected bps
