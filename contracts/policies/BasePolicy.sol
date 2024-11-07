@@ -2,16 +2,20 @@
 
 pragma solidity 0.8.26;
 
+import { ERC165 } from "@openzeppelin/contracts/utils/introspection/ERC165.sol";
 import { ReentrancyGuard } from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 import { IContentOwnership } from "contracts/interfaces/content/IContentOwnership.sol";
 import { IRightsPolicyManager } from "contracts/interfaces/rightsmanager/IRightsPolicyManager.sol";
 import { IAttestationProvider } from "contracts/interfaces/IAttestationProvider.sol";
 import { IPolicy } from "contracts/interfaces/policies/IPolicy.sol";
+import { LoopOps } from "contracts/libraries/LoopOps.sol";
 import { T } from "contracts/libraries/Types.sol";
 
 /// @title BasePolicy
 /// @notice This abstract contract serves as a base for policies that manage access to content.
-abstract contract BasePolicy is ReentrancyGuard, IPolicy {
+abstract contract BasePolicy is ReentrancyGuard, IPolicy, ERC165 {
+    using LoopOps for uint256;
+
     // Immutable public variables to store the addresses of the Rights Manager and Ownership.
     IAttestationProvider public immutable ATTESTATION_PROVIDER;
     IRightsPolicyManager public immutable RIGHTS_POLICY_MANAGER;
@@ -99,6 +103,15 @@ abstract contract BasePolicy is ReentrancyGuard, IPolicy {
         return attestations[recipient];
     }
 
+    // @notice Checks if a given interface ID is supported by this contract.
+    /// @dev This function is an override of the ERC-165 `supportsInterface` function, allowing this contract to declare support for interfaces.
+    ///      It checks if the provided `interfaceId` matches the interface ID of `IPolicy` or if it is supported by a parent contract.
+    /// @param interfaceId The bytes4 identifier of the interface to check for support.
+    /// @return A boolean indicating whether the interface ID is supported (true) or not (false).
+    function supportsInterface(bytes4 interfaceId) public view virtual override returns (bool) {
+        return interfaceId == type(IPolicy).interfaceId || super.supportsInterface(interfaceId);
+    }
+
     /// @notice Retrieves the address of the attestation provider.
     /// @return The address of the provider associated with the policy.
     function getAttestationProvider() public view returns (address) {
@@ -126,7 +139,7 @@ abstract contract BasePolicy is ReentrancyGuard, IPolicy {
     /// @param agreement The agreement structure containing necessary details for the attestation.
     /// @param expireAt The timestamp at which the attestation will expire.
     function _commit(address holder, T.Agreement memory agreement, uint256 expireAt) internal returns (uint256) {
-        bytes memory data = abi.encode(holder, agreement); // bind agreement and rights holder..
+        bytes memory data = abi.encode(holder, agreement.parties, agreement); // bind agreement and rights holder..
         uint256 attestationId = ATTESTATION_PROVIDER.attest(agreement.parties, expireAt, data);
         _updateBatchAttestation(holder, attestationId, agreement.parties);
         return attestationId;
@@ -137,7 +150,7 @@ abstract contract BasePolicy is ReentrancyGuard, IPolicy {
     /// @param parties The list of account to assign attestation id.
     function _updateBatchAttestation(address holder, uint256 attestationId, address[] memory parties) private {
         uint256 partiesLen = parties.length;
-        for (uint256 i = 0; i < partiesLen; i++) {
+        for (uint256 i = 0; i < partiesLen; i = i.uncheckedInc()) {
             attestations[parties[i]] = attestationId;
             emit AccessGranted(holder, parties[i], attestationId);
         }

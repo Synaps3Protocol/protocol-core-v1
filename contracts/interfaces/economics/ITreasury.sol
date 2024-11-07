@@ -27,7 +27,7 @@ interface ITreasury is IBalanceWithdrawable {
     // /// @notice Batch deposit multiple currency amounts into the treasury for multiple recipients.
     // /// @param deposits An array of Deposit structs containing recipient, amount, and currency for each deposit.
     // /// @return The total amount of currency deposited across all batch deposits.
-    // function batchDeposit(T.Deposit[] calldata deposits) external returns (uint256);
+    // function batchDeposit(..) external returns (uint256);
 
     /// @notice Collects all accrued fees for a specified currency from a list of authorized collectors.
     /// @dev This function aggregates the fees from specified collectors and prepares them for distribution.

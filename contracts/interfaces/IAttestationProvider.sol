@@ -4,7 +4,7 @@ pragma solidity 0.8.26;
 interface IAttestationProvider {
     /// @notice Returns the name of the attestor.
     /// @return The name of the attestor as a string.
-    function name() external view returns (string memory);
+    function getName() external view returns (string memory);
 
     /// @notice Returns the address associated with the attestor.
     /// @return The address of the attestor.

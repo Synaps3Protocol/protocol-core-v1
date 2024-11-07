@@ -12,6 +12,7 @@ import { LedgerUpgradeable } from "contracts/base/upgradeable/LedgerUpgradeable.
 import { IFeesCollector } from "contracts/interfaces/economics/IFeesCollector.sol";
 import { ITreasury } from "contracts/interfaces/economics/ITreasury.sol";
 import { TreasuryOps } from "contracts/libraries/TreasuryOps.sol";
+import { LoopOps } from "contracts/libraries/LoopOps.sol";
 
 // TODO payment splitter
 // TODO aca se puede tener un metodo que collecte todos los fees
@@ -28,6 +29,7 @@ contract Treasury is
     ITreasury
 {
     using TreasuryOps for address;
+    using LoopOps for uint256;
 
     /// @custom:oz-upgrades-unsafe-allow constructor
     constructor() {
@@ -79,7 +81,7 @@ contract Treasury is
         address pool = address(this);
 
         // For each collector, request the collected fees and add them to the treasury pool balance
-        for (uint256 i = 0; i < collectorsLen; i++) {
+        for (uint256 i = 0; i < collectorsLen; i = i.uncheckedInc()) {
             IFeesCollector collector = IFeesCollector(collectors[i]);
             uint256 collected = collector.disburse(currency);
             // register funds in treasury pool...

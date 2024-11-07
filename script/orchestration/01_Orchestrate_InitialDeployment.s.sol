@@ -115,7 +115,7 @@ contract OrchestrateInitialDeployment is Script {
         deployContentManagement(accessManager); // 3
         deploySyndication(accessManager, treasury, tollgate); // 4
 
-        address policyAudit = deployPolicies(accessManager); // 6
-        deployRightsManager(accessManager, treasury, tollgate, policyAudit); // 7
+        address policyAudit = deployPolicies(accessManager); // 5
+        deployRightsManager(accessManager, treasury, tollgate, policyAudit); // 6
     }
 }

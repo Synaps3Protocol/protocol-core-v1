@@ -6,8 +6,12 @@
     "solhint": "^5.0.1",
     "solhint-plugin-prettier": "^0.1.0"
   },
+  "peerDependencies": {
+    "@ethereum-attestation-service/eas-contracts": "^1.7.1",
+    "@ethsign/sign-protocol-evm": "^1.1.1"
+  },
   "dependencies": {
-   "@openzeppelin/contracts": "^5.0.2",
+    "@openzeppelin/contracts": "^5.0.2",
     "@openzeppelin/contracts-upgradeable": "^5.0.2",
     "@openzeppelin/upgrades-core": "^1.40.0"
   }

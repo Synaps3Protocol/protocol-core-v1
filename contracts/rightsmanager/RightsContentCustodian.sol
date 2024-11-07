@@ -122,6 +122,10 @@ contract RightsContentCustodian is
         bytes32 blockHash = blockhash(block.number - 1);
         uint256 random = uint256(keccak256(abi.encodePacked(blockHash, holder))) % C.BPS_MAX;
         uint256 n = _custodiansByHolder[holder].length();
+        // Adjust 'n' to comply with the maximum distribution redundancy:
+        // This ensures that no more redundancy than allowed is used,
+        // even if more custodians are available.
+        n = _maxDistributionRedundancy <= n ? _maxDistributionRedundancy : n;
         // arithmetic sucesion
         // eg: 3 = 1+2+3 =  n(n+1) / 2 = 6
         uint256 s = (n * (n + 1)) / 2;

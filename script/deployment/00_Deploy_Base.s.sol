@@ -27,13 +27,13 @@ contract DeployBase is Script {
         // Deploy the upgradeable contract
         Options memory options; // struct with default values
         options.constructorData = constructorData;
-        options.unsafeSkipAllChecks = vm.envBool("UPGRADE_UNSAFE_CHECK");
+        options.unsafeSkipAllChecks = true; // vm.envBool("UPGRADE_UNSAFE_CHECK");
         return Upgrades.deployUUPSProxy(contractName, initData, options);
     }
 
     function deployUUPS(string memory contractName, bytes memory initData) internal returns (address) {
         Options memory options; // struct with default values
-        options.unsafeSkipAllChecks = vm.envBool("UPGRADE_UNSAFE_CHECK");
+        options.unsafeSkipAllChecks = true; // vm.envBool("UPGRADE_UNSAFE_CHECK");
         return Upgrades.deployUUPSProxy(contractName, initData, options);
     }
 

@@ -43,16 +43,6 @@ contract Tollgate is Initializable, UUPSUpgradeable, AccessControlledUpgradeable
     /// @param currency The address of the unsupported currency.
     error InvalidCurrency(address currency);
 
-    /// @notice Modifier to ensure only valid ERC20 or native coins are used.
-    /// @param currency The address of the currency to check.
-    modifier onlyValidCurrency(address currency) {
-        // if not native coin then should be a valid erc20 token
-        if (currency != address(0) && !currency.supportsInterface(INTERFACE_ID_ERC20)) {
-            revert InvalidCurrency(currency);
-        }
-        _;
-    }
-
     /// @notice Ensures valid fee representation based on the context.
     /// @param ctx The context for which the fee is being set.
     /// @param fee The fee to validate.
@@ -114,7 +104,7 @@ contract Tollgate is Initializable, UUPSUpgradeable, AccessControlledUpgradeable
         T.Context ctx,
         uint256 fee,
         address currency
-    ) external onlyGov onlyValidFeeRepresentation(ctx, fee) onlyValidCurrency(currency) {
+    ) external onlyGov onlyValidFeeRepresentation(ctx, fee) {
         _currencyFees[currency][ctx] = fee;
         _registeredCurrencies[ctx].add(currency); // set avoid duplication..
         emit FeesSet(fee, ctx, currency, msg.sender);

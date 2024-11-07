@@ -12,11 +12,13 @@ import { IPolicy } from "contracts/interfaces/policies/IPolicy.sol";
 import { IRightsPolicyManager } from "contracts/interfaces/rightsmanager/IRightsPolicyManager.sol";
 import { IRightsPolicyAuthorizer } from "contracts/interfaces/rightsmanager/IRightsPolicyAuthorizer.sol";
 import { IRightsAccessAgreement } from "contracts/interfaces/rightsmanager/IRightsAccessAgreement.sol";
+import { LoopOps } from "contracts/libraries/LoopOps.sol";
 import { T } from "contracts/libraries/Types.sol";
 
 contract RightsPolicyManager is Initializable, UUPSUpgradeable, AccessControlledUpgradeable, IRightsPolicyManager {
     using EnumerableSet for EnumerableSet.AddressSet;
     using ERC165Checker for address;
+    using LoopOps for uint256;
 
     /// @custom:oz-upgrades-unsafe-allow state-variable-immutable
     IRightsAccessAgreement public immutable RIGTHS_AGREEMENT;
@@ -127,7 +129,7 @@ contract RightsPolicyManager is Initializable, UUPSUpgradeable, AccessControlled
     /// @param parties The addresses of the accounts to be granted access through the policy.
     function _registerBatchPolicies(bytes32 proof, address policyAddress, address[] memory parties) private {
         uint256 partiesLen = parties.length;
-        for (uint256 i = 0; i < partiesLen; i++) {
+        for (uint256 i = 0; i < partiesLen; i = i.uncheckedInc()) {
             _acl[parties[i]].add(policyAddress);
             emit PolicyRegistered(parties[i], proof, policyAddress);
         }

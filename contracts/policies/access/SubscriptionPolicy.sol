@@ -9,8 +9,7 @@ import { T } from "contracts/libraries/Types.sol";
 contract SubscriptionPolicy is BasePolicy {
     /// @dev Structure to define a subscription package.
     struct Package {
-        uint256 subscriptionDuration; // Duration in seconds for which the subscription is valid.
-        uint256 price; // Price of the subscription package.
+        uint256 pricePerDay; // Price of the subscription package.
         address currency;
     }
 
@@ -20,8 +19,8 @@ contract SubscriptionPolicy is BasePolicy {
     constructor(
         address rmAddress,
         address ownershipAddress,
-        address spiAddress
-    ) BasePolicy(rmAddress, ownershipAddress, spiAddress) {}
+        address providerAddress
+    ) BasePolicy(rmAddress, ownershipAddress, providerAddress) {}
 
     /// @notice Returns the name of the policy.
     function name() external pure returns (string memory) {
@@ -36,17 +35,15 @@ contract SubscriptionPolicy is BasePolicy {
                 "to access a content holder's catalog for a specified duration.\n\n"
                 "1) Flexible subscription duration, defined by the content holder.\n"
                 "2) Recurring revenue streams for content holders.\n"
-                "3) Immediate access to content catalog during the subscription period.\n"
-                "4) Automated payment processing."
+                "3) Immediate access to content catalog during the subscription period."
             );
     }
 
     function initialize(bytes calldata init) external initializer {
-        (uint256 subscriptionDuration, uint256 price, address currency) = abi.decode(init, (uint256, uint256, address));
-        if (subscriptionDuration == 0) revert InvalidInitialization("Subscription: Invalid subscription duration.");
-        if (price == 0) revert InvalidInitialization("SInvalidInitialization Invalid subscription price.");
+        (uint256 price, address currency) = abi.decode(init, (uint256, address));
+        if (price == 0) revert InvalidInitialization("InvalidInitialization Invalid subscription price.");
         // expected content rigInvalidInitializationending subscription params..
-        _packages[msg.sender] = Package(subscriptionDuration, price, currency);
+        _packages[msg.sender] = Package(price, currency);
     }
 
     // this function should be called only by RM and its used to establish
@@ -54,13 +51,14 @@ contract SubscriptionPolicy is BasePolicy {
     // de modo qu en el futuro se pueda usar otro tipo de estructuras como group
     function enforce(address holder, T.Agreement calldata agreement) external onlyRM initialized returns (uint256) {
         Package memory pkg = _packages[holder];
-        // we need to be sure the user paid for the total of the price..
-        uint256 total = agreement.parties.length * pkg.price; // total to pay for the total of subscriptions
-        if (pkg.subscriptionDuration == 0) revert InvalidEnforcement("Invalid not existing subscription");
+        // we need to be sure the user paid for the total of the package..
+        uint256 paymentPerAccount = agreement.amount / agreement.parties.length;
+        uint256 subscriptionDuration = paymentPerAccount / pkg.pricePerDay; // expected payment per day per account
+        uint256 total = (subscriptionDuration * pkg.pricePerDay) * agreement.parties.length; // total to pay for the total of subscriptions
         if (agreement.amount < total) revert InvalidEnforcement("Insufficient funds for subscription");
 
         // subscribe to content owner's catalog (content package)
-        uint256 subExpire = block.timestamp + pkg.subscriptionDuration;
+        uint256 subExpire = block.timestamp + (subscriptionDuration * 1 days);
         // the agreement is stored in an attestation signed registry
         // the recipients is the list of benefitians of the agreement
         return _commit(holder, agreement, subExpire);
@@ -69,6 +67,6 @@ contract SubscriptionPolicy is BasePolicy {
     function resolveTerms(bytes calldata criteria) external view returns (T.Terms memory) {
         address holder = abi.decode(criteria, (address));
         Package memory pkg = _packages[holder];
-        return T.Terms(pkg.currency, pkg.price, "");
+        return T.Terms(pkg.currency, pkg.pricePerDay, "");
     }
 }
