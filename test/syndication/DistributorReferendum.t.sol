@@ -8,6 +8,7 @@ import { ITollgate } from "contracts/interfaces/economics/ITollgate.sol";
 import { IDistributorVerifiable } from "contracts/interfaces/syndication/IDistributorVerifiable.sol";
 import { IDistributorExpirable } from "contracts/interfaces/syndication/IDistributorExpirable.sol";
 import { IDistributorRegistrable } from "contracts/interfaces/syndication/IDistributorRegistrable.sol";
+import { IDistributorFactory } from "contracts/interfaces/syndication/IDistributorFactory.sol";
 
 import { BaseTest } from "test/BaseTest.t.sol";
 import { DistributorReferendum } from "contracts/syndication/DistributorReferendum.sol";
@@ -15,20 +16,23 @@ import { T } from "contracts/libraries/Types.sol";
 
 contract DistributorReferendumTest is BaseTest {
     address distributor;
+    address distFactory;
     address referendum;
     address tollgate;
-    address treasury;
     address token;
 
-    function setUp() public {
-        // setup the access manager to use during tests..
-        deployAndSetAccessManager();
-
+    function setUp() public initialize {
         token = deployToken();
-        treasury = deployTreasury();
         tollgate = deployTollgate();
-        referendum = deployDistributorReferendum(treasury, tollgate);
+        referendum = deployDistributorReferendum();
+        distFactory = deployDistributorFactory();
         distributor = deployDistributor("contentrider.com");
+    }
+
+     function deployDistributor(string memory endpoint) public returns(address) {
+        vm.prank(admin);
+        IDistributorFactory distributorFactory = IDistributorFactory(distFactory);
+        return distributorFactory.create(endpoint);
     }
 
     /// ----------------------------------------------------------------

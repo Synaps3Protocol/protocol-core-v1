@@ -12,8 +12,11 @@ import { ERC20Burnable } from "@openzeppelin/contracts/token/ERC20/extensions/ER
 // https://eips.ethereum.org/EIPS/eip-2612 - permit
 // https://eips.ethereum.org/EIPS/eip-1363 - payable
 contract MMC is ERC20, ERC20Permit, ERC20Burnable, ERC20Votes {
-    constructor(uint256 totalSupply) ERC20("Multimedia Coin", "MMC") ERC20Permit("Multimedia Coin") {
-        _mint(msg.sender, totalSupply * (10 ** 18));
+    constructor(
+        address initialHolder,
+        uint256 totalSupply
+    ) ERC20("Multimedia Coin", "MMC") ERC20Permit("Multimedia Coin") {
+        _mint(initialHolder, totalSupply * (10 ** 18));
     }
 
     /// @inheritdoc IERC20Permit

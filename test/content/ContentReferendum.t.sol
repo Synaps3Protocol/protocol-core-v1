@@ -15,34 +15,10 @@ import { C } from "contracts/libraries/Constants.sol";
 contract ContentReferendumTest is BaseTest {
     address referendum;
 
-    function setUp() public {
+    function setUp() public initialize  {
         // setup the access manager to use during tests..
-        deployAndSetAccessManager();
         referendum = deployContentReferendum();
     }
-
-    // TODO move to access manager
-    // function test_GrantVerifiedRole_ValidVerifiedRoleGrant() public {
-    //     vm.prank(governor);
-    //     IContentRoleManager(referendum).grantVerifiedRole(user);
-    //     assertTrue(IAccessControl(referendum).hasRole(C.VERIFIED_ROLE, user));
-    // }
-
-    // function test_GrantVerifiedRole_RevertWhen_Unauthorized() public {
-    //     vm.expectRevert();
-    //     IContentRoleManager(referendum).grantVerifiedRole(user);
-    // }
-
-    // function test_RevokeVerifiedRole_ValidVerifiedRoleRevoke() public {
-    //     vm.prank(governor);
-    //     IContentRoleManager(referendum).revokeVerifiedRole(user);
-    //     assertFalse(IAccessControl(referendum).hasRole(C.VERIFIED_ROLE, user));
-    // }
-
-    // function test_RevokeVerifiedRole_RevertWhen_Unauthorized() public {
-    //     vm.expectRevert();
-    //     IContentRoleManager(referendum).revokeVerifiedRole(user);
-    // }
 
     function test_Submit_SubmittedEventEmmitted() public {
         vm.warp(1641070800);
@@ -51,7 +27,6 @@ contract ContentReferendumTest is BaseTest {
         emit ContentReferendum.Submitted(user, 1641070800, 1);
         IContentRegistrable(referendum).submit(1);
     }
-
 
     function test_Submit_SubmittedValidStates() public {
         _submitContentAsUser(1);

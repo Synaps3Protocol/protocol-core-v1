@@ -71,7 +71,7 @@ contract PolicyAudit is Initializable, UUPSUpgradeable, AccessControlledUpgradea
     /// @notice Approves the audit of a given policy by a specified auditor.
     /// @param policy The address of the policy to be audited.
     /// @dev This function emits the PolicyApproved event upon successful audit approval.
-    function approve(address policy) external onlyPolicyContract(policy) onlyMod {
+    function approve(address policy) external onlyPolicyContract(policy) restricted {
         _approve(uint160(policy));
         emit PolicyApproved(policy, msg.sender);
     }
@@ -79,7 +79,7 @@ contract PolicyAudit is Initializable, UUPSUpgradeable, AccessControlledUpgradea
     /// @notice Revokes the audit of a given policy by a specified auditor.
     /// @param policy The address of the policy whose audit is to be revoked.
     /// @dev This function emits the PolicyRevoked event upon successful audit revocation.
-    function reject(address policy) external onlyPolicyContract(policy) onlyMod {
+    function reject(address policy) external onlyPolicyContract(policy) restricted {
         _revoke(uint160(policy));
         emit PolicyRevoked(policy, msg.sender);
     }

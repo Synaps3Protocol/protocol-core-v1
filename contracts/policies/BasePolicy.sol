@@ -137,7 +137,7 @@ abstract contract BasePolicy is ReentrancyGuard, IPolicy, ERC165 {
     /// @param agreement The agreement structure containing necessary details for the attestation.
     /// @param expireAt The timestamp at which the attestation will expire.
     function _commit(address holder, T.Agreement memory agreement, uint256 expireAt) internal returns (uint256) {
-        bytes memory data = abi.encode(holder, agreement.parties, agreement); // bind agreement and rights holder..
+        bytes memory data = abi.encode(holder, agreement.initiator, agreement.parties, agreement);
         uint256 attestationId = ATTESTATION_PROVIDER.attest(agreement.parties, expireAt, data);
         _updateBatchAttestation(holder, attestationId, agreement.parties);
         return attestationId;

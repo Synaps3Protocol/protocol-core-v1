@@ -11,17 +11,11 @@ library C {
     uint8 internal constant SCALE_FACTOR = 100;
     uint16 internal constant BPS_MAX = 10_000;
 
-    /// @notice The keccak256 hash representing the governance role.
-    /// @dev This constant is used to identify accounts with the admin permissions within the system.
-    bytes32 internal constant ADMIN_ROLE = keccak256("ADMIN_ROLE");
-    /// @notice The keccak256 hash representing the governance role.
-    /// @dev This constant is used to identify accounts with the governance permissions within the system.
-    bytes32 internal constant GOV_ROLE = keccak256("GOV_ROLE");
-    /// @notice The keccak256 hash representing the moderator role.
-    /// @dev This constant is used to identify accounts with the moderator permissions within the system.
-    bytes32 internal constant MOD_ROLE = keccak256("MOD_ROLE");
-    // This role is granted to any representant trusted account. eg: Verified Accounts, etc.
-    bytes32 internal constant VERIFIED_ROLE = keccak256("VERIFIED_ROLE");
+    uint64 internal constant ADMIN_ROLE = 0; // alias type(uint64).min AccessManager
+    uint64 internal constant GOV_ROLE = 1;
+    uint64 internal constant MOD_ROLE = 2;
+    uint64 internal constant VERIFIED_ROLE = 3;
+    uint64 internal constant COLLECTOR_ROLE = 4;
 
     bytes32 internal constant REFERENDUM_SUBMIT_TYPEHASH =
         keccak256("Submission(uint256 contentId, address initiator, uint256 nonce)");
