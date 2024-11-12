@@ -7,13 +7,22 @@ import { IERC20 } from "@openzeppelin/contracts/interfaces/IERC20.sol";
 import { IDistributor } from "contracts/interfaces/syndication/IDistributor.sol";
 import { IBalanceVerifiable } from "contracts/interfaces/IBalanceVerifiable.sol";
 import { IBalanceWithdrawable } from "contracts/interfaces/IBalanceWithdrawable.sol";
+import { IDistributorFactory } from "contracts/interfaces/syndication/IDistributorFactory.sol";
 import { BaseTest } from "test/BaseTest.t.sol";
 
 contract DistributorImplTest is BaseTest {
     address token;
+    address distFactory;
 
-    function setUp() public {
+    function setUp() public initialize {
         token = deployToken();
+        distFactory = deployDistributorFactory();
+    }
+
+    function deployDistributor(string memory endpoint) public returns(address) {
+        vm.prank(admin);
+        IDistributorFactory distributorFactory = IDistributorFactory(distFactory);
+        return distributorFactory.create(endpoint);
     }
 
     function test_Create_ValidDistributor() public {
@@ -22,7 +31,6 @@ contract DistributorImplTest is BaseTest {
     }
 
     function test_GetOwner_ExpectedDeployer() public {
-        vm.prank(admin);
         address distributor = deployDistributor("test2.com");
         assertEq(IDistributor(distributor).getManager(), admin);
     }
@@ -73,7 +81,6 @@ contract DistributorImplTest is BaseTest {
         vm.stopPrank();
 
         assertEq(IERC20(token).balanceOf(user), expected);
-
     }
 
     function test_Withdraw_EmitFundsWithdrawn() public {
@@ -89,7 +96,7 @@ contract DistributorImplTest is BaseTest {
         IBalanceWithdrawable(distributor).withdraw(user, expected, token);
     }
 
-     function test_Withdraw_RevertWhen_NoBalance() public {
+    function test_Withdraw_RevertWhen_NoBalance() public {
         // created with an initial endpoint
         uint256 expected = 100 * 1e18;
         address distributor = deployDistributor("1.1.1.1");
@@ -103,7 +110,7 @@ contract DistributorImplTest is BaseTest {
         // created with an initial endpoint
         uint256 expected = 100 * 1e18;
         address distributor = deployDistributor("1.1.1.1");
-        
+
         vm.prank(user);
         vm.expectRevert(abi.encodeWithSignature("OwnableUnauthorizedAccount(address)", user));
         IBalanceWithdrawable(distributor).withdraw(user, expected, token);

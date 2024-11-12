@@ -96,7 +96,7 @@ contract DistributorReferendum is
 
     /// @notice Sets a new expiration period for an enrollment or registration.
     /// @param newPeriod The new expiration period, in seconds.
-    function setExpirationPeriod(uint256 newPeriod) external onlyGov {
+    function setExpirationPeriod(uint256 newPeriod) external restricted {
         _enrollmentPeriod = newPeriod;
         emit PeriodSet(msg.sender, newPeriod);
     }
@@ -119,7 +119,7 @@ contract DistributorReferendum is
 
     /// @notice Revokes the registration of a distributor.
     /// @param distributor The address of the distributor to revoke.
-    function revoke(address distributor) external onlyGov onlyValidDistributor(distributor) {
+    function revoke(address distributor) external restricted onlyValidDistributor(distributor) {
         _enrollmentsCount--;
         _revoke(uint160(distributor));
         emit Revoked(distributor, block.timestamp);
@@ -127,7 +127,7 @@ contract DistributorReferendum is
 
     /// @notice Approves a distributor's registration.
     /// @param distributor The address of the distributor to approve.
-    function approve(address distributor) external onlyGov onlyValidDistributor(distributor) {
+    function approve(address distributor) external restricted onlyValidDistributor(distributor) {
         _enrollmentsCount++;
         _approve(uint160(distributor));
         emit Approved(distributor, block.timestamp);

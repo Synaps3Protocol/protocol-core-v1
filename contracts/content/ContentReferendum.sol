@@ -103,6 +103,27 @@ contract ContentReferendum is
         _submit(contentId, initiator);
     }
 
+    /// @notice Revoke an approved content.
+    /// @param contentId The ID of the content to be revoked.
+    function revoke(uint256 contentId) external restricted {
+        _revoke(contentId); // bundled check-effects-interaction
+        emit Revoked(contentId, block.timestamp);
+    }
+
+    /// @notice Reject a content proposition.
+    /// @param contentId The ID of the content to be rejected.
+    function reject(uint256 contentId) external restricted {
+        _block(contentId); // bundled check-effects-interaction
+        emit Rejected(contentId, block.timestamp);
+    }
+
+    /// @notice Approves a content proposition.
+    /// @param contentId The ID of the content to be approved.
+    function approve(uint256 contentId) external restricted {
+        _approve(contentId); // bundled check-effects-interaction
+        emit Approved(contentId, block.timestamp);
+    }
+
     /// @notice Checks if the content is active nor blocked.
     /// @param contentId The ID of the content.
     function isActive(uint256 contentId) public view returns (bool) {
@@ -118,27 +139,6 @@ contract ContentReferendum is
         bool verifiedRole = _hasRole(C.VERIFIED_ROLE, initiator);
         // is approved with a valid submission account or is verified account..
         return (approved && validAccount) || verifiedRole;
-    }
-
-    /// @notice Revoke an approved content.
-    /// @param contentId The ID of the content to be revoked.
-    function revoke(uint256 contentId) public onlyGov {
-        _revoke(contentId); // bundled check-effects-interaction
-        emit Revoked(contentId, block.timestamp);
-    }
-
-    /// @notice Reject a content proposition.
-    /// @param contentId The ID of the content to be rejected.
-    function reject(uint256 contentId) public onlyGov {
-        _block(contentId); // bundled check-effects-interaction
-        emit Rejected(contentId, block.timestamp);
-    }
-
-    /// @notice Approves a content proposition.
-    /// @param contentId The ID of the content to be approved.
-    function approve(uint256 contentId) public onlyGov {
-        _approve(contentId); // bundled check-effects-interaction
-        emit Approved(contentId, block.timestamp);
     }
 
     /// @notice Function that should revert when msg.sender is not authorized to upgrade the contract.

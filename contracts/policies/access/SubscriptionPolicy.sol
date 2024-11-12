@@ -56,6 +56,7 @@ contract SubscriptionPolicy is BasePolicy {
         // expected payment per day per account
         uint256 subscriptionDuration = paymentPerAccount / pkg.pricePerDay;
         // total to pay for the total of subscriptions
+        // TODO log decay days > more days, less price
         uint256 total = (subscriptionDuration * pkg.pricePerDay) * agreement.parties.length;
         if (agreement.amount < total) revert InvalidEnforcement("Insufficient funds for subscription");
 

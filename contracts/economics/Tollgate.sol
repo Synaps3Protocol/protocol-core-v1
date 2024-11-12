@@ -104,7 +104,7 @@ contract Tollgate is Initializable, UUPSUpgradeable, AccessControlledUpgradeable
         T.Context ctx,
         uint256 fee,
         address currency
-    ) external onlyGov onlyValidFeeRepresentation(ctx, fee) {
+    ) external restricted onlyValidFeeRepresentation(ctx, fee) {
         _currencyFees[currency][ctx] = fee;
         _registeredCurrencies[ctx].add(currency); // set avoid duplication..
         emit FeesSet(fee, ctx, currency, msg.sender);
