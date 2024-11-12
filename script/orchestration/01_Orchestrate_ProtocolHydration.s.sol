@@ -15,10 +15,20 @@ import { DeployPolicyAudit } from "script/deployment/11_Deploy_Policies_PolicyAu
 import { Treasury } from "contracts/economics/Treasury.sol";
 import { PolicyAudit } from "contracts/policies/PolicyAudit.sol";
 
+import { getGovPermissions as TollgateGovPermissions } from "script/permissions/Permissions_Tollgate.sol";
+import { getGovPermissions as TreasuryGovPermissions } from "script/permissions/Permissions_Treasury.sol";
+import { getGovPermissions as PolicyAuditorGovPermissions } from "script/permissions/Permissions_PolicyAuditor.sol";
+import { getGovPermissions as DistributorReferendumGovPermissions } from "script/permissions/Permissions_DistributorReferendum.sol";
+import { getGovPermissions as ContentReferendumGovPermissions } from "script/permissions/Permissions_ContentReferendum.sol";
+
 contract OrchestrateProtocolHydration is Script {
     function run() external {
         uint256 admin = vm.envUint("PRIVATE_KEY");
         address tollgateAddress = vm.envAddress("TOLLGATE");
+        address treasuryAddress = vm.envAddress("TREASURY");
+        address auditorAddress = vm.envAddress("POLICY_AUDIT");
+        address contentReferendumAddress = vm.envAddress("CONTENT_REFERENDUM");
+        address distributorReferendumAddress = vm.envAddress("DISTRIBUTION_REFERENDUM");
         address accessManager = vm.envAddress("ACCESS_MANAGER");
 
         vm.startBroadcast(admin);
@@ -31,12 +41,18 @@ contract OrchestrateProtocolHydration is Script {
         // after this can be revoked and assign the governance as governor
         authority.grantRole(C.GOV_ROLE, adminAddress, 0);
 
-        // // tollgate grant access to governacne
-        // (new DeployTollgate()).setUpPermissions();
-        // (new DeployTreasury()).setUpPermissions();
-        // (new DeployPolicyAudit()).setUpPermissions();
-        // (new DeployContentReferendum()).setUpPermissions();
-        // (new DeployDistributorReferendum()).setUpPermissions();
+        // assign governance permissions
+        bytes4[] memory tollgateAllowed = TollgateGovPermissions();
+        bytes4[] memory treasuryAllowed = TreasuryGovPermissions();
+        bytes4[] memory auditorAllowed = PolicyAuditorGovPermissions();
+        bytes4[] memory contentReferendumAllowed = ContentReferendumGovPermissions();
+        bytes4[] memory distributorReferendumAllowed = DistributorReferendumGovPermissions();
+
+        authority.setTargetFunctionRole(tollgateAddress, tollgateAllowed, C.GOV_ROLE);
+        authority.setTargetFunctionRole(treasuryAddress, treasuryAllowed, C.GOV_ROLE);
+        authority.setTargetFunctionRole(auditorAddress, auditorAllowed, C.GOV_ROLE);
+        authority.setTargetFunctionRole(contentReferendumAddress, contentReferendumAllowed, C.GOV_ROLE);
+        authority.setTargetFunctionRole(distributorReferendumAddress, distributorReferendumAllowed, C.GOV_ROLE);
 
         // 2 set mmc as the initial currency and fees
         uint256 rmaFees = vm.envUint("AGREEMENT_FEES"); // 5% 500 bps

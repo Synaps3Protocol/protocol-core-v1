@@ -11,21 +11,18 @@ contract OrchestrateProtocolHydration is Script {
     function run() external {
         uint256 admin = vm.envUint("PRIVATE_KEY");
         address easAddress = vm.envAddress("EAS_ADDRESS");
+        address attestationProviderAddress = vm.envAddress("EAS_ATTESTATION_PROVIDER");
+        address subscriptionPolicy = vm.envAddress("SUBSCRIPTION_POLICY");
         address policyAuditor = vm.envAddress("POLICY_AUDIT");
-
-        // set initial policies
-        // setup eas as attestation provider
-        address attestationProviderAddress =  (new DeployEasProvider()).run();
-        address subscriptionPolicy = (new DeploySubscriptionPolicy()).run();
 
         vm.startBroadcast(admin);
         // approve initial policies
         IPolicyAuditor registrar = IPolicyAuditor(policyAuditor);
-        registrar.submit(address(subscriptionPolicy));
-        registrar.approve(address(subscriptionPolicy));
+        registrar.submit(subscriptionPolicy);
+        registrar.approve(subscriptionPolicy);
 
         IAttestationProvider provider = IAttestationProvider(attestationProviderAddress);
-        require(registrar.isAudited(address(subscriptionPolicy)), "Invalid inactive policy");
+        require(registrar.isAudited(subscriptionPolicy), "Invalid inactive policy");
         require(provider.getAddress() == easAddress, "Invalid attestation provider address");
 
         bytes32 gotAttestationProvidername = keccak256(abi.encodePacked(provider.getName()));

@@ -12,6 +12,12 @@ import { DeployContentReferendum } from "script/deployment/06_Deploy_Content_Con
 import { DeployDistributorFactory } from "script/deployment/09_Deploy_Syndication_DistributorFactory.s.sol";
 import { DeployDistributorReferendum } from "script/deployment/10_Deploy_Syndication_DistributorReferendum.s.sol";
 
+
+import {getGovPermissions as TollgateGovPermissions} from "script/permissions/Permissions_Tollgate.sol";
+import {getGovPermissions as TreasuryGovPermissions} from "script/permissions/Permissions_Treasury.sol";
+import {getGovPermissions as DistributorReferendumGovPermissions} from "script/permissions/Permissions_DistributorReferendum.sol";
+import {getGovPermissions as ContentReferendumGovPermissions} from "script/permissions/Permissions_ContentReferendum.sol";
+
 import { IAccessManager } from "contracts/interfaces/access/IAccessManager.sol";
 import { C } from "contracts/libraries/Constants.sol";
 
@@ -54,7 +60,7 @@ abstract contract BaseTest is Test {
     function deployTollgate() public returns (address) {
         // set default admin as deployer..
         DeployTollgate tollgateDeployer = new DeployTollgate();
-        bytes4[] memory tollgateAllowed = tollgateDeployer.getGovPermissions();
+        bytes4[] memory tollgateAllowed = TollgateGovPermissions();
         address tollgate = tollgateDeployer.run();
         _setTargetGovRole(tollgate, tollgateAllowed);
         return tollgate;
@@ -72,7 +78,7 @@ abstract contract BaseTest is Test {
     function deployTreasury() public returns (address) {
         // set default admin as deployer..
         DeployTreasury treasuryDeployer = new DeployTreasury();
-        bytes4[] memory treasuryAllowed = treasuryDeployer.getGovPermissions();
+        bytes4[] memory treasuryAllowed = TreasuryGovPermissions();
         address treasury = treasuryDeployer.run();
         _setTargetGovRole(treasury, treasuryAllowed);
         return treasury;
@@ -82,7 +88,7 @@ abstract contract BaseTest is Test {
     function deployContentReferendum() public returns (address) {
         // set default admin as deployer..
         DeployContentReferendum contentReferendumDeployer = new DeployContentReferendum();
-        bytes4[] memory referendumAllowed = contentReferendumDeployer.getGovPermissions();
+        bytes4[] memory referendumAllowed = ContentReferendumGovPermissions();
         address contentReferendum = contentReferendumDeployer.run();
         _setTargetGovRole(contentReferendum, referendumAllowed);
         return contentReferendum;
@@ -99,7 +105,7 @@ abstract contract BaseTest is Test {
     function deployDistributorReferendum() public returns (address) {
         // set default admin as deployer..
         DeployDistributorReferendum distReferendumDeployer = new DeployDistributorReferendum();
-        bytes4[] memory distributorReferendumAllowed = distReferendumDeployer.getGovPermissions();
+        bytes4[] memory distributorReferendumAllowed = DistributorReferendumGovPermissions();
         address distributorReferendum = distReferendumDeployer.run();
         _setTargetGovRole(distributorReferendum, distributorReferendumAllowed);
         return distributorReferendum;

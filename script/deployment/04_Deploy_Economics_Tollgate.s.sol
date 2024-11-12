@@ -7,15 +7,7 @@ import { IAccessManager } from "contracts/interfaces/access/IAccessManager.sol";
 import { C } from "contracts/libraries/Constants.sol";
 
 contract DeployTollgate is DeployBase {
-    function getGovPermissions() public pure returns (bytes4[] memory) {
-        // tollgate grant access to governacne
-        bytes4[] memory tollgateAllowed = new bytes4[](1);
-        tollgateAllowed[0] = Tollgate.setFees.selector;
-        return tollgateAllowed;
-    }
-
     function run() external returns (address) {
-
         vm.startBroadcast(getAdminPK());
         address impl = address(new Tollgate());
         address accessManager = computeCreate3Address("SALT_ACCESS_MANAGER");

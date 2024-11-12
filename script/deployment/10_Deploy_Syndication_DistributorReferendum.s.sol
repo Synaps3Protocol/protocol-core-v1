@@ -6,16 +6,7 @@ import { IAccessManager } from "contracts/interfaces/access/IAccessManager.sol";
 import { C } from "contracts/libraries/Constants.sol";
 
 contract DeployDistributorReferendum is DeployBase {
-    function getGovPermissions() public pure returns (bytes4[] memory) {
-        bytes4[] memory distributorReferendumAllowed = new bytes4[](3);
-        distributorReferendumAllowed[0] = DistributorReferendum.setExpirationPeriod.selector;
-        distributorReferendumAllowed[1] = DistributorReferendum.revoke.selector;
-        distributorReferendumAllowed[2] = DistributorReferendum.approve.selector;
-        return distributorReferendumAllowed;
-    }
-
     function run() external returns (address) {
-
         vm.startBroadcast(getAdminPK());
         address treasury = computeCreate3Address("SALT_TREASURY");
         address tollgate = computeCreate3Address("SALT_TOLLGATE");
