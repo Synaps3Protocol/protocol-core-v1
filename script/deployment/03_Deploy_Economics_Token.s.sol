@@ -6,7 +6,6 @@ import { MMC } from "contracts/economics/MMC.sol";
 
 contract DeployToken is DeployBase {
     function run() external returns (address) {
-        
         uint256 privateKey = getAdminPK();
         address publicKey = vm.addr(privateKey);
 
@@ -18,6 +17,7 @@ contract DeployToken is DeployBase {
         vm.stopBroadcast();
 
         _checkExpectedAddress(token, "SALT_MMC");
+        _logAddress("MMC", token);
         return token;
     }
 }

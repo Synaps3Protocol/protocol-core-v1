@@ -16,6 +16,7 @@ contract DeployRightsPolicyAuthorizer is DeployBase {
         vm.stopBroadcast();
 
         _checkExpectedAddress(authorizer, "SALT_RIGHT_POLICY_AUTHORIZER");
+        _logAddress("RIGHT_POLICY_AUTHORIZER", authorizer);
         return authorizer;
     }
 }

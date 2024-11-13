@@ -20,9 +20,13 @@ interface IRightsPolicyManager {
     /// @param account The address of the account for which policies are being retrieved.
     function getPolicies(address account) external view returns (address[] memory);
 
+    /// @notice Retrieves the address of the Rights Policies Authorizer contract.
+    /// @return The address of the contract responsible for authorizing rights policies.
+    function getPolicyAuthorizer() external view returns (address);
+
     /// @notice Finalizes the agreement by registering the agreed-upon policy, effectively closing the agreement.
     /// @param proof The unique identifier of the agreement to be enforced.
     /// @param holder The rights holder whose authorization is required for accessing the content.
     /// @param policyAddress The address of the policy contract managing the agreement.
-    function registerPolicy(bytes32 proof, address holder, address policyAddress) external returns (uint256);
+    function registerPolicy(uint256 proof, address holder, address policyAddress) external returns (uint256);
 }

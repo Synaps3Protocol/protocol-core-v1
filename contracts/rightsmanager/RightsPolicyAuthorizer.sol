@@ -7,6 +7,7 @@ import { EnumerableSet } from "@openzeppelin/contracts/utils/structs/EnumerableS
 import { UUPSUpgradeable } from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import { AccessControlledUpgradeable } from "contracts/base/upgradeable/AccessControlledUpgradeable.sol";
 
+import { IPolicy } from "contracts/interfaces/policies/IPolicy.sol";
 import { IRightsPolicyAuthorizer } from "contracts/interfaces/rightsmanager/IRightsPolicyAuthorizer.sol";
 import { IPolicyAuditorVerifiable } from "contracts/interfaces/policies/IPolicyAuditorVerifiable.sol";
 
@@ -62,10 +63,13 @@ contract RightsPolicyAuthorizer is
 
     /// @notice Initializes and authorizes a policy contract for content held by the holder.
     /// @param policy The address of the policy contract to be initialized and authorized.
-    function authorizePolicy(address policy) external {
+    /// @param data The data to initialize policy.
+    function authorizePolicy(address policy, bytes calldata data) external {
         // only valid and audit polices are allowed to be authorized and initialized..
         if (!_isValidPolicy(policy)) revert InvalidNotAuditedPolicy(policy);
         _delegation[msg.sender].add(policy);
+        // call policy initialization with provided data..
+        IPolicy(policy).initialize(msg.sender, data);
         emit RightsGranted(policy, msg.sender);
     }
 

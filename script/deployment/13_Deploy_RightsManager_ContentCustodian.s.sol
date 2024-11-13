@@ -16,6 +16,7 @@ contract DeployRightsContentCustodian is DeployBase {
         vm.stopBroadcast();
         
         _checkExpectedAddress(custodian, "SALT_RIGHT_CONTENT_CUSTODIAN");
+        _logAddress("RIGHT_CONTENT_CUSTODIAN", custodian);
         return custodian;
     }
 }

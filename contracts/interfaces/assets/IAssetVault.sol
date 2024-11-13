@@ -3,10 +3,10 @@ pragma solidity 0.8.26;
 
 import { T } from "contracts/libraries/Types.sol";
 
-/// @title IContentVault
+/// @title IAssetVault
 /// @notice Interface for a content vault that manages secured content.
 /// @dev This interface defines the methods to retrieve and store content.
-interface IContentVault {
+interface IAssetVault {
     /// @notice Retrieves the encrypted content for a given content ID.
     /// @param contentId The identifier of the content.
     /// @param vault The vault type used to retrieve the content (e.g., LIT, RSA, EC).

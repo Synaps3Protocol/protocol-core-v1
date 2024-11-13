@@ -9,24 +9,24 @@ import { ERC721Upgradeable } from "@openzeppelin/contracts-upgradeable/token/ERC
 // solhint-disable-next-line max-line-length
 import { ERC721EnumerableUpgradeable } from "@openzeppelin/contracts-upgradeable/token/ERC721/extensions/ERC721EnumerableUpgradeable.sol";
 import { AccessControlledUpgradeable } from "contracts/base/upgradeable/AccessControlledUpgradeable.sol";
-import { IContentVerifiable } from "contracts/interfaces/content/IContentVerifiable.sol";
-import { IContentOwnership } from "contracts/interfaces/content/IContentOwnership.sol";
+import { IAssetVerifiable } from "contracts/interfaces/assets/IAssetVerifiable.sol";
+import { IAssetOwnership } from "contracts/interfaces/assets/IAssetOwnership.sol";
 
 // TODO imp ERC404
 // TODO imp EIP4337 accounting
 
 /// @title Ownership ERC721 Upgradeable
 /// @notice This abstract contract manages the ownership.
-contract ContentOwnership is
+contract AssetOwnership is
     Initializable,
     UUPSUpgradeable,
     ERC721Upgradeable,
     AccessControlledUpgradeable,
     ERC721EnumerableUpgradeable,
-    IContentOwnership
+    IAssetOwnership
 {
     /// @custom:oz-upgrades-unsafe-allow state-variable-immutable
-    IContentVerifiable public immutable CONTENT_REFERENDUM;
+    IAssetVerifiable public immutable CONTENT_REFERENDUM;
 
     /// @dev Emitted when a new content item is registered on the platform.
     /// @param owner The address of the content creator or owner who registered the content.
@@ -52,12 +52,12 @@ contract ContentOwnership is
     }
 
     /// @custom:oz-upgrades-unsafe-allow constructor
-    constructor(address contentReferendum) {
+    constructor(address assetReferendum) {
         /// https://forum.openzeppelin.com/t/what-does-disableinitializers-function-mean/28730/5
         /// https://forum.openzeppelin.com/t/uupsupgradeable-vulnerability-post-mortem/15680
         _disableInitializers();
         // we need to verify the status of each content before allow register it.
-        CONTENT_REFERENDUM = IContentVerifiable(contentReferendum);
+        CONTENT_REFERENDUM = IAssetVerifiable(assetReferendum);
     }
 
     /// @notice Initializes the proxy state.

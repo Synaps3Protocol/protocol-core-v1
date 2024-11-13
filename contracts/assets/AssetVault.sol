@@ -5,17 +5,16 @@ import { UUPSUpgradeable } from "@openzeppelin/contracts-upgradeable/proxy/utils
 import { Initializable } from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 
 import { AccessControlledUpgradeable } from "contracts/base/upgradeable/AccessControlledUpgradeable.sol";
-import { IContentOwnership } from "contracts/interfaces/content/IContentOwnership.sol";
-import { IContentVault } from "contracts/interfaces/content/IContentVault.sol";
-
+import { IAssetOwnership } from "contracts/interfaces/assets/IAssetOwnership.sol";
+import { IAssetVault } from "contracts/interfaces/assets/IAssetVault.sol";
 import { T } from "contracts/libraries/Types.sol";
 
 /// @notice This contract is designed as a secure and decentralized area to exchange complementary data related to
 /// content access, such as encrypted keys, license keys, or metadata. It does not store the actual content itself,
 /// but manages the complementary data necessary to access that content.
-contract ContentVault is Initializable, UUPSUpgradeable, AccessControlledUpgradeable, IContentVault {
+contract AssetVault is Initializable, UUPSUpgradeable, AccessControlledUpgradeable, IAssetVault {
     /// @custom:oz-upgrades-unsafe-allow state-variable-immutable
-    IContentOwnership public immutable CONTENT_OWNSERSHIP;
+    IAssetOwnership public immutable CONTENT_OWNSERSHIP;
     /// @dev Mapping to store encrypted content, identified by content ID.
     mapping(uint256 => mapping(T.VaultType => bytes)) private _secured;
     /// @notice Error thrown when a non-owner tries to modify or access the content.
@@ -32,12 +31,12 @@ contract ContentVault is Initializable, UUPSUpgradeable, AccessControlledUpgrade
     }
 
     /// @custom:oz-upgrades-unsafe-allow constructor
-    constructor(address contentOwnership) {
+    constructor(address AssetOwnership) {
         ///  https://forum.openzeppelin.com/t/uupsupgradeable-vulnerability-post-mortem/15680
         /// https://forum.openzeppelin.com/t/what-does-disableinitializers-function-mean/28730/5
         _disableInitializers();
         // we need to verify ownership during content storage handling
-        CONTENT_OWNSERSHIP = IContentOwnership(contentOwnership);
+        CONTENT_OWNSERSHIP = IAssetOwnership(AssetOwnership);
     }
 
     /// @notice Initializes the proxy state.

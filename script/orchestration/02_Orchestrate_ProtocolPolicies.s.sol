@@ -1,13 +1,10 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.26;
 import "forge-std/Script.sol";
-
-import { DeployEasProvider } from "script/deployment/16_Deploy_Policies_EasProvider.s.sol";
-import { DeploySubscriptionPolicy } from "script/deployment/17_Deploy_Policies_Subscription.s.sol";
 import { IPolicyAuditor } from "contracts/interfaces/policies/IPolicyAuditor.sol";
 import { IAttestationProvider } from "contracts/interfaces/IAttestationProvider.sol";
 
-contract OrchestrateProtocolHydration is Script {
+contract OrchestrateProtocolPolicies is Script {
     function run() external {
         uint256 admin = vm.envUint("PRIVATE_KEY");
         address easAddress = vm.envAddress("EAS_ADDRESS");

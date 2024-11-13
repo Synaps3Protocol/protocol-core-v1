@@ -20,7 +20,8 @@ interface IRightsPolicyAuthorizer {
     /// @notice Authorizes a policy contract, granting it rights to manage the content associated with the holder.
     /// @dev This function allows a content holder to authorize a policy to manage its content rights.
     /// @param policy The address of the policy contract to authorize.
-    function authorizePolicy(address policy) external;
+    /// @param data The data to initialize policy.
+    function authorizePolicy(address policy, bytes calldata data) external;
 
     /// @notice Revokes the authorization of a policy contract.
     /// @dev This function removes the rights of a policy, preventing it from managing the content holder’s assets.

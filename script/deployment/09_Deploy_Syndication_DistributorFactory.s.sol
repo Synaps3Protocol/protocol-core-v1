@@ -16,6 +16,7 @@ contract DeployDistributorFactory is DeployBase {
         vm.stopBroadcast();
 
         _checkExpectedAddress(factory, "SALT_DISTRIBUTION_FACTORY");
+        _logAddress("DISTRIBUTION_FACTORY", factory);
         return factory;
     }
 }

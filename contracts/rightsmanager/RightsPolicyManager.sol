@@ -21,7 +21,7 @@ contract RightsPolicyManager is Initializable, UUPSUpgradeable, AccessControlled
     using LoopOps for uint256;
 
     /// @custom:oz-upgrades-unsafe-allow state-variable-immutable
-    IRightsAccessAgreement public immutable RIGTHS_AGREEMENT;
+    IRightsAccessAgreement public immutable RIGHTS_AGREEMENT;
     /// @custom:oz-upgrades-unsafe-allow state-variable-immutable
     IRightsPolicyAuthorizer public immutable RIGHTS_AUTHORIZER;
 
@@ -32,7 +32,7 @@ contract RightsPolicyManager is Initializable, UUPSUpgradeable, AccessControlled
     /// @param account The address of the account to which the policy applies.
     /// @param proof A unique identifier for the agreement, attestation, or transaction that confirms the registration.
     /// @param policy The address of the registered policy governing the access rights.
-    event PolicyRegistered(address indexed account, bytes32 proof, address policy);
+    event PolicyRegistered(address indexed account, uint256 proof, address policy);
 
     /// @dev Error thrown when attempting to operate on a policy that has not
     /// been delegated rights for the specified content.
@@ -45,7 +45,7 @@ contract RightsPolicyManager is Initializable, UUPSUpgradeable, AccessControlled
         /// https://forum.openzeppelin.com/t/uupsupgradeable-vulnerability-post-mortem/15680
         /// https://forum.openzeppelin.com/t/what-does-disableinitializers-function-mean/28730/5
         _disableInitializers();
-        RIGTHS_AGREEMENT = IRightsAccessAgreement(rightsAgreement);
+        RIGHTS_AGREEMENT = IRightsAccessAgreement(rightsAgreement);
         RIGHTS_AUTHORIZER = IRightsPolicyAuthorizer(rightsAuthorizer);
     }
 
@@ -53,6 +53,12 @@ contract RightsPolicyManager is Initializable, UUPSUpgradeable, AccessControlled
     function initialize(address accessManager) public initializer {
         __UUPSUpgradeable_init();
         __AccessControlled_init(accessManager);
+    }
+
+    /// @notice Retrieves the address of the Rights Policies Authorizer contract.
+    /// @return The address of the contract responsible for authorizing rights policies.
+    function getPolicyAuthorizer() external view returns (address) {
+        return address(RIGHTS_AUTHORIZER);
     }
 
     /// @notice Verifies if a specific policy is active for the provided account and criteria.
@@ -92,9 +98,9 @@ contract RightsPolicyManager is Initializable, UUPSUpgradeable, AccessControlled
     /// @param proof The unique identifier of the agreement to be enforced.
     /// @param holder The rights holder whose authorization is required for accessing the content.
     /// @param policyAddress The address of the policy contract managing the agreement.
-    function registerPolicy(bytes32 proof, address holder, address policyAddress) public returns (uint256) {
+    function registerPolicy(uint256 proof, address holder, address policyAddress) public returns (uint256) {
         // 1- retrieves the agreement and marks it as settled..
-        T.Agreement memory agreement = RIGTHS_AGREEMENT.settleAgreement(proof, holder);
+        T.Agreement memory agreement = RIGHTS_AGREEMENT.settleAgreement(proof, holder);
         // 2- only authorized policies by holder can be registered..
         if (!RIGHTS_AUTHORIZER.isPolicyAuthorized(policyAddress, holder))
             revert InvalidNotRightsDelegated(policyAddress, holder);
@@ -127,7 +133,7 @@ contract RightsPolicyManager is Initializable, UUPSUpgradeable, AccessControlled
     /// @param proof A cryptographic proof that verifies the authenticity of the agreement.
     /// @param policyAddress The address of the policy contract responsible for validating the access conditions.
     /// @param parties The addresses of the accounts to be granted access through the policy.
-    function _registerBatchPolicies(bytes32 proof, address policyAddress, address[] memory parties) private {
+    function _registerBatchPolicies(uint256 proof, address policyAddress, address[] memory parties) private {
         uint256 partiesLen = parties.length;
         for (uint256 i = 0; i < partiesLen; i = i.uncheckedInc()) {
             _acl[parties[i]].add(policyAddress);

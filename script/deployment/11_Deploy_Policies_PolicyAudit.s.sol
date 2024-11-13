@@ -16,6 +16,7 @@ contract DeployPolicyAudit is DeployBase {
         vm.stopBroadcast();
 
         _checkExpectedAddress(policyAudit, "SALT_POLICY_AUDIT");
+        _logAddress("POLICY_AUDIT", policyAudit);
         return policyAudit;
     }
 }

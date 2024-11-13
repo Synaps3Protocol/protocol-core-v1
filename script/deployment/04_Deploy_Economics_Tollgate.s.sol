@@ -16,6 +16,7 @@ contract DeployTollgate is DeployBase {
         vm.stopBroadcast();
 
         _checkExpectedAddress(tollgate, "SALT_TOLLGATE");
+        _logAddress("TOLLGATE", tollgate);
         return tollgate;
     }
 }

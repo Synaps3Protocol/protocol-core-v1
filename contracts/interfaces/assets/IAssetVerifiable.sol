@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.26;
 
-interface IContentVerifiable {
+interface IAssetVerifiable {
     /// @notice Checks if the content is approved.
     /// @param initiator The submission account address.
     /// @param contentId The ID of the content.

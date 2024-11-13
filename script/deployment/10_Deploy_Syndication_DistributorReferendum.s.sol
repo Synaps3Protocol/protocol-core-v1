@@ -17,6 +17,7 @@ contract DeployDistributorReferendum is DeployBase {
         vm.stopBroadcast();
 
         _checkExpectedAddress(referendum, "SALT_DISTRIBUTION_REFERENDUM");
+        _logAddress("DISTRIBUTION_REFERENDUM", referendum);
         return referendum;
     }
 }

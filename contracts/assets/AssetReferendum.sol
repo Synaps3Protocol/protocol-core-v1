@@ -10,21 +10,21 @@ import { EnumerableSet } from "@openzeppelin/contracts/utils/structs/EnumerableS
 
 import { AccessControlledUpgradeable } from "contracts/base/upgradeable/AccessControlledUpgradeable.sol";
 import { QuorumUpgradeable } from "contracts/base/upgradeable/QuorumUpgradeable.sol";
-import { IContentReferendum } from "contracts/interfaces/content/IContentReferendum.sol";
+import { IAssetReferendum } from "contracts/interfaces/assets/IAssetReferendum.sol";
 
 import { C } from "contracts/libraries/Constants.sol";
 import { T } from "contracts/libraries/Types.sol";
 
 /// @title Content curation contract.
 /// @notice This contract allows for the submission, voting, and approval/rejection of content.
-contract ContentReferendum is
+contract AssetReferendum is
     Initializable,
     UUPSUpgradeable,
     AccessControlledUpgradeable,
     NoncesUpgradeable,
     EIP712Upgradeable,
     QuorumUpgradeable,
-    IContentReferendum
+    IAssetReferendum
 {
     using EnumerableSet for EnumerableSet.UintSet;
 

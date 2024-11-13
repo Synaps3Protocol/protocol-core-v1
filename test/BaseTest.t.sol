@@ -8,7 +8,7 @@ import { DeployAccessManager } from "script/deployment/02_Deploy_Access_AccessMa
 import { DeployTollgate } from "script/deployment/04_Deploy_Economics_Tollgate.s.sol";
 import { DeployToken } from "script/deployment/03_Deploy_Economics_Token.s.sol";
 import { DeployTreasury } from "script/deployment/05_Deploy_Economics_Treasury.s.sol";
-import { DeployContentReferendum } from "script/deployment/06_Deploy_Content_ContentReferendum.s.sol";
+import { DeployAssetReferendum } from "script/deployment/06_Deploy_Assets_AssetReferendum.s.sol";
 import { DeployDistributorFactory } from "script/deployment/09_Deploy_Syndication_DistributorFactory.s.sol";
 import { DeployDistributorReferendum } from "script/deployment/10_Deploy_Syndication_DistributorReferendum.s.sol";
 
@@ -16,7 +16,7 @@ import { DeployDistributorReferendum } from "script/deployment/10_Deploy_Syndica
 import {getGovPermissions as TollgateGovPermissions} from "script/permissions/Permissions_Tollgate.sol";
 import {getGovPermissions as TreasuryGovPermissions} from "script/permissions/Permissions_Treasury.sol";
 import {getGovPermissions as DistributorReferendumGovPermissions} from "script/permissions/Permissions_DistributorReferendum.sol";
-import {getGovPermissions as ContentReferendumGovPermissions} from "script/permissions/Permissions_ContentReferendum.sol";
+import {getGovPermissions as AssetReferendumGovPermissions} from "script/permissions/Permissions_AssetReferendum.sol";
 
 import { IAccessManager } from "contracts/interfaces/access/IAccessManager.sol";
 import { C } from "contracts/libraries/Constants.sol";
@@ -84,14 +84,14 @@ abstract contract BaseTest is Test {
         return treasury;
     }
 
-    // 05_DeployContentReferendum
-    function deployContentReferendum() public returns (address) {
+    // 05_DeployAssetReferendum
+    function deployAssetReferendum() public returns (address) {
         // set default admin as deployer..
-        DeployContentReferendum contentReferendumDeployer = new DeployContentReferendum();
-        bytes4[] memory referendumAllowed = ContentReferendumGovPermissions();
-        address contentReferendum = contentReferendumDeployer.run();
-        _setTargetGovRole(contentReferendum, referendumAllowed);
-        return contentReferendum;
+        DeployAssetReferendum AssetReferendumDeployer = new DeployAssetReferendum();
+        bytes4[] memory referendumAllowed = AssetReferendumGovPermissions();
+        address assetReferendum = AssetReferendumDeployer.run();
+        _setTargetGovRole(assetReferendum, referendumAllowed);
+        return assetReferendum;
     }
 
     // 08_DeployDistributor
