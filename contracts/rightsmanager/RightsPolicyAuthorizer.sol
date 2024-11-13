@@ -33,11 +33,11 @@ contract RightsPolicyAuthorizer is
     /// @notice Emitted when rights are granted to a policy for content.
     /// @param policy The policy contract address granted rights.
     /// @param holder The address of the asset rights holder.
-    event RightsGranted(address indexed policy, address holder);
+    event RightsGranted(address indexed policy, address indexed holder);
     /// @notice Emitted when rights are revoked from a policy for content.
     /// @param policy The policy contract address whose rights are being revoked.
     /// @param holder The address of the asset rights holder.
-    event RightsRevoked(address indexed policy, address holder);
+    event RightsRevoked(address indexed policy, address indexed holder);
 
     /// @dev Error thrown when a policy has not been audited or approved for operation.
     /// @param policy The address of the unaudited policy.
