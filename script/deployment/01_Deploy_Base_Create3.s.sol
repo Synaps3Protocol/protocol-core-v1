@@ -19,6 +19,7 @@ contract DeployCreate3Factory is DeployBase {
         }
         
         vm.stopBroadcast();
+        _logAddress("CREATE3_FACTORY", factory);
         return factory;
     }
 }

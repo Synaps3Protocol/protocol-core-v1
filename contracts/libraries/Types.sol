@@ -28,7 +28,7 @@ library T {
     }
 
     /// @title Agreement
-    /// @dev Represents an agreement between multiple parties regarding the distribution and management of content.
+    /// @dev Represents an agreement between multiple parties regarding the distribution and management of asset.
     /// @notice This struct captures the total amount involved, net amount after deductions, distribution fees,
     /// and the relevant addresses involved in the agreement.
     struct Agreement {
@@ -47,17 +47,29 @@ library T {
     /// @title Setup
     /// @dev Represents a setup process for initializing and authorizing a policy contract for content.
     struct Setup {
-        address holder; // the content rights holder
+        address holder; // the asset rights holder
         bytes payload; // any additional data needed during setup execution
+    }
+
+    /// @title RateBasis
+    /// @notice Enum representing different time bases for calculating terms or fees.
+    /// @dev Includes options for unset none, hourly, daily, monthly, and yearly bases.
+    enum RateBasis {
+        NONE, // Default value indicating "unset" or "not specified"
+        HOURLY, // Indicates a rate basis of per hour
+        DAILY, // Indicates a rate basis of per day
+        MONTHLY // Indicates a rate basis of per month
     }
 
     /// @title Terms
     /// @notice Represents the financial and contractual terms associated with a specific policy or agreement.
     /// @dev This struct is used to capture both on-chain and off-chain terms for content or agreement management.
+    ///      It includes fields for currency, amount, rate basis, calculation formula, and off-chain terms.
     struct Terms {
-        address currency;
-        uint256 amount;
-        string uri; // off-chain terms
+        address currency; // The currency in which the amount is denominated, e.g., ETH or USDC
+        uint256 amount; // The rate amount based on the rate basis, expressed in the smallest unit of the currency
+        RateBasis rateBasis; // The time basis for the amount, using a standardized enum (e.g., HOURLY, DAILY)
+        string uri; // URI pointing to off-chain terms for additional details or extended documentation
     }
 
     /// @notice A struct containing the necessary information to reconstruct an EIP-712 typed data signature.

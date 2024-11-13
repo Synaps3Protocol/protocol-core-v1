@@ -16,6 +16,7 @@ contract DeployTreasury is DeployBase {
         vm.stopBroadcast();
 
         _checkExpectedAddress(treasury, "SALT_TREASURY");
+        _logAddress("TREASURY", treasury);
         return treasury;
     }
 }

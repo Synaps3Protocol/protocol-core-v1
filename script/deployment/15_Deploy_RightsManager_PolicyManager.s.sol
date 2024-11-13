@@ -17,6 +17,7 @@ contract DeployRightsPolicyManager is DeployBase {
         vm.stopBroadcast();
 
         _checkExpectedAddress(manager, "SALT_RIGHT_POLICY_MANAGER");
+        _logAddress("RIGHT_POLICY_MANAGER", manager);
         return manager;
     }
 }

@@ -17,10 +17,10 @@ contract SubscriptionPolicy is BasePolicy {
     mapping(address => Package) private _packages;
 
     constructor(
-        address rmAddress,
+        address rightPolicyManagerAddress,
         address ownershipAddress,
         address providerAddress
-    ) BasePolicy(rmAddress, ownershipAddress, providerAddress) {}
+    ) BasePolicy(rightPolicyManagerAddress, ownershipAddress, providerAddress) {}
 
     /// @notice Returns the name of the policy.
     function name() external pure returns (string memory) {
@@ -28,28 +28,29 @@ contract SubscriptionPolicy is BasePolicy {
     }
 
     /// @notice Returns the business/strategy model implemented by the policy.
-    function description() external pure returns (bytes memory) {
+    function description() external pure returns (string memory) {
         return
-            abi.encodePacked(
-                "This policy implements a subscription-based model where users pay a fixed fee "
-                "to access a content holder's catalog for a specified duration.\n\n"
-                "1) Flexible subscription duration, defined by the content holder.\n"
-                "2) Recurring revenue streams for content holders.\n"
-                "3) Immediate access to content catalog during the subscription period."
-            );
+            "This policy follows a subscription model with daily pricing, allowing users to access "
+            "a content holder's catalog by paying a daily fee for a chosen duration.\n\n"
+            "Key features:\n"
+            "1) Flexible subscription periods set by the asset holder.\n"
+            "2) Instant access to all content during the subscription period.";
     }
 
-    function initialize(bytes calldata init) external initializer {
+    function initialize(address holder, bytes calldata init) external onlyPolicyAuthorizer initializer {
         (uint256 price, address currency) = abi.decode(init, (uint256, address));
-        if (price == 0) revert InvalidInitialization("InvalidInitialization Invalid subscription price.");
+        if (price == 0) revert InvalidInitialization("Invalid subscription price.");
         // expected content rigInvalidInitializationending subscription params..
-        _packages[msg.sender] = Package(price, currency);
+        _packages[holder] = Package(price, currency);
     }
 
     // this function should be called only by RM and its used to establish
     // any logic or validation needed to set the authorization parameters
     // de modo qu en el futuro se pueda usar otro tipo de estructuras como group
-    function enforce(address holder, T.Agreement calldata agreement) external onlyRM initialized returns (uint256) {
+    function enforce(
+        address holder,
+        T.Agreement calldata agreement
+    ) external onlyPolicyManager initialized returns (uint256) {
         Package memory pkg = _packages[holder];
         // we need to be sure the user paid for the total of the package..
         uint256 paymentPerAccount = agreement.amount / agreement.parties.length;
@@ -67,9 +68,9 @@ contract SubscriptionPolicy is BasePolicy {
         return _commit(holder, agreement, subExpire);
     }
 
-    function resolveTerms(bytes calldata criteria) external view returns (T.Terms memory) {
-        address holder = abi.decode(criteria, (address));
-        Package memory pkg = _packages[holder];
-        return T.Terms(pkg.currency, pkg.pricePerDay, "");
+    /// @notice Retrieves the terms associated with a specific rights holder.
+    function resolveTerms(address holder) external view override returns (T.Terms memory) {
+        Package memory pkg = _packages[holder]; // the term set by the asset holder
+        return T.Terms(pkg.currency, pkg.pricePerDay, T.RateBasis.DAILY, "ipfs://");
     }
 }

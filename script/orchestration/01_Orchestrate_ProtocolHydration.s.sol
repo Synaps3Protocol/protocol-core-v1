@@ -7,19 +7,11 @@ import { ITollgate } from "contracts/interfaces/economics/ITollgate.sol";
 import { C } from "contracts/libraries/Constants.sol";
 import { T } from "contracts/libraries/Types.sol";
 
-import { DeployTollgate } from "script/deployment/04_Deploy_Economics_Tollgate.s.sol";
-import { DeployTreasury } from "script/deployment/05_Deploy_Economics_Treasury.s.sol";
-import { DeployContentReferendum } from "script/deployment/06_Deploy_Content_ContentReferendum.s.sol";
-import { DeployDistributorReferendum } from "script/deployment/10_Deploy_Syndication_DistributorReferendum.s.sol";
-import { DeployPolicyAudit } from "script/deployment/11_Deploy_Policies_PolicyAudit.s.sol";
-import { Treasury } from "contracts/economics/Treasury.sol";
-import { PolicyAudit } from "contracts/policies/PolicyAudit.sol";
-
 import { getGovPermissions as TollgateGovPermissions } from "script/permissions/Permissions_Tollgate.sol";
 import { getGovPermissions as TreasuryGovPermissions } from "script/permissions/Permissions_Treasury.sol";
 import { getGovPermissions as PolicyAuditorGovPermissions } from "script/permissions/Permissions_PolicyAuditor.sol";
 import { getGovPermissions as DistributorReferendumGovPermissions } from "script/permissions/Permissions_DistributorReferendum.sol";
-import { getGovPermissions as ContentReferendumGovPermissions } from "script/permissions/Permissions_ContentReferendum.sol";
+import { getGovPermissions as AssetReferendumGovPermissions } from "script/permissions/Permissions_AssetReferendum.sol";
 
 contract OrchestrateProtocolHydration is Script {
     function run() external {
@@ -27,7 +19,7 @@ contract OrchestrateProtocolHydration is Script {
         address tollgateAddress = vm.envAddress("TOLLGATE");
         address treasuryAddress = vm.envAddress("TREASURY");
         address auditorAddress = vm.envAddress("POLICY_AUDIT");
-        address contentReferendumAddress = vm.envAddress("CONTENT_REFERENDUM");
+        address assetReferendumAddress = vm.envAddress("ASSET_REFERENDUM");
         address distributorReferendumAddress = vm.envAddress("DISTRIBUTION_REFERENDUM");
         address accessManager = vm.envAddress("ACCESS_MANAGER");
 
@@ -45,13 +37,13 @@ contract OrchestrateProtocolHydration is Script {
         bytes4[] memory tollgateAllowed = TollgateGovPermissions();
         bytes4[] memory treasuryAllowed = TreasuryGovPermissions();
         bytes4[] memory auditorAllowed = PolicyAuditorGovPermissions();
-        bytes4[] memory contentReferendumAllowed = ContentReferendumGovPermissions();
+        bytes4[] memory assetReferendumAllowed = AssetReferendumGovPermissions();
         bytes4[] memory distributorReferendumAllowed = DistributorReferendumGovPermissions();
 
         authority.setTargetFunctionRole(tollgateAddress, tollgateAllowed, C.GOV_ROLE);
         authority.setTargetFunctionRole(treasuryAddress, treasuryAllowed, C.GOV_ROLE);
         authority.setTargetFunctionRole(auditorAddress, auditorAllowed, C.GOV_ROLE);
-        authority.setTargetFunctionRole(contentReferendumAddress, contentReferendumAllowed, C.GOV_ROLE);
+        authority.setTargetFunctionRole(assetReferendumAddress, assetReferendumAllowed, C.GOV_ROLE);
         authority.setTargetFunctionRole(distributorReferendumAddress, distributorReferendumAllowed, C.GOV_ROLE);
 
         // 2 set mmc as the initial currency and fees

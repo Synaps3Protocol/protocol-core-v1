@@ -17,6 +17,7 @@ contract DeployRightsAccessAgrement is DeployBase {
         vm.stopBroadcast();
 
         _checkExpectedAddress(agreement, "SALT_RIGHT_ACCESS_AGREEMENT");
+        _logAddress("RIGHT_ACCESS_AGREEMENT", agreement);
         return agreement;
     }
 }

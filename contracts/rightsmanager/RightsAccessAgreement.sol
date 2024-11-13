@@ -40,22 +40,22 @@ contract RightsAccessAgreement is
     // @dev Holds a bounded key expressing the agreement between the parts.
     // The key is derived using keccak256 hashing of the account and the rights holder.
     // This mapping stores active agreements, indexed by their unique proof.
-    mapping(bytes32 => T.Agreement) private _agreements;
+    mapping(uint256 => T.Agreement) private _agreements;
 
     /// @notice Emitted when an agreement is created.
     /// @param initiator The account that initiated or created the agreement.
     /// @param proof The unique identifier (hash or proof) of the created agreement.
-    event AgreementCreated(address indexed initiator, bytes32 proof);
+    event AgreementCreated(address indexed initiator, uint256 proof);
 
     /// @notice Emitted when an agreement is settled by the designated broker or authorized account.
     /// @param broker The account that facilitated the agreement settlement.
     /// @param proof The unique identifier (hash or proof) of the settled agreement.
-    event AgreementSettled(address indexed broker, address indexed counterparty, bytes32 proof);
+    event AgreementSettled(address indexed broker, address indexed counterparty, uint256 proof);
 
     /// @notice Emitted when an agreement is canceled by the broker or another authorized account.
     /// @param initiator The account that initiated the cancellation.
     /// @param proof The unique identifier (hash or proof) of the canceled agreement.
-    event AgreementCancelled(address indexed initiator, bytes32 proof);
+    event AgreementCancelled(address indexed initiator, uint256 proof);
 
     /// @dev Custom error thrown when the provided proof for an agreement is invalid.
     error InvalidAgreementProof();
@@ -65,10 +65,10 @@ contract RightsAccessAgreement is
     error InvalidAgreementOp(string message);
 
     /// @notice Ensures the agreement associated with the provided `proof` is valid and active.
-    modifier onlyValidAgreement(bytes32 proof) {
+    modifier onlyValidAgreement(uint256 proof) {
         T.Agreement memory agreement = getAgreement(proof);
         if (!agreement.active || agreement.initiator == address(0)) {
-            revert InvalidAgreementOp("Invalida inactive agreement.");
+            revert InvalidAgreementOp("Invalid inactive agreement.");
         }
         _;
     }
@@ -103,20 +103,21 @@ contract RightsAccessAgreement is
         address broker,
         address[] calldata parties,
         bytes calldata payload
-    ) external returns (bytes32 proof) {
+    ) external returns (uint256) {
         // IMPORTANT: The process of distributing funds to accounts should be handled within the policy logic.
         uint256 confirmed = msg.sender.safeDeposit(amount, currency);
         T.Agreement memory agreement = previewAgreement(confirmed, currency, broker, parties, payload);
         // only the initiator can operate with this agreement proof, or transfer the proof to the other party..
         // each agreement is unique and immutable, ensuring that it cannot be modified or reconstructed.
-        proof = _createProof(agreement);
+        uint256 proof = _createProof(agreement);
         _storeAgreement(proof, agreement);
         emit AgreementCreated(msg.sender, proof);
+        return proof;
     }
 
     /// @notice Allows the initiator to quit the agreement and receive the committed funds.
     /// @param proof The unique identifier of the agreement.
-    function quitAgreement(bytes32 proof) external onlyValidAgreement(proof) nonReentrant returns (T.Agreement memory) {
+    function quitAgreement(uint256 proof) external onlyValidAgreement(proof) nonReentrant returns (T.Agreement memory) {
         T.Agreement memory agreement = getAgreement(proof);
         if (agreement.initiator != msg.sender) {
             revert InvalidAgreementOp("Only initiator can close the agreement.");
@@ -138,7 +139,7 @@ contract RightsAccessAgreement is
 
     /// @notice Retrieves the details of an agreement based on the provided proof.
     /// @param proof The unique identifier (hash) of the agreement.
-    function getAgreement(bytes32 proof) public view returns (T.Agreement memory) {
+    function getAgreement(uint256 proof) public view returns (T.Agreement memory) {
         return _agreements[proof];
     }
 
@@ -146,7 +147,7 @@ contract RightsAccessAgreement is
     /// @param proof The unique identifier of the agreement.
     /// @param counterparty The address that will receive the funds upon settlement.
     function settleAgreement(
-        bytes32 proof,
+        uint256 proof,
         address counterparty
     ) public onlyValidAgreement(proof) returns (T.Agreement memory) {
         // retrieve the agreement to storage to inactivate it and return it
@@ -211,29 +212,28 @@ contract RightsAccessAgreement is
     function _authorizeUpgrade(address newImplementation) internal override onlyAdmin {}
 
     /// @dev Generates a unique proof for an agreement using keccak256 hashing.
-    function _createProof(T.Agreement memory agreement) private view returns (bytes32) {
+    function _createProof(T.Agreement memory agreement) private view returns (uint256) {
         // yes, we can encode full struct as abi.encode with extra overhead..
-        return
-            keccak256(
-                abi.encodePacked(
-                    blockhash(block.number - 1),
-                    agreement.createdAt,
-                    agreement.fees,
-                    agreement.amount,
-                    agreement.broker,
-                    agreement.currency,
-                    agreement.payload
-                )
-            );
+        bytes memory rawProof = abi.encodePacked(
+            blockhash(block.number - 1),
+            agreement.createdAt,
+            agreement.amount,
+            agreement.broker,
+            agreement.currency,
+            agreement.payload
+        );
+
+        bytes32 proof = keccak256(rawProof);
+        return uint256(proof);
     }
 
     /// @dev Set the agreement relation with proof in storage.
-    function _storeAgreement(bytes32 proof, T.Agreement memory agreement) private {
+    function _storeAgreement(uint256 proof, T.Agreement memory agreement) private {
         _agreements[proof] = agreement; // store agreement..
     }
 
     /// @dev Marks an agreement as inactive, effectively closing it.
-    function _closeAgreement(bytes32 proof) private returns (T.Agreement storage) {
+    function _closeAgreement(uint256 proof) private returns (T.Agreement storage) {
         // retrieve the agreement to storage to inactivate it and return it
         T.Agreement storage agreement = _agreements[proof];
         agreement.active = false;

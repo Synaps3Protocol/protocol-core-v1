@@ -17,6 +17,7 @@ contract DeployEasProvider is DeployBase {
         vm.stopBroadcast();
 
         _checkExpectedAddress(provider, "SALT_ATTESTATION_EAS");
+        _logAddress("EAS_ATTESTATION_PROVIDER", provider);
         return provider;
     }
 }

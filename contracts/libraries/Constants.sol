@@ -18,5 +18,5 @@ library C {
     uint64 internal constant COLLECTOR_ROLE = 4;
 
     bytes32 internal constant REFERENDUM_SUBMIT_TYPEHASH =
-        keccak256("Submission(uint256 contentId, address initiator, uint256 nonce)");
+        keccak256("Submission(uint256 assetId, address initiator, uint256 nonce)");
 }

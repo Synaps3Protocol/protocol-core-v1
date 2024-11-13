@@ -2,6 +2,7 @@
 pragma solidity 0.8.26;
 
 import "forge-std/Script.sol";
+import { Strings } from "@openzeppelin/contracts/utils/Strings.sol";
 import { ERC1967Proxy } from "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
 import { CREATE3Factory, ICREATE3Factory } from "script/create3/CREATE3Factory.sol";
 
@@ -10,28 +11,6 @@ import { CREATE3Factory, ICREATE3Factory } from "script/create3/CREATE3Factory.s
 // is determined by only the deployer address and the salt.
 // This makes it far easier to deploy contracts to multiple chains at the same addresses.
 abstract contract DeployBase is Script {
-    function getCaller() public returns (bool, address) {
-        // Why is this needed?
-        // In test deployments, when scripts are used for deployments,
-        // `msg.sender` can be modified due to transitions across contract calls.
-        // For example: TestA -> Deploy Contract A -> Call Create3 -> Create Factory,
-        // where `TestA` becomes the `msg.sender` in the entire call chain.
-        // This inconsistency can lead to different addresses depending on the sender.
-        // To maintain consistency and preserve the original sender across all contexts, we use this approach.
-        // https://book.getfoundry.sh/cheatcodes/read-callers
-
-        (VmSafe.CallerMode callerMode, address msgSender, address txOrigin) = vm.readCallers();
-        bool isPrank = VmSafe.CallerMode.Prank == callerMode || VmSafe.CallerMode.RecurrentPrank == callerMode;
-        bool isBroadcast = VmSafe.CallerMode.Broadcast == callerMode || VmSafe.CallerMode.RecurrentBroadcast == callerMode;
-
-        // If we are in Prank mode, return txOrigin (the original sender for the prank call)
-        if (isPrank) return (true, txOrigin);
-        // If we are in Broadcast mode, return msgSender (the sender set by startBroadcast)
-        if (isBroadcast) return (false, msgSender);
-        // In other cases, return msgSender directly
-        return (false, msgSender);
-    }
-
     function getCreate3FactoryAddress() public view returns (address) {
         return vm.envAddress("CREATE3_FACTORY");
     }
@@ -107,8 +86,13 @@ abstract contract DeployBase is Script {
     }
 
     // Checks if the predicted address matches the expected address.
-    function _checkExpectedAddress(address expected, string memory saltIndex) internal view{
+    function _checkExpectedAddress(address expected, string memory saltIndex) internal view {
         address predictedAddress = computeCreate3Address(saltIndex);
         require(expected == predictedAddress, "Invalid address mismatch");
+    }
+
+    function _logAddress(string memory index, address contractAddress) internal {
+        string memory output = string.concat(index, "=", Strings.toHexString(contractAddress));
+        vm.writeLine(".env", output);
     }
 }
