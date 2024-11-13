@@ -11,12 +11,7 @@ import { IRightsAssetCustodian } from "contracts/interfaces/rightsmanager/IRight
 
 import { C } from "contracts/libraries/Constants.sol";
 
-contract RightsAssetCustodian is
-    Initializable,
-    UUPSUpgradeable,
-    AccessControlledUpgradeable,
-    IRightsAssetCustodian
-{
+contract RightsAssetCustodian is Initializable, UUPSUpgradeable, AccessControlledUpgradeable, IRightsAssetCustodian {
     using EnumerableSet for EnumerableSet.AddressSet;
 
     /// @custom:oz-upgrades-unsafe-allow state-variable-immutable
