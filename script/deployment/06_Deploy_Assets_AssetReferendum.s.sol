@@ -10,11 +10,11 @@ contract DeployAssetReferendum is DeployBase {
         address impl = address(new AssetReferendum());
         address accessManager = computeCreate3Address("SALT_ACCESS_MANAGER");
         bytes memory init = abi.encodeCall(AssetReferendum.initialize, (accessManager));
-        address assetReferendum = deployUUPS(impl, init, "SALT_CONTENT_REFERENDUM");
+        address assetReferendum = deployUUPS(impl, init, "SALT_ASSET_REFERENDUM");
         vm.stopBroadcast();
 
-        _checkExpectedAddress(assetReferendum, "SALT_CONTENT_REFERENDUM");
-        _logAddress("CONTENT_REFERENDUM", assetReferendum);
+        _checkExpectedAddress(assetReferendum, "SALT_ASSET_REFERENDUM");
+        _logAddress("ASSET_REFERENDUM", assetReferendum);
         return assetReferendum;
     }
 }

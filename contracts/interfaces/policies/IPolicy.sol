@@ -21,10 +21,10 @@ interface IPolicy {
     /// @param init Initialization data required to configure the policy.
     function initialize(address holder, bytes calldata init) external;
 
-    /// @notice Executes the agreement between the content holder and the account based on the policy's rules.
+    /// @notice Executes the agreement between the asset holder and the account based on the policy's rules.
     /// @dev Rights Policies Manager contract should be the only one allowed to call this method.
-    /// @param holder The rights holder whose authorization is required for accessing the content.
-    /// @param agreement An object containing the terms agreed upon between the content holder and the user.
+    /// @param holder The rights holder whose authorization is required for accessing the asset.
+    /// @param agreement An object containing the terms agreed upon between the asset holder and the user.
     function enforce(address holder, T.Agreement calldata agreement) external returns (uint256);
 
     /// @notice Retrieves the terms associated with a specific rights holder.
@@ -36,10 +36,10 @@ interface IPolicy {
 
     /// @notice Retrieves the terms associated with a specific content ID.
     /// @dev This function allows for querying policy terms based on the unique content identifier.
-    ///      It provides information on conditions and permissions associated with the content.
-    /// @param contentId The unique identifier of the content for which terms are being resolved.
+    ///      It provides information on conditions and permissions associated with the asset.
+    /// @param assetId The unique identifier of the asset for which terms are being resolved.
     /// @return A struct containing the terms applicable to the specified content ID.
-    function resolveTerms(uint256 contentId) external view returns (T.Terms memory);
+    function resolveTerms(uint256 assetId) external view returns (T.Terms memory);
 
     /// @notice Retrieves the address of the attestation provider.
     /// @return The address of the provider associated with the policy.
@@ -49,9 +49,9 @@ interface IPolicy {
     /// @param recipient The address of the account involved in the attestation.
     function getAttestation(address recipient) external view returns (uint256);
 
-    /// @notice Determines if the user has access to specific content based on `contentId`.
-    /// @dev Evaluates the provided `contentId` and returns true if access is allowed.
+    /// @notice Determines if the user has access to specific content based on `assetId`.
+    /// @dev Evaluates the provided `assetId` and returns true if access is allowed.
     /// @param account The user address whose access is being checked.
-    /// @param contentId The unique identifier of the content to verify access for.
-    function isAccessAllowed(address account, uint256 contentId) external view returns (bool);
+    /// @param assetId The unique identifier of the asset to verify access for.
+    function isAccessAllowed(address account, uint256 assetId) external view returns (bool);
 }

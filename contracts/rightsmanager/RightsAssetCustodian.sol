@@ -7,15 +7,15 @@ import { Initializable } from "@openzeppelin/contracts-upgradeable/proxy/utils/I
 import { UUPSUpgradeable } from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import { AccessControlledUpgradeable } from "contracts/base/upgradeable/AccessControlledUpgradeable.sol";
 import { IDistributorVerifiable } from "contracts/interfaces/syndication/IDistributorVerifiable.sol";
-import { IRightsContentCustodian } from "contracts/interfaces/rightsmanager/IRightsContentCustodian.sol";
+import { IRightsAssetCustodian } from "contracts/interfaces/rightsmanager/IRightsAssetCustodian.sol";
 
 import { C } from "contracts/libraries/Constants.sol";
 
-contract RightsContentCustodian is
+contract RightsAssetCustodian is
     Initializable,
     UUPSUpgradeable,
     AccessControlledUpgradeable,
-    IRightsContentCustodian
+    IRightsAssetCustodian
 {
     using EnumerableSet for EnumerableSet.AddressSet;
 
@@ -31,7 +31,7 @@ contract RightsContentCustodian is
 
     /// @notice Emitted when distribution custodial rights are granted to a distributor.
     /// @param newCustody The new distributor custodial address.
-    /// @param rightsHolder The content rights holder.
+    /// @param rightsHolder the asset rights holder.
     event CustodialGranted(address indexed newCustody, address indexed rightsHolder);
     /// @dev Error that is thrown when a content hash is already registered.
     error InvalidInactiveDistributor();
@@ -66,8 +66,8 @@ contract RightsContentCustodian is
         _maxDistributionRedundancy = 3;
     }
 
-    /// @notice Grants custodial rights over the content held by a holder to a distributor.
-    /// @dev This function assigns custodial rights for the content held by a specific
+    /// @notice Grants custodial rights over the asset held by a holder to a distributor.
+    /// @dev This function assigns custodial rights for the asset held by a specific
     /// account to a designated distributor.
     /// @param distributor The address of the distributor who will receive custodial rights.
     function grantCustody(address distributor) external onlyActiveDistributor(distributor) {
@@ -82,7 +82,7 @@ contract RightsContentCustodian is
     }
 
     /// @notice Checks if the given distributor is a custodian for the specified content holder
-    /// @param holder The address of the content holder.
+    /// @param holder The address of the asset holder.
     /// @param distributor The address of the distributor to check.
     function isCustodian(address holder, address distributor) external view returns (bool) {
         return _custodiansByHolder[holder].contains(distributor) && _isValidActiveDistributor(distributor);
@@ -115,7 +115,7 @@ contract RightsContentCustodian is
     /// The randomness used here is not cryptographically secure, but sufficient for this non-critical operation.
     /// The random number is generated using the block hash and the holder's address, and is used to determine
     /// which custodian is selected.
-    /// @param holder The address of the content rights holder whose custodian is to be selected.
+    /// @param holder The address of the asset rights holder whose custodian is to be selected.
     function getBalancedCustodian(address holder) public view returns (address choosen) {
         uint256 i = 0;
         uint256 acc = 0;
@@ -160,7 +160,7 @@ contract RightsContentCustodian is
 
     /// @notice Retrieves the addresses of the custodians assigned to a specific content holder.
     /// @dev Is not guaranteed that returned custodians are actives. use `getBalancedCustodian` in place.
-    /// @param holder The address of the content holder whose custodians are being retrieved.
+    /// @param holder The address of the asset holder whose custodians are being retrieved.
     function getCustodians(address holder) public view returns (address[] memory) {
         return _custodiansByHolder[holder].values();
     }

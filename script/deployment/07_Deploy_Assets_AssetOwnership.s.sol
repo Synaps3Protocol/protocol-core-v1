@@ -9,14 +9,14 @@ contract DeployAssetOwnership is DeployBase {
 
         vm.startBroadcast(getAdminPK());
         address accessManager = computeCreate3Address("SALT_ACCESS_MANAGER");
-        address assetReferendum = computeCreate3Address("SALT_CONTENT_REFERENDUM");
+        address assetReferendum = computeCreate3Address("SALT_ASSET_REFERENDUM");
         address impl = address(new AssetOwnership(assetReferendum));
         bytes memory init = abi.encodeCall(AssetOwnership.initialize, (accessManager));
-        address assetOwnersip = deployUUPS(impl, init, "SALT_CONTENT_OWNERSHIP");
+        address assetOwnersip = deployUUPS(impl, init, "SALT_ASSET_OWNERSHIP");
         vm.stopBroadcast();
         
-        _checkExpectedAddress(assetOwnersip, "SALT_CONTENT_OWNERSHIP");
-        _logAddress("CONTENT_OWNERSHIP", assetOwnersip);
+        _checkExpectedAddress(assetOwnersip, "SALT_ASSET_OWNERSHIP");
+        _logAddress("ASSET_OWNERSHIP", assetOwnersip);
         return assetOwnersip;
     }
 }

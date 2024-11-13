@@ -33,7 +33,7 @@ contract SubscriptionPolicy is BasePolicy {
             "This policy follows a subscription model with daily pricing, allowing users to access "
             "a content holder's catalog by paying a daily fee for a chosen duration.\n\n"
             "Key features:\n"
-            "1) Flexible subscription periods set by the content holder.\n"
+            "1) Flexible subscription periods set by the asset holder.\n"
             "2) Instant access to all content during the subscription period.";
     }
 
@@ -70,7 +70,7 @@ contract SubscriptionPolicy is BasePolicy {
 
     /// @notice Retrieves the terms associated with a specific rights holder.
     function resolveTerms(address holder) external view override returns (T.Terms memory) {
-        Package memory pkg = _packages[holder]; // the term set by the content holder
+        Package memory pkg = _packages[holder]; // the term set by the asset holder
         return T.Terms(pkg.currency, pkg.pricePerDay, T.RateBasis.DAILY, "ipfs://");
     }
 }

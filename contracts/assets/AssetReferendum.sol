@@ -15,8 +15,8 @@ import { IAssetReferendum } from "contracts/interfaces/assets/IAssetReferendum.s
 import { C } from "contracts/libraries/Constants.sol";
 import { T } from "contracts/libraries/Types.sol";
 
-/// @title Content curation contract.
-/// @notice This contract allows for the submission, voting, and approval/rejection of content.
+/// @title Asset curation contract.
+/// @notice This contract allows for the submission, voting, and approval/rejection of asset.
 contract AssetReferendum is
     Initializable,
     UUPSUpgradeable,
@@ -29,34 +29,34 @@ contract AssetReferendum is
     using EnumerableSet for EnumerableSet.UintSet;
 
     /// @dev Mapping that tracks content submissions for each address.
-    /// Each address maps to a set of content IDs (UintSet) that have been submitted by that address.
+    /// Each address maps to a set of asset IDs (UintSet) that have been submitted by that address.
     mapping(address => EnumerableSet.UintSet) private _submissions;
 
     /// @dev Event emitted when a content is submitted for referendum.
-    /// @param contentId The ID of the content that has been submitted.
-    /// @param initiator The address of the initiator who submitted the content.
-    /// @param timestamp The timestamp indicating when the content was submitted.
-    event Submitted(address indexed initiator, uint256 timestamp, uint256 contentId);
+    /// @param assetId The ID of the asset that has been submitted.
+    /// @param initiator The address of the initiator who submitted the asset.
+    /// @param timestamp The timestamp indicating when the asset was submitted.
+    event Submitted(address indexed initiator, uint256 timestamp, uint256 assetId);
 
     /// @dev Event emitted when a content is approved.
-    /// @param contentId The ID of the content that has been approved.
-    /// @param timestamp The timestamp indicating when the content was approved.
-    event Approved(uint256 contentId, uint256 timestamp);
+    /// @param assetId The ID of the asset that has been approved.
+    /// @param timestamp The timestamp indicating when the asset was approved.
+    event Approved(uint256 assetId, uint256 timestamp);
 
     /// @dev Event emitted when a content is revoked.
-    /// @param contentId The ID of the content that has been revoked.
-    /// @param timestamp The timestamp indicating when the content was revoked.
-    event Revoked(uint256 contentId, uint256 timestamp);
+    /// @param assetId The ID of the asset that has been revoked.
+    /// @param timestamp The timestamp indicating when the asset was revoked.
+    event Revoked(uint256 assetId, uint256 timestamp);
 
     /// @dev Event emitted when a content is rejected.
-    /// @param contentId The ID of the content that has been rejected.
-    /// @param timestamp The timestamp indicating when the content was revoked.
-    event Rejected(uint256 contentId, uint256 timestamp);
+    /// @param assetId The ID of the asset that has been rejected.
+    /// @param timestamp The timestamp indicating when the asset was revoked.
+    event Rejected(uint256 assetId, uint256 timestamp);
 
-    /// @dev Error thrown when the content submission is invalid (e.g., incorrect or missing data).
-    error InvalidSubmissionContent();
+    /// @dev Error thrown when the asset submission is invalid (e.g., incorrect or missing data).
+    error InvalidSubmissionAsset();
 
-    /// @dev Error thrown when the signature of the content submission is invalid.
+    /// @dev Error thrown when the signature of the asset submission is invalid.
     error InvalidSubmissionSignature();
 
     /// @dev Error thrown when the initiator of the submission is invalid (e.g., not authorized to submit content).
@@ -80,19 +80,19 @@ contract AssetReferendum is
     }
 
     /// @notice Submits a content proposition for referendum.
-    /// @param contentId The ID of the content to be submitted.
-    /// @dev The content ID is reviewed by governance.
-    function submit(uint256 contentId) external {
-        _submit(contentId, msg.sender);
+    /// @param assetId The ID of the asset to be submitted.
+    /// @dev The asset ID is reviewed by governance.
+    function submit(uint256 assetId) external {
+        _submit(assetId, msg.sender);
     }
 
     /// @notice Submits a content proposition for referendum with a signature.
-    /// @param contentId The ID of the content to be submitted.
+    /// @param assetId The ID of the asset to be submitted.
     /// @param sig The EIP712 signature for the submission.
-    function submitWithSig(uint256 contentId, T.EIP712Signature calldata sig) external {
+    function submitWithSig(uint256 assetId, T.EIP712Signature calldata sig) external {
         // https://eips.ethereum.org/EIPS/eip-712
         bytes32 structHash = keccak256(
-            abi.encode(C.REFERENDUM_SUBMIT_TYPEHASH, contentId, sig.signer, _useNonce(sig.signer))
+            abi.encode(C.REFERENDUM_SUBMIT_TYPEHASH, assetId, sig.signer, _useNonce(sig.signer))
         );
 
         // retrieve the signer from digest and register the resultant signer as initiator.
@@ -100,42 +100,42 @@ contract AssetReferendum is
         bytes32 digest = _hashTypedDataV4(structHash);
         address initiator = ecrecover(digest, sig.v, sig.r, sig.s);
         if (initiator == address(0) || sig.signer != initiator) revert InvalidSubmissionSignature();
-        _submit(contentId, initiator);
+        _submit(assetId, initiator);
     }
 
     /// @notice Revoke an approved content.
-    /// @param contentId The ID of the content to be revoked.
-    function revoke(uint256 contentId) external restricted {
-        _revoke(contentId); // bundled check-effects-interaction
-        emit Revoked(contentId, block.timestamp);
+    /// @param assetId The ID of the asset to be revoked.
+    function revoke(uint256 assetId) external restricted {
+        _revoke(assetId); // bundled check-effects-interaction
+        emit Revoked(assetId, block.timestamp);
     }
 
     /// @notice Reject a content proposition.
-    /// @param contentId The ID of the content to be rejected.
-    function reject(uint256 contentId) external restricted {
-        _block(contentId); // bundled check-effects-interaction
-        emit Rejected(contentId, block.timestamp);
+    /// @param assetId The ID of the asset to be rejected.
+    function reject(uint256 assetId) external restricted {
+        _block(assetId); // bundled check-effects-interaction
+        emit Rejected(assetId, block.timestamp);
     }
 
     /// @notice Approves a content proposition.
-    /// @param contentId The ID of the content to be approved.
-    function approve(uint256 contentId) external restricted {
-        _approve(contentId); // bundled check-effects-interaction
-        emit Approved(contentId, block.timestamp);
+    /// @param assetId The ID of the asset to be approved.
+    function approve(uint256 assetId) external restricted {
+        _approve(assetId); // bundled check-effects-interaction
+        emit Approved(assetId, block.timestamp);
     }
 
-    /// @notice Checks if the content is active nor blocked.
-    /// @param contentId The ID of the content.
-    function isActive(uint256 contentId) public view returns (bool) {
-        return _status(contentId) == Status.Active;
+    /// @notice Checks if the asset is active nor blocked.
+    /// @param assetId The ID of the asset.
+    function isActive(uint256 assetId) public view returns (bool) {
+        return _status(assetId) == Status.Active;
     }
 
-    /// @notice Checks if the content is approved.
+    /// @notice Checks if the asset is approved.
     /// @param initiator The submission account address .
-    /// @param contentId The ID of the content.
-    function isApproved(address initiator, uint256 contentId) public view returns (bool) {
-        bool approved = isActive(contentId);
-        bool validAccount = _submissions[initiator].contains(contentId);
+    /// @param assetId The ID of the asset.
+    function isApproved(address initiator, uint256 assetId) public view returns (bool) {
+        bool approved = isActive(assetId);
+        bool validAccount = _submissions[initiator].contains(assetId);
         bool verifiedRole = _hasRole(C.VERIFIED_ROLE, initiator);
         // is approved with a valid submission account or is verified account..
         return (approved && validAccount) || verifiedRole;
@@ -147,12 +147,12 @@ contract AssetReferendum is
     function _authorizeUpgrade(address newImplementation) internal override onlyAdmin {}
 
     /// @notice Submits content for registration and tracks the submission for the initiator.
-    /// @dev This function registers the content, records the submission, and emits an event.
-    /// @param contentId The unique identifier of the content being submitted.
-    /// @param initiator The address of the entity initiating the content submission.
-    function _submit(uint256 contentId, address initiator) private {
-        _register(contentId); // bundled check-effects-interaction
-        _submissions[initiator].add(contentId);
-        emit Submitted(initiator, block.timestamp, contentId);
+    /// @dev This function registers the asset, records the submission, and emits an event.
+    /// @param assetId The unique identifier of the asset being submitted.
+    /// @param initiator The address of the entity initiating the asset submission.
+    function _submit(uint256 assetId, address initiator) private {
+        _register(assetId); // bundled check-effects-interaction
+        _submissions[initiator].add(assetId);
+        emit Submitted(initiator, block.timestamp, assetId);
     }
 }

@@ -2,12 +2,12 @@
 pragma solidity 0.8.26;
 
 interface IAssetVerifiable {
-    /// @notice Checks if the content is approved.
+    /// @notice Checks if the asset is approved.
     /// @param initiator The submission account address.
-    /// @param contentId The ID of the content.
-    function isApproved(address initiator, uint256 contentId) external view returns (bool);
+    /// @param assetId The ID of the asset.
+    function isApproved(address initiator, uint256 assetId) external view returns (bool);
 
-    /// @notice Checks if the content is active nor blocked.
-    /// @param contentId The ID of the content.
-    function isActive(uint256 contentId) external view returns (bool);
+    /// @notice Checks if the asset is active nor blocked.
+    /// @param assetId The ID of the asset.
+    function isActive(uint256 assetId) external view returns (bool);
 }

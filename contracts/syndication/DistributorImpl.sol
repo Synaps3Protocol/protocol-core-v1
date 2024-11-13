@@ -7,7 +7,7 @@ import { OwnableUpgradeable } from "@openzeppelin/contracts-upgradeable/access/O
 import { IDistributor } from "contracts/interfaces/syndication/IDistributor.sol";
 import { TreasuryOps } from "contracts/libraries/TreasuryOps.sol";
 
-/// @title Content Distributor Implementation
+/// @title Asset Distributor Implementation
 /// @notice This contract handles all the necessary logic for managing content distributors.
 contract DistributorImpl is Initializable, ERC165Upgradeable, OwnableUpgradeable, IDistributor {
     using TreasuryOps for address;

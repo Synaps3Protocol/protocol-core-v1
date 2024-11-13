@@ -26,27 +26,27 @@ contract AssetOwnership is
     IAssetOwnership
 {
     /// @custom:oz-upgrades-unsafe-allow state-variable-immutable
-    IAssetVerifiable public immutable CONTENT_REFERENDUM;
+    IAssetVerifiable public immutable ASSET_REFERENDUM;
 
     /// @dev Emitted when a new content item is registered on the platform.
-    /// @param owner The address of the content creator or owner who registered the content.
-    /// @param contentId The unique identifier for the registered content.
-    event RegisteredContent(address indexed owner, uint256 contentId);
+    /// @param owner The address of the asset creator or owner who registered the asset.
+    /// @param assetId The unique identifier for the registered content.
+    event RegisteredAsset(address indexed owner, uint256 assetId);
 
     /// @dev Error indicating that an operation attempted to reference content that has not been approved.
-    /// This error is triggered when the content being accessed or referenced is not in an approved state.
-    error InvalidNotApprovedContent();
+    /// This error is triggered when the asset being accessed or referenced is not in an approved state.
+    error InvalidNotApprovedAsset();
 
     /// @notice Modifier to ensure content is approved before distribution.
-    /// @param to The address attempting to distribute the content.
-    /// @param contentId The ID of the content to be distributed.
-    /// @dev The content must be approved by referendum or the recipient must have a verified role.
-    /// This modifier checks if the content is approved by referendum or if the recipient has a verified role.
-    /// It also ensures that the recipient is the one who initially submitted the content for approval.
-    modifier onlyApprovedContent(address to, uint256 contentId) {
-        // Revert if the content is not approved or if the recipient is not the original submitter
-        if (!CONTENT_REFERENDUM.isApproved(to, contentId)) {
-            revert InvalidNotApprovedContent();
+    /// @param to The address attempting to distribute the asset.
+    /// @param assetId The ID of the asset to be distributed.
+    /// @dev the asset must be approved by referendum or the recipient must have a verified role.
+    /// This modifier checks if the asset is approved by referendum or if the recipient has a verified role.
+    /// It also ensures that the recipient is the one who initially submitted the asset for approval.
+    modifier onlyApprovedAsset(address to, uint256 assetId) {
+        // Revert if the asset is not approved or if the recipient is not the original submitter
+        if (!ASSET_REFERENDUM.isApproved(to, assetId)) {
+            revert InvalidNotApprovedAsset();
         }
         _;
     }
@@ -57,7 +57,7 @@ contract AssetOwnership is
         /// https://forum.openzeppelin.com/t/uupsupgradeable-vulnerability-post-mortem/15680
         _disableInitializers();
         // we need to verify the status of each content before allow register it.
-        CONTENT_REFERENDUM = IAssetVerifiable(assetReferendum);
+        ASSET_REFERENDUM = IAssetVerifiable(assetReferendum);
     }
 
     /// @notice Initializes the proxy state.
@@ -76,13 +76,13 @@ contract AssetOwnership is
         return super.supportsInterface(interfaceId);
     }
 
-    /// @notice Mints a new NFT to the specified address.
-    /// @dev Our naive assumption is that only those who know the content id can mint the corresponding token.
+    /// @notice Mints a new NFT representing an asset to the specified address.
+    /// @dev The assumption is that only those who know the asset ID and have the required approval can mint the corresponding token.
     /// @param to The address to mint the NFT to.
-    /// @param contentId The content id of the NFT. This should be a unique identifier for the NFT.
-    function registerContent(address to, uint256 contentId) external onlyApprovedContent(to, contentId) {
-        _mint(to, contentId);
-        emit RegisteredContent(to, contentId);
+    /// @param assetId The unique identifier for the asset, which serves as the NFT ID.
+    function registerAsset(address to, uint256 assetId) external onlyApprovedAsset(to, assetId) {
+        _mint(to, assetId);
+        emit RegisteredAsset(to, assetId);
     }
 
     /// @dev Internal function to update the ownership of a token.

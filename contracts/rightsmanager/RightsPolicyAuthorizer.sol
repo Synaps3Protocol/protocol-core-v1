@@ -32,11 +32,11 @@ contract RightsPolicyAuthorizer is
     mapping(address => EnumerableSet.AddressSet) private _delegation;
     /// @notice Emitted when rights are granted to a policy for content.
     /// @param policy The policy contract address granted rights.
-    /// @param holder The address of the content rights holder.
+    /// @param holder The address of the asset rights holder.
     event RightsGranted(address indexed policy, address holder);
     /// @notice Emitted when rights are revoked from a policy for content.
     /// @param policy The policy contract address whose rights are being revoked.
-    /// @param holder The address of the content rights holder.
+    /// @param holder The address of the asset rights holder.
     event RightsRevoked(address indexed policy, address holder);
 
     /// @dev Error thrown when a policy has not been audited or approved for operation.
@@ -80,16 +80,16 @@ contract RightsPolicyAuthorizer is
         emit RightsRevoked(policy, msg.sender);
     }
 
-    /// @dev Verify if the specified policy contract has been delegated the rights by the content holder.
+    /// @dev Verify if the specified policy contract has been delegated the rights by the assetolder.
     /// @param policy The address of the policy contract to check for delegation.
-    /// @param holder The content rights holder to check for delegation.
+    /// @param holder the asset rights holder to check for delegation.
     function isPolicyAuthorized(address policy, address holder) public view returns (bool) {
         return _delegation[holder].contains(policy) && _isValidPolicy(policy);
     }
 
     /// @notice Retrieves all policies authorized by a specific content holder.
     /// @dev This function returns an array of policy addresses that have been granted rights by the holder.
-    /// @param holder The address of the content rights holder whose authorized policies are being queried.
+    /// @param holder The address of the asset rights holder whose authorized policies are being queried.
     function getAuthorizedPolicies(address holder) public view returns (address[] memory) {
         // https://docs.openzeppelin.com/contracts/5.x/api/utils#EnumerableSet-values-struct-EnumerableSet-AddressSet-
         // This operation will copy the entire storage to memory, which can be quite expensive.

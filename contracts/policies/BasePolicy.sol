@@ -19,21 +19,21 @@ abstract contract BasePolicy is ReentrancyGuard, IPolicy, ERC165 {
     // Immutable public variables to store the addresses of the Rights Manager and Ownership.
     IAttestationProvider public immutable ATTESTATION_PROVIDER;
     IRightsPolicyManager public immutable RIGHTS_POLICY_MANAGER;
-    IAssetOwnership public immutable CONTENT_OWNERSHIP;
+    IAssetOwnership public immutable ASSET_OWNERSHIP;
 
     bool private _initialized;
     /// @dev attestation registry
     mapping(address => uint256) public attestations;
 
     /// @notice Emitted when an enforcement process is successfully completed for a given account and holder.
-    /// @param holder The address of the rights holder managing the content or access.
+    /// @param holder The address of the rights holder managing the asset or access.
     /// @param account The address of the user whose access or compliance is being enforced.
     /// @param attestationId The unique identifier of the attestation that confirms compliance or access.
     event AccessGranted(address indexed holder, address indexed account, uint256 attestationId);
 
     /// @dev Thrown when an attempt is made to access content without proper authorization.
     /// This error is used to prevent unauthorized access to content protected by policies or rights.
-    error InvalidContentHolder();
+    error InvalidAssetHolder();
 
     /// @notice Thrown when a function is called by an address other than the authorized Rights Manager.
     /// This restricts access to functions that are intended to be executed only by the Rights Manager.
@@ -94,7 +94,7 @@ abstract contract BasePolicy is ReentrancyGuard, IPolicy, ERC165 {
     constructor(address rightsPolicyManager, address assetOwnership, address providerAddress) {
         ATTESTATION_PROVIDER = IAttestationProvider(providerAddress);
         RIGHTS_POLICY_MANAGER = IRightsPolicyManager(rightsPolicyManager);
-        CONTENT_OWNERSHIP = IAssetOwnership(assetOwnership);
+        ASSET_OWNERSHIP = IAssetOwnership(assetOwnership);
     }
 
     /// @notice Checks if the contract has been initialized.
@@ -102,7 +102,7 @@ abstract contract BasePolicy is ReentrancyGuard, IPolicy, ERC165 {
         return _initialized;
     }
 
-    /// @notice Determines if the user has access to specific content based on `contentId`.
+    /// @notice Determines if the user has access to specific content based on `assetId`.
     /// @dev By default, this function only checks if the account complies with attestation requirements.
     function isAccessAllowed(address account, uint256) external view virtual returns (bool) {
         // Default behavior: only check attestation compliance.
@@ -124,10 +124,10 @@ abstract contract BasePolicy is ReentrancyGuard, IPolicy, ERC165 {
 
     /// @notice Retrieves the terms associated with a specific content ID.
     /// @dev This function allows for querying policy terms based on the unique content identifier.
-    ///      It provides information on conditions and permissions associated with the content.
-    /// @param contentId The unique identifier of the content for which terms are being resolved.
+    ///      It provides information on conditions and permissions associated with the asset.
+    /// @param assetId The unique identifier of the asset for which terms are being resolved.
     /// @return A struct containing the terms applicable to the specified content ID.
-    function resolveTerms(uint256 contentId) external view virtual returns (T.Terms memory) {}
+    function resolveTerms(uint256 assetId) external view virtual returns (T.Terms memory) {}
 
     /// @notice Checks if a given interface ID is supported by this contract.
     /// @param interfaceId The bytes4 identifier of the interface to check for support.
@@ -152,10 +152,10 @@ abstract contract BasePolicy is ReentrancyGuard, IPolicy, ERC165 {
         return ATTESTATION_PROVIDER.verify(attestationId, address(this), account);
     }
 
-    /// @notice Returns the content holder registered in the ownership contract.
-    /// @param contentId The content ID to retrieve the holder.
-    function getHolder(uint256 contentId) public view returns (address) {
-        return CONTENT_OWNERSHIP.ownerOf(contentId); // Returns the registered owner.
+    /// @notice Returns the asset holder registered in the ownership contract.
+    /// @param assetId the asset ID to retrieve the holder.
+    function getHolder(uint256 assetId) public view returns (address) {
+        return ASSET_OWNERSHIP.ownerOf(assetId); // Returns the registered owner.
     }
 
     /// @dev Internal function to commit an agreement and create an attestation.

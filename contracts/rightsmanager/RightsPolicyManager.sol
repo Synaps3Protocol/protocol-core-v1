@@ -37,7 +37,7 @@ contract RightsPolicyManager is Initializable, UUPSUpgradeable, AccessControlled
     /// @dev Error thrown when attempting to operate on a policy that has not
     /// been delegated rights for the specified content.
     /// @param policy The address of the policy contract attempting to access rights.
-    /// @param holder The content rights holder.
+    /// @param holder the asset rights holder.
     error InvalidNotRightsDelegated(address policy, address holder);
 
     /// @custom:oz-upgrades-unsafe-allow constructor
@@ -63,24 +63,24 @@ contract RightsPolicyManager is Initializable, UUPSUpgradeable, AccessControlled
 
     /// @notice Verifies if a specific policy is active for the provided account and criteria.
     /// @param account The address of the user whose compliance is being evaluated.
-    /// @param contentId The identifier of the content to validate the policy status.
+    /// @param assetId The identifier of the asset to validate the policy status.
     /// @param policyAddress The address of the policy contract to check compliance against.
-    function isActivePolicy(address account, uint256 contentId, address policyAddress) public view returns (bool) {
+    function isActivePolicy(address account, uint256 assetId, address policyAddress) public view returns (bool) {
         // verify if the policy were registered for account address and comply with the criteria
         IPolicy policy = IPolicy(policyAddress);
         bool registeredPolicy = _acl[account].contains(policyAddress);
-        return registeredPolicy && policy.isAccessAllowed(account, contentId);
+        return registeredPolicy && policy.isAccessAllowed(account, assetId);
     }
 
     /// @notice Retrieves the first active policy for a specific account in LIFO order.
     /// @param account The address of the account to evaluate.
-    /// @param contentId The identifier of the content to validate the policy status.
-    function getActivePolicy(address account, uint256 contentId) public view returns (bool, address) {
+    /// @param assetId The identifier of the asset to validate the policy status.
+    function getActivePolicy(address account, uint256 assetId) public view returns (bool, address) {
         address[] memory policies = getPolicies(account);
         uint256 i = policies.length - 1;
 
         while (true) {
-            bool comply = isActivePolicy(account, contentId, policies[i]);
+            bool comply = isActivePolicy(account, assetId, policies[i]);
             if (comply) return (true, policies[i]);
             if (i == 0) break;
             // i == 0 avoids underflow, we can safely decrement using unchecked
@@ -96,7 +96,7 @@ contract RightsPolicyManager is Initializable, UUPSUpgradeable, AccessControlled
     /// @notice Finalizes the agreement by registering the agreed-upon policy, effectively closing the agreement.
     /// @dev This function verifies the policy's authorization, executes the agreement and registers the policy.
     /// @param proof The unique identifier of the agreement to be enforced.
-    /// @param holder The rights holder whose authorization is required for accessing the content.
+    /// @param holder The rights holder whose authorization is required for accessing the asset.
     /// @param policyAddress The address of the policy contract managing the agreement.
     function registerPolicy(uint256 proof, address holder, address policyAddress) public returns (uint256) {
         // 1- retrieves the agreement and marks it as settled..

@@ -9,14 +9,14 @@ contract DeployAssetVault is DeployBase {
 
         vm.startBroadcast(getAdminPK());
         address accessManager = computeCreate3Address("SALT_ACCESS_MANAGER");
-        address AssetOwnership = computeCreate3Address("SALT_CONTENT_OWNERSHIP");
+        address AssetOwnership = computeCreate3Address("SALT_ASSET_OWNERSHIP");
         address impl = address(new AssetVault(AssetOwnership));
         bytes memory init = abi.encodeCall(AssetVault.initialize, (accessManager));
-        address assetVault = deployUUPS(impl, init, "SALT_CONTENT_VAULT");
+        address assetVault = deployUUPS(impl, init, "SALT_ASSET_VAULT");
         vm.stopBroadcast();
 
-        _checkExpectedAddress(assetVault, "SALT_CONTENT_VAULT");
-        _logAddress("CONTENT_VAULT", assetVault);
+        _checkExpectedAddress(assetVault, "SALT_ASSET_VAULT");
+        _logAddress("ASSET_VAULT", assetVault);
         return assetVault;
     }
 }

@@ -9,7 +9,7 @@ contract DeploySubscriptionPolicy is DeployBase {
         vm.startBroadcast(getAdminPK());
 
         address rightsPolicyManager = computeCreate3Address("SALT_RIGHT_POLICY_MANAGER");
-        address AssetOwnership = computeCreate3Address("SALT_CONTENT_OWNERSHIP");
+        address AssetOwnership = computeCreate3Address("SALT_ASSET_OWNERSHIP");
         address easAddress = computeCreate3Address("SALT_ATTESTATION_EAS");
 
         bytes memory creationCode = type(SubscriptionPolicy).creationCode;

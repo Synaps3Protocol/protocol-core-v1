@@ -8,13 +8,13 @@ import { T } from "contracts/libraries/Types.sol";
 /// @dev This interface defines the methods to retrieve and store content.
 interface IAssetVault {
     /// @notice Retrieves the encrypted content for a given content ID.
-    /// @param contentId The identifier of the content.
-    /// @param vault The vault type used to retrieve the content (e.g., LIT, RSA, EC).
-    function getContent(uint256 contentId, T.VaultType vault) external view returns (bytes memory);
+    /// @param assetId The identifier of the asset.
+    /// @param vault The vault type used to retrieve the asset (e.g., LIT, RSA, EC).
+    function getContent(uint256 assetId, T.VaultType vault) external view returns (bytes memory);
 
     /// @notice Stores encrypted content in the vault under a specific content ID.
-    /// @param contentId The identifier of the content.
+    /// @param assetId The identifier of the asset.
     /// @param vault The vault type to associate with the encrypted content (e.g., LIT, RSA, EC).
     /// @param data The secure content to store, represented as bytes.
-    function setContent(uint256 contentId, T.VaultType vault, bytes memory data) external;
+    function setContent(uint256 assetId, T.VaultType vault, bytes memory data) external;
 }

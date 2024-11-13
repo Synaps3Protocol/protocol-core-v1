@@ -19,7 +19,7 @@ contract OrchestrateProtocolHydration is Script {
         address tollgateAddress = vm.envAddress("TOLLGATE");
         address treasuryAddress = vm.envAddress("TREASURY");
         address auditorAddress = vm.envAddress("POLICY_AUDIT");
-        address assetReferendumAddress = vm.envAddress("CONTENT_REFERENDUM");
+        address assetReferendumAddress = vm.envAddress("ASSET_REFERENDUM");
         address distributorReferendumAddress = vm.envAddress("DISTRIBUTION_REFERENDUM");
         address accessManager = vm.envAddress("ACCESS_MANAGER");
 

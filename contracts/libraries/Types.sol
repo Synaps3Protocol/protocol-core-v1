@@ -28,7 +28,7 @@ library T {
     }
 
     /// @title Agreement
-    /// @dev Represents an agreement between multiple parties regarding the distribution and management of content.
+    /// @dev Represents an agreement between multiple parties regarding the distribution and management of asset.
     /// @notice This struct captures the total amount involved, net amount after deductions, distribution fees,
     /// and the relevant addresses involved in the agreement.
     struct Agreement {
@@ -47,7 +47,7 @@ library T {
     /// @title Setup
     /// @dev Represents a setup process for initializing and authorizing a policy contract for content.
     struct Setup {
-        address holder; // the content rights holder
+        address holder; // the asset rights holder
         bytes payload; // any additional data needed during setup execution
     }
 
