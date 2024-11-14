@@ -39,6 +39,7 @@ contract RightsPolicyManager is Initializable, UUPSUpgradeable, AccessControlled
     /// @param policy The address of the policy contract attempting to access rights.
     /// @param holder the asset rights holder.
     error InvalidNotRightsDelegated(address policy, address holder);
+    error InvalidPolicyEnforcement(string);
 
     /// @custom:oz-upgrades-unsafe-allow constructor
     constructor(address rightsAgreement, address rightsAuthorizer) {
@@ -97,18 +98,22 @@ contract RightsPolicyManager is Initializable, UUPSUpgradeable, AccessControlled
     /// @dev This function verifies the policy's authorization, executes the agreement and registers the policy.
     /// @param proof The unique identifier of the agreement to be enforced.
     /// @param holder The rights holder whose authorization is required for accessing the asset.
-    /// @param policyAddress The address of the policy contract managing the agreement.
-    function registerPolicy(uint256 proof, address holder, address policyAddress) public returns (uint256) {
+    /// @param policy The address of the policy contract managing the agreement.
+    function registerPolicy(uint256 proof, address holder, address policy) public returns (uint256) {
         // 1- retrieves the agreement and marks it as settled..
         T.Agreement memory agreement = RIGHTS_AGREEMENT.settleAgreement(proof, holder);
         // 2- only authorized policies by holder can be registered..
-        if (!RIGHTS_AUTHORIZER.isPolicyAuthorized(policyAddress, holder))
-            revert InvalidNotRightsDelegated(policyAddress, holder);
+        if (!RIGHTS_AUTHORIZER.isPolicyAuthorized(policy, holder)) {
+            revert InvalidNotRightsDelegated(policy, holder);
+        }
 
-        // After successful policy execution:
-        // The policy is registered to the parties..
-        uint256 attestationId = IPolicy(policyAddress).enforce(holder, agreement);
-        _registerBatchPolicies(proof, policyAddress, agreement.parties);
+        // type safe low level call to policy
+        // the policy is registered to the parties..
+        (bool success, bytes memory result) = policy.call(abi.encodeCall(IPolicy.enforce, (holder, agreement)));
+        if (!success) revert InvalidPolicyEnforcement("Error during policy enforcement call");
+        // expected returned attestation as agreement confirmation
+        uint256 attestationId = abi.decode(result, (uint256));
+        _registerBatchPolicies(proof, policy, agreement.parties);
         return attestationId;
     }
 

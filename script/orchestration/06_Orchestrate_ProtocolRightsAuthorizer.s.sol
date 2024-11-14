@@ -2,7 +2,9 @@
 pragma solidity 0.8.26;
 import "forge-std/Script.sol";
 
+import { IPolicy } from "contracts/interfaces/policies/IPolicy.sol";
 import { IRightsPolicyAuthorizer } from "contracts/interfaces/rightsmanager/IRightsPolicyAuthorizer.sol";
+import { T } from "contracts/libraries/Types.sol";
 
 contract OrchestrateRightsAuthorizer is Script {
     function run() external {
@@ -16,6 +18,12 @@ contract OrchestrateRightsAuthorizer is Script {
         IRightsPolicyAuthorizer custodian = IRightsPolicyAuthorizer(rightsAuthorizer);
         custodian.authorizePolicy(subscriptionPolicy, abi.encode(1 * 1e18, mmc)); // assign my content custody to distributor
         require(custodian.isPolicyAuthorized(subscriptionPolicy, msg.sender) == true);
+
+        // verify policy initialization
+        T.Terms memory terms = IPolicy(subscriptionPolicy).resolveTerms(msg.sender);
+        require(terms.amount == 1 * 1e18);
+        require(terms.currency == mmc);
+        require(terms.rateBasis == T.RateBasis.DAILY);
         vm.stopBroadcast();
     }
 }

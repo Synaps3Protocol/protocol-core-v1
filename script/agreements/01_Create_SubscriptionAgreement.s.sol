@@ -8,7 +8,7 @@ import { IRightsAccessAgreement } from "contracts/interfaces/rightsmanager/IRigh
 import { IRightsPolicyManager } from "contracts/interfaces/rightsmanager/IRightsPolicyManager.sol";
 import { console } from "forge-std/console.sol";
 
-contract OrchestrateRightsAuthorizer is Script {
+contract OrchestrateCreateSubscriptionAgreement is Script {
     function run() external {
         uint256 admin = vm.envUint("PRIVATE_KEY");
         address mmc = vm.envAddress("MMC");
@@ -18,8 +18,7 @@ contract OrchestrateRightsAuthorizer is Script {
         vm.startBroadcast(admin);
         address[] memory parties = new address[](1);
         parties[0] = 0x037f2b49721E34296fBD8F9E7e9cc6D5F9ecE7b4;
-
-        // TODO invalid print
+        IERC20(mmc).approve(rightsAgreement, 10 * 1e18);
         uint256 proof = IRightsAccessAgreement(rightsAgreement).createAgreement(
             10 * 1e18,
             mmc,

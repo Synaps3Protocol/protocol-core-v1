@@ -27,20 +27,6 @@ interface IPolicy {
     /// @param agreement An object containing the terms agreed upon between the asset holder and the user.
     function enforce(address holder, T.Agreement calldata agreement) external returns (uint256);
 
-    /// @notice Retrieves the terms associated with a specific rights holder.
-    /// @dev This function provides access to policy terms based on the rights holder's address.
-    ///      It allows for querying conditions and permissions applicable to the holder.
-    /// @param holder The address of the rights holder for whom terms are being resolved.
-    /// @return A struct containing the terms applicable to the specified rights holder.
-    function resolveTerms(address holder) external view returns (T.Terms memory);
-
-    /// @notice Retrieves the terms associated with a specific content ID.
-    /// @dev This function allows for querying policy terms based on the unique content identifier.
-    ///      It provides information on conditions and permissions associated with the asset.
-    /// @param assetId The unique identifier of the asset for which terms are being resolved.
-    /// @return A struct containing the terms applicable to the specified content ID.
-    function resolveTerms(uint256 assetId) external view returns (T.Terms memory);
-
     /// @notice Retrieves the address of the attestation provider.
     /// @return The address of the provider associated with the policy.
     function getAttestationProvider() external view returns (address);
@@ -54,4 +40,16 @@ interface IPolicy {
     /// @param account The user address whose access is being checked.
     /// @param assetId The unique identifier of the asset to verify access for.
     function isAccessAllowed(address account, uint256 assetId) external view returns (bool);
+
+    /// @notice Retrieves the terms associated with a specific rights holder.
+    /// @dev This function provides access to policy terms based on the rights holder's address.
+    /// @param holder The address of the rights holder for whom terms are being resolved.
+    /// @return A struct containing the terms applicable to the specified rights holder.
+    function resolveTerms(address holder) external view returns (T.Terms memory);
+
+    /// @notice Retrieves the terms associated with a specific content ID.
+    /// @dev This function allows for querying policy terms based on the unique content identifier.
+    /// @param assetId The unique identifier of the asset for which terms are being resolved.
+    /// @return A struct containing the terms applicable to the specified content ID.
+    function resolveTerms(uint256 assetId) external view returns (T.Terms memory);
 }

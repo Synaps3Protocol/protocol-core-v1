@@ -35,6 +35,8 @@ abstract contract BasePolicy is ReentrancyGuard, IPolicy, ERC165 {
     /// This error is used to prevent unauthorized access to content protected by policies or rights.
     error InvalidAssetHolder();
 
+    error InvalidNotSupportedOperation();
+
     /// @notice Thrown when a function is called by an address other than the authorized Rights Manager.
     /// This restricts access to functions that are intended to be executed only by the Rights Manager.
     error InvalidUnauthorizedCall(string reason);
@@ -117,17 +119,17 @@ abstract contract BasePolicy is ReentrancyGuard, IPolicy, ERC165 {
 
     /// @notice Retrieves the terms associated with a specific rights holder.
     /// @dev This function provides access to policy terms based on the rights holder's address.
-    ///      It allows for querying conditions and permissions applicable to the holder.
-    /// @param holder The address of the rights holder for whom terms are being resolved.
     /// @return A struct containing the terms applicable to the specified rights holder.
-    function resolveTerms(address holder) external view virtual returns (T.Terms memory) {}
+    function resolveTerms(address) external view virtual returns (T.Terms memory) {
+        revert InvalidNotSupportedOperation();
+    }
 
     /// @notice Retrieves the terms associated with a specific content ID.
     /// @dev This function allows for querying policy terms based on the unique content identifier.
-    ///      It provides information on conditions and permissions associated with the asset.
-    /// @param assetId The unique identifier of the asset for which terms are being resolved.
     /// @return A struct containing the terms applicable to the specified content ID.
-    function resolveTerms(uint256 assetId) external view virtual returns (T.Terms memory) {}
+    function resolveTerms(uint256) external view virtual returns (T.Terms memory) {
+        revert InvalidNotSupportedOperation();
+    }
 
     /// @notice Checks if a given interface ID is supported by this contract.
     /// @param interfaceId The bytes4 identifier of the interface to check for support.

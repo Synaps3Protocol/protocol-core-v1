@@ -66,8 +66,8 @@ library T {
     /// @dev This struct is used to capture both on-chain and off-chain terms for content or agreement management.
     ///      It includes fields for currency, amount, rate basis, calculation formula, and off-chain terms.
     struct Terms {
-        address currency; // The currency in which the amount is denominated, e.g., ETH or USDC
         uint256 amount; // The rate amount based on the rate basis, expressed in the smallest unit of the currency
+        address currency; // The currency in which the amount is denominated, e.g., ETH or USDC
         RateBasis rateBasis; // The time basis for the amount, using a standardized enum (e.g., HOURLY, DAILY)
         string uri; // URI pointing to off-chain terms for additional details or extended documentation
     }

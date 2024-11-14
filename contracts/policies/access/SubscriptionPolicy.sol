@@ -71,6 +71,6 @@ contract SubscriptionPolicy is BasePolicy {
     /// @notice Retrieves the terms associated with a specific rights holder.
     function resolveTerms(address holder) external view override returns (T.Terms memory) {
         Package memory pkg = _packages[holder]; // the term set by the asset holder
-        return T.Terms(pkg.currency, pkg.pricePerDay, T.RateBasis.DAILY, "ipfs://");
+        return T.Terms(pkg.pricePerDay, pkg.currency, T.RateBasis.DAILY, "ipfs://");
     }
 }

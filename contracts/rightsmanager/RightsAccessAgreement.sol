@@ -212,17 +212,9 @@ contract RightsAccessAgreement is
     function _authorizeUpgrade(address newImplementation) internal override onlyAdmin {}
 
     /// @dev Generates a unique proof for an agreement using keccak256 hashing.
-    function _createProof(T.Agreement memory agreement) private view returns (uint256) {
+    function _createProof(T.Agreement memory agreement) private pure returns (uint256) {
         // yes, we can encode full struct as abi.encode with extra overhead..
-        bytes memory rawProof = abi.encodePacked(
-            blockhash(block.number - 1),
-            agreement.createdAt,
-            agreement.amount,
-            agreement.broker,
-            agreement.currency,
-            agreement.payload
-        );
-
+        bytes memory rawProof = abi.encode(agreement);
         bytes32 proof = keccak256(rawProof);
         return uint256(proof);
     }

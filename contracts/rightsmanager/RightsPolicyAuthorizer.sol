@@ -44,7 +44,7 @@ contract RightsPolicyAuthorizer is
     error InvalidNotAuditedPolicy(address policy);
     /// @dev Error thrown when there is an issue with the policy setup.
     /// @param reason A string explaining the reason for the invalid policy setup.
-    error InvalidPolicySetup(string reason);
+    error InvalidPolicyInitialization(string reason);
 
     /// @custom:oz-upgrades-unsafe-allow constructor
     constructor(address policyAudit) {
@@ -67,9 +67,11 @@ contract RightsPolicyAuthorizer is
     function authorizePolicy(address policy, bytes calldata data) external {
         // only valid and audit polices are allowed to be authorized and initialized..
         if (!_isValidPolicy(policy)) revert InvalidNotAuditedPolicy(policy);
-        _delegation[msg.sender].add(policy);
+        // type safe low level call to policy
         // call policy initialization with provided data..
-        IPolicy(policy).initialize(msg.sender, data);
+        (bool success, ) = policy.call(abi.encodeCall(IPolicy.initialize, (msg.sender, data)));
+        if (!success) revert InvalidPolicyInitialization("Error during policy initialization call");
+        _delegation[msg.sender].add(policy); // register policy as authorized for the authorizer
         emit RightsGranted(policy, msg.sender);
     }
 
