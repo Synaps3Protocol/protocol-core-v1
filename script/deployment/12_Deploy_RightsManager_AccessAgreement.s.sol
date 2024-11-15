@@ -2,7 +2,7 @@
 pragma solidity 0.8.26;
 
 import { DeployBase } from "script/deployment/00_Deploy_Base.s.sol";
-import { RightsAccessAgreement } from "contracts/rightsmanager/RightsAccessAgreement.sol";
+import { RightsAccessAgreement } from "contracts/rights/RightsAccessAgreement.sol";
 
 contract DeployRightsAccessAgrement is DeployBase {
     function run() external returns (address) {

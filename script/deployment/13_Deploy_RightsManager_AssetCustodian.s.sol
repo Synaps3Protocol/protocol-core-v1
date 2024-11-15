@@ -2,7 +2,7 @@
 pragma solidity 0.8.26;
 
 import { DeployBase } from "script/deployment/00_Deploy_Base.s.sol";
-import { RightsAssetCustodian } from "contracts/rightsmanager/RightsAssetCustodian.sol";
+import { RightsAssetCustodian } from "contracts/rights/RightsAssetCustodian.sol";
 
 contract DeployRightsAssetCustodian is DeployBase {
     function run() external returns (address) {

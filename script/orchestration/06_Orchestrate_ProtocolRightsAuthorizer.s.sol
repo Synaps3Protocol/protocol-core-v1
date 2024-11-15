@@ -3,7 +3,7 @@ pragma solidity 0.8.26;
 import "forge-std/Script.sol";
 
 import { IPolicy } from "contracts/core/interfaces/policies/IPolicy.sol";
-import { IRightsPolicyAuthorizer } from "contracts/core/interfaces/rightsmanager/IRightsPolicyAuthorizer.sol";
+import { IRightsPolicyAuthorizer } from "contracts/core/interfaces/rights/IRightsPolicyAuthorizer.sol";
 import { T } from "contracts/core/primitives/Types.sol";
 
 contract OrchestrateRightsAuthorizer is Script {

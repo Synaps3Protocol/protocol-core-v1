@@ -2,7 +2,7 @@
 pragma solidity 0.8.26;
 
 import { DeployBase } from "script/deployment/00_Deploy_Base.s.sol";
-import { RightsPolicyAuthorizer } from "contracts/rightsmanager/RightsPolicyAuthorizer.sol";
+import { RightsPolicyAuthorizer } from "contracts/rights/RightsPolicyAuthorizer.sol";
 
 contract DeployRightsPolicyAuthorizer is DeployBase {
     function run() external returns (address) {

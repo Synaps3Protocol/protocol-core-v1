@@ -2,7 +2,7 @@
 pragma solidity 0.8.26;
 
 import "forge-std/Script.sol";
-import { IRightsAssetCustodian } from "contracts/core/interfaces/rightsmanager/IRightsAssetCustodian.sol";
+import { IRightsAssetCustodian } from "contracts/core/interfaces/rights/IRightsAssetCustodian.sol";
 
 contract OrchestrateRightsCustodian is Script {
     function run() external {

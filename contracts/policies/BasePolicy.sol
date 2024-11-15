@@ -5,7 +5,7 @@ pragma solidity 0.8.26;
 import { ERC165 } from "@openzeppelin/contracts/utils/introspection/ERC165.sol";
 import { ReentrancyGuard } from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 import { IAssetOwnership } from "contracts/core/interfaces/assets/IAssetOwnership.sol";
-import { IRightsPolicyManager } from "contracts/core/interfaces/rightsmanager/IRightsPolicyManager.sol";
+import { IRightsPolicyManager } from "contracts/core/interfaces/rights/IRightsPolicyManager.sol";
 import { IAttestationProvider } from "contracts/core/interfaces/IAttestationProvider.sol";
 import { IPolicy } from "contracts/core/interfaces/policies/IPolicy.sol";
 import { LoopOps } from "contracts/core/libraries/LoopOps.sol";

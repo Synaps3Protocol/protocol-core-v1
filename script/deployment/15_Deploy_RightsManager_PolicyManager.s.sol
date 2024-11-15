@@ -2,7 +2,7 @@
 pragma solidity 0.8.26;
 
 import { DeployBase } from "script/deployment/00_Deploy_Base.s.sol";
-import { RightsPolicyManager } from "contracts/rightsmanager/RightsPolicyManager.sol";
+import { RightsPolicyManager } from "contracts/rights/RightsPolicyManager.sol";
 
 contract DeployRightsPolicyManager is DeployBase {
     function run() external returns (address) {
