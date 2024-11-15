@@ -30,9 +30,9 @@ contract RightsPolicyManager is Initializable, UUPSUpgradeable, AccessControlled
 
     /// @notice Emitted when access rights are granted to an account based on a specific policy.
     /// @param account The address of the account to which the policy applies.
-    /// @param proof A unique identifier for the agreement, attestation, or transaction that confirms the registration.
+    /// @param attestationId A unique identifier for the attestation that confirms the registration.
     /// @param policy The address of the registered policy governing the access rights.
-    event PolicyRegistered(address indexed account, uint256 proof, address policy);
+    event PolicyRegistered(address indexed account, uint256 attestationId, address policy);
 
     /// @dev Error thrown when attempting to operate on a policy that has not
     /// been delegated rights for the specified content.
@@ -93,7 +93,7 @@ contract RightsPolicyManager is Initializable, UUPSUpgradeable, AccessControlled
         if (!success) revert InvalidPolicyEnforcement("Error during policy enforcement call");
         // expected returned attestation as agreement confirmation
         uint256 attestationId = abi.decode(result, (uint256));
-        _registerBatchPolicies(proof, policyAddress, agreement.parties);
+        _registerBatchPolicies(attestationId, policyAddress, agreement.parties);
         return attestationId;
     }
 
