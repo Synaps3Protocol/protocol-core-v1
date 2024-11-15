@@ -3,14 +3,14 @@ pragma solidity 0.8.26;
 
 import "forge-std/Test.sol";
 import { IAccessControl } from "@openzeppelin/contracts/access/IAccessControl.sol";
-import { IAssetRegistrable } from "contracts/interfaces/assets/IAssetRegistrable.sol";
-import { IAssetVerifiable } from "contracts/interfaces/assets/IAssetVerifiable.sol";
-import { INonceVerifiable } from "contracts/interfaces/INonceVerifiable.sol";
+import { IAssetRegistrable } from "contracts/core/interfaces/assets/IAssetRegistrable.sol";
+import { IAssetVerifiable } from "contracts/core/interfaces/assets/IAssetVerifiable.sol";
+import { INonceVerifiable } from "contracts/core/interfaces/INonceVerifiable.sol";
 import { AssetReferendum } from "contracts/assets/AssetReferendum.sol";
 
 import { BaseTest } from "test/BaseTest.t.sol";
-import { T } from "contracts/libraries/Types.sol";
-import { C } from "contracts/libraries/Constants.sol";
+import { T } from "contracts/core/primitives/Types.sol";
+import { C } from "contracts/core/primitives/Constants.sol";
 
 contract AssetReferendumTest is BaseTest {
     address referendum;

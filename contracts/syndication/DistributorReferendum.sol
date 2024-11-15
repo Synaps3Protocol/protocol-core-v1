@@ -7,16 +7,16 @@ import { UUPSUpgradeable } from "@openzeppelin/contracts-upgradeable/proxy/utils
 import { Initializable } from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 // solhint-disable-next-line max-line-length
 import { ReentrancyGuardTransientUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardTransientUpgradeable.sol";
-import { AccessControlledUpgradeable } from "contracts/base/upgradeable/AccessControlledUpgradeable.sol";
-import { FeesCollectorUpgradeable } from "contracts/base/upgradeable/FeesCollectorUpgradeable.sol";
-import { QuorumUpgradeable } from "contracts/base/upgradeable/QuorumUpgradeable.sol";
+import { AccessControlledUpgradeable } from "contracts/core/primitives/upgradeable/AccessControlledUpgradeable.sol";
+import { FeesCollectorUpgradeable } from "contracts/core/primitives/upgradeable/FeesCollectorUpgradeable.sol";
+import { QuorumUpgradeable } from "contracts/core/primitives/upgradeable/QuorumUpgradeable.sol";
 
-import { ITreasury } from "contracts/interfaces/economics/ITreasury.sol";
-import { ITollgate } from "contracts/interfaces/economics/ITollgate.sol";
-import { IDistributor } from "contracts/interfaces/syndication/IDistributor.sol";
-import { IDistributorReferendum } from "contracts/interfaces/syndication/IDistributorReferendum.sol";
-import { TreasuryOps } from "contracts/libraries/TreasuryOps.sol";
-import { T } from "contracts/libraries/Types.sol";
+import { ITreasury } from "contracts/core/interfaces/economics/ITreasury.sol";
+import { ITollgate } from "contracts/core/interfaces/economics/ITollgate.sol";
+import { IDistributor } from "contracts/core/interfaces/syndication/IDistributor.sol";
+import { IDistributorReferendum } from "contracts/core/interfaces/syndication/IDistributorReferendum.sol";
+import { TreasuryOps } from "contracts/core/libraries/TreasuryOps.sol";
+import { T } from "contracts/core/primitives/Types.sol";
 
 contract DistributorReferendum is
     Initializable,

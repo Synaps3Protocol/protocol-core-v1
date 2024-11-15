@@ -2,9 +2,9 @@
 pragma solidity 0.8.26;
 import { DeployBase } from "script/deployment/00_Deploy_Base.s.sol";
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import { IDistributor } from "contracts/interfaces/syndication/IDistributor.sol";
-import { IDistributorFactory } from "contracts/interfaces/syndication/IDistributorFactory.sol";
-import { IDistributorReferendum } from "contracts/interfaces/syndication/IDistributorReferendum.sol";
+import { IDistributor } from "contracts/core/interfaces/syndication/IDistributor.sol";
+import { IDistributorFactory } from "contracts/core/interfaces/syndication/IDistributorFactory.sol";
+import { IDistributorReferendum } from "contracts/core/interfaces/syndication/IDistributorReferendum.sol";
 
 contract OrchestrateProtocolSyndication is DeployBase {
     function run() external {

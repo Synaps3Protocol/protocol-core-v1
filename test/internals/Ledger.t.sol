@@ -2,7 +2,7 @@
 pragma solidity 0.8.26;
 
 import "forge-std/Test.sol";
-import {LedgerUpgradeable} from "contracts/base/upgradeable/LedgerUpgradeable.sol";
+import { LedgerUpgradeable } from "contracts/core/primitives/upgradeable/LedgerUpgradeable.sol";
 
 contract LedgerTest is Test, LedgerUpgradeable {
     function test_SetLedgerEntry() public {

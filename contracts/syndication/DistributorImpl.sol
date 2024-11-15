@@ -4,8 +4,8 @@ pragma solidity 0.8.26;
 import { Initializable } from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import { ERC165Upgradeable } from "@openzeppelin/contracts-upgradeable/utils/introspection/ERC165Upgradeable.sol";
 import { OwnableUpgradeable } from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
-import { IDistributor } from "contracts/interfaces/syndication/IDistributor.sol";
-import { TreasuryOps } from "contracts/libraries/TreasuryOps.sol";
+import { IDistributor } from "contracts/core/interfaces/syndication/IDistributor.sol";
+import { TreasuryOps } from "contracts/core/libraries/TreasuryOps.sol";
 
 /// @title Asset Distributor Implementation
 /// @notice This contract handles all the necessary logic for managing content distributors.

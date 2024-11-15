@@ -2,7 +2,7 @@
 pragma solidity 0.8.26;
 
 import "forge-std/Test.sol";
-import {QuorumUpgradeable} from "contracts/base/upgradeable/QuorumUpgradeable.sol";
+import { QuorumUpgradeable } from "contracts/core/primitives/upgradeable/QuorumUpgradeable.sol";
 
 contract QuorumTest is Test, QuorumUpgradeable {
     function test_DefaultStatus() public view {

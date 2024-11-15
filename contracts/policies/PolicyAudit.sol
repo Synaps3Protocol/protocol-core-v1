@@ -4,11 +4,11 @@ pragma solidity 0.8.26;
 import { ERC165Checker } from "@openzeppelin/contracts/utils/introspection/ERC165Checker.sol";
 import { UUPSUpgradeable } from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import { Initializable } from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
-import { AccessControlledUpgradeable } from "contracts/base/upgradeable/AccessControlledUpgradeable.sol";
-import { QuorumUpgradeable } from "contracts/base/upgradeable/QuorumUpgradeable.sol";
+import { AccessControlledUpgradeable } from "contracts/core/primitives/upgradeable/AccessControlledUpgradeable.sol";
+import { QuorumUpgradeable } from "contracts/core/primitives/upgradeable/QuorumUpgradeable.sol";
 
-import { IPolicy } from "contracts/interfaces/policies/IPolicy.sol";
-import { IPolicyAuditor } from "contracts/interfaces/policies/IPolicyAuditor.sol";
+import { IPolicy } from "contracts/core/interfaces/policies/IPolicy.sol";
+import { IPolicyAuditor } from "contracts/core/interfaces/policies/IPolicyAuditor.sol";
 
 /// @title PolicyAudit
 /// @notice This contract audits content policies and ensures that only authorized entities can approve or revoke.

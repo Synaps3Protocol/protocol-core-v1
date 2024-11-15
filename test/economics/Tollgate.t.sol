@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.26;
 
-import { Tollgate } from "contracts/economics/Tollgate.sol";
-import { ITollgate } from "contracts/interfaces/economics/ITollgate.sol";
 import { BaseTest } from "test/BaseTest.t.sol";
-import { T } from "contracts/libraries/Types.sol";
+import { Tollgate } from "contracts/economics/Tollgate.sol";
+import { T } from "contracts/core/primitives/Types.sol";
+import { ITollgate } from "contracts/core/interfaces/economics/ITollgate.sol";
 
 contract TollgateTest is BaseTest {
     address tollgate;

@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.26;
 import "forge-std/Script.sol";
-import { IPolicyAuditor } from "contracts/interfaces/policies/IPolicyAuditor.sol";
-import { IAttestationProvider } from "contracts/interfaces/IAttestationProvider.sol";
+import { IPolicyAuditor } from "contracts/core/interfaces/policies/IPolicyAuditor.sol";
+import { IAttestationProvider } from "contracts/core/interfaces/IAttestationProvider.sol";
 
 contract OrchestrateProtocolPolicies is Script {
     function run() external {

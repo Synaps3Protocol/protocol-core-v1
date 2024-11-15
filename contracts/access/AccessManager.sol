@@ -5,7 +5,7 @@ import { Initializable } from "@openzeppelin/contracts-upgradeable/proxy/utils/I
 import { UUPSUpgradeable } from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 // solhint-disable-next-line max-line-length
 import { AccessManagerUpgradeable } from "@openzeppelin/contracts-upgradeable/access/manager/AccessManagerUpgradeable.sol";
-import { C } from "contracts/libraries/Constants.sol";
+import { C } from "contracts/core/primitives/Constants.sol";
 
 /// @title AccessManager
 /// @dev Manages roles and permissions across the protocol.

@@ -5,15 +5,15 @@ pragma solidity 0.8.26;
 import { Initializable } from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import { UUPSUpgradeable } from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import { EnumerableSet } from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
-import { AccessControlledUpgradeable } from "contracts/base/upgradeable/AccessControlledUpgradeable.sol";
+import { AccessControlledUpgradeable } from "contracts/core/primitives/upgradeable/AccessControlledUpgradeable.sol";
 import { ERC165Checker } from "@openzeppelin/contracts/utils/introspection/ERC165Checker.sol";
 
-import { IPolicy } from "contracts/interfaces/policies/IPolicy.sol";
-import { IRightsPolicyManager } from "contracts/interfaces/rightsmanager/IRightsPolicyManager.sol";
-import { IRightsPolicyAuthorizer } from "contracts/interfaces/rightsmanager/IRightsPolicyAuthorizer.sol";
-import { IRightsAccessAgreement } from "contracts/interfaces/rightsmanager/IRightsAccessAgreement.sol";
-import { LoopOps } from "contracts/libraries/LoopOps.sol";
-import { T } from "contracts/libraries/Types.sol";
+import { IPolicy } from "contracts/core/interfaces/policies/IPolicy.sol";
+import { IRightsPolicyManager } from "contracts/core/interfaces/rightsmanager/IRightsPolicyManager.sol";
+import { IRightsPolicyAuthorizer } from "contracts/core/interfaces/rightsmanager/IRightsPolicyAuthorizer.sol";
+import { IRightsAccessAgreement } from "contracts/core/interfaces/rightsmanager/IRightsAccessAgreement.sol";
+import { LoopOps } from "contracts/core/libraries/LoopOps.sol";
+import { T } from "contracts/core/primitives/Types.sol";
 
 contract RightsPolicyManager is Initializable, UUPSUpgradeable, AccessControlledUpgradeable, IRightsPolicyManager {
     using EnumerableSet for EnumerableSet.AddressSet;
