@@ -2,28 +2,6 @@
   "name": "@synaps3/protocol",
   "version": "1.0.8",
   "description": "Core contracts for the Synapse Protocol",
-  "homepage": "https://github.com/Synaps3Protocol/protocol-core-v1#readme",
-  "bugs": {
-    "url": "https://github.com/Synaps3Protocol/protocol-core-v1/issues"
-  },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/Synaps3Protocol/protocol-core-v1.git"
-  },
-  "files": [
-    "contracts/**/*.sol"
-  ],
-  "keywords": [
-    "solidity",
-    "ethereum",
-    "smart contracts",
-    "protocol",
-    "ip",
-    "monetization",
-    "access control",
-    "decentralized",
-    "intellectual property"
-  ],
   "devDependencies": {
     "dotenv": "^16.4.5",
     "prettier-plugin-solidity": "^1.4.1",
