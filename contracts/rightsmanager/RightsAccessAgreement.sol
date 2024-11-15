@@ -113,7 +113,7 @@ contract RightsAccessAgreement is
         // each agreement is unique and immutable, ensuring that it cannot be modified or reconstructed.
         uint256 proof = _createProof(agreement);
         _storeAgreement(proof, agreement);
-        
+
         emit AgreementCreated(msg.sender, proof);
         return proof;
     }

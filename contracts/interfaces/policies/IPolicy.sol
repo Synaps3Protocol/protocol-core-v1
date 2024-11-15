@@ -43,8 +43,8 @@ interface IPolicy {
     /// @return A boolean value: true if the account has access to the specified asset; otherwise, false.
     function isAccessAllowed(address account, uint256 assetId) external view returns (bool);
 
-    /// @notice Verifies if a specific account has general holder's access rights, without specifying an individual asset.
-    /// @dev This function can be used to check access for broader scopes, such as groups of content, subscriptions,etc.
+    /// @notice Verifies if a specific account has general holder's access rights.
+    /// @dev This function can be used to check access for broader scopes, such as groups, subscriptions,etc.
     /// @param account The address of the user whose general access rights are being verified.
     /// @param holder The address of the rigths holder.
     /// @return A boolean value: true if the account has general access to holder's rights; otherwise, false.

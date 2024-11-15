@@ -131,8 +131,8 @@ abstract contract BasePolicy is ReentrancyGuard, IPolicy, ERC165 {
         revert InvalidNotSupportedOperation();
     }
 
-    /// @notice Verifies if a specific account has general holder's access rights, without specifying an individual asset.
-    /// @dev This function can be used to check access for broader scopes, such as groups of content, subscriptions,etc.
+    /// @notice Verifies if a specific account has general holder's access rights,.
+    /// @dev This function can be used to check access for broader scopes, such as groups, subscriptions,etc.
     function isAccessAllowed(address, address) external view virtual returns (bool) {
         revert InvalidNotSupportedOperation();
     }

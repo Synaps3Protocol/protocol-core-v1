@@ -42,7 +42,7 @@ force-compile:
 
 .PHONY: test ## run tests
 test:
-	@forge test --show-progress --gas-report -vvv  --fail-fast --verbose --sender ${PUBLIC_KEY}
+	@forge test --show-progress --gas-report -vvv  --fail-fast --sender ${PUBLIC_KEY}
 
 .PHONY: coverage ## run tests coverage report
 coverage:
@@ -50,7 +50,7 @@ coverage:
 	@forge coverage --report $(report)
 	@npx lcov-badge2 -o ./.github/workflows/cov-badge.svg lcov.info
 
-.PHONY: secreport ## generate a security analysis report using aderyn
+.PHONY: secreport ## generate a security analysis report using aderyn--verbose
 secreport:
 	@aderyn
 
