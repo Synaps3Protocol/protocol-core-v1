@@ -22,8 +22,8 @@ abstract contract BasePolicy is ReentrancyGuard, IPolicy, ERC165 {
     IAssetOwnership public immutable ASSET_OWNERSHIP;
 
     bool private _initialized;
-    /// @dev attestation registry
-    mapping(address => uint256) public attestations;
+    /// @dev attestation registry to store the relation between holder & account
+    mapping(address => mapping(address => uint256)) public attestations;
 
     /// @notice Emitted when an enforcement process is successfully completed for a given account and holder.
     /// @param holder The address of the rights holder managing the asset or access.
@@ -104,17 +104,11 @@ abstract contract BasePolicy is ReentrancyGuard, IPolicy, ERC165 {
         return _initialized;
     }
 
-    /// @notice Determines if the user has access to specific content based on `assetId`.
-    /// @dev By default, this function only checks if the account complies with attestation requirements.
-    function isAccessAllowed(address account, uint256) external view virtual returns (bool) {
-        // Default behavior: only check attestation compliance.
-        return isCompliant(account);
-    }
-
-    /// @notice Retrieves the attestation associated with a specific account.
-    /// @param recipient The address of the account involved in the attestation.
-    function getAttestation(address recipient) external view returns (uint256) {
-        return attestations[recipient];
+    /// @notice Retrieves the attestation associated with a specific account and rights holder.
+    /// @param recipient The address of the account for which the attestation is being retrieved.
+    /// @param holder The address of the rights holder with whom the agreement was made.
+    function getAttestation(address recipient, address holder) external view returns (uint256) {
+        return attestations[recipient][holder];
     }
 
     /// @notice Retrieves the terms associated with a specific rights holder.
@@ -128,6 +122,18 @@ abstract contract BasePolicy is ReentrancyGuard, IPolicy, ERC165 {
     /// @dev This function allows for querying policy terms based on the unique content identifier.
     /// @return A struct containing the terms applicable to the specified content ID.
     function resolveTerms(uint256) external view virtual returns (T.Terms memory) {
+        revert InvalidNotSupportedOperation();
+    }
+
+    /// @notice Verifies if a specific account has access to a particular asset based on `assetId`.
+    /// @dev Checks the access policy tied to the provided `assetId` to determine if the account has authorized access.
+    function isAccessAllowed(address, uint256) external view virtual returns (bool) {
+        revert InvalidNotSupportedOperation();
+    }
+
+    /// @notice Verifies if a specific account has general holder's access rights, without specifying an individual asset.
+    /// @dev This function can be used to check access for broader scopes, such as groups of content, subscriptions,etc.
+    function isAccessAllowed(address, address) external view virtual returns (bool) {
         revert InvalidNotSupportedOperation();
     }
 
@@ -147,11 +153,11 @@ abstract contract BasePolicy is ReentrancyGuard, IPolicy, ERC165 {
     /// @notice Verifies whether the on-chain access terms are satisfied for an account.
     /// @dev The function checks if the provided account complies with the attestation.
     /// @param account The address of the user whose access is being verified.
-    function isCompliant(address account) public view returns (bool) {
-        uint256 attestationId = attestations[account];
+    function isCompliant(address account, address holder) public view returns (bool) {
+        uint256 attestationId = attestations[account][holder];
         // default uint256 attestation is zero <- means not registered
         if (attestationId == 0) return false; // false if not registered
-        return ATTESTATION_PROVIDER.verify(attestationId, address(this), account);
+        return ATTESTATION_PROVIDER.verify(attestationId, account);
     }
 
     /// @notice Returns the asset holder registered in the ownership contract.
@@ -177,7 +183,7 @@ abstract contract BasePolicy is ReentrancyGuard, IPolicy, ERC165 {
     function _updateBatchAttestation(address holder, uint256 attestationId, address[] memory parties) private {
         uint256 partiesLen = parties.length;
         for (uint256 i = 0; i < partiesLen; i = i.uncheckedInc()) {
-            attestations[parties[i]] = attestationId;
+            attestations[parties[i]][holder] = attestationId;
             emit AccessGranted(holder, parties[i], attestationId);
         }
     }

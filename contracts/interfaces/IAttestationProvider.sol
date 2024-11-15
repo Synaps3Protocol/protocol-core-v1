@@ -18,7 +18,6 @@ interface IAttestationProvider {
 
     /// @notice Verifies the validity of an attestation for a given attester and recipient.
     /// @param attestationId The id of the attestation to verify.
-    /// @param attester The address of the original creator of the attestation.
     /// @param recipient The address of the recipient whose attestation is being verified.
-    function verify(uint256 attestationId, address attester, address recipient) external view returns (bool);
+    function verify(uint256 attestationId, address recipient) external view returns (bool);
 }

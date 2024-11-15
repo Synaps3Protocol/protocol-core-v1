@@ -37,12 +37,11 @@ contract SignGlobal is IAttestationProvider {
     function attest(address[] calldata recipients, uint256 expireAt, bytes calldata data) external returns (uint256) {
         Attestation memory a = Attestation({
             schemaId: SCHEMA_ID,
-            attester: msg.sender,
+            attester: address(this),
             attestTimestamp: 0,
             revokeTimestamp: 0,
             linkedAttestationId: 0,
             validUntil: uint64(expireAt),
-            // The attester expected always is the policy
             dataLocation: DataLocation.ONCHAIN,
             recipients: _convertAddressesToBytes(recipients),
             revoked: false,
@@ -55,16 +54,16 @@ contract SignGlobal is IAttestationProvider {
     }
 
     /// @notice Verifies the validity of an attestation for a given attester and recipient.
-    /// @param attester The address of the original creator of the attestation.
+    /// @param attestationId The id of the attestation to verify.
     /// @param recipient The address of the recipient whose attestation is being verified.
-    function verify(uint256 attestationId, address attester, address recipient) external view returns (bool) {
+    function verify(uint256 attestationId, address recipient) external view returns (bool) {
         // check attestation conditions..
         Attestation memory a = SPI_INSTANCE.getAttestation(uint64(attestationId));
         // is the same expected criteria as the registered in attestation?
         // is the attestation expired?
         // who emmited the attestation?
         if (a.validUntil > 0 && block.timestamp > a.validUntil) return false;
-        if (a.attester != attester) return false;
+        if (a.attester != address(this)) return false;
 
         // check if the recipient is listed
         uint256 len = a.recipients.length;

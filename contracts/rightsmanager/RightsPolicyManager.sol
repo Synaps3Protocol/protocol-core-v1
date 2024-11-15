@@ -62,6 +62,41 @@ contract RightsPolicyManager is Initializable, UUPSUpgradeable, AccessControlled
         return address(RIGHTS_AUTHORIZER);
     }
 
+    /// @notice Retrieves the list of policys associated with a specific account and content ID.
+    /// @param account The address of the account for which policies are being retrieved.
+    function getPolicies(address account) public view returns (address[] memory) {
+        // https://docs.openzeppelin.com/contracts/5.x/api/utils#EnumerableSet-values-struct-EnumerableSet-AddressSet-
+        // This operation will copy the entire storage to memory, which can be quite expensive.
+        // This is designed to mostly be used by view accessors that are queried without any gas fees.
+        // Developers should keep in mind that this function has an unbounded cost,
+        /// and using it as part of a state-changing function may render the function uncallable
+        /// if the set grows to a point where copying to memory consumes too much gas to fit in a block.
+        return _acl[account].values();
+    }
+
+    /// @notice Finalizes the agreement by registering the agreed-upon policy, effectively closing the agreement.
+    /// @dev This function verifies the policy's authorization, executes the agreement and registers the policy.
+    /// @param proof The unique identifier of the agreement to be enforced.
+    /// @param holder The rights holder whose authorization is required for accessing the asset.
+    /// @param policyAddress The address of the policy contract managing the agreement.
+    function registerPolicy(uint256 proof, address holder, address policyAddress) public returns (uint256) {
+        // 1- retrieves the agreement and marks it as settled..
+        T.Agreement memory agreement = RIGHTS_AGREEMENT.settleAgreement(proof, holder);
+        // 2- only authorized policies by holder can be registered..
+        if (!RIGHTS_AUTHORIZER.isPolicyAuthorized(policyAddress, holder)) {
+            revert InvalidNotRightsDelegated(policyAddress, holder);
+        }
+
+        // type safe low level call to policy
+        // the policy is registered to the parties..
+        (bool success, bytes memory result) = policyAddress.call(abi.encodeCall(IPolicy.enforce, (holder, agreement)));
+        if (!success) revert InvalidPolicyEnforcement("Error during policy enforcement call");
+        // expected returned attestation as agreement confirmation
+        uint256 attestationId = abi.decode(result, (uint256));
+        _registerBatchPolicies(proof, policyAddress, agreement.parties);
+        return attestationId;
+    }
+
     /// @notice Verifies if a specific policy is active for the provided account and criteria.
     /// @param account The address of the user whose compliance is being evaluated.
     /// @param assetId The identifier of the asset to validate the policy status.
@@ -92,41 +127,6 @@ contract RightsPolicyManager is Initializable, UUPSUpgradeable, AccessControlled
 
         // No active policy found
         return (false, address(0));
-    }
-
-    /// @notice Finalizes the agreement by registering the agreed-upon policy, effectively closing the agreement.
-    /// @dev This function verifies the policy's authorization, executes the agreement and registers the policy.
-    /// @param proof The unique identifier of the agreement to be enforced.
-    /// @param holder The rights holder whose authorization is required for accessing the asset.
-    /// @param policy The address of the policy contract managing the agreement.
-    function registerPolicy(uint256 proof, address holder, address policy) public returns (uint256) {
-        // 1- retrieves the agreement and marks it as settled..
-        T.Agreement memory agreement = RIGHTS_AGREEMENT.settleAgreement(proof, holder);
-        // 2- only authorized policies by holder can be registered..
-        if (!RIGHTS_AUTHORIZER.isPolicyAuthorized(policy, holder)) {
-            revert InvalidNotRightsDelegated(policy, holder);
-        }
-
-        // type safe low level call to policy
-        // the policy is registered to the parties..
-        (bool success, bytes memory result) = policy.call(abi.encodeCall(IPolicy.enforce, (holder, agreement)));
-        if (!success) revert InvalidPolicyEnforcement("Error during policy enforcement call");
-        // expected returned attestation as agreement confirmation
-        uint256 attestationId = abi.decode(result, (uint256));
-        _registerBatchPolicies(proof, policy, agreement.parties);
-        return attestationId;
-    }
-
-    /// @notice Retrieves the list of policys associated with a specific account and content ID.
-    /// @param account The address of the account for which policies are being retrieved.
-    function getPolicies(address account) public view returns (address[] memory) {
-        // https://docs.openzeppelin.com/contracts/5.x/api/utils#EnumerableSet-values-struct-EnumerableSet-AddressSet-
-        // This operation will copy the entire storage to memory, which can be quite expensive.
-        // This is designed to mostly be used by view accessors that are queried without any gas fees.
-        // Developers should keep in mind that this function has an unbounded cost,
-        /// and using it as part of a state-changing function may render the function uncallable
-        /// if the set grows to a point where copying to memory consumes too much gas to fit in a block.
-        return _acl[account].values();
     }
 
     /// @dev Authorizes the upgrade of the contract.

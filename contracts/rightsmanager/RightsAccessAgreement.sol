@@ -2,6 +2,7 @@
 // NatSpec format convention - https://docs.soliditylang.org/en/v0.5.10/natspec-format.html
 pragma solidity 0.8.26;
 
+import { EnumerableSet } from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 import { Initializable } from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import { UUPSUpgradeable } from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import { AccessControlledUpgradeable } from "contracts/base/upgradeable/AccessControlledUpgradeable.sol";
@@ -26,6 +27,7 @@ contract RightsAccessAgreement is
 {
     using FeesOps for uint256;
     using TreasuryOps for address;
+    using EnumerableSet for EnumerableSet.UintSet;
 
     /// KIM: any initialization here is ephimeral and not included in bytecode..
     /// so the code within a logic contract’s constructor or global declaration
@@ -37,10 +39,10 @@ contract RightsAccessAgreement is
     /// @custom:oz-upgrades-unsafe-allow state-variable-immutable
     ITollgate public immutable TOLLGATE;
 
-    // @dev Holds a bounded key expressing the agreement between the parts.
-    // The key is derived using keccak256 hashing of the account and the rights holder.
-    // This mapping stores active agreements, indexed by their unique proof.
+    /// @dev Holds a bounded key expressing the agreement between the parts.
     mapping(uint256 => T.Agreement) private _agreements;
+    /// @dev Holds a the list of actives proof for accounts.
+    mapping(address => EnumerableSet.UintSet) private _actives;
 
     /// @notice Emitted when an agreement is created.
     /// @param initiator The account that initiated or created the agreement.
@@ -137,6 +139,12 @@ contract RightsAccessAgreement is
         return agreement;
     }
 
+    /// @notice Retrieves the list of active proofs associated with a specific account.
+    /// @param account The address of the account whose active proofs are being queried.
+    function getActiveProofs(address account) public view returns (uint256[] memory) {
+        return _actives[account].values();
+    }
+
     /// @notice Retrieves the details of an agreement based on the provided proof.
     /// @param proof The unique identifier (hash) of the agreement.
     function getAgreement(uint256 proof) public view returns (T.Agreement memory) {
@@ -222,12 +230,14 @@ contract RightsAccessAgreement is
     /// @dev Set the agreement relation with proof in storage.
     function _storeAgreement(uint256 proof, T.Agreement memory agreement) private {
         _agreements[proof] = agreement; // store agreement..
+        _actives[agreement.initiator].add(proof);
     }
 
     /// @dev Marks an agreement as inactive, effectively closing it.
     function _closeAgreement(uint256 proof) private returns (T.Agreement storage) {
         // retrieve the agreement to storage to inactivate it and return it
         T.Agreement storage agreement = _agreements[proof];
+        _actives[agreement.initiator].remove(proof);
         agreement.active = false;
         return agreement;
     }
