@@ -4,10 +4,10 @@ pragma solidity 0.8.26;
 import { UUPSUpgradeable } from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import { Initializable } from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 
-import { AccessControlledUpgradeable } from "contracts/base/upgradeable/AccessControlledUpgradeable.sol";
-import { IAssetOwnership } from "contracts/interfaces/assets/IAssetOwnership.sol";
-import { IAssetVault } from "contracts/interfaces/assets/IAssetVault.sol";
-import { T } from "contracts/libraries/Types.sol";
+import { AccessControlledUpgradeable } from "contracts/core/primitives/upgradeable/AccessControlledUpgradeable.sol";
+import { IAssetOwnership } from "contracts/core/interfaces/assets/IAssetOwnership.sol";
+import { IAssetVault } from "contracts/core/interfaces/assets/IAssetVault.sol";
+import { T } from "contracts/core/primitives/Types.sol";
 
 /// @notice This contract is designed as a secure and decentralized area to exchange complementary data related to
 /// content access, such as encrypted keys, license keys, or metadata. It does not store the actual content itself,

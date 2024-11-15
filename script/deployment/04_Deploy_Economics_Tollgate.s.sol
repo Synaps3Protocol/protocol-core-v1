@@ -3,8 +3,8 @@ pragma solidity 0.8.26;
 
 import { DeployBase } from "script/deployment/00_Deploy_Base.s.sol";
 import { Tollgate } from "contracts/economics/Tollgate.sol";
-import { IAccessManager } from "contracts/interfaces/access/IAccessManager.sol";
-import { C } from "contracts/libraries/Constants.sol";
+import { IAccessManager } from "contracts/core/interfaces/access/IAccessManager.sol";
+import { C } from "contracts/core/primitives/Constants.sol";
 
 contract DeployTollgate is DeployBase {
     function run() external returns (address) {

@@ -3,16 +3,16 @@ pragma solidity 0.8.26;
 
 import "forge-std/Test.sol";
 import { IERC20 } from "@openzeppelin/contracts/interfaces/IERC20.sol";
-import { ITreasury } from "contracts/interfaces/economics/ITreasury.sol";
-import { ITollgate } from "contracts/interfaces/economics/ITollgate.sol";
-import { IDistributorVerifiable } from "contracts/interfaces/syndication/IDistributorVerifiable.sol";
-import { IDistributorExpirable } from "contracts/interfaces/syndication/IDistributorExpirable.sol";
-import { IDistributorRegistrable } from "contracts/interfaces/syndication/IDistributorRegistrable.sol";
-import { IDistributorFactory } from "contracts/interfaces/syndication/IDistributorFactory.sol";
+import { ITreasury } from "contracts/core/interfaces/economics/ITreasury.sol";
+import { ITollgate } from "contracts/core/interfaces/economics/ITollgate.sol";
+import { IDistributorVerifiable } from "contracts/core/interfaces/syndication/IDistributorVerifiable.sol";
+import { IDistributorExpirable } from "contracts/core/interfaces/syndication/IDistributorExpirable.sol";
+import { IDistributorRegistrable } from "contracts/core/interfaces/syndication/IDistributorRegistrable.sol";
+import { IDistributorFactory } from "contracts/core/interfaces/syndication/IDistributorFactory.sol";
 
 import { BaseTest } from "test/BaseTest.t.sol";
 import { DistributorReferendum } from "contracts/syndication/DistributorReferendum.sol";
-import { T } from "contracts/libraries/Types.sol";
+import { T } from "contracts/core/primitives/Types.sol";
 
 contract DistributorReferendumTest is BaseTest {
     address distributor;

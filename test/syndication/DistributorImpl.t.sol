@@ -4,10 +4,10 @@ pragma solidity 0.8.26;
 import "forge-std/Test.sol";
 import { IERC165 } from "@openzeppelin/contracts/interfaces/IERC165.sol";
 import { IERC20 } from "@openzeppelin/contracts/interfaces/IERC20.sol";
-import { IDistributor } from "contracts/interfaces/syndication/IDistributor.sol";
-import { IBalanceVerifiable } from "contracts/interfaces/IBalanceVerifiable.sol";
-import { IBalanceWithdrawable } from "contracts/interfaces/IBalanceWithdrawable.sol";
-import { IDistributorFactory } from "contracts/interfaces/syndication/IDistributorFactory.sol";
+import { IDistributor } from "contracts/core/interfaces/syndication/IDistributor.sol";
+import { IBalanceVerifiable } from "contracts/core/interfaces/IBalanceVerifiable.sol";
+import { IBalanceWithdrawable } from "contracts/core/interfaces/IBalanceWithdrawable.sol";
+import { IDistributorFactory } from "contracts/core/interfaces/syndication/IDistributorFactory.sol";
 import { BaseTest } from "test/BaseTest.t.sol";
 
 contract DistributorImplTest is BaseTest {

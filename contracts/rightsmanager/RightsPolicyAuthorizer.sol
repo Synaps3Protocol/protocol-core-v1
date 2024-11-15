@@ -5,11 +5,11 @@ pragma solidity 0.8.26;
 import { Initializable } from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import { EnumerableSet } from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 import { UUPSUpgradeable } from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
-import { AccessControlledUpgradeable } from "contracts/base/upgradeable/AccessControlledUpgradeable.sol";
+import { AccessControlledUpgradeable } from "contracts/core/primitives/upgradeable/AccessControlledUpgradeable.sol";
 
-import { IPolicy } from "contracts/interfaces/policies/IPolicy.sol";
-import { IRightsPolicyAuthorizer } from "contracts/interfaces/rightsmanager/IRightsPolicyAuthorizer.sol";
-import { IPolicyAuditorVerifiable } from "contracts/interfaces/policies/IPolicyAuditorVerifiable.sol";
+import { IPolicy } from "contracts/core/interfaces/policies/IPolicy.sol";
+import { IRightsPolicyAuthorizer } from "contracts/core/interfaces/rightsmanager/IRightsPolicyAuthorizer.sol";
+import { IPolicyAuditorVerifiable } from "contracts/core/interfaces/policies/IPolicyAuditorVerifiable.sol";
 
 contract RightsPolicyAuthorizer is
     Initializable,

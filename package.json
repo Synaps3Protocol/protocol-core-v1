@@ -1,5 +1,5 @@
 {
-  "name": "hardhat-project",
+  "name": "synapse-core",
   "devDependencies": {
     "dotenv": "^16.4.5",
     "prettier-plugin-solidity": "^1.4.1",

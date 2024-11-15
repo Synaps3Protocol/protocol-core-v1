@@ -2,10 +2,10 @@
 pragma solidity 0.8.26;
 import "forge-std/Script.sol";
 
-import { IAccessManager } from "contracts/interfaces/access/IAccessManager.sol";
-import { ITollgate } from "contracts/interfaces/economics/ITollgate.sol";
-import { C } from "contracts/libraries/Constants.sol";
-import { T } from "contracts/libraries/Types.sol";
+import { IAccessManager } from "contracts/core/interfaces/access/IAccessManager.sol";
+import { ITollgate } from "contracts/core/interfaces/economics/ITollgate.sol";
+import { C } from "contracts/core/primitives/Constants.sol";
+import { T } from "contracts/core/primitives/Types.sol";
 
 import { getGovPermissions as TollgateGovPermissions } from "script/permissions/Permissions_Tollgate.sol";
 import { getGovPermissions as TreasuryGovPermissions } from "script/permissions/Permissions_Treasury.sol";

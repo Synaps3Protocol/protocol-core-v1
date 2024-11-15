@@ -18,8 +18,8 @@ import {getGovPermissions as TreasuryGovPermissions} from "script/permissions/Pe
 import {getGovPermissions as DistributorReferendumGovPermissions} from "script/permissions/Permissions_DistributorReferendum.sol";
 import {getGovPermissions as AssetReferendumGovPermissions} from "script/permissions/Permissions_AssetReferendum.sol";
 
-import { IAccessManager } from "contracts/interfaces/access/IAccessManager.sol";
-import { C } from "contracts/libraries/Constants.sol";
+import { IAccessManager } from "contracts/core/interfaces/access/IAccessManager.sol";
+import { C } from "contracts/core/primitives/Constants.sol";
 
 import {console} from "forge-std/console.sol";
 
