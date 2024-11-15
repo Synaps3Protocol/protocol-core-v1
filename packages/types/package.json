@@ -1,0 +1,28 @@
+{
+  "name": "@synaps3/types",
+  "version": "1.0.3",
+  "description": "Essential interfaces and types for Synapse Protocol.",
+  "homepage": "https://github.com/Synaps3Protocol/protocol-core-v1#readme",
+  "bugs": {
+    "url": "https://github.com/Synaps3Protocol/protocol-core-v1/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Synaps3Protocol/protocol-core-v1.git"
+  },
+  "files": [
+    "contracts/core/interfaces/**/*.sol",
+    "contracts/core/primitives/Types.sol",
+    "contracts/core/primitives/Constants.sol"
+  ],
+  "keywords": [
+    "solidity",
+    "ethereum",
+    "smart contracts",
+    "distribution",
+    "ip",
+    "intellectual property",
+    "monetization",
+    "access control"
+  ]
+}

@@ -1,6 +1,6 @@
 {
   "name": "@synaps3/protocol",
-  "version": "1.0.7",
+  "version": "1.0.8",
   "description": "Core contracts for the Synapse Protocol",
   "homepage": "https://github.com/Synaps3Protocol/protocol-core-v1#readme",
   "bugs": {
@@ -11,10 +11,7 @@
     "url": "git+https://github.com/Synaps3Protocol/protocol-core-v1.git"
   },
   "files": [
-    "contracts/core/interfaces/**/*.sol",
-    "contracts/core/libraries/**/*.sol",
-    "contracts/core/primitives/Types.sol",
-    "contracts/core/primitives/Constants.sol"
+    "contracts/**/*.sol"
   ],
   "keywords": [
     "solidity",
