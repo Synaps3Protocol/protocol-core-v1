@@ -12,6 +12,10 @@ interface IRightsAccessAgreement {
     /// @param counterparty The address that will receive the funds upon settlement.
     function settleAgreement(uint256 proof, address counterparty) external returns (T.Agreement memory);
 
+    /// @notice Allows the initiator to quit the agreement and receive the committed funds.
+    /// @param proof The unique identifier of the agreement.
+    function quitAgreement(uint256 proof) external returns (T.Agreement memory);
+
     /// @notice Creates and stores a new agreement.
     /// @param amount The total amount committed.
     /// @param currency The currency used for the agreement.
@@ -44,7 +48,7 @@ interface IRightsAccessAgreement {
     /// @param proof The unique identifier (hash) of the agreement.
     function getAgreement(uint256 proof) external view returns (T.Agreement memory);
 
-    /// @notice Allows the initiator to quit the agreement and receive the committed funds.
-    /// @param proof The unique identifier of the agreement.
-    function quitAgreement(uint256 proof) external returns (T.Agreement memory);
+    /// @notice Retrieves the list of active proofs associated with a specific account.
+    /// @param account The address of the account whose active proofs are being queried.
+    function getActiveProofs(address account) external view returns (uint256[] memory);
 }

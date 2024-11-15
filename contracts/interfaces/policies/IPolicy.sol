@@ -27,6 +27,29 @@ interface IPolicy {
     /// @param agreement An object containing the terms agreed upon between the asset holder and the user.
     function enforce(address holder, T.Agreement calldata agreement) external returns (uint256);
 
+    /// @notice Retrieves the address of the attestation provider.
+    /// @return The address of the provider associated with the policy.
+    function getAttestationProvider() external view returns (address);
+
+    /// @notice Retrieves the attestation associated with a specific account and rights holder.
+    /// @param recipient The address of the account for which the attestation is being retrieved.
+    /// @param holder The address of the rights holder with whom the agreement was made.
+    function getAttestation(address recipient, address holder) external view returns (uint256);
+
+    /// @notice Verifies if a specific account has access rights to a particular asset based on `assetId`.
+    /// @dev Checks the access policy tied to the provided `assetId` to determine if the account has authorized access.
+    /// @param account The address of the user whose access rights are being verified.
+    /// @param assetId The unique identifier of the asset being checked.
+    /// @return A boolean value: true if the account has access to the specified asset; otherwise, false.
+    function isAccessAllowed(address account, uint256 assetId) external view returns (bool);
+
+    /// @notice Verifies if a specific account has general holder's access rights.
+    /// @dev This function can be used to check access for broader scopes, such as groups, subscriptions,etc.
+    /// @param account The address of the user whose general access rights are being verified.
+    /// @param holder The address of the rigths holder.
+    /// @return A boolean value: true if the account has general access to holder's rights; otherwise, false.
+    function isAccessAllowed(address account, address holder) external view returns (bool);
+
     /// @notice Retrieves the terms associated with a specific rights holder.
     /// @dev This function provides access to policy terms based on the rights holder's address.
     ///      It allows for querying conditions and permissions applicable to the holder.
@@ -40,18 +63,4 @@ interface IPolicy {
     /// @param assetId The unique identifier of the asset for which terms are being resolved.
     /// @return A struct containing the terms applicable to the specified content ID.
     function resolveTerms(uint256 assetId) external view returns (T.Terms memory);
-
-    /// @notice Retrieves the address of the attestation provider.
-    /// @return The address of the provider associated with the policy.
-    function getAttestationProvider() external view returns (address);
-
-    /// @notice Retrieves the attestation associated with a specific account.
-    /// @param recipient The address of the account involved in the attestation.
-    function getAttestation(address recipient) external view returns (uint256);
-
-    /// @notice Determines if the user has access to specific content based on `assetId`.
-    /// @dev Evaluates the provided `assetId` and returns true if access is allowed.
-    /// @param account The user address whose access is being checked.
-    /// @param assetId The unique identifier of the asset to verify access for.
-    function isAccessAllowed(address account, uint256 assetId) external view returns (bool);
 }

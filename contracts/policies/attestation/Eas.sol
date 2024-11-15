@@ -67,9 +67,9 @@ contract EAS is IAttestationProvider {
     }
 
     /// @notice Verifies the validity of an attestation for a given attester and recipient.
-    /// @param attester The address of the original creator of the attestation.
+    /// @param attestationId The id of the attestation to verify.
     /// @param recipient The address of the recipient whose attestation is being verified.
-    function verify(uint256 attestationId, address attester, address recipient) external view returns (bool) {
+    function verify(uint256 attestationId, address recipient) external view returns (bool) {
         // check attestation conditions..
         // attestationId here is expected as global
         bytes32 uid = attestations[recipient][attestationId];
@@ -78,7 +78,7 @@ contract EAS is IAttestationProvider {
         // is the attestation expired?
         // who emmited the attestation?
         if (a.expirationTime > 0 && block.timestamp > a.expirationTime) return false;
-        if (a.attester != attester) return false;
+        if (a.attester != address(this)) return false;
         // check if the recipient is listed
         return recipient == a.recipient;
     }

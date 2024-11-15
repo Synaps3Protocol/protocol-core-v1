@@ -9,7 +9,7 @@ import { T } from "contracts/libraries/Types.sol";
 contract SubscriptionPolicy is BasePolicy {
     /// @dev Structure to define a subscription package.
     struct Package {
-        uint256 pricePerDay; // Price of the subscription package.
+        uint256 pricePerDay;
         address currency;
     }
 
@@ -52,25 +52,54 @@ contract SubscriptionPolicy is BasePolicy {
         T.Agreement calldata agreement
     ) external onlyPolicyManager initialized returns (uint256) {
         Package memory pkg = _packages[holder];
-        // we need to be sure the user paid for the total of the package..
-        uint256 paymentPerAccount = agreement.amount / agreement.parties.length;
-        // expected payment per day per account
-        uint256 subscriptionDuration = paymentPerAccount / pkg.pricePerDay;
-        // total to pay for the total of subscriptions
-        // TODO log decay days > more days, less price
-        uint256 total = (subscriptionDuration * pkg.pricePerDay) * agreement.parties.length;
-        if (agreement.amount < total) revert InvalidEnforcement("Insufficient funds for subscription");
+        if (pkg.pricePerDay == 0) {
+            // if the holder has not set the package details, can not process the agreement
+            revert InvalidEnforcement("Invalid not initialized holder conditions");
+        }
 
+        uint256 paidAmount = agreement.amount;
+        uint256 partiesLen = agreement.parties.length;
+        uint256 pricePerDay = pkg.pricePerDay;
+        // verify if the paid amount is valid based on total expected + parties
+        uint256 duration = _verifyDaysFromAmount(paidAmount, pricePerDay, partiesLen);
         // subscribe to content owner's catalog (content package)
-        uint256 subExpire = block.timestamp + (subscriptionDuration * 1 days);
+        uint256 subExpire = block.timestamp + (duration * 1 days);
         // the agreement is stored in an attestation signed registry
         // the recipients is the list of benefitians of the agreement
         return _commit(holder, agreement, subExpire);
     }
 
+    /// @notice Verifies if a specific account has access to a particular asset based on `assetId`.
+    function isAccessAllowed(address account, uint256 assetId) external view override returns (bool) {
+        // Default behavior: only check attestation compliance.
+        address holder = getHolder(assetId);
+        return isCompliant(account, holder);
+    }
+
+    /// @notice Verifies if a specific account has general access holder's rights .
+    function isAccessAllowed(address account, address holder) external view override returns (bool) {
+        // Default behavior: only check attestation compliance.
+        return isCompliant(account, holder);
+    }
+
     /// @notice Retrieves the terms associated with a specific rights holder.
     function resolveTerms(address holder) external view override returns (T.Terms memory) {
         Package memory pkg = _packages[holder]; // the term set by the asset holder
-        return T.Terms(pkg.currency, pkg.pricePerDay, T.RateBasis.DAILY, "ipfs://");
+        return T.Terms(pkg.pricePerDay, pkg.currency, T.RateBasis.DAILY, "ipfs://");
+    }
+
+    function _verifyDaysFromAmount(
+        uint256 amount,
+        uint256 pricePerDay,
+        uint256 partiesLen
+    ) private pure returns (uint256) {
+        // we need to be sure the user paid for the total of the package..
+        uint256 paymentPerAccount = amount / partiesLen;
+        // expected payment per day per account
+        uint256 subscriptionDuration = paymentPerAccount / pricePerDay;
+        // total to pay for the total of subscriptions
+        uint256 total = (subscriptionDuration * pricePerDay) * partiesLen;
+        if (amount < total) revert InvalidEnforcement("Insufficient funds for subscription");
+        return subscriptionDuration;
     }
 }
