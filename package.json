@@ -1,28 +1,31 @@
 {
   "name": "@synaps3/protocol",
-  "version": "1.0.3",
+  "version": "1.0.7",
   "description": "Core contracts for the Synapse Protocol",
+  "homepage": "https://github.com/Synaps3Protocol/protocol-core-v1#readme",
   "bugs": {
     "url": "https://github.com/Synaps3Protocol/protocol-core-v1/issues"
   },
-  "files": [
-    "/contracts/**/*.sol"
-  ],
   "repository": {
     "type": "git",
     "url": "git+https://github.com/Synaps3Protocol/protocol-core-v1.git"
   },
+  "files": [
+    "contracts/core/interfaces/**/*.sol",
+    "contracts/core/libraries/**/*.sol",
+    "contracts/core/primitives/Types.sol",
+    "contracts/core/primitives/Constants.sol"
+  ],
   "keywords": [
     "solidity",
     "ethereum",
-    "smart",
-    "contracts",
-    "distribution",
+    "smart contracts",
+    "protocol",
     "ip",
-    "property",
     "monetization",
-    "distribution",
-    "intellectual"
+    "access control",
+    "decentralized",
+    "intellectual property"
   ],
   "devDependencies": {
     "dotenv": "^16.4.5",
@@ -38,16 +41,5 @@
     "@openzeppelin/contracts": "^5.0.2",
     "@openzeppelin/contracts-upgradeable": "^5.0.2",
     "@openzeppelin/upgrades-core": "^1.40.0"
-  },
-  "main": "index.js",
-  "directories": {
-    "lib": "lib",
-    "test": "test"
-  },
-  "scripts": {
-    "test": "mocha"
-  },
-  "author": "",
-  "license": "ISC",
-  "homepage": "https://github.com/Synaps3Protocol/protocol-core-v1#readme"
+  }
 }
