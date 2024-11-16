@@ -1,6 +1,6 @@
 {
   "name": "@synaps3/protocol",
-  "version": "1.0.8",
+  "version": "1.0.9",
   "description": "Core contracts for the Synapse Protocol",
   "devDependencies": {
     "dotenv": "^16.4.5",
