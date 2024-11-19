@@ -86,7 +86,7 @@ keysenv:
 
 .PHONY: deploy ## deploy contract
 deploy: 
-	@forge script --chain $(network) script/$(script) --rpc-url $(network) --broadcast --verify --private-key ${PRIVATE_KEY} --slow 
+	@forge script --chain $(network) script/$(script) --rpc-url $(network) --broadcast --verify --private-key ${PRIVATE_KEY}
 
 .PHONY: publish-package ## publish npm package
 publish-package: 
