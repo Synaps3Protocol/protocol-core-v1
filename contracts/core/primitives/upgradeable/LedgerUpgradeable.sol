@@ -3,7 +3,7 @@
 pragma solidity 0.8.26;
 
 import { Initializable } from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
-import { ILedgerVerifiable } from "contracts/core/interfaces/ILedgerVerifiable.sol";
+import { ILedgerVerifiable } from "@synaps3/core/interfaces/ILedgerVerifiable.sol";
 
 /// @title LedgerUpgradeable
 /// @notice Abstract contract for managing accounts ledger that support upgradability.

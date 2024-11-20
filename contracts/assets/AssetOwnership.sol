@@ -8,9 +8,9 @@ import { UUPSUpgradeable } from "@openzeppelin/contracts-upgradeable/proxy/utils
 import { ERC721Upgradeable } from "@openzeppelin/contracts-upgradeable/token/ERC721/ERC721Upgradeable.sol";
 // solhint-disable-next-line max-line-length
 import { ERC721EnumerableUpgradeable } from "@openzeppelin/contracts-upgradeable/token/ERC721/extensions/ERC721EnumerableUpgradeable.sol";
-import { AccessControlledUpgradeable } from "contracts/core/primitives/upgradeable/AccessControlledUpgradeable.sol";
-import { IAssetVerifiable } from "contracts/core/interfaces/assets/IAssetVerifiable.sol";
-import { IAssetOwnership } from "contracts/core/interfaces/assets/IAssetOwnership.sol";
+import { AccessControlledUpgradeable } from "@synaps3/core/primitives/upgradeable/AccessControlledUpgradeable.sol";
+import { IAssetVerifiable } from "@synaps3/core/interfaces/assets/IAssetVerifiable.sol";
+import { IAssetOwnership } from "@synaps3/core/interfaces/assets/IAssetOwnership.sol";
 
 // TODO imp ERC404
 // TODO imp EIP4337 accounting

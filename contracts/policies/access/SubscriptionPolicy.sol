@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.26;
 
-import { BasePolicy } from "contracts/policies/BasePolicy.sol";
-import { T } from "contracts/core/primitives/Types.sol";
+import { BasePolicy } from "@synaps3/policies/BasePolicy.sol";
+import { T } from "@synaps3/core/primitives/Types.sol";
 
 /// @title SubscriptionPolicy
 /// @notice Implements a subscription-based content access policy.

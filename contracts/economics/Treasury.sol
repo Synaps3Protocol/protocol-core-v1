@@ -6,13 +6,13 @@ import { Initializable } from "@openzeppelin/contracts-upgradeable/proxy/utils/I
 import { UUPSUpgradeable } from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 // solhint-disable-next-line max-line-length
 import { ReentrancyGuardTransientUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardTransientUpgradeable.sol";
-import { AccessControlledUpgradeable } from "contracts/core/primitives/upgradeable/AccessControlledUpgradeable.sol";
-import { LedgerUpgradeable } from "contracts/core/primitives/upgradeable/LedgerUpgradeable.sol";
+import { AccessControlledUpgradeable } from "@synaps3/core/primitives/upgradeable/AccessControlledUpgradeable.sol";
+import { LedgerUpgradeable } from "@synaps3/core/primitives/upgradeable/LedgerUpgradeable.sol";
 
-import { IFeesCollector } from "contracts/core/interfaces/economics/IFeesCollector.sol";
-import { ITreasury } from "contracts/core/interfaces/economics/ITreasury.sol";
-import { TreasuryOps } from "contracts/core/libraries/TreasuryOps.sol";
-import { LoopOps } from "contracts/core/libraries/LoopOps.sol";
+import { IFeesCollector } from "@synaps3/core/interfaces/economics/IFeesCollector.sol";
+import { ITreasury } from "@synaps3/core/interfaces/economics/ITreasury.sol";
+import { TreasuryOps } from "@synaps3/core/libraries/TreasuryOps.sol";
+import { LoopOps } from "@synaps3/core/libraries/LoopOps.sol";
 
 // TODO payment splitter
 // TODO aca se puede tener un metodo que collecte todos los fees

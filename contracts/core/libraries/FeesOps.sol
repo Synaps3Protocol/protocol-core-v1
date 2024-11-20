@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.26;
 
-import { C } from "contracts/core/primitives/Constants.sol";
+import { C } from "@synaps3/core/primitives/Constants.sol";
 
 /// @title FeesOps
 /// @notice Library for handling fee-related calculations and operations.

@@ -5,11 +5,11 @@ pragma solidity 0.8.26;
 import { EnumerableSet } from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 import { Initializable } from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import { UUPSUpgradeable } from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
-import { AccessControlledUpgradeable } from "contracts/core/primitives/upgradeable/AccessControlledUpgradeable.sol";
-import { IDistributorVerifiable } from "contracts/core/interfaces/syndication/IDistributorVerifiable.sol";
-import { IRightsAssetCustodian } from "contracts/core/interfaces/rights/IRightsAssetCustodian.sol";
+import { AccessControlledUpgradeable } from "@synaps3/core/primitives/upgradeable/AccessControlledUpgradeable.sol";
+import { IDistributorVerifiable } from "@synaps3/core/interfaces/syndication/IDistributorVerifiable.sol";
+import { IRightsAssetCustodian } from "@synaps3/core/interfaces/rights/IRightsAssetCustodian.sol";
 
-import { C } from "contracts/core/primitives/Constants.sol";
+import { C } from "@synaps3/core/primitives/Constants.sol";
 
 contract RightsAssetCustodian is Initializable, UUPSUpgradeable, AccessControlledUpgradeable, IRightsAssetCustodian {
     using EnumerableSet for EnumerableSet.AddressSet;

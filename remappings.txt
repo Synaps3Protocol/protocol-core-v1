@@ -1,3 +1,4 @@
+@synaps3/=contracts/
 @ethereum-attestation-service/=node_modules/@ethereum-attestation-service/
 @ethsign/=node_modules/@ethsign/
 @openzeppelin/=node_modules/@openzeppelin/

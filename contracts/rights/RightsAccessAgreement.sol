@@ -5,17 +5,17 @@ pragma solidity 0.8.26;
 import { EnumerableSet } from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 import { Initializable } from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import { UUPSUpgradeable } from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
-import { AccessControlledUpgradeable } from "contracts/core/primitives/upgradeable/AccessControlledUpgradeable.sol";
+import { AccessControlledUpgradeable } from "@synaps3/core/primitives/upgradeable/AccessControlledUpgradeable.sol";
 // solhint-disable-next-line max-line-length
 import { ReentrancyGuardTransientUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardTransientUpgradeable.sol";
-import { FeesCollectorUpgradeable } from "contracts/core/primitives/upgradeable/FeesCollectorUpgradeable.sol";
+import { FeesCollectorUpgradeable } from "@synaps3/core/primitives/upgradeable/FeesCollectorUpgradeable.sol";
 
-import { IRightsAccessAgreement } from "contracts/core/interfaces/rights/IRightsAccessAgreement.sol";
-import { ITollgate } from "contracts/core/interfaces/economics/ITollgate.sol";
-import { ITreasury } from "contracts/core/interfaces/economics/ITreasury.sol";
-import { TreasuryOps } from "contracts/core/libraries/TreasuryOps.sol";
-import { FeesOps } from "contracts/core/libraries/FeesOps.sol";
-import { T } from "contracts/core/primitives/Types.sol";
+import { IRightsAccessAgreement } from "@synaps3/core/interfaces/rights/IRightsAccessAgreement.sol";
+import { ITollgate } from "@synaps3/core/interfaces/economics/ITollgate.sol";
+import { ITreasury } from "@synaps3/core/interfaces/economics/ITreasury.sol";
+import { TreasuryOps } from "@synaps3/core/libraries/TreasuryOps.sol";
+import { FeesOps } from "@synaps3/core/libraries/FeesOps.sol";
+import { T } from "@synaps3/core/primitives/Types.sol";
 
 contract RightsAccessAgreement is
     Initializable,

@@ -4,12 +4,12 @@ pragma solidity 0.8.26;
 
 import { ERC165 } from "@openzeppelin/contracts/utils/introspection/ERC165.sol";
 import { ReentrancyGuard } from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
-import { IAssetOwnership } from "contracts/core/interfaces/assets/IAssetOwnership.sol";
-import { IRightsPolicyManager } from "contracts/core/interfaces/rights/IRightsPolicyManager.sol";
-import { IAttestationProvider } from "contracts/core/interfaces/IAttestationProvider.sol";
-import { IPolicy } from "contracts/core/interfaces/policies/IPolicy.sol";
-import { LoopOps } from "contracts/core/libraries/LoopOps.sol";
-import { T } from "contracts/core/primitives/Types.sol";
+import { IAssetOwnership } from "@synaps3/core/interfaces/assets/IAssetOwnership.sol";
+import { IRightsPolicyManager } from "@synaps3/core/interfaces/rights/IRightsPolicyManager.sol";
+import { IAttestationProvider } from "@synaps3/core/interfaces/IAttestationProvider.sol";
+import { IPolicy } from "@synaps3/core/interfaces/policies/IPolicy.sol";
+import { LoopOps } from "@synaps3/core/libraries/LoopOps.sol";
+import { T } from "@synaps3/core/primitives/Types.sol";
 
 /// @title BasePolicy
 /// @notice This abstract contract serves as a base for policies that manage access to content.

@@ -1,6 +1,11 @@
 {
     "solidity.compileUsingRemoteVersion": "v0.8.26+commit.8a97fa7a",
     "cSpell.words": [
-        "multicurrency"
+        "Initializable",
+        "multicurrency",
+        "Reentrancy",
+        "solhint",
+        "synaps",
+        "UUPS"
     ]
 }

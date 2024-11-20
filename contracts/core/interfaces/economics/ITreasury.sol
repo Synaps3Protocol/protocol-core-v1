@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.26;
 
-import { IBalanceWithdrawable } from "contracts/core/interfaces/IBalanceWithdrawable.sol";
+import { IBalanceWithdrawable } from "@synaps3/core/interfaces/IBalanceWithdrawable.sol";
 
 /// @title ITreasury Interface
 /// @notice Defines the standard functions for a Treasury contract.

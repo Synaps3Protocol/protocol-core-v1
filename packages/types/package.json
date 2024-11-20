@@ -1,26 +1,26 @@
 {
-  "name": "@synaps3/types",
-  "version": "1.0.8",
-  "description": "Essential interfaces and types for Synapse Protocol.",
-  "homepage": "https://github.com/Synaps3Protocol/protocol-core-v1#readme",
-  "bugs": {
-    "url": "https://github.com/Synaps3Protocol/protocol-core-v1/issues"
-  },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/Synaps3Protocol/protocol-core-v1.git"
-  },
-  "files": [
-    "contracts/core//**/*.sol"
-  ],
-  "keywords": [
-    "solidity",
-    "ethereum",
-    "smart contracts",
-    "distribution",
-    "ip",
-    "intellectual property",
-    "monetization",
-    "access control"
-  ]
-}
+    "name": "@synaps3/types",
+    "version": "1.0.9",
+    "description": "Essential interfaces and types for Synapse Protocol.",
+    "homepage": "https://github.com/Synaps3Protocol/protocol-core-v1#readme",
+    "bugs": {
+      "url": "https://github.com/Synaps3Protocol/protocol-core-v1/issues"
+    },
+    "repository": {
+      "type": "git",
+      "url": "git+https://github.com/Synaps3Protocol/protocol-core-v1.git"
+    },
+    "files": [
+      "contracts/core/**/*.sol"
+    ],
+    "keywords": [
+      "solidity",
+      "ethereum",
+      "smart contracts",
+      "distribution",
+      "ip",
+      "intellectual property",
+      "monetization",
+      "access control"
+    ]
+  }
