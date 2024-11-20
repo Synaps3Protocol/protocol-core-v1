@@ -1,5 +1,6 @@
 @ethereum-attestation-service/=node_modules/@ethereum-attestation-service/
 @ethsign/=node_modules/@ethsign/
+@synaps3/=contracts/
 @openzeppelin/=node_modules/@openzeppelin/
 ds-test/=lib/openzeppelin-foundry-upgrades/lib/solidity-stringutils/lib/ds-test/src/
 forge-std/=lib/forge-std/src/
