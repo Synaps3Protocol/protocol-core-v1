@@ -5,8 +5,8 @@ import { IEAS } from "@ethereum-attestation-service/eas-contracts/contracts/IEAS
 import { Attestation } from "@ethereum-attestation-service/eas-contracts/contracts/IEAS.sol";
 import { MultiAttestationRequest } from "@ethereum-attestation-service/eas-contracts/contracts/IEAS.sol";
 import { AttestationRequestData } from "@ethereum-attestation-service/eas-contracts/contracts/IEAS.sol";
-import { IAttestationProvider } from "contracts/core/interfaces/IAttestationProvider.sol";
-import { LoopOps } from "contracts/core/libraries/LoopOps.sol";
+import { IAttestationProvider } from "@synaps3/core/interfaces/IAttestationProvider.sol";
+import { LoopOps } from "@synaps3/core/libraries/LoopOps.sol";
 
 contract EAS is IAttestationProvider {
     using LoopOps for uint256;

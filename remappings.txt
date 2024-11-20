@@ -1,6 +1,6 @@
+@synaps3/=contracts/
 @ethereum-attestation-service/=node_modules/@ethereum-attestation-service/
 @ethsign/=node_modules/@ethsign/
-@synaps3/=contracts/
 @openzeppelin/=node_modules/@openzeppelin/
 ds-test/=lib/openzeppelin-foundry-upgrades/lib/solidity-stringutils/lib/ds-test/src/
 forge-std/=lib/forge-std/src/
@@ -8,4 +8,3 @@ hardhat/=node_modules/hardhat/
 openzeppelin-foundry-upgrades/=lib/openzeppelin-foundry-upgrades/src/
 solady/=lib/solady/src/
 solidity-stringutils/=lib/openzeppelin-foundry-upgrades/lib/solidity-stringutils/
-`

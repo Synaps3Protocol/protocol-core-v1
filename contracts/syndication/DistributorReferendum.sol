@@ -7,16 +7,16 @@ import { UUPSUpgradeable } from "@openzeppelin/contracts-upgradeable/proxy/utils
 import { Initializable } from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 // solhint-disable-next-line max-line-length
 import { ReentrancyGuardTransientUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardTransientUpgradeable.sol";
-import { AccessControlledUpgradeable } from "contracts/core/primitives/upgradeable/AccessControlledUpgradeable.sol";
-import { FeesCollectorUpgradeable } from "contracts/core/primitives/upgradeable/FeesCollectorUpgradeable.sol";
-import { QuorumUpgradeable } from "contracts/core/primitives/upgradeable/QuorumUpgradeable.sol";
+import { AccessControlledUpgradeable } from "@synaps3/core/primitives/upgradeable/AccessControlledUpgradeable.sol";
+import { FeesCollectorUpgradeable } from "@synaps3/core/primitives/upgradeable/FeesCollectorUpgradeable.sol";
+import { QuorumUpgradeable } from "@synaps3/core/primitives/upgradeable/QuorumUpgradeable.sol";
 
-import { ITreasury } from "contracts/core/interfaces/economics/ITreasury.sol";
-import { ITollgate } from "contracts/core/interfaces/economics/ITollgate.sol";
-import { IDistributor } from "contracts/core/interfaces/syndication/IDistributor.sol";
-import { IDistributorReferendum } from "contracts/core/interfaces/syndication/IDistributorReferendum.sol";
-import { TreasuryOps } from "contracts/core/libraries/TreasuryOps.sol";
-import { T } from "contracts/core/primitives/Types.sol";
+import { ITreasury } from "@synaps3/core/interfaces/economics/ITreasury.sol";
+import { ITollgate } from "@synaps3/core/interfaces/economics/ITollgate.sol";
+import { IDistributor } from "@synaps3/core/interfaces/syndication/IDistributor.sol";
+import { IDistributorReferendum } from "@synaps3/core/interfaces/syndication/IDistributorReferendum.sol";
+import { TreasuryOps } from "@synaps3/core/libraries/TreasuryOps.sol";
+import { T } from "@synaps3/core/primitives/Types.sol";
 
 contract DistributorReferendum is
     Initializable,

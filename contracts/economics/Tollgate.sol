@@ -7,11 +7,11 @@ import { ERC165Checker } from "@openzeppelin/contracts/utils/introspection/ERC16
 import { Initializable } from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import { EnumerableSet } from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 import { UUPSUpgradeable } from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
-import { AccessControlledUpgradeable } from "contracts/core/primitives/upgradeable/AccessControlledUpgradeable.sol";
-import { ITollgate } from "contracts/core/interfaces/economics/ITollgate.sol";
+import { AccessControlledUpgradeable } from "@synaps3/core/primitives/upgradeable/AccessControlledUpgradeable.sol";
+import { ITollgate } from "@synaps3/core/interfaces/economics/ITollgate.sol";
 
-import { T } from "contracts/core/primitives/Types.sol";
-import { FeesOps } from "contracts/core/libraries/FeesOps.sol";
+import { T } from "@synaps3/core/primitives/Types.sol";
+import { FeesOps } from "@synaps3/core/libraries/FeesOps.sol";
 
 /// @title Tollgate Contract
 /// @dev This contract acts as a financial gateway, managing fees and the currencies allowed

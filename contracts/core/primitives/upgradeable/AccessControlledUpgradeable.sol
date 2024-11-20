@@ -6,8 +6,8 @@ import { Initializable } from "@openzeppelin/contracts-upgradeable/proxy/utils/I
 
 // solhint-disable-next-line max-line-length
 import { AccessManagedUpgradeable } from "@openzeppelin/contracts-upgradeable/access/manager/AccessManagedUpgradeable.sol";
-import { IAccessManager } from "contracts/core/interfaces/access/IAccessManager.sol";
-import { C } from "contracts/core/primitives/Constants.sol";
+import { IAccessManager } from "@synaps3/core/interfaces/access/IAccessManager.sol";
+import { C } from "@synaps3/core/primitives/Constants.sol";
 
 /// @title AccessControlledUpgradeable
 /// @dev Abstract contract that provides role-based access control functionality to upgradeable contracts.
