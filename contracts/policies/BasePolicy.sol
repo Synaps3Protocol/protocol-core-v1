@@ -22,14 +22,14 @@ abstract contract BasePolicy is ReentrancyGuard, IPolicy, ERC165 {
     IAssetOwnership public immutable ASSET_OWNERSHIP;
 
     bool private _initialized;
-    /// @dev attestation registry to store the relation between holder & account
-    mapping(address => mapping(address => uint256)) public attestations;
+    /// @dev registry to store the relation between holder & account
+    mapping(address => mapping(address => uint256)) private _attestations;
 
     /// @notice Emitted when an enforcement process is successfully completed for a given account and holder.
     /// @param holder The address of the rights holder managing the asset or access.
     /// @param account The address of the user whose access or compliance is being enforced.
-    /// @param attestationId The unique identifier of the attestation that confirms compliance or access.
-    event AccessGranted(address indexed holder, address indexed account, uint256 attestationId);
+    /// @param attestationId The unique identifier of the attestations that confirms compliance or access.
+    event AttestedAgreement(address indexed holder, address indexed account, uint256 attestationId);
 
     /// @dev Thrown when an attempt is made to access content without proper authorization.
     /// This error is used to prevent unauthorized access to content protected by policies or rights.
@@ -104,11 +104,11 @@ abstract contract BasePolicy is ReentrancyGuard, IPolicy, ERC165 {
         return _initialized;
     }
 
-    /// @notice Retrieves the attestation associated with a specific account and rights holder.
+    /// @notice Retrieves the attestation id associated with a specific account and rights holder.
     /// @param recipient The address of the account for which the attestation is being retrieved.
     /// @param holder The address of the rights holder with whom the agreement was made.
     function getAttestation(address recipient, address holder) external view returns (uint256) {
-        return attestations[recipient][holder];
+        return _attestations[recipient][holder];
     }
 
     /// @notice Retrieves the terms associated with a specific rights holder.
@@ -154,7 +154,7 @@ abstract contract BasePolicy is ReentrancyGuard, IPolicy, ERC165 {
     /// @dev The function checks if the provided account complies with the attestation.
     /// @param account The address of the user whose access is being verified.
     function isCompliant(address account, address holder) public view returns (bool) {
-        uint256 attestationId = attestations[account][holder];
+        uint256 attestationId = _attestations[account][holder];
         // default uint256 attestation is zero <- means not registered
         if (attestationId == 0) return false; // false if not registered
         return ATTESTATION_PROVIDER.verify(attestationId, account);
@@ -170,21 +170,29 @@ abstract contract BasePolicy is ReentrancyGuard, IPolicy, ERC165 {
     ///      The attestation will be stored on-chain and will have a validity period.
     /// @param agreement The agreement structure containing necessary details for the attestation.
     /// @param expireAt The timestamp at which the attestation will expire.
-    function _commit(address holder, T.Agreement memory agreement, uint256 expireAt) internal returns (uint256) {
+    function _commit(
+        address holder,
+        T.Agreement memory agreement,
+        uint256 expireAt
+    ) internal returns (uint256[] memory) {
         bytes memory data = abi.encode(holder, agreement.initiator, address(this), agreement.parties, agreement);
-        uint256 attestationId = ATTESTATION_PROVIDER.attest(agreement.parties, expireAt, data);
-        _updateBatchAttestation(holder, attestationId, agreement.parties);
-        return attestationId;
+        uint256[] memory attestationIds = ATTESTATION_PROVIDER.attest(agreement.parties, expireAt, data);
+        _updateBatchAttestation(holder, attestationIds, agreement.parties);
+        return attestationIds;
     }
 
     /// @notice Updates the attestation records for each account.
-    /// @param attestationId The ID of the attestation.
+    /// @param attestationIds The ID of the attestations.
     /// @param parties The list of account to assign attestation id.
-    function _updateBatchAttestation(address holder, uint256 attestationId, address[] memory parties) private {
+    function _updateBatchAttestation(
+        address holder,
+        uint256[] memory attestationIds,
+        address[] memory parties
+    ) private {
         uint256 partiesLen = parties.length;
         for (uint256 i = 0; i < partiesLen; i = i.uncheckedInc()) {
-            attestations[parties[i]][holder] = attestationId;
-            emit AccessGranted(holder, parties[i], attestationId);
+            _attestations[parties[i]][holder] = attestationIds[i];
+            emit AttestedAgreement(holder, parties[i], attestationIds[i]);
         }
     }
 

@@ -18,15 +18,15 @@ interface IRightsPolicyManager {
     /// @param contentId The identifier of the content to validate the policy status.
     function getActivePolicy(address account, uint256 contentId) external view returns (bool, address);
 
-    /// @notice Finalizes the agreement by registering the agreed-upon policy, effectively closing the agreement.
-    /// @param proof The unique identifier of the agreement to be enforced.
-    /// @param holder The rights holder whose authorization is required for accessing the asset.
-    /// @param policyAddress The address of the policy contract managing the agreement.
-    function registerPolicy(uint256 proof, address holder, address policyAddress) external returns (uint256);
-
     /// @notice Verifies if a specific policy is active for the provided account and content.
     /// @param account The address of the user whose compliance is being evaluated.
     /// @param contentId The identifier of the content to validate the policy status.
     /// @param policyAddress The address of the policy contract to check compliance against.
     function isActivePolicy(address account, uint256 contentId, address policyAddress) external view returns (bool);
+
+    /// @notice Finalizes the agreement by registering the agreed-upon policy, effectively closing the agreement.
+    /// @param proof The unique identifier of the agreement to be enforced.
+    /// @param holder The rights holder whose authorization is required for accessing the asset.
+    /// @param policyAddress The address of the policy contract managing the agreement.
+    function registerPolicy(uint256 proof, address holder, address policyAddress) external;
 }

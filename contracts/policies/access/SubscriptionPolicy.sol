@@ -46,11 +46,10 @@ contract SubscriptionPolicy is BasePolicy {
 
     // this function should be called only by RM and its used to establish
     // any logic or validation needed to set the authorization parameters
-    // de modo qu en el futuro se pueda usar otro tipo de estructuras como group
     function enforce(
         address holder,
         T.Agreement calldata agreement
-    ) external onlyPolicyManager initialized returns (uint256) {
+    ) external onlyPolicyManager initialized returns (uint256[] memory) {
         Package memory pkg = _packages[holder];
         if (pkg.pricePerDay == 0) {
             // if the holder has not set the package details, can not process the agreement
@@ -64,8 +63,6 @@ contract SubscriptionPolicy is BasePolicy {
         uint256 duration = _verifyDaysFromAmount(paidAmount, pricePerDay, partiesLen);
         // subscribe to content owner's catalog (content package)
         uint256 subExpire = block.timestamp + (duration * 1 days);
-        // the agreement is stored in an attestation signed registry
-        // the recipients is the list of benefitians of the agreement
         return _commit(holder, agreement, subExpire);
     }
 

@@ -34,7 +34,11 @@ contract SignGlobal is IAttestationProvider {
     /// @param recipients The addresses of the recipients of the attestation.
     /// @param expireAt The timestamp at which the attestation will expire.
     /// @param data Additional data associated with the attestation.
-    function attest(address[] calldata recipients, uint256 expireAt, bytes calldata data) external returns (uint256) {
+    function attest(
+        address[] calldata recipients,
+        uint256 expireAt,
+        bytes calldata data
+    ) external returns (uint256[] memory) {
         Attestation memory a = Attestation({
             schemaId: SCHEMA_ID,
             attester: address(this),
@@ -50,7 +54,8 @@ contract SignGlobal is IAttestationProvider {
 
         // Call the SPI instance to register the attestation in the system
         // SPI_INSTANCE.attest() stores the attestation and returns an ID for tracking
-        return SPI_INSTANCE.attest(a, "", "", "");
+        uint64 attestationId = SPI_INSTANCE.attest(a, "", "", "");
+        return _fillRecipientsWithIds(recipients, attestationId);
     }
 
     /// @notice Verifies the validity of an attestation for a given attester and recipient.
@@ -61,7 +66,7 @@ contract SignGlobal is IAttestationProvider {
         Attestation memory a = SPI_INSTANCE.getAttestation(uint64(attestationId));
         // is the same expected criteria as the registered in attestation?
         // is the attestation expired?
-        // who emmited the attestation?
+        // who emitted the attestation?
         if (a.validUntil > 0 && block.timestamp > a.validUntil) return false;
         if (a.attester != address(this)) return false;
 
@@ -73,6 +78,20 @@ contract SignGlobal is IAttestationProvider {
         }
 
         return false;
+    }
+
+    /// @dev Fills an array with the same `uid` value for each recipient in the input array.
+    /// @param recipients An array of recipient addresses.
+    /// @param uid The unique identifier (UID) to assign to each recipient.
+    /// @return attestationIds An array of UIDs corresponding to each recipient.
+    function _fillRecipientsWithIds(address[] memory recipients, uint64 uid) private pure returns (uint256[] memory) {
+        uint256 len = recipients.length;
+        uint256[] memory attestationIds = new uint256[](len);
+        for (uint256 i = 0; i < len; i++) {
+            attestationIds[i] = uid;
+        }
+
+        return attestationIds;
     }
 
     /// @notice Converts an array of addresses to an array of bytes.
