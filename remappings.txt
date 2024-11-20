@@ -8,3 +8,4 @@ hardhat/=node_modules/hardhat/
 openzeppelin-foundry-upgrades/=lib/openzeppelin-foundry-upgrades/src/
 solady/=lib/solady/src/
 solidity-stringutils/=lib/openzeppelin-foundry-upgrades/lib/solidity-stringutils/
+`
