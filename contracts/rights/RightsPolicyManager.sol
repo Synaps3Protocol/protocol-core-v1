@@ -80,7 +80,7 @@ contract RightsPolicyManager is Initializable, UUPSUpgradeable, AccessControlled
     /// @param proof The unique identifier of the agreement to be enforced.
     /// @param holder The rights holder whose authorization is required for accessing the asset.
     /// @param policyAddress The address of the policy contract managing the agreement.
-    function registerPolicy(uint256 proof, address holder, address policyAddress) public {
+    function registerPolicy(uint256 proof, address holder, address policyAddress) public returns (uint256[] memory) {
         // 1- retrieves the agreement and marks it as settled..
         T.Agreement memory agreement = RIGHTS_AGREEMENT.settleAgreement(proof, holder);
         // 2- only authorized policies by holder can be registered..
@@ -95,6 +95,7 @@ contract RightsPolicyManager is Initializable, UUPSUpgradeable, AccessControlled
         // expected returned attestation as agreement confirmation
         uint256[] memory attestationIds = abi.decode(result, (uint256[]));
         _registerBatchPolicies(proof, policyAddress, attestationIds, agreement.parties);
+        return attestationIds;
     }
 
     /// @notice Verifies if a specific policy is active for the provided account and criteria.

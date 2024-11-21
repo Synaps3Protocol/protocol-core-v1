@@ -28,5 +28,5 @@ interface IRightsPolicyManager {
     /// @param proof The unique identifier of the agreement to be enforced.
     /// @param holder The rights holder whose authorization is required for accessing the asset.
     /// @param policyAddress The address of the policy contract managing the agreement.
-    function registerPolicy(uint256 proof, address holder, address policyAddress) external;
+    function registerPolicy(uint256 proof, address holder, address policyAddress) external returns (uint256[] memory);
 }

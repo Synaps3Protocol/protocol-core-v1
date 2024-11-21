@@ -40,9 +40,9 @@ contract RightsAccessAgreement is
     ITollgate public immutable TOLLGATE;
 
     /// @dev Holds a bounded key expressing the agreement between the parts.
-    mapping(uint256 => T.Agreement) private _agreements;
+    mapping(uint256 => T.Agreement) private _agreementsByProof;
     /// @dev Holds a the list of actives proof for accounts.
-    mapping(address => EnumerableSet.UintSet) private _actives;
+    mapping(address => EnumerableSet.UintSet) private _activeProofs;
 
     /// @notice Emitted when an agreement is created.
     /// @param initiator The account that initiated or created the agreement.
@@ -59,9 +59,6 @@ contract RightsAccessAgreement is
     /// @param proof The unique identifier (hash or proof) of the canceled agreement.
     event AgreementCancelled(address indexed initiator, uint256 proof);
 
-    /// @dev Custom error thrown when the provided proof for an agreement is invalid.
-    error InvalidAgreementProof();
-
     /// @dev Custom error thrown for invalid operations on an agreement, with a descriptive message.
     /// @param message A string explaining the invalid operation.
     error InvalidAgreementOp(string message);
@@ -69,7 +66,8 @@ contract RightsAccessAgreement is
     /// @notice Ensures the agreement associated with the provided `proof` is valid and active.
     modifier onlyValidAgreement(uint256 proof) {
         T.Agreement memory agreement = getAgreement(proof);
-        if (!agreement.active || agreement.initiator == address(0)) {
+        bool isActiveProof = _activeProofs[agreement.initiator].contains(proof);
+        if (agreement.initiator == address(0) || !isActiveProof) {
             revert InvalidAgreementOp("Invalid inactive agreement.");
         }
         _;
@@ -113,7 +111,6 @@ contract RightsAccessAgreement is
         // each agreement is unique and immutable, ensuring that it cannot be modified or reconstructed.
         uint256 proof = _createProof(agreement);
         _storeAgreement(proof, agreement);
-
         emit AgreementCreated(msg.sender, proof);
         return proof;
     }
@@ -131,11 +128,9 @@ contract RightsAccessAgreement is
         address initiator = agreement.initiator; // the original initiator
         uint256 fees = agreement.fees; // keep fees as penalty
         address currency = agreement.currency;
-
         _closeAgreement(proof); // close the agreement
         _sumLedgerEntry(address(this), fees, currency);
         _registerFundsInTreasury(initiator, available, currency);
-
         emit AgreementCancelled(initiator, proof);
         return agreement;
     }
@@ -143,13 +138,13 @@ contract RightsAccessAgreement is
     /// @notice Retrieves the list of active proofs associated with a specific account.
     /// @param account The address of the account whose active proofs are being queried.
     function getActiveProofs(address account) public view returns (uint256[] memory) {
-        return _actives[account].values();
+        return _activeProofs[account].values();
     }
 
     /// @notice Retrieves the details of an agreement based on the provided proof.
     /// @param proof The unique identifier (hash) of the agreement.
     function getAgreement(uint256 proof) public view returns (T.Agreement memory) {
-        return _agreements[proof];
+        return _agreementsByProof[proof];
     }
 
     /// @notice Settles an agreement by marking it inactive and transferring funds to the counterparty.
@@ -168,11 +163,9 @@ contract RightsAccessAgreement is
         uint256 fees = agreement.fees; // protocol
         uint256 available = agreement.available; // holder earnings
         address currency = agreement.currency;
-
         _closeAgreement(proof); // after settled the agreement is complete..
         _sumLedgerEntry(address(this), fees, currency);
         _registerFundsInTreasury(counterparty, available, currency);
-
         emit AgreementSettled(msg.sender, counterparty, proof);
         return agreement;
     }
@@ -202,7 +195,6 @@ contract RightsAccessAgreement is
         // by using this immutable approach, the agreement terms are "frozen" at the time of creation.
         return
             T.Agreement({
-                active: true, // the agreement status, true for active, false for closed.
                 broker: broker, // the authorized account to manage the agreement
                 currency: currency, // the currency used in transaction
                 initiator: msg.sender, // the tx initiator
@@ -230,16 +222,15 @@ contract RightsAccessAgreement is
 
     /// @dev Set the agreement relation with proof in storage.
     function _storeAgreement(uint256 proof, T.Agreement memory agreement) private {
-        _agreements[proof] = agreement; // store agreement..
-        _actives[agreement.initiator].add(proof);
+        _agreementsByProof[proof] = agreement; // store agreement..
+        _activeProofs[agreement.initiator].add(proof);
     }
 
     /// @dev Marks an agreement as inactive, effectively closing it.
     function _closeAgreement(uint256 proof) private returns (T.Agreement storage) {
         // retrieve the agreement to storage to inactivate it and return it
-        T.Agreement storage agreement = _agreements[proof];
-        _actives[agreement.initiator].remove(proof);
-        agreement.active = false;
+        T.Agreement storage agreement = _agreementsByProof[proof];
+        _activeProofs[agreement.initiator].remove(proof);
         return agreement;
     }
 
