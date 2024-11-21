@@ -13,7 +13,7 @@ import { FeesCollectorUpgradeable } from "@synaps3/core/primitives/upgradeable/F
 import { IRightsAccessAgreement } from "@synaps3/core/interfaces/rights/IRightsAccessAgreement.sol";
 import { ITollgate } from "@synaps3/core/interfaces/economics/ITollgate.sol";
 import { ITreasury } from "@synaps3/core/interfaces/economics/ITreasury.sol";
-import { TreasuryOps } from "@synaps3/core/libraries/TreasuryOps.sol";
+import { FinancialOps } from "@synaps3/core/libraries/FinancialOps.sol";
 import { FeesOps } from "@synaps3/core/libraries/FeesOps.sol";
 import { T } from "@synaps3/core/primitives/Types.sol";
 
@@ -26,7 +26,7 @@ contract RightsAccessAgreement is
     IRightsAccessAgreement
 {
     using FeesOps for uint256;
-    using TreasuryOps for address;
+    using FinancialOps for address;
     using EnumerableSet for EnumerableSet.UintSet;
 
     /// KIM: any initialization here is ephimeral and not included in bytecode..

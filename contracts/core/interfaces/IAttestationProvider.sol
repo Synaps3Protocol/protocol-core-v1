@@ -14,7 +14,11 @@ interface IAttestationProvider {
     /// @param recipients The addresses of the recipients of the attestation.
     /// @param expireAt The timestamp at which the attestation will expire.
     /// @param data Additional data associated with the attestation.
-    function attest(address[] calldata recipients, uint256 expireAt, bytes calldata data) external returns (uint256);
+    function attest(
+        address[] calldata recipients,
+        uint256 expireAt,
+        bytes calldata data
+    ) external returns (uint256[] memory);
 
     /// @notice Verifies the validity of an attestation for a given attester and recipient.
     /// @param attestationId The id of the attestation to verify.

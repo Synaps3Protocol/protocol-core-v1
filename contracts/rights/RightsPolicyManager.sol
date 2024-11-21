@@ -26,13 +26,14 @@ contract RightsPolicyManager is Initializable, UUPSUpgradeable, AccessControlled
     IRightsPolicyAuthorizer public immutable RIGHTS_AUTHORIZER;
 
     /// @dev Mapping to store the access control list for each content holder and account.
-    mapping(address => EnumerableSet.AddressSet) private _acl;
+    mapping(address => EnumerableSet.AddressSet) private _closures;
 
     /// @notice Emitted when access rights are granted to an account based on a specific policy.
     /// @param account The address of the account to which the policy applies.
+    /// @param proof A unique identifier for the agreement between holder and account.
     /// @param attestationId A unique identifier for the attestation that confirms the registration.
     /// @param policy The address of the registered policy governing the access rights.
-    event PolicyRegistered(address indexed account, uint256 attestationId, address policy);
+    event PolicyRegistered(address indexed account, uint256 proof, uint256 attestationId, address policy);
 
     /// @dev Error thrown when attempting to operate on a policy that has not
     /// been delegated rights for the specified content.
@@ -71,7 +72,7 @@ contract RightsPolicyManager is Initializable, UUPSUpgradeable, AccessControlled
         // Developers should keep in mind that this function has an unbounded cost,
         /// and using it as part of a state-changing function may render the function uncallable
         /// if the set grows to a point where copying to memory consumes too much gas to fit in a block.
-        return _acl[account].values();
+        return _closures[account].values();
     }
 
     /// @notice Finalizes the agreement by registering the agreed-upon policy, effectively closing the agreement.
@@ -79,7 +80,7 @@ contract RightsPolicyManager is Initializable, UUPSUpgradeable, AccessControlled
     /// @param proof The unique identifier of the agreement to be enforced.
     /// @param holder The rights holder whose authorization is required for accessing the asset.
     /// @param policyAddress The address of the policy contract managing the agreement.
-    function registerPolicy(uint256 proof, address holder, address policyAddress) public returns (uint256) {
+    function registerPolicy(uint256 proof, address holder, address policyAddress) public {
         // 1- retrieves the agreement and marks it as settled..
         T.Agreement memory agreement = RIGHTS_AGREEMENT.settleAgreement(proof, holder);
         // 2- only authorized policies by holder can be registered..
@@ -92,9 +93,8 @@ contract RightsPolicyManager is Initializable, UUPSUpgradeable, AccessControlled
         (bool success, bytes memory result) = policyAddress.call(abi.encodeCall(IPolicy.enforce, (holder, agreement)));
         if (!success) revert InvalidPolicyEnforcement("Error during policy enforcement call");
         // expected returned attestation as agreement confirmation
-        uint256 attestationId = abi.decode(result, (uint256));
-        _registerBatchPolicies(attestationId, policyAddress, agreement.parties);
-        return attestationId;
+        uint256[] memory attestationIds = abi.decode(result, (uint256[]));
+        _registerBatchPolicies(proof, policyAddress, attestationIds, agreement.parties);
     }
 
     /// @notice Verifies if a specific policy is active for the provided account and criteria.
@@ -104,7 +104,7 @@ contract RightsPolicyManager is Initializable, UUPSUpgradeable, AccessControlled
     function isActivePolicy(address account, uint256 assetId, address policyAddress) public view returns (bool) {
         // verify if the policy were registered for account address and comply with the criteria
         IPolicy policy = IPolicy(policyAddress);
-        bool registeredPolicy = _acl[account].contains(policyAddress);
+        bool registeredPolicy = _closures[account].contains(policyAddress);
         return registeredPolicy && policy.isAccessAllowed(account, assetId);
     }
 
@@ -136,13 +136,20 @@ contract RightsPolicyManager is Initializable, UUPSUpgradeable, AccessControlled
 
     /// @notice Registers a new policy for a list of accounts, granting access based on a specific policy contract.
     /// @param proof A cryptographic proof that verifies the authenticity of the agreement.
+    /// @param attestationIds A list of unique identifiers for the attestation that confirms the registration.
     /// @param policyAddress The address of the policy contract responsible for validating the access conditions.
     /// @param parties The addresses of the accounts to be granted access through the policy.
-    function _registerBatchPolicies(uint256 proof, address policyAddress, address[] memory parties) private {
+    function _registerBatchPolicies(
+        uint256 proof,
+        address policyAddress,
+        uint256[] memory attestationIds,
+        address[] memory parties
+    ) private {
         uint256 partiesLen = parties.length;
         for (uint256 i = 0; i < partiesLen; i = i.uncheckedInc()) {
-            _acl[parties[i]].add(policyAddress);
-            emit PolicyRegistered(parties[i], proof, policyAddress);
+            uint256 attestationId = attestationIds[i];
+            _closures[parties[i]].add(policyAddress); // associate the policy with party account
+            emit PolicyRegistered(parties[i], proof, attestationId, policyAddress);
         }
     }
 }

@@ -11,7 +11,7 @@ import { LedgerUpgradeable } from "@synaps3/core/primitives/upgradeable/LedgerUp
 
 import { IFeesCollector } from "@synaps3/core/interfaces/economics/IFeesCollector.sol";
 import { ITreasury } from "@synaps3/core/interfaces/economics/ITreasury.sol";
-import { TreasuryOps } from "@synaps3/core/libraries/TreasuryOps.sol";
+import { FinancialOps } from "@synaps3/core/libraries/FinancialOps.sol";
 import { LoopOps } from "@synaps3/core/libraries/LoopOps.sol";
 
 // TODO payment splitter
@@ -28,7 +28,7 @@ contract Treasury is
     LedgerUpgradeable,
     ITreasury
 {
-    using TreasuryOps for address;
+    using FinancialOps for address;
     using LoopOps for uint256;
 
     /// @custom:oz-upgrades-unsafe-allow constructor

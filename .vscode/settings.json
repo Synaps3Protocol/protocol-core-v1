@@ -6,6 +6,7 @@
         "Reentrancy",
         "solhint",
         "synaps",
+        "uids",
         "UUPS"
     ]
 }

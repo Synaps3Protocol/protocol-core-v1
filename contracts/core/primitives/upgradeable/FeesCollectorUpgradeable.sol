@@ -5,13 +5,13 @@ pragma solidity 0.8.26;
 import { Initializable } from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import { LedgerUpgradeable } from "@synaps3/core/primitives/upgradeable/LedgerUpgradeable.sol";
 import { IFeesCollector } from "@synaps3/core/interfaces/economics/IFeesCollector.sol";
-import { TreasuryOps } from "@synaps3/core/libraries/TreasuryOps.sol";
+import { FinancialOps } from "@synaps3/core/libraries/FinancialOps.sol";
 
 /// @title FeesCollectorUpgradeable Contract
 /// @notice Manages the address of the treasury and disburses collected funds in an upgradeable way.
 /// @dev This is an abstract contract that implements the IFeesCollector interface.
 abstract contract FeesCollectorUpgradeable is Initializable, LedgerUpgradeable, IFeesCollector {
-    using TreasuryOps for address;
+    using FinancialOps for address;
 
     /// @custom:storage-location erc7201:feescollectorupgradeable
     /// @notice Stores the treasury address used for disbursement operations.

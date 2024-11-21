@@ -25,16 +25,7 @@ interface IPolicy {
     /// @dev Rights Policies Manager contract should be the only one allowed to call this method.
     /// @param holder The rights holder whose authorization is required for accessing the asset.
     /// @param agreement An object containing the terms agreed upon between the asset holder and the user.
-    function enforce(address holder, T.Agreement calldata agreement) external returns (uint256);
-
-    /// @notice Retrieves the address of the attestation provider.
-    /// @return The address of the provider associated with the policy.
-    function getAttestationProvider() external view returns (address);
-
-    /// @notice Retrieves the attestation associated with a specific account and rights holder.
-    /// @param recipient The address of the account for which the attestation is being retrieved.
-    /// @param holder The address of the rights holder with whom the agreement was made.
-    function getAttestation(address recipient, address holder) external view returns (uint256);
+    function enforce(address holder, T.Agreement calldata agreement) external returns (uint256[] memory);
 
     /// @notice Verifies if a specific account has access rights to a particular asset based on `assetId`.
     /// @dev Checks the access policy tied to the provided `assetId` to determine if the account has authorized access.
@@ -63,4 +54,13 @@ interface IPolicy {
     /// @param assetId The unique identifier of the asset for which terms are being resolved.
     /// @return A struct containing the terms applicable to the specified content ID.
     function resolveTerms(uint256 assetId) external view returns (T.Terms memory);
+
+    /// @notice Retrieves the address of the attestation provider.
+    /// @return The address of the provider associated with the policy.
+    function getAttestationProvider() external view returns (address);
+
+    /// @notice Retrieves the attestation id associated with a specific account and rights holder.
+    /// @param recipient The address of the account for which the attestation is being retrieved.
+    /// @param holder The address of the rights holder with whom the agreement was made.
+    function getAttestation(address recipient, address holder) external view returns (uint256);
 }

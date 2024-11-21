@@ -15,7 +15,7 @@ import { ITreasury } from "@synaps3/core/interfaces/economics/ITreasury.sol";
 import { ITollgate } from "@synaps3/core/interfaces/economics/ITollgate.sol";
 import { IDistributor } from "@synaps3/core/interfaces/syndication/IDistributor.sol";
 import { IDistributorReferendum } from "@synaps3/core/interfaces/syndication/IDistributorReferendum.sol";
-import { TreasuryOps } from "@synaps3/core/libraries/TreasuryOps.sol";
+import { FinancialOps } from "@synaps3/core/libraries/FinancialOps.sol";
 import { T } from "@synaps3/core/primitives/Types.sol";
 
 contract DistributorReferendum is
@@ -27,7 +27,7 @@ contract DistributorReferendum is
     FeesCollectorUpgradeable,
     IDistributorReferendum
 {
-    using TreasuryOps for address;
+    using FinancialOps for address;
     using ERC165Checker for address;
 
     /// @custom:oz-upgrades-unsafe-allow state-variable-immutable

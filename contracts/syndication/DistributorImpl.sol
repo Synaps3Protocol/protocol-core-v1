@@ -5,12 +5,12 @@ import { Initializable } from "@openzeppelin/contracts-upgradeable/proxy/utils/I
 import { ERC165Upgradeable } from "@openzeppelin/contracts-upgradeable/utils/introspection/ERC165Upgradeable.sol";
 import { OwnableUpgradeable } from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import { IDistributor } from "@synaps3/core/interfaces/syndication/IDistributor.sol";
-import { TreasuryOps } from "@synaps3/core/libraries/TreasuryOps.sol";
+import { FinancialOps } from "@synaps3/core/libraries/FinancialOps.sol";
 
 /// @title Asset Distributor Implementation
 /// @notice This contract handles all the necessary logic for managing content distributors.
 contract DistributorImpl is Initializable, ERC165Upgradeable, OwnableUpgradeable, IDistributor {
-    using TreasuryOps for address;
+    using FinancialOps for address;
 
     /// @notice The distribution endpoint URL.
     string private endpoint;
