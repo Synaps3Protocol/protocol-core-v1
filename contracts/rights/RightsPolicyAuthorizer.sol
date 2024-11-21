@@ -19,7 +19,7 @@ contract RightsPolicyAuthorizer is
 {
     using EnumerableSet for EnumerableSet.AddressSet;
 
-    /// KIM: any initialization here is ephimeral and not included in bytecode..
+    /// KIM: any initialization here is ephemeral and not included in bytecode..
     /// so the code within a logic contract’s constructor or global declaration
     /// will never be executed in the context of the proxy’s state
     /// https://docs.openzeppelin.com/upgrades-plugins/1.x/proxies#the-constructor-caveat
@@ -28,8 +28,7 @@ contract RightsPolicyAuthorizer is
     IPolicyAuditorVerifiable public immutable POLICY_AUDIT;
 
     /// @dev Mapping to store the delegated rights for each policy contract (address)
-    /// by each content holder (address).
-    mapping(address => EnumerableSet.AddressSet) private _delegation;
+    mapping(address => EnumerableSet.AddressSet) private _authorizedPolicies;
     /// @notice Emitted when rights are granted to a policy for content.
     /// @param policy The policy contract address granted rights.
     /// @param holder The address of the asset rights holder.
@@ -71,14 +70,14 @@ contract RightsPolicyAuthorizer is
         // call policy initialization with provided data..
         (bool success, ) = policy.call(abi.encodeCall(IPolicy.initialize, (msg.sender, data)));
         if (!success) revert InvalidPolicyInitialization("Error during policy initialization call");
-        _delegation[msg.sender].add(policy); // register policy as authorized for the authorizer
+        _authorizedPolicies[msg.sender].add(policy); // register policy as authorized for the authorizer
         emit RightsGranted(policy, msg.sender);
     }
 
     /// @notice Revokes the delegation of rights to a policy contract.
     /// @param policy The address of the policy contract whose rights delegation is being revoked.
     function revokePolicy(address policy) external {
-        _delegation[msg.sender].remove(policy);
+        _authorizedPolicies[msg.sender].remove(policy);
         emit RightsRevoked(policy, msg.sender);
     }
 
@@ -86,7 +85,7 @@ contract RightsPolicyAuthorizer is
     /// @param policy The address of the policy contract to check for delegation.
     /// @param holder the asset rights holder to check for delegation.
     function isPolicyAuthorized(address policy, address holder) public view returns (bool) {
-        return _delegation[holder].contains(policy) && _isValidPolicy(policy);
+        return _authorizedPolicies[holder].contains(policy) && _isValidPolicy(policy);
     }
 
     /// @notice Retrieves all policies authorized by a specific content holder.
@@ -99,7 +98,7 @@ contract RightsPolicyAuthorizer is
         // Developers should note that this function has an unbounded cost, and using it as part of a state-changing
         // function may render the function uncallable if the set grows to a point where copying to memory
         /// consumes too much gas to fit in a block.
-        return _delegation[holder].values();
+        return _authorizedPolicies[holder].values();
     }
 
     /// @dev Authorizes the upgrade of the contract.

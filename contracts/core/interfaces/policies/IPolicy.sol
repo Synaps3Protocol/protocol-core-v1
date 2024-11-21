@@ -37,7 +37,7 @@ interface IPolicy {
     /// @notice Verifies if a specific account has general holder's access rights.
     /// @dev This function can be used to check access for broader scopes, such as groups, subscriptions,etc.
     /// @param account The address of the user whose general access rights are being verified.
-    /// @param holder The address of the rigths holder.
+    /// @param holder The address of the rights holder.
     /// @return A boolean value: true if the account has general access to holder's rights; otherwise, false.
     function isAccessAllowed(address account, address holder) external view returns (bool);
 
