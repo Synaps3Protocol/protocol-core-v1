@@ -13,7 +13,6 @@ import { IAssetVerifiable } from "@synaps3/core/interfaces/assets/IAssetVerifiab
 import { IAssetOwnership } from "@synaps3/core/interfaces/assets/IAssetOwnership.sol";
 
 // TODO imp ERC404
-// TODO imp EIP4337 accounting
 
 /// @title Ownership ERC721 Upgradeable
 /// @notice This abstract contract manages the ownership.
@@ -75,6 +74,8 @@ contract AssetOwnership is
     ) public view virtual override(IERC165, ERC721Upgradeable, ERC721EnumerableUpgradeable) returns (bool) {
         return super.supportsInterface(interfaceId);
     }
+
+    // TODO build getURI => from distributor custodian /erc721-metadata
 
     /// @notice Mints a new NFT representing an asset to the specified address.
     /// @dev The assumption is that only those who know the asset ID
