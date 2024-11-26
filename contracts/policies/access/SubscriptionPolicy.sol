@@ -40,7 +40,7 @@ contract SubscriptionPolicy is BasePolicy {
     function initialize(address holder, bytes calldata init) external onlyPolicyAuthorizer initializer {
         (uint256 price, address currency) = abi.decode(init, (uint256, address));
         if (price == 0) revert InvalidInitialization("Invalid subscription price.");
-        // expected content rigInvalidInitializationending subscription params..
+        // expected content subscription params..
         _packages[holder] = Package(price, currency);
     }
 
@@ -69,8 +69,7 @@ contract SubscriptionPolicy is BasePolicy {
     /// @notice Verifies if a specific account has access to a particular asset based on `assetId`.
     function isAccessAllowed(address account, uint256 assetId) external view override returns (bool) {
         // Default behavior: only check attestation compliance.
-        address holder = getHolder(assetId);
-        return isCompliant(account, holder);
+        return isCompliant(account, getHolder(assetId));
     }
 
     /// @notice Verifies if a specific account has general access holder's rights .

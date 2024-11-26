@@ -81,7 +81,7 @@ contract RightsPolicyAuthorizer is
         emit RightsRevoked(policy, msg.sender);
     }
 
-    /// @dev Verify if the specified policy contract has been delegated the rights by the assetolder.
+    /// @dev Verify if the specified policy contract has been delegated the rights by the asset holder.
     /// @param policy The address of the policy contract to check for delegation.
     /// @param holder the asset rights holder to check for delegation.
     function isPolicyAuthorized(address policy, address holder) public view returns (bool) {

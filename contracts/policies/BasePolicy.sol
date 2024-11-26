@@ -175,7 +175,8 @@ abstract contract BasePolicy is ReentrancyGuard, IPolicy, ERC165 {
         T.Agreement memory agreement,
         uint256 expireAt
     ) internal returns (uint256[] memory) {
-        bytes memory data = abi.encode(holder, agreement.initiator, address(this), agreement.parties, agreement);
+        bytes memory encodedAgreement = abi.encode(agreement);
+        bytes memory data = abi.encode(holder, agreement.initiator, address(this), agreement.parties, encodedAgreement);
         uint256[] memory attestationIds = ATTESTATION_PROVIDER.attest(agreement.parties, expireAt, data);
         _updateBatchAttestation(holder, attestationIds, agreement.parties);
         return attestationIds;
