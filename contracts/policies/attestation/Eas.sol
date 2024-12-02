@@ -50,7 +50,7 @@ contract EAS is IAttestationProvider {
                 expirationTime: uint64(expireAt),
                 revocable: false,
                 refUID: 0, // No references UI
-                data: data, // 
+                data: data, //
                 value: 0 // No value/ETH
             });
         }

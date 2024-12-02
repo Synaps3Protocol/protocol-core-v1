@@ -35,7 +35,7 @@ forge-update:
 
 .PHONY: compile ## compile contracts
 compile:
-	@forge build
+	@forge build --extra-output-files bin
 
 .PHONY: force-compile ## compile contracts
 force-compile:

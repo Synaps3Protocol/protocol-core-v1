@@ -6,7 +6,7 @@ import { T } from "@synaps3/core/primitives/Types.sol";
 /// @title IRightsAccessAgreement
 /// @notice Interface for managing agreements related to content rights access.
 /// @dev This interface handles the creation, retrieval, and execution of agreements within the RightsManager context.
-interface IRightsAccessAgreement {
+interface IAccessRegistry {
     /// @notice Settles an agreement by marking it inactive and transferring funds to the counterparty.
     /// @param proof The unique identifier of the agreement.
     /// @param counterparty The address that will receive the funds upon settlement.
@@ -48,7 +48,4 @@ interface IRightsAccessAgreement {
     /// @param proof The unique identifier (hash) of the agreement.
     function getAgreement(uint256 proof) external view returns (T.Agreement memory);
 
-    /// @notice Retrieves the list of active proofs associated with a specific account.
-    /// @param account The address of the account whose active proofs are being queried.
-    function getActiveProofs(address account) external view returns (uint256[] memory);
 }

@@ -99,7 +99,7 @@ abstract contract BasePolicy is ReentrancyGuard, IPolicy, ERC165 {
         ASSET_OWNERSHIP = IAssetOwnership(assetOwnership);
     }
 
-    /// @notice Checks if the contract has been initialized.
+    /// @notice Checks if the policy has been initialized.
     function isInitialized() external view returns (bool) {
         return _initialized;
     }
