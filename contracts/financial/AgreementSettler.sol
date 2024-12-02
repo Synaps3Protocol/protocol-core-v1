@@ -4,7 +4,7 @@
 
 // el settler toma el agreement desde agreement
 // TODO el settlement podria tener split conf por ejemplo
-// TODO 
+// TODO
 
 // SPDX-License-Identifier: MIT
 // NatSpec format convention - https://docs.soliditylang.org/en/v0.5.10/natspec-format.html
@@ -25,7 +25,7 @@ import { FinancialOps } from "@synaps3/core/libraries/FinancialOps.sol";
 import { FeesOps } from "@synaps3/core/libraries/FeesOps.sol";
 import { T } from "@synaps3/core/primitives/Types.sol";
 
-contract RightsAccessAgreement is
+contract AgreementSettler is
     Initializable,
     UUPSUpgradeable,
     AccessControlledUpgradeable,
@@ -44,18 +44,11 @@ contract RightsAccessAgreement is
 
     /// @custom:oz-upgrades-unsafe-allow state-variable-immutable
     ITreasury public immutable TREASURY;
-    /// @custom:oz-upgrades-unsafe-allow state-variable-immutable
-    ITollgate public immutable TOLLGATE;
 
     /// @dev Holds a bounded key expressing the agreement between the parts.
     mapping(uint256 => T.Agreement) private _agreementsByProof;
     /// @dev Holds a the list of actives proof for accounts.
     mapping(address => EnumerableSet.UintSet) private _activeProofs;
-
-    /// @notice Emitted when an agreement is created.
-    /// @param initiator The account that initiated or created the agreement.
-    /// @param proof The unique identifier (hash or proof) of the created agreement.
-    event AgreementCreated(address indexed initiator, uint256 proof);
 
     /// @notice Emitted when an agreement is settled by the designated broker or authorized account.
     /// @param broker The account that facilitated the agreement settlement.
@@ -119,12 +112,12 @@ contract RightsAccessAgreement is
         return agreement;
     }
 
+        // TODO aca se registran los closed y en agreement los open y genera paralelismo y continuidad..
     /// @notice Retrieves the list of active proofs associated with a specific account.
     /// @param account The address of the account whose active proofs are being queried.
-    function getActiveProofs(address account) public view returns (uint256[] memory) {
+    function getClosedProofs(address account) public view returns (uint256[] memory) {
         return _activeProofs[account].values();
     }
-
 
     /// @notice Settles an agreement by marking it inactive and transferring funds to the counterparty.
     /// @param proof The unique identifier of the agreement.
@@ -149,8 +142,6 @@ contract RightsAccessAgreement is
         return agreement;
     }
 
-   
-
     /// @dev Authorizes the upgrade of the contract.
     /// @notice Only the owner can authorize the upgrade.
     /// @param newImplementation The address of the new implementation contract.
@@ -162,6 +153,9 @@ contract RightsAccessAgreement is
         _activeProofs[agreement.initiator].add(proof);
     }
 
+
+
+
     /// @dev Marks an agreement as inactive, effectively closing it.
     function _closeAgreement(uint256 proof) private returns (T.Agreement storage) {
         // retrieve the agreement to storage to inactivate it and return it
@@ -170,7 +164,6 @@ contract RightsAccessAgreement is
         return agreement;
     }
 
-   
     /// @notice Registers a specified amount of currency in the treasury on behalf of the recipient.
     /// @dev This function increases the allowance for the treasury to access the specified `amount` of `currency`
     ///      and then deposits the funds into the treasury for the given `recipient`.
@@ -180,6 +173,7 @@ contract RightsAccessAgreement is
     function _registerFundsInTreasury(address recipient, uint256 amount, address currency) private {
         // during the closing of the deal the earnings are registered in treasury..
         address(TREASURY).increaseAllowance(amount, currency);
+        // TODO deposit a ledger vault
         TREASURY.deposit(recipient, amount, currency);
     }
 }
