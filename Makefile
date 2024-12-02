@@ -2,10 +2,11 @@ include .env
 export
 
 .DEFAULT_GOAL := all
+package=types
 network=polygon-amoy
 report=lcov
 stage=development
-package=types
+file=out/${contract}.sol/${contract}
 
 # https://github.com/crytic/slither?tab=readme-ov-file#detectors
 # https://book.getfoundry.sh/getting-started/installation
@@ -35,7 +36,16 @@ forge-update:
 
 .PHONY: compile ## compile contracts
 compile:
-	@forge build
+	@forge build --extra-output-files bin abi
+
+# https://geth.ethereum.org/docs/tools/abigen
+# https://geth.ethereum.org/docs/getting-started/installing-geth
+# eg:
+# abigen --abi out/RightsPolicyManager.sol/RightsPolicyManager.abi.json --bin out/RightsPolicyManager.sol/RightsPolicyManager.bin /
+# --pkg synapse --type RightsPolicyManager --out RightsPolicyManager.go
+.PHONY: generate ## generate contract using abigen
+generate:
+	@abigen --abi ${file}.abi.json --bin ${file}.bin --pkg contracts --type ${contract} --out ${contract}.go
 
 .PHONY: force-compile ## compile contracts
 force-compile:
