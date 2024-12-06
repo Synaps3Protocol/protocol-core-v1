@@ -18,7 +18,7 @@ import { AccessControlledUpgradeable } from "@synaps3/core/primitives/upgradeabl
 import { ReentrancyGuardTransientUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardTransientUpgradeable.sol";
 import { FeesCollectorUpgradeable } from "@synaps3/core/primitives/upgradeable/FeesCollectorUpgradeable.sol";
 
-import { IRightsAccessAgreement } from "@synaps3/core/interfaces/rights/IRightsAccessAgreement.sol";
+import { IAgreementSettler } from "@synaps3/core/interfaces/financial/IAgreementSettler.sol";
 import { ITollgate } from "@synaps3/core/interfaces/economics/ITollgate.sol";
 import { ITreasury } from "@synaps3/core/interfaces/economics/ITreasury.sol";
 import { FinancialOps } from "@synaps3/core/libraries/FinancialOps.sol";
@@ -31,7 +31,7 @@ contract AgreementSettler is
     AccessControlledUpgradeable,
     ReentrancyGuardTransientUpgradeable,
     FeesCollectorUpgradeable,
-    IRightsAccessAgreement
+    IAgreementSettler
 {
     using FeesOps for uint256;
     using FinancialOps for address;

@@ -10,7 +10,7 @@ import { AccessControlledUpgradeable } from "@synaps3/core/primitives/upgradeabl
 import { ReentrancyGuardTransientUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardTransientUpgradeable.sol";
 import { FeesCollectorUpgradeable } from "@synaps3/core/primitives/upgradeable/FeesCollectorUpgradeable.sol";
 
-import { IRightsAccessAgreement } from "@synaps3/core/interfaces/rights/IRightsAccessAgreement.sol";
+import { IAgreementRegistry } from "@synaps3/core/interfaces/financial/IAgreementRegistry.sol";
 import { ITollgate } from "@synaps3/core/interfaces/economics/ITollgate.sol";
 import { ITreasury } from "@synaps3/core/interfaces/economics/ITreasury.sol";
 import { FinancialOps } from "@synaps3/core/libraries/FinancialOps.sol";
@@ -23,7 +23,7 @@ contract AgreementRegistry is
     AccessControlledUpgradeable,
     ReentrancyGuardTransientUpgradeable,
     FeesCollectorUpgradeable,
-    IRightsAccessAgreement
+    IAgreementRegistry
 {
     using FeesOps for uint256;
     using FinancialOps for address;
@@ -103,12 +103,6 @@ contract AgreementRegistry is
         return proof;
     }
 
-    /// @notice Retrieves the list of active proofs associated with a specific account.
-    /// @param account The address of the account whose active proofs are being queried.
-    function getActiveProofs(address account) public view returns (uint256[] memory) {
-        return _activeProofs[account].values();
-    }
-
     /// @notice Retrieves the details of an agreement based on the provided proof.
     /// @param proof The unique identifier (hash) of the agreement.
     function getAgreement(uint256 proof) public view returns (T.Agreement memory) {
@@ -169,14 +163,6 @@ contract AgreementRegistry is
     function _storeAgreement(uint256 proof, T.Agreement memory agreement) private {
         _agreementsByProof[proof] = agreement; // store agreement..
         _activeProofs[agreement.initiator].add(proof);
-    }
-
-    /// @dev Marks an agreement as inactive, effectively closing it.
-    function _closeAgreement(uint256 proof) private returns (T.Agreement storage) {
-        // retrieve the agreement to storage to inactivate it and return it
-        T.Agreement storage agreement = _agreementsByProof[proof];
-        _activeProofs[agreement.initiator].remove(proof);
-        return agreement;
     }
 
     /// @notice Calculates the fee based on the provided total amount and currency.

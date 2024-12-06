@@ -7,9 +7,8 @@ import { UUPSUpgradeable } from "@openzeppelin/contracts-upgradeable/proxy/utils
 // solhint-disable-next-line max-line-length
 import { ReentrancyGuardTransientUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardTransientUpgradeable.sol";
 import { AccessControlledUpgradeable } from "@synaps3/core/primitives/upgradeable/AccessControlledUpgradeable.sol";
-import { LedgerUpgradeable } from "@synaps3/core/primitives/upgradeable/LedgerUpgradeable.sol";
+import { BalanceOperatorUpgradeable } from "@synaps3/core/primitives/upgradeable/BalanceOperatorUpgradeable.sol";
 
-import { ILedgerVault } from "@synaps3/core/interfaces/financial/ILedgerVault.sol";
 import { FinancialOps } from "@synaps3/core/libraries/FinancialOps.sol";
 import { LoopOps } from "@synaps3/core/libraries/LoopOps.sol";
 
@@ -20,8 +19,7 @@ contract TokenVault is
     UUPSUpgradeable,
     AccessControlledUpgradeable,
     ReentrancyGuardTransientUpgradeable,
-    LedgerUpgradeable,
-    ILedgerVault
+    BalanceOperatorUpgradeable
 {
     using FinancialOps for address;
 
@@ -34,17 +32,17 @@ contract TokenVault is
 
     function initialize(address accessManager) public initializer {
         __UUPSUpgradeable_init();
+        __BalanceOperator_init();
         __ReentrancyGuardTransient_init();
         __AccessControlled_init(accessManager);
     }
 
-    /// @notice Deposits a specified amount of currency into the treasury for a given recipient.
+    /// @notice Deposits a specified amount of currency into the pool for a given recipient.
     /// @param recipient The address of the account to credit with the deposit.
     /// @param amount The amount of currency to deposit.
     /// @param currency The address of the ERC20 token to deposit.
     function deposit(address recipient, uint256 amount, address currency) external {
-        uint256 confirmed = msg.sender.safeDeposit(amount, currency);
-        _sumLedgerEntry(recipient, confirmed, currency);
+        uint256 confirmed = _deposit(recipient, amount, currency);
         emit FundsDeposited(recipient, confirmed, currency);
     }
 
@@ -55,10 +53,18 @@ contract TokenVault is
     /// @param amount The amount of tokens to withdraw.
     /// @param currency The currency to associate fees with. Use address(0) for the native coin.
     function withdraw(address recipient, uint256 amount, address currency) external nonReentrant {
-        if (getLedgerBalance(msg.sender, currency) < amount) revert NoFundsToWithdraw();
-        _subLedgerEntry(msg.sender, amount, currency);
-        recipient.transfer(amount, currency);
-        emit FundsWithdrawn(recipient, amount, currency);
+        uint256 confirmed = _withdraw(recipient, amount, currency);
+        emit FundsWithdrawn(recipient, confirmed, currency);
+    }
+
+    /// @notice Transfers a specified amount of currency from the caller's balance to a given recipient.
+    /// @dev Ensures the caller has sufficient balance before performing the transfer. Updates the ledger accordingly.
+    /// @param recipient The address of the account to credit with the transfer.
+    /// @param amount The amount of currency to transfer.
+    /// @param currency The address of the ERC20 token to transfer. Use `address(0)` for native tokens.
+    function transfer(address recipient, uint256 amount, address currency) external nonReentrant {
+        uint256 confirmed = _transfer(recipient, amount, currency);
+        emit FundsTransferred(msg.sender, recipient, confirmed, currency);
     }
 
     /// @notice Function that should revert when msg.sender is not authorized to upgrade the contract.

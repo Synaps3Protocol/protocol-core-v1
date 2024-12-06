@@ -7,6 +7,7 @@ import { UUPSUpgradeable } from "@openzeppelin/contracts-upgradeable/proxy/utils
 // solhint-disable-next-line max-line-length
 import { ReentrancyGuardTransientUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardTransientUpgradeable.sol";
 import { AccessControlledUpgradeable } from "@synaps3/core/primitives/upgradeable/AccessControlledUpgradeable.sol";
+import { BalanceOperatorUpgradeable } from "@synaps3/core/primitives/upgradeable/BalanceOperatorUpgradeable.sol";
 
 import { IFeesCollector } from "@synaps3/core/interfaces/economics/IFeesCollector.sol";
 import { ITreasury } from "@synaps3/core/interfaces/economics/ITreasury.sol";
@@ -20,16 +21,11 @@ contract Treasury is
     UUPSUpgradeable,
     AccessControlledUpgradeable,
     ReentrancyGuardTransientUpgradeable,
+    BalanceOperatorUpgradeable,
     ITreasury
 {
     using FinancialOps for address;
     using LoopOps for uint256;
-
-    /// @notice Emitted when funds are disbursed to the treasury from a collector.
-    /// @param collector The address of the collector disbursing the funds.
-    /// @param amount The amount of tokens that were disbursed.
-    /// @param currency The address of the ERC20 token contract for the currency disbursed.
-    event FundsCollected(address indexed collector, uint256 amount, address currency);
 
     /// @custom:oz-upgrades-unsafe-allow constructor
     constructor() {
@@ -40,15 +36,28 @@ contract Treasury is
 
     function initialize(address accessManager) public initializer {
         __UUPSUpgradeable_init();
+        __BalanceOperator_init();
         __ReentrancyGuardTransient_init();
         __AccessControlled_init(accessManager);
     }
 
-    /// @notice Returns the contract's balance for the specified currency.
-    /// @dev The function checks the balance for both native and ERC-20 tokens.
-    /// @param currency The address of the currency to check the balance of.
-    function getBalance(address currency) public view returns (uint256) {
-        return address(this).balanceOf(currency);
+    /// @notice Deposits a specified amount of currency into the ledger of the specified pool.
+    /// @param pool The address of the pool to credit with the deposit.
+    /// @param amount The amount of currency to deposit.
+    /// @param currency The address of the ERC20 token to deposit.
+    function deposit(address pool, uint256 amount, address currency) external {
+        uint256 confirmed = _deposit(pool, amount, currency);
+        emit FundsDeposited(pool, confirmed, currency);
+    }
+
+    /// @notice Transfers a specified amount of currency from the caller pool's balance to a given pool.
+    /// @dev Ensures the caller has sufficient balance before performing the transfer. 
+    /// @param pool The address of the pool to credit with the transfer.
+    /// @param amount The amount of currency to transfer.
+    /// @param currency The address of the ERC20 token to transfer. Use `address(0)` for native tokens.
+    function transfer(address pool, uint256 amount, address currency) external nonReentrant {
+        uint256 confirmed = _transfer(pool, amount, currency);
+        emit FundsTransferred(msg.sender, pool, confirmed, currency);
     }
 
     /// @notice Withdraws tokens from the contract to a specified recipient's address.
@@ -56,16 +65,14 @@ contract Treasury is
     /// @param recipient The address that will receive the withdrawn tokens.
     /// @param amount The amount of tokens to withdraw.
     /// @param currency The currency to associate fees with. Use address(0) for the native coin.
-    function withdraw(address recipient, uint256 amount, address currency) external nonReentrant restricted {
-        if (getBalance(currency) < amount) revert NoFundsToWithdraw();
-        recipient.transfer(amount, currency);
-        emit FundsWithdrawn(recipient, amount, currency);
+    function withdraw(address recipient, uint256 amount, address currency) external nonReentrant {
+        uint256 confirmed = _withdraw(recipient, amount, currency);
+        emit FundsWithdrawn(recipient, confirmed, currency);
     }
 
     // TODO burn fees
     // TODO burn MMC only
     // TODO burn fees rate
-    // TODO si habra mas que fees en el treasury deberia existir un registro? mas pools? 
 
     /// @notice Collects all accrued fees for a specified currency from a list of authorized collectors.
     /// @dev This function iterates over the list of collectors, requesting each to disburse their collected fees
@@ -74,11 +81,15 @@ contract Treasury is
     /// @param currency The address of the ERC20 token for which fees are being collected.
     function collectFees(address[] calldata collectors, address currency) external restricted {
         uint256 collectorsLen = collectors.length;
+        address pool = address(this); // fees pool is treasury
+
         // For each collector, request the collected fees and add them to the treasury pool balance
         for (uint256 i = 0; i < collectorsLen; i = i.uncheckedInc()) {
             IFeesCollector collector = IFeesCollector(collectors[i]);
             uint256 collected = collector.disburse(currency);
-            emit FundsCollected(collectors[i], collected, currency);
+            // register funds in treasury pool...
+            _sumLedgerEntry(pool, collected, currency);
+            emit FeesCollected(collectors[i], collected, currency);
         }
     }
 

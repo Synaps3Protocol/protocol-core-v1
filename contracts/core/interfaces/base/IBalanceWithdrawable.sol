@@ -9,6 +9,7 @@ interface IBalanceWithdrawable {
     /// @param amount The amount of funds being withdrawn.
     /// @param currency The currency used for the withdrawal.
     event FundsWithdrawn(address indexed recipient, uint256 amount, address indexed currency);
+    
     /// @dev Error thrown when the fund withdrawal fails.
     error NoFundsToWithdraw();
 

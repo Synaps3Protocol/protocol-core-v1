@@ -4,7 +4,7 @@ pragma solidity 0.8.26;
 import { ISP } from "@ethsign/sign-protocol-evm/src/interfaces/ISP.sol";
 import { Attestation } from "@ethsign/sign-protocol-evm/src/models/Attestation.sol";
 import { DataLocation } from "@ethsign/sign-protocol-evm/src/models/DataLocation.sol";
-import { IAttestationProvider } from "@synaps3/core/interfaces/IAttestationProvider.sol";
+import { IAttestationProvider } from "@synaps3/core/interfaces/base/IAttestationProvider.sol";
 import { LoopOps } from "@synaps3/core/libraries/LoopOps.sol";
 
 contract SignGlobal is IAttestationProvider {
