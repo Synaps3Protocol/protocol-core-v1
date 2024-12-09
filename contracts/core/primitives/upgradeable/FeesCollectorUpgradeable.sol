@@ -49,7 +49,7 @@ abstract contract FeesCollectorUpgradeable is Initializable, LedgerUpgradeable, 
     /// @notice Disburses all collected funds of a specified currency from the contract to the treasury.
     /// @dev This function can only be called by the treasury. It transfers the full balance of the specified currency.
     /// @param currency The address of the ERC20 token to disburse.
-    function disburse(address currency) external onlyTreasury returns (uint256) {
+    function disburse(address currency) public virtual onlyTreasury returns (uint256) {
         // Transfer all funds of the specified currency to the treasury.
         address treasuryAddress = getTreasuryAddress();
         uint256 amount = getLedgerBalance(address(this), currency);

@@ -45,19 +45,21 @@ contract Treasury is
     /// @param pool The address of the pool to credit with the deposit.
     /// @param amount The amount of currency to deposit.
     /// @param currency The address of the ERC20 token to deposit.
-    function deposit(address pool, uint256 amount, address currency) external {
+    function deposit(address pool, uint256 amount, address currency) external returns (uint256) {
         uint256 confirmed = _deposit(pool, amount, currency);
         emit FundsDeposited(pool, confirmed, currency);
+        return confirmed;
     }
 
     /// @notice Transfers a specified amount of currency from the caller pool's balance to a given pool.
-    /// @dev Ensures the caller has sufficient balance before performing the transfer. 
+    /// @dev Ensures the caller has sufficient balance before performing the transfer.
     /// @param pool The address of the pool to credit with the transfer.
     /// @param amount The amount of currency to transfer.
     /// @param currency The address of the ERC20 token to transfer. Use `address(0)` for native tokens.
-    function transfer(address pool, uint256 amount, address currency) external nonReentrant {
+    function transfer(address pool, uint256 amount, address currency) external nonReentrant returns (uint256) {
         uint256 confirmed = _transfer(pool, amount, currency);
         emit FundsTransferred(msg.sender, pool, confirmed, currency);
+        return confirmed;
     }
 
     /// @notice Withdraws tokens from the contract to a specified recipient's address.
@@ -65,9 +67,10 @@ contract Treasury is
     /// @param recipient The address that will receive the withdrawn tokens.
     /// @param amount The amount of tokens to withdraw.
     /// @param currency The currency to associate fees with. Use address(0) for the native coin.
-    function withdraw(address recipient, uint256 amount, address currency) external nonReentrant {
+    function withdraw(address recipient, uint256 amount, address currency) external nonReentrant returns (uint256) {
         uint256 confirmed = _withdraw(recipient, amount, currency);
         emit FundsWithdrawn(recipient, confirmed, currency);
+        return confirmed;
     }
 
     // TODO burn fees

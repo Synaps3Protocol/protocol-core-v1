@@ -9,9 +9,9 @@ import { AccessControlledUpgradeable } from "@synaps3/core/primitives/upgradeabl
 import { ERC165Checker } from "@openzeppelin/contracts/utils/introspection/ERC165Checker.sol";
 
 import { IPolicy } from "@synaps3/core/interfaces/policies/IPolicy.sol";
+import { IAgreementSettler } from "@synaps3/core/interfaces/financial/IAgreementSettler.sol";
 import { IRightsPolicyManager } from "@synaps3/core/interfaces/rights/IRightsPolicyManager.sol";
 import { IRightsPolicyAuthorizer } from "@synaps3/core/interfaces/rights/IRightsPolicyAuthorizer.sol";
-import { IRightsAccessAgreement } from "@synaps3/core/interfaces/rights/IRightsAccessAgreement.sol";
 import { LoopOps } from "@synaps3/core/libraries/LoopOps.sol";
 import { T } from "@synaps3/core/primitives/Types.sol";
 
@@ -21,7 +21,7 @@ contract RightsPolicyManager is Initializable, UUPSUpgradeable, AccessControlled
     using LoopOps for uint256;
 
     /// @custom:oz-upgrades-unsafe-allow state-variable-immutable
-    IRightsAccessAgreement public immutable RIGHTS_AGREEMENT;
+    IAgreementSettler public immutable AGREEMENT_SETTLER;
     /// @custom:oz-upgrades-unsafe-allow state-variable-immutable
     IRightsPolicyAuthorizer public immutable RIGHTS_AUTHORIZER;
 
@@ -43,11 +43,11 @@ contract RightsPolicyManager is Initializable, UUPSUpgradeable, AccessControlled
     error InvalidPolicyEnforcement(string);
 
     /// @custom:oz-upgrades-unsafe-allow constructor
-    constructor(address rightsAgreement, address rightsAuthorizer) {
+    constructor(address agreementSettler, address rightsAuthorizer) {
         /// https://forum.openzeppelin.com/t/uupsupgradeable-vulnerability-post-mortem/15680
         /// https://forum.openzeppelin.com/t/what-does-disableinitializers-function-mean/28730/5
         _disableInitializers();
-        RIGHTS_AGREEMENT = IRightsAccessAgreement(rightsAgreement);
+        AGREEMENT_SETTLER = IAgreementSettler(agreementSettler);
         RIGHTS_AUTHORIZER = IRightsPolicyAuthorizer(rightsAuthorizer);
     }
 
@@ -82,7 +82,7 @@ contract RightsPolicyManager is Initializable, UUPSUpgradeable, AccessControlled
     /// @param policyAddress The address of the policy contract managing the agreement.
     function registerPolicy(uint256 proof, address holder, address policyAddress) public returns (uint256[] memory) {
         // 1- retrieves the agreement and marks it as settled..
-        T.Agreement memory agreement = RIGHTS_AGREEMENT.settleAgreement(proof, holder);
+        T.Agreement memory agreement = AGREEMENT_SETTLER.settleAgreement(proof, holder);
         // 2- only authorized policies by holder can be registered..
         if (!RIGHTS_AUTHORIZER.isPolicyAuthorized(policyAddress, holder)) {
             revert InvalidNotRightsDelegated(policyAddress, holder);

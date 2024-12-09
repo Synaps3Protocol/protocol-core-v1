@@ -53,7 +53,6 @@ abstract contract BalanceOperatorUpgradeable is Initializable, LedgerUpgradeable
         if (getLedgerBalance(msg.sender, currency) < amount) revert NoFundsToWithdraw();
         _subLedgerEntry(msg.sender, amount, currency);
         recipient.transfer(amount, currency);
-        emit FundsWithdrawn(recipient, amount, currency);
         return amount;
     }
 
@@ -64,10 +63,9 @@ abstract contract BalanceOperatorUpgradeable is Initializable, LedgerUpgradeable
     /// @param amount The amount of tokens to transfer.
     /// @param currency The address of the currency to transfer. Use `address(0)` for the native coin.
     function _transfer(address recipient, uint256 amount, address currency) internal returns (uint256) {
-        if (getLedgerBalance(msg.sender, currency) < amount) revert NoFundsToWithdraw();
+        if (getLedgerBalance(msg.sender, currency) < amount) revert NoFundsToTransfer();
         _subLedgerEntry(msg.sender, amount, currency);
         _sumLedgerEntry(recipient, amount, currency);
-        emit FundsWithdrawn(recipient, amount, currency);
         return amount;
     }
 }
