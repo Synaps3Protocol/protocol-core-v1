@@ -12,9 +12,11 @@ import { BalanceOperatorUpgradeable } from "@synaps3/core/primitives/upgradeable
 import { FinancialOps } from "@synaps3/core/libraries/FinancialOps.sol";
 import { LoopOps } from "@synaps3/core/libraries/LoopOps.sol";
 
-/// @title Treasury Contract
-/// @dev This contract is designed to manage the storage and distribution of funds.
-contract TokenVault is
+/// @title LedgerVault
+/// @notice A vault contract designed to store, lock, release, and manage funds securely.
+/// @dev This contract includes administrative methods (`restricted`) and general user methods.
+///      Supports operations such as deposits, withdrawals, transfers, and locked funds management.
+contract LedgerVault is
     Initializable,
     UUPSUpgradeable,
     AccessControlledUpgradeable,
@@ -22,6 +24,8 @@ contract TokenVault is
     BalanceOperatorUpgradeable
 {
     using FinancialOps for address;
+
+    /// @dev Holds the registry of locked funds for accounts.
     mapping(address => mapping(address => uint256)) _locked;
 
     /// @notice Emitted when funds are locked in the ledger.
@@ -29,6 +33,12 @@ contract TokenVault is
     /// @param amount The amount of funds that were locked.
     /// @param currency The address of the currency in which the funds were locked.
     event FundsLocked(address indexed account, uint256 amount, address indexed currency);
+
+    /// @notice Emitted when locked funds are successfully released.
+    /// @param account The address of the account whose funds were released.
+    /// @param amount The amount of funds that were locked.
+    /// @param currency The address of the currency in which the funds were locked.
+    event FundsReleased(address indexed account, uint256 amount, address indexed currency);
 
     /// @notice Emitted when locked funds are successfully claimed.
     /// @param claimer The address of the entity claiming the funds.
@@ -117,6 +127,7 @@ contract TokenVault is
         if (_getLockedAmount(account, currency) < amount) revert NoFundsToRelease();
         _subLockedAmount(account, amount, currency);
         _sumLedgerEntry(account, amount, currency);
+        emit FundsReleased(account, amount, currency);
         return amount;
     }
 
@@ -130,6 +141,7 @@ contract TokenVault is
         if (_getLockedAmount(account, currency) < amount) revert NoFundsToClaim();
         _subLockedAmount(account, amount, currency); //
         _sumLedgerEntry(msg.sender, amount, currency);
+        emit FundsClaimed(msg.sender, amount, currency);
         return amount;
     }
 

@@ -3,14 +3,13 @@
 pragma solidity 0.8.26;
 
 import { Initializable } from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
-import { LedgerUpgradeable } from "@synaps3/core/primitives/upgradeable/LedgerUpgradeable.sol";
 import { IFeesCollector } from "@synaps3/core/interfaces/economics/IFeesCollector.sol";
 import { FinancialOps } from "@synaps3/core/libraries/FinancialOps.sol";
 
 /// @title FeesCollectorUpgradeable Contract
 /// @notice Manages the address of the treasury and disburses collected funds in an upgradeable way.
 /// @dev This is an abstract contract that implements the IFeesCollector interface.
-abstract contract FeesCollectorUpgradeable is Initializable, LedgerUpgradeable, IFeesCollector {
+abstract contract FeesCollectorUpgradeable is Initializable, IFeesCollector {
     using FinancialOps for address;
 
     /// @custom:storage-location erc7201:feescollectorupgradeable
@@ -52,7 +51,7 @@ abstract contract FeesCollectorUpgradeable is Initializable, LedgerUpgradeable, 
     function disburse(address currency) public virtual onlyTreasury returns (uint256) {
         // Transfer all funds of the specified currency to the treasury.
         address treasuryAddress = getTreasuryAddress();
-        uint256 amount = getLedgerBalance(address(this), currency);
+        uint256 amount = address(this).balanceOf(currency);
         if (amount == 0) return 0; // error trying transfer zero amount..
         // safe direct transfer to treasury address..
         treasuryAddress.transfer(amount, currency);
@@ -64,7 +63,6 @@ abstract contract FeesCollectorUpgradeable is Initializable, LedgerUpgradeable, 
     /// @dev This is part of the upgradeable pattern for initializing contract state.
     /// @param treasuryAddress The address of the treasury to initialize.
     function __FeesCollector_init(address treasuryAddress) internal onlyInitializing {
-        __Ledger_init();
         __FeesCollector_init_unchained(treasuryAddress);
     }
 

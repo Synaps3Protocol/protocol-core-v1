@@ -2,7 +2,7 @@
 pragma solidity 0.8.26;
 import "forge-std/Script.sol";
 import { IPolicyAuditor } from "contracts/core/interfaces/policies/IPolicyAuditor.sol";
-import { IAttestationProvider } from "contracts/core/interfaces/IAttestationProvider.sol";
+import { IAttestationProvider } from "contracts/core/interfaces/base/IAttestationProvider.sol";
 
 contract OrchestrateProtocolPolicies is Script {
     function run() external {

@@ -56,7 +56,7 @@ contract SubscriptionPolicy is BasePolicy {
             revert InvalidEnforcement("Invalid not initialized holder conditions");
         }
 
-        uint256 paidAmount = agreement.amount;
+        uint256 paidAmount = agreement.total;
         uint256 partiesLen = agreement.parties.length;
         uint256 pricePerDay = pkg.pricePerDay;
         // verify if the paid amount is valid based on total expected + parties

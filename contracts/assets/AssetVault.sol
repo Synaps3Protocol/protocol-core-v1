@@ -14,9 +14,11 @@ import { T } from "@synaps3/core/primitives/Types.sol";
 /// but manages the complementary data necessary to access that content.
 contract AssetVault is Initializable, UUPSUpgradeable, AccessControlledUpgradeable, IAssetVault {
     /// @custom:oz-upgrades-unsafe-allow state-variable-immutable
-    IAssetOwnership public immutable ASSET_OWNSERSHIP;
+    IAssetOwnership public immutable ASSET_OWNERSHIP;
+
     /// @dev Mapping to store encrypted content, identified by content ID.
     mapping(uint256 => mapping(T.VaultType => bytes)) private _secured;
+    
     /// @notice Error thrown when a non-owner tries to modify or access the asset.
     error InvalidAssetHolder();
 
@@ -24,7 +26,7 @@ contract AssetVault is Initializable, UUPSUpgradeable, AccessControlledUpgradeab
     /// @param assetId The identifier of the asset.
     /// @dev Reverts if the sender is not the owner of the asset based on the Ownership contract.
     modifier onlyHolder(uint256 assetId) {
-        if (ASSET_OWNSERSHIP.ownerOf(assetId) != msg.sender) {
+        if (ASSET_OWNERSHIP.ownerOf(assetId) != msg.sender) {
             revert InvalidAssetHolder();
         }
         _;
@@ -36,7 +38,7 @@ contract AssetVault is Initializable, UUPSUpgradeable, AccessControlledUpgradeab
         /// https://forum.openzeppelin.com/t/what-does-disableinitializers-function-mean/28730/5
         _disableInitializers();
         // we need to verify ownership during content storage handling
-        ASSET_OWNSERSHIP = IAssetOwnership(AssetOwnership);
+        ASSET_OWNERSHIP = IAssetOwnership(AssetOwnership);
     }
 
     /// @notice Initializes the proxy state.

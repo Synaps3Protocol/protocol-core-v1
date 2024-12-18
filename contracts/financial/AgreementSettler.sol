@@ -51,7 +51,7 @@ contract AgreementSettler is
     ILedgerVault public immutable VAULT;
 
     /// @dev Holds a the list of closed/settled proof for accounts.
-    mapping(address => EnumerableSet.UintSet) private _settledProofs;
+    mapping(uint256 => bool) private _settledProofs;
 
     /// @notice Emitted when an agreement is settled by the designated broker or authorized account.
     /// @param broker The account that facilitated the agreement settlement.
@@ -69,9 +69,7 @@ contract AgreementSettler is
 
     /// @notice Ensures the agreement associated with the provided `proof` is valid and active.
     modifier onlyValidAgreement(uint256 proof) {
-        T.Agreement memory agreement = AGREEMENT_MANAGER.getAgreement(proof);
-        bool isClosedProof = _settledProofs[agreement.initiator].contains(proof);
-        if (agreement.initiator == address(0) || isClosedProof) {
+        if (_settledProofs[proof]) {
             revert InvalidAgreementOp("Invalid settled agreement.");
         }
         _;
@@ -95,44 +93,27 @@ contract AgreementSettler is
         __ReentrancyGuardTransient_init();
     }
 
-    /// @notice Disburses all collected funds of a specified currency from the contract to the treasury.
-    /// @dev This function can only be called by the treasury. It transfers the full balance of the specified currency.
-    /// @param currency The address of the ERC20 token to disburse.
-    function disburse(address currency) public override onlyTreasury returns (uint256) {
-        // Transfer all funds of the specified currency to the treasury.
-        uint256 collected = getLedgerBalance(address(this), currency);
-        VAULT.withdraw(address(this), collected, currency);
-        return super.disburse(currency);
-    }
-
     /// @notice Allows the initiator to quit the agreement and receive the committed funds.
     /// @param proof The unique identifier of the agreement.
     function quitAgreement(uint256 proof) external onlyValidAgreement(proof) nonReentrant returns (T.Agreement memory) {
         T.Agreement memory agreement = AGREEMENT_MANAGER.getAgreement(proof);
         if (agreement.initiator != msg.sender) {
-            revert InvalidAgreementOp("Only initiator can close the agreement.");
+            revert InvalidAgreementOp("Only initiator can quit the agreement.");
         }
 
         // a partial rollback amount is registered in vault..
-        uint256 available = agreement.available; // initiator rollback
-        address initiator = agreement.initiator; // the original initiator
         uint256 fees = agreement.fees; // keep fees as penalty
+        uint256 available = agreement.total - fees; // initiator rollback
+        address initiator = agreement.initiator; // the original initiator
         address currency = agreement.currency;
 
-        _registerSettlement(proof, initiator); 
-        // the fees are registered in local ledger as available to claim..
-        _sumLedgerEntry(address(this), fees, currency); // register penalty
+        _setProofAsSettled(proof);
         // part of the agreement locked amount is released to the account
         VAULT.claim(initiator, fees, currency);
         VAULT.release(initiator, available, currency);
+        VAULT.withdraw(address(this), fees, currency);
         emit AgreementCancelled(initiator, proof);
         return agreement;
-    }
-
-    /// @notice Retrieves the list of settled proofs associated with a specific account.
-    /// @param account The address of the account whose settled proofs are being queried.
-    function getSettledProofs(address account) external view override returns (uint256[] memory) {
-        return _settledProofs[account].values();
     }
 
     /// @notice Settles an agreement by marking it inactive and transferring funds to the counterparty.
@@ -148,17 +129,20 @@ contract AgreementSettler is
             revert InvalidAgreementOp("Only broker can settle the agreement.");
         }
 
-        uint256 total = agreement.amount; // protocol
+        uint256 total = agreement.total; // protocol
         uint256 fees = agreement.fees; // protocol
-        uint256 available = agreement.available; // holder earnings
+        uint256 available = total - fees; // holder earnings
         address initiator = agreement.initiator;
         address currency = agreement.currency;
 
-        _registerSettlement(proof, initiator); 
-        _sumLedgerEntry(address(this), fees, currency);
+        // TODO: Implement a time window to enforce the validity period for agreement settlement.
+        // Once the window expires, the agreement should be marked as invalid or revert, 
+        // then quit is only way to close the agreement.
+        _setProofAsSettled(proof);
         // move the funds to settler and transfer the available to counterparty
         VAULT.claim(initiator, total, currency);
         VAULT.transfer(counterparty, available, currency);
+        VAULT.withdraw(address(this), fees, currency);
         emit AgreementSettled(msg.sender, counterparty, proof);
         return agreement;
     }
@@ -168,9 +152,9 @@ contract AgreementSettler is
     /// @param newImplementation The address of the new implementation contract.
     function _authorizeUpgrade(address newImplementation) internal override onlyAdmin {}
 
-    /// @dev Marks an agreement as inactive, effectively closing it.
-    function _registerSettlement(uint256 proof, address initiator) private {
-        // add the settled agreement to the list
-        _settledProofs[initiator].add(proof);
+    /// @dev Marks a proof as "settled" in the registry.
+    /// @param proof The unique identifier of the proof to be settled.
+    function _setProofAsSettled(uint256 proof) private {
+        _settledProofs[proof] = true;
     }
 }

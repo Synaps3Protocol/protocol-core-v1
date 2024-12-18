@@ -5,8 +5,8 @@ import "forge-std/Test.sol";
 import { IERC165 } from "@openzeppelin/contracts/interfaces/IERC165.sol";
 import { IERC20 } from "@openzeppelin/contracts/interfaces/IERC20.sol";
 import { IDistributor } from "contracts/core/interfaces/syndication/IDistributor.sol";
-import { IBalanceVerifiable } from "contracts/core/interfaces/IBalanceVerifiable.sol";
-import { IBalanceWithdrawable } from "contracts/core/interfaces/IBalanceWithdrawable.sol";
+import { IBalanceVerifiable } from "contracts/core/interfaces/base/IBalanceVerifiable.sol";
+import { IBalanceWithdrawable } from "contracts/core/interfaces/base/IBalanceWithdrawable.sol";
 import { IDistributorFactory } from "contracts/core/interfaces/syndication/IDistributorFactory.sol";
 import { BaseTest } from "test/BaseTest.t.sol";
 

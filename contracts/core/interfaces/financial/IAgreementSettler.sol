@@ -16,7 +16,4 @@ interface IAgreementSettler {
     /// @param proof The unique identifier of the agreement.
     function quitAgreement(uint256 proof) external returns (T.Agreement memory);
 
-    /// @notice Retrieves the list of active proofs associated with a specific account.
-    /// @param account The address of the account whose active proofs are being queried.
-    function getSettledProofs(address account) external view returns (uint256[] memory);
 }

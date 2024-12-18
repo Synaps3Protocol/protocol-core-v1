@@ -15,7 +15,7 @@ library C {
     uint64 internal constant GOV_ROLE = 1;
     uint64 internal constant MOD_ROLE = 2;
     uint64 internal constant VERIFIED_ROLE = 3;
-    uint64 internal constant COLLECTOR_ROLE = 4;
+    uint64 internal constant OPS_ROLE = 4;
 
     bytes32 internal constant REFERENDUM_SUBMIT_TYPEHASH =
         keccak256("Submission(uint256 assetId, address initiator, uint256 nonce)");

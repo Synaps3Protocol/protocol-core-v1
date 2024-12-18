@@ -108,8 +108,7 @@ contract DistributorReferendum is
         // !IMPORTANT if fees manager does not support the currency, will revert..
         uint256 fees = TOLLGATE.getFees(T.Context.SYN, currency);
         uint256 depositedAmount = msg.sender.safeDeposit(fees, currency);
-        // register fees and set distributor as pending approval
-        _sumLedgerEntry(address(this), fees, currency);
+        // register distributor as pending approval
         _register(uint160(distributor));
         // set the distributor active enrollment period..
         // after this time the distributor is considered inactive and cannot collect his profits...

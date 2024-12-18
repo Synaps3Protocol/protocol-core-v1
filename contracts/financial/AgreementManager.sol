@@ -70,6 +70,7 @@ contract AgreementManager is Initializable, UUPSUpgradeable, AccessControlledUpg
         address[] calldata parties,
         bytes calldata payload
     ) external returns (uint256) {
+        // TODO Even if we are covered by gas fees, a good way to avoid abuse is penalize parties after N length
         // IMPORTANT: The process of distributing funds to accounts should be handled within the settlement logic.
         uint256 confirmed = VAULT.lock(msg.sender, amount, currency); // msg.sender.safeDeposit(amount, currency);
         T.Agreement memory agreement = previewAgreement(confirmed, currency, broker, parties, payload);
@@ -82,7 +83,7 @@ contract AgreementManager is Initializable, UUPSUpgradeable, AccessControlledUpg
 
     /// @notice Retrieves the details of an agreement based on the provided proof.
     /// @param proof The unique identifier (hash) of the agreement.
-    function getAgreement(uint256 proof) public view returns (T.Agreement memory) {
+    function getAgreement(uint256 proof) external view returns (T.Agreement memory) {
         return _agreementsByProof[proof];
     }
 
@@ -106,7 +107,6 @@ contract AgreementManager is Initializable, UUPSUpgradeable, AccessControlledUpg
         // agreements transport value..
         // imagine an agreement like a bonus, gift card, prepaid card or check..
         uint256 deductions = _calcFees(amount, currency);
-        uint256 available = amount - deductions; // the total after fees
         // this design protects the agreement's terms from any future changes in fees or protocol conditions.
         // by using this immutable approach, the agreement terms are "frozen" at the time of creation.
         return
@@ -114,10 +114,8 @@ contract AgreementManager is Initializable, UUPSUpgradeable, AccessControlledUpg
                 broker: broker, // the authorized account to manage the agreement
                 currency: currency, // the currency used in transaction
                 initiator: msg.sender, // the tx initiator
-                amount: amount, // the transaction amount
+                total: amount, // the transaction amount
                 fees: deductions, // the protocol fees of the agreement
-                available: available, // the remaining amount after fees
-                createdAt: block.timestamp, // the agreement creation time
                 parties: parties, // the accounts related to agreement
                 payload: payload // any additional data needed during agreement execution
             });
@@ -131,7 +129,7 @@ contract AgreementManager is Initializable, UUPSUpgradeable, AccessControlledUpg
     /// @dev Generates a unique proof for an agreement using keccak256 hashing.
     function _createAndStoreProof(T.Agreement memory agreement) private returns (uint256) {
         // yes, we can encode full struct as abi.encode with extra overhead..
-        bytes memory rawProof = abi.encode(agreement);
+        bytes memory rawProof = abi.encode(agreement, block.number, address(this));
         uint256 proof = uint256(keccak256(rawProof));
         _agreementsByProof[proof] = agreement;
         return proof;

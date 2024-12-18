@@ -22,7 +22,7 @@ abstract contract BasePolicy is ReentrancyGuard, IPolicy, ERC165 {
     IAssetOwnership public immutable ASSET_OWNERSHIP;
 
     bool private _initialized;
-    /// @dev registry to store the relation between holder & account
+    /// @dev registry to store the relation between holder & account = attestation
     mapping(address => mapping(address => uint256)) private _attestations;
 
     /// @notice Emitted when an enforcement process is successfully completed for a given account and holder.
