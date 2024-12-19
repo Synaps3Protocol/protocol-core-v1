@@ -83,7 +83,7 @@ contract SubscriptionPolicy is BasePolicy {
         // it is treated as a `holder`. Otherwise, it is treated as an `assetId`.
         // The likelihood of a mismatch in this validation is low, as `assetId` is expected to be a long integer.
         // https://github.com/ethereum/solidity-examples/blob/master/docs/bytes/Bytes.md
-        // TODO: potential improvement: 
+        // TODO: potential improvement:
         // https://github.com/ethereum/solidity/issues/10381
         // https://forum.soliditylang.org/t/call-for-feedback-the-future-of-try-catch-in-solidity/1497
         bool last20Valid = bytes20(criteria[12:32]) != bytes20(0);

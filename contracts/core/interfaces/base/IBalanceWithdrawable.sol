@@ -15,5 +15,5 @@ interface IBalanceWithdrawable {
     /// @param recipient The address that will receive the withdrawn tokens.
     /// @param amount The amount of tokens to withdraw.
     /// @param currency The currency to associate fees with. Use address(0) for the native coin.
-    function withdraw(address recipient, uint256 amount, address currency) external returns(uint256);
+    function withdraw(address recipient, uint256 amount, address currency) external returns (uint256);
 }

@@ -17,5 +17,5 @@ interface IBalanceTransferable {
     /// @param recipient The address of the account to credit with the transfer.
     /// @param amount The amount of currency to transfer.
     /// @param currency The address of the ERC20 token to transfer. Use `address(0)` for native tokens.
-    function transfer(address recipient, uint256 amount, address currency) external returns(uint256);
+    function transfer(address recipient, uint256 amount, address currency) external returns (uint256);
 }

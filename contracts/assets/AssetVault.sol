@@ -18,7 +18,7 @@ contract AssetVault is Initializable, UUPSUpgradeable, AccessControlledUpgradeab
 
     /// @dev Mapping to store encrypted content, identified by content ID.
     mapping(uint256 => mapping(T.VaultType => bytes)) private _secured;
-    
+
     /// @notice Error thrown when a non-owner tries to modify or access the asset.
     error InvalidAssetHolder();
 

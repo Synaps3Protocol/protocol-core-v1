@@ -73,7 +73,7 @@ contract DistributorImpl is Initializable, ERC165Upgradeable, OwnableUpgradeable
     /// @param currency The address of the token to withdraw (use `address(0)` for native currency).
     /// @dev Transfers the specified amount of tokens or native currency to the recipient.
     /// Emits a {FundWithdrawn} event.
-    function withdraw(address recipient, uint256 amount, address currency) public onlyOwner returns(uint256) {
+    function withdraw(address recipient, uint256 amount, address currency) public onlyOwner returns (uint256) {
         if (getBalance(currency) == 0) revert NoFundsToWithdraw();
         recipient.transfer(amount, currency);
         emit FundsWithdrawn(recipient, amount, currency);

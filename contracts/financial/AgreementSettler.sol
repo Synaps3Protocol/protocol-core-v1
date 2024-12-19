@@ -136,7 +136,7 @@ contract AgreementSettler is
         address currency = agreement.currency;
 
         // TODO: Implement a time window to enforce the validity period for agreement settlement.
-        // Once the window expires, the agreement should be marked as invalid or revert, 
+        // Once the window expires, the agreement should be marked as invalid or revert,
         // then quit is only way to close the agreement.
         _setProofAsSettled(proof);
         // move the funds to settler and transfer the available to counterparty

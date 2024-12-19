@@ -9,6 +9,6 @@ import { IBalanceDepositor } from "@synaps3/core/interfaces/base/IBalanceDeposit
 import { IBalanceWithdrawable } from "@synaps3/core/interfaces/base/IBalanceWithdrawable.sol";
 import { IBalanceTransferable } from "@synaps3/core/interfaces/base/IBalanceTransferable.sol";
 
-/// @dev The `IBalanceOperator` interface extends multiple interfaces to provide a comprehensive suite of 
+/// @dev The `IBalanceOperator` interface extends multiple interfaces to provide a comprehensive suite of
 /// balance-related operations, including deposit, withdrawal, transfer, and balance verification.
 interface IBalanceOperator is IBalanceWithdrawable, IBalanceDepositor, IBalanceTransferable {}
