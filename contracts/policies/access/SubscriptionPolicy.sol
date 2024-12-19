@@ -66,16 +66,37 @@ contract SubscriptionPolicy is BasePolicy {
         return _commit(holder, agreement, subExpire);
     }
 
-    /// @notice Verifies if a specific account has access to a particular asset based on `assetId`.
-    function isAccessAllowed(address account, uint256 assetId) external view override returns (bool) {
-        // Default behavior: only check attestation compliance.
-        return isCompliant(account, getHolder(assetId));
-    }
+    // TODOpotential improvement to scaling custom actions in protocol using hooks
+    // function isAccessAllowed(bytes calldata criteria) external view return (bool) {
+    //  IHook hook = HOOKS.get(address(this), IAccessHook) <- internal handling of any logic needed to get the valid hook
+    //  if (!hook) return false // need conf hook
+    //  return hook.exec(criteria)
+    //}
 
     /// @notice Verifies if a specific account has general access holder's rights .
-    function isAccessAllowed(address account, address holder) external view override returns (bool) {
+    function isAccessAllowed(address account, bytes calldata criteria) external view returns (bool) {
         // Default behavior: only check attestation compliance.
-        return isCompliant(account, holder);
+        // we expect always two inputs eg: (address, address) or (address, uint256)
+        if (criteria.length != 32) revert InvalidNotSupportedOperation();
+        // Detecting the "address shape" for the second argument to handle polymorphic validation.
+        // If the second argument has the structure of an address (20 bytes with 12 leading zero bytes),
+        // it is treated as a `holder`. Otherwise, it is treated as an `assetId`.
+        // The likelihood of a mismatch in this validation is low, as `assetId` is expected to be a long integer.
+        // https://github.com/ethereum/solidity-examples/blob/master/docs/bytes/Bytes.md
+        // TODO: potential improvement: 
+        // https://github.com/ethereum/solidity/issues/10381
+        // https://forum.soliditylang.org/t/call-for-feedback-the-future-of-try-catch-in-solidity/1497
+        bool last20Valid = bytes20(criteria[12:32]) != bytes20(0);
+        bool first12Valid = bytes12(criteria[0:12]) == bytes12(0);
+        if (last20Valid && first12Valid) {
+            // match the holder
+            address holder = abi.decode(criteria, (address));
+            return isCompliant(account, holder);
+        }
+
+        // validate access on asset id criteria
+        uint256 assetId = abi.decode(criteria, (uint256));
+        return isCompliant(account, getHolder(assetId));
     }
 
     /// @notice Retrieves the terms associated with a specific rights holder.

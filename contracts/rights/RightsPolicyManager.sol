@@ -100,34 +100,20 @@ contract RightsPolicyManager is Initializable, UUPSUpgradeable, AccessControlled
 
     /// @notice Verifies if a specific policy is active for the provided account and criteria.
     /// @param account The address of the user whose compliance is being evaluated.
-    /// @param assetId The identifier of the asset to validate the policy status.
+    /// @param criteria Encoded data containing the parameters required to verify access.
     /// @param policyAddress The address of the policy contract to check compliance against.
-    function isActivePolicy(address account, uint256 assetId, address policyAddress) public view returns (bool) {
+    function isActivePolicy(address account, bytes memory criteria, address policyAddress) public view returns (bool) {
         // verify if the policy were registered for account address and comply with the criteria
-        IPolicy policy = IPolicy(policyAddress);
         bool registeredPolicy = _closures[account].contains(policyAddress);
-        return registeredPolicy && policy.isAccessAllowed(account, assetId);
-    }
-
-    /// @notice Retrieves the first active policy for a specific account in LIFO order.
-    /// @param account The address of the account to evaluate.
-    /// @param assetId The identifier of the asset to validate the policy status.
-    function getActivePolicy(address account, uint256 assetId) public view returns (bool, address) {
-        address[] memory policies = getPolicies(account);
-        uint256 i = policies.length - 1;
-
-        while (true) {
-            bool comply = isActivePolicy(account, assetId, policies[i]);
-            if (comply) return (true, policies[i]);
-            if (i == 0) break;
-            // i == 0 avoids underflow, we can safely decrement using unchecked
-            unchecked {
-                --i;
-            }
-        }
-
-        // No active policy found
-        return (false, address(0));
+        if (!registeredPolicy) return false; // not registered policy
+        // ask to policy about the access to account address
+        bytes memory callData = abi.encodeCall(IPolicy.isAccessAllowed, (account, criteria));
+        (bool success, bytes memory result) = policyAddress.staticcall(callData);
+        // error during validation
+        if (!success) return false;
+        // ok verifying access
+        bool ok = abi.decode(result, (bool));
+        return ok;
     }
 
     /// @dev Authorizes the upgrade of the contract.

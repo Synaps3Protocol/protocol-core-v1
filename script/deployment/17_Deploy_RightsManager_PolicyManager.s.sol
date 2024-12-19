@@ -9,9 +9,9 @@ contract DeployRightsPolicyManager is DeployBase {
 
         vm.startBroadcast(getAdminPK());
         address accessManager = computeCreate3Address("SALT_ACCESS_MANAGER");
-        address rightsAgreement = computeCreate3Address("SALT_RIGHT_ACCESS_AGREEMENT");
+        address agreementSettler = computeCreate3Address("SALT_AGREEMENT_SETTLER");
         address rightsAuthorizer = computeCreate3Address("SALT_RIGHT_POLICY_AUTHORIZER");
-        address impl = address(new RightsPolicyManager(rightsAgreement, rightsAuthorizer));
+        address impl = address(new RightsPolicyManager(agreementSettler, rightsAuthorizer));
         bytes memory init = abi.encodeCall(RightsPolicyManager.initialize, (accessManager));
         address manager = deployUUPS(impl, init, "SALT_RIGHT_POLICY_MANAGER");
         vm.stopBroadcast();

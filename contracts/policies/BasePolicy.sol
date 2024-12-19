@@ -35,6 +35,7 @@ abstract contract BasePolicy is ReentrancyGuard, IPolicy, ERC165 {
     /// This error is used to prevent unauthorized access to content protected by policies or rights.
     error InvalidAssetHolder();
 
+    /// This error is thrown when a method not implemented is called.
     error InvalidNotSupportedOperation();
 
     /// @notice Thrown when a function is called by an address other than the authorized Rights Manager.
@@ -122,18 +123,6 @@ abstract contract BasePolicy is ReentrancyGuard, IPolicy, ERC165 {
     /// @dev This function allows for querying policy terms based on the unique content identifier.
     /// @return A struct containing the terms applicable to the specified content ID.
     function resolveTerms(uint256) external view virtual returns (T.Terms memory) {
-        revert InvalidNotSupportedOperation();
-    }
-
-    /// @notice Verifies if a specific account has access to a particular asset based on `assetId`.
-    /// @dev Checks the access policy tied to the provided `assetId` to determine if the account has authorized access.
-    function isAccessAllowed(address, uint256) external view virtual returns (bool) {
-        revert InvalidNotSupportedOperation();
-    }
-
-    /// @notice Verifies if a specific account has general holder's access rights,.
-    /// @dev This function can be used to check access for broader scopes, such as groups, subscriptions,etc.
-    function isAccessAllowed(address, address) external view virtual returns (bool) {
         revert InvalidNotSupportedOperation();
     }
 
