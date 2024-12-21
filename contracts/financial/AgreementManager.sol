@@ -104,11 +104,21 @@ contract AgreementManager is Initializable, UUPSUpgradeable, AccessControlledUpg
             revert InvalidAgreementOp("Agreement must include at least one party");
         }
 
-        // agreements transport value..
-        // imagine an agreement like a bonus, gift card, prepaid card or check..
+        // IMPORTANT:
+        // Agreements transport value and represent a defined commitment between parties.
+        // Think of an agreement as similar to a bonus, gift card, prepaid card, or check:
+        // its value and terms are fixed at creation and cannot be changed arbitrarily.
+
+        // Fees are calculated during this preview and "frozen" into the agreement terms.
+        // This ensures that the fee structure at the time of agreement creation remains
+        // immutable and protects all parties from potential future manipulations.
+        //
+        // By locking in fees during agreement creation, the protocol avoids scenarios
+        // where fee structures change (favorably or unfavorably) after creation,
+        // which could lead to abuse or exploitation.
         uint256 deductions = _calcFees(amount, currency);
-        // this design protects the agreement's terms from any future changes in fees or protocol conditions.
-        // by using this immutable approach, the agreement terms are "frozen" at the time of creation.
+        // This design ensures fairness and transparency by preventing any future
+        // adjustments to fees or protocol conditions from affecting the terms of this agreement.
         return
             T.Agreement({
                 broker: broker, // the authorized account to manage the agreement

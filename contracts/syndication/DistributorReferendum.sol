@@ -109,12 +109,23 @@ contract DistributorReferendum is
     /// @param distributor The address of the distributor to register.
     /// @param currency The currency used to pay enrollment.
     function register(address distributor, address currency) external onlyValidDistributor(distributor) {
-        // !IMPORTANT if fees manager does not support the currency, will revert..
+        // !IMPORTANT:
+        // Fees act as a mechanism to prevent abuse or spam by users
+        // when submitting distributors for approval. This discourages users from
+        // making frivolous or excessive registrations without genuine intent.
+        //
+        // Additionally, the fees establish a foundation of real interest and commitment
+        // from the distributor. This ensures that only those who see value in the protocol
+        // and are willing to contribute to its ecosystem will participate.
+        //
+        // The collected fees are used to support the protocol's operations, aligning
+        // individual actions with the broader sustainability of the network.
+        // !IMPORTANT If fees manager does not support the currency, will revert..
         uint256 fees = TOLLGATE.getFees(T.Context.SYN, currency);
         VAULT.lock(msg.sender, fees, currency); // lock funds for distributor
-        VAULT.claim(msg.sender, fees, currency); // claim the funds on behalf referendum 
+        VAULT.claim(msg.sender, fees, currency); // claim the funds on behalf referendum
         VAULT.withdraw(address(this), fees, currency); // transfer the funds to referendum
-        
+
         // register distributor as pending approval
         _register(uint160(distributor));
         // set the distributor active enrollment period..
@@ -160,8 +171,15 @@ contract DistributorReferendum is
     /// @param distributor The distributor's address to check.
     function isActive(address distributor) public view onlyValidDistributor(distributor) returns (bool) {
         // TODO a renovation mechanism is needed to update the enrollment time
-        // this mechanisms helps to verify the availability of the distributor forcing recurrent registrations.
-        return _status(uint160(distributor)) == Status.Active && _enrollmentDeadline[distributor] > block.timestamp;
+        /// It ensures that distributors remain engaged and do not become inactive for extended periods.
+        /// The enrollment deadline enforces a time-based mechanism where distributors must renew
+        /// their registration to maintain their active status. This prevents dormant distributors
+        /// from continuing to benefit from the protocol without contributing.
+        
+        // This mechanism helps to verify the availability of the distributor,
+        // forcing recurrent registrations and ensuring ongoing participation.
+        bool notExpiredDeadline = _enrollmentDeadline[distributor] > block.timestamp;
+        return _status(uint160(distributor)) == Status.Active && notExpiredDeadline;
     }
 
     /// @notice Checks if the entity is waiting.

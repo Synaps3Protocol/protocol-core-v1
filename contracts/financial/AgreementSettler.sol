@@ -101,7 +101,19 @@ contract AgreementSettler is
             revert InvalidAgreementOp("Only initiator can quit the agreement.");
         }
 
-        // a partial rollback amount is registered in vault..
+        // IMPORTANT:
+        // The protocol enforces a penalty for quitting the agreement to ensure fairness
+        // and discourage frivolous cancellations. This mechanism protects the integrity
+        // of the agreement process and ensures that resources spent in its creation
+        // (e.g., computation, storage, and fee management) are compensated.
+        //
+        // Fees are immutable and determined at the time of agreement creation
+        // (as defined in `previewAgreement`).This design disincentives manipulation, 
+        // ensuring that no changes can occur later to unfairly benefit or harm the initiator or other parties involved.
+
+        //
+        // Penalty fees retained here also help maintain the protocol's economic balance
+        // and ensure that the system operates sustainably over time.
         uint256 fees = agreement.fees; // keep fees as penalty
         uint256 available = agreement.total - fees; // initiator rollback
         address initiator = agreement.initiator; // the original initiator

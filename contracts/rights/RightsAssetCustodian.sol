@@ -111,7 +111,7 @@ contract RightsAssetCustodian is Initializable, UUPSUpgradeable, AccessControlle
     /// The random number is generated using the block hash and the holder's address, and is used to determine
     /// which custodian is selected.
     /// @param holder The address of the asset rights holder whose custodian is to be selected.
-    function getBalancedCustodian(address holder) public view returns (address choosen) {
+    function getBalancedCustodian(address holder) public view returns (address chosen) {
         uint256 i = 0;
         uint256 acc = 0;
         bytes32 blockHash = blockhash(block.number - 1);
@@ -121,7 +121,7 @@ contract RightsAssetCustodian is Initializable, UUPSUpgradeable, AccessControlle
         // This ensures that no more redundancy than allowed is used,
         // even if more custodians are available.
         n = _maxDistributionRedundancy <= n ? _maxDistributionRedundancy : n;
-        // arithmetic sucesion
+        // arithmetic succession
         // eg: 3 = 1+2+3 =  n(n+1) / 2 = 6
         uint256 s = (n * (n + 1)) / 2;
 
@@ -143,7 +143,7 @@ contract RightsAssetCustodian is Initializable, UUPSUpgradeable, AccessControlle
             acc += ((n - i) * C.BPS_MAX) / s;
             address candidate = _custodiansByHolder[holder].at(i);
             if (acc >= random && _isValidActiveDistributor(candidate)) {
-                choosen = candidate;
+                chosen = candidate;
             }
 
             // i can't overflow n
