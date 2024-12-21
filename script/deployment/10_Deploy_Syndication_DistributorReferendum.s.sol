@@ -10,8 +10,9 @@ contract DeployDistributorReferendum is DeployBase {
         vm.startBroadcast(getAdminPK());
         address treasury = computeCreate3Address("SALT_TREASURY");
         address tollgate = computeCreate3Address("SALT_TOLLGATE");
+        address vault = computeCreate3Address("SALT_LEDGER_VAULT");
         address accessManager = computeCreate3Address("SALT_ACCESS_MANAGER");
-        address impl = address(new DistributorReferendum(treasury, tollgate));
+        address impl = address(new DistributorReferendum(treasury, tollgate, vault));
         bytes memory init = abi.encodeCall(DistributorReferendum.initialize, (accessManager));
         address referendum = deployUUPS(impl, init, "SALT_DISTRIBUTION_REFERENDUM");
         vm.stopBroadcast();

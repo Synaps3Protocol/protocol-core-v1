@@ -66,13 +66,6 @@ contract SubscriptionPolicy is BasePolicy {
         return _commit(holder, agreement, subExpire);
     }
 
-    // TODOpotential improvement to scaling custom actions in protocol using hooks
-    // function isAccessAllowed(bytes calldata criteria) external view return (bool) {
-    //  IHook hook = HOOKS.get(address(this), IAccessHook) <- internal handling of any logic needed to get the valid hook
-    //  if (!hook) return false // need conf hook
-    //  return hook.exec(criteria)
-    //}
-
     /// @notice Verifies if a specific account has general access holder's rights .
     function isAccessAllowed(address account, bytes calldata criteria) external view returns (bool) {
         // Default behavior: only check attestation compliance.

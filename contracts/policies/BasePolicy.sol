@@ -119,9 +119,9 @@ abstract contract BasePolicy is ReentrancyGuard, IPolicy, ERC165 {
         revert InvalidNotSupportedOperation();
     }
 
-    /// @notice Retrieves the terms associated with a specific content ID.
-    /// @dev This function allows for querying policy terms based on the unique content identifier.
-    /// @return A struct containing the terms applicable to the specified content ID.
+    /// @notice Retrieves the terms associated with a specific asset ID.
+    /// @dev This function allows for querying policy terms based on the unique asset identifier.
+    /// @return A struct containing the terms applicable to the specified asset ID.
     function resolveTerms(uint256) external view virtual returns (T.Terms memory) {
         revert InvalidNotSupportedOperation();
     }

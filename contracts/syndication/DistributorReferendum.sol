@@ -9,8 +9,9 @@ import { Initializable } from "@openzeppelin/contracts-upgradeable/proxy/utils/I
 import { ReentrancyGuardTransientUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardTransientUpgradeable.sol";
 import { AccessControlledUpgradeable } from "@synaps3/core/primitives/upgradeable/AccessControlledUpgradeable.sol";
 import { FeesCollectorUpgradeable } from "@synaps3/core/primitives/upgradeable/FeesCollectorUpgradeable.sol";
-import { QuorumUpgradeable } from "@synaps3/core/primitives/upgradeable/QuorumUpgradeable.sol";
 
+import { QuorumUpgradeable } from "@synaps3/core/primitives/upgradeable/QuorumUpgradeable.sol";
+import { ILedgerVault } from "@synaps3/core/interfaces/financial/ILedgerVault.sol";
 import { ITreasury } from "@synaps3/core/interfaces/economics/ITreasury.sol";
 import { ITollgate } from "@synaps3/core/interfaces/economics/ITollgate.sol";
 import { IDistributor } from "@synaps3/core/interfaces/syndication/IDistributor.sol";
@@ -34,11 +35,13 @@ contract DistributorReferendum is
     ITollgate public immutable TOLLGATE;
     /// @custom:oz-upgrades-unsafe-allow state-variable-immutable
     ITreasury public immutable TREASURY;
+    /// @custom:oz-upgrades-unsafe-allow state-variable-immutable
+    ILedgerVault public immutable VAULT;
 
-    uint256 private _enrollmentPeriod; // Period for enrollment
+    uint256 private _expirationPeriod; // Period for enrollment
     uint256 private _enrollmentsCount; // Count of enrollments
     mapping(address => uint256) private _enrollmentDeadline; // Timestamp for enrollment periods
-    bytes4 private constant INTERFACE_ID_IDISTRIBUTOR = type(IDistributor).interfaceId;
+    bytes4 private constant INTERFACE_ID_DISTRIBUTOR = type(IDistributor).interfaceId;
 
     /// @notice Event emitted when a distributor is registered
     /// @param distributor The address of the registered distributor
@@ -68,17 +71,18 @@ contract DistributorReferendum is
     /// @notice Modifier to ensure that the given distributor contract supports the IDistributor interface.
     /// @param distributor The distributor contract address.
     modifier onlyValidDistributor(address distributor) {
-        if (!distributor.supportsInterface(INTERFACE_ID_IDISTRIBUTOR)) {
+        if (!distributor.supportsInterface(INTERFACE_ID_DISTRIBUTOR)) {
             revert InvalidDistributorContract(distributor);
         }
         _;
     }
 
     /// @custom:oz-upgrades-unsafe-allow constructor
-    constructor(address treasury, address tollgate) {
+    constructor(address treasury, address tollgate, address vault) {
         /// https://forum.openzeppelin.com/t/what-does-disableinitializers-function-mean/28730/5
         /// https://forum.openzeppelin.com/t/uupsupgradeable-vulnerability-post-mortem/15680
         _disableInitializers();
+        VAULT = ILedgerVault(vault);
         TREASURY = ITreasury(treasury);
         TOLLGATE = ITollgate(tollgate);
     }
@@ -91,13 +95,13 @@ contract DistributorReferendum is
         __AccessControlled_init(accessManager);
         __FeesCollector_init(address(TREASURY));
         // 6 months initially..
-        _enrollmentPeriod = 180 days;
+        _expirationPeriod = 180 days;
     }
 
     /// @notice Sets a new expiration period for an enrollment or registration.
     /// @param newPeriod The new expiration period, in seconds.
     function setExpirationPeriod(uint256 newPeriod) external restricted {
-        _enrollmentPeriod = newPeriod;
+        _expirationPeriod = newPeriod;
         emit PeriodSet(msg.sender, newPeriod);
     }
 
@@ -107,13 +111,16 @@ contract DistributorReferendum is
     function register(address distributor, address currency) external onlyValidDistributor(distributor) {
         // !IMPORTANT if fees manager does not support the currency, will revert..
         uint256 fees = TOLLGATE.getFees(T.Context.SYN, currency);
-        uint256 depositedAmount = msg.sender.safeDeposit(fees, currency);
+        VAULT.lock(msg.sender, fees, currency); // lock funds for distributor
+        VAULT.claim(msg.sender, fees, currency); // claim the funds on behalf referendum 
+        VAULT.withdraw(address(this), fees, currency); // transfer the funds to referendum
+        
         // register distributor as pending approval
         _register(uint160(distributor));
         // set the distributor active enrollment period..
         // after this time the distributor is considered inactive and cannot collect his profits...
-        _enrollmentDeadline[distributor] = block.timestamp + _enrollmentPeriod;
-        emit Registered(distributor, block.timestamp, depositedAmount);
+        _enrollmentDeadline[distributor] = block.timestamp + _expirationPeriod;
+        emit Registered(distributor, block.timestamp, fees);
     }
 
     /// @notice Revokes the registration of a distributor.
@@ -134,7 +141,7 @@ contract DistributorReferendum is
 
     /// @notice Retrieves the current expiration period for enrollments or registrations.
     function getExpirationPeriod() public view returns (uint256) {
-        return _enrollmentPeriod;
+        return _expirationPeriod;
     }
 
     /// @notice Retrieves the enrollment deadline for a distributor.

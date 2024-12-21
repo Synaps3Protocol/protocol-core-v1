@@ -22,9 +22,9 @@ contract OrchestrateProtocolPolicies is Script {
         require(registrar.isAudited(subscriptionPolicy), "Invalid inactive policy");
         require(provider.getAddress() == easAddress, "Invalid attestation provider address");
 
-        bytes32 gotAttestationProvidername = keccak256(abi.encodePacked(provider.getName()));
+        bytes32 gotAttestationProviderName = keccak256(abi.encodePacked(provider.getName()));
         bytes32 expectedAttestationProviderName = keccak256(abi.encodePacked("EthereumAttestationService"));
-        require(gotAttestationProvidername == expectedAttestationProviderName, "Invalid attestation provider name");
+        require(gotAttestationProviderName == expectedAttestationProviderName, "Invalid attestation provider name");
 
         vm.stopBroadcast();
     }

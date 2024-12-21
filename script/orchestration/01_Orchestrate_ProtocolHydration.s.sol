@@ -20,11 +20,11 @@ contract OrchestrateProtocolHydration is Script {
         address tollgateAddress = vm.envAddress("TOLLGATE");
         address treasuryAddress = vm.envAddress("TREASURY");
         address auditorAddress = vm.envAddress("POLICY_AUDIT");
-        address assetReferendumAddress = vm.envAddress("ASSET_REFERENDUM");
-        address distributorReferendumAddress = vm.envAddress("DISTRIBUTION_REFERENDUM");
+        address assetReferendum = vm.envAddress("ASSET_REFERENDUM");
         address accessManager = vm.envAddress("ACCESS_MANAGER");
         address agreementManager = vm.envAddress("AGREEMENT_MANAGER");
         address agreementSettler = vm.envAddress("AGREEMENT_SETTLER");
+        address distributorReferendum = vm.envAddress("DISTRIBUTION_REFERENDUM");
         address ledgerVault = vm.envAddress("LEDGER_VAULT");
 
         vm.startBroadcast(admin);
@@ -45,8 +45,8 @@ contract OrchestrateProtocolHydration is Script {
 
         authority.setTargetFunctionRole(tollgateAddress, tollgateAllowed, C.GOV_ROLE);
         authority.setTargetFunctionRole(treasuryAddress, treasuryAllowed, C.GOV_ROLE);
-        authority.setTargetFunctionRole(assetReferendumAddress, assetReferendumAllowed, C.GOV_ROLE);
-        authority.setTargetFunctionRole(distributorReferendumAddress, distributorReferendumAllowed, C.GOV_ROLE);
+        authority.setTargetFunctionRole(assetReferendum, assetReferendumAllowed, C.GOV_ROLE);
+        authority.setTargetFunctionRole(distributorReferendum, distributorReferendumAllowed, C.GOV_ROLE);
 
         // assign moderation permissions
         authority.grantRole(C.MOD_ROLE, adminAddress, 0);
@@ -56,6 +56,7 @@ contract OrchestrateProtocolHydration is Script {
         // assign operations permissions
         authority.grantRole(C.OPS_ROLE, agreementManager, 0);
         authority.grantRole(C.OPS_ROLE, agreementSettler, 0);
+        authority.grantRole(C.OPS_ROLE, distributorReferendum, 0);
         bytes4[] memory vaultAllowed = LedgerVaultOpsPermissions();
         authority.setTargetFunctionRole(ledgerVault, vaultAllowed, C.OPS_ROLE);
 
