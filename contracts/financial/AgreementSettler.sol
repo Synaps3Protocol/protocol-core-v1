@@ -108,7 +108,7 @@ contract AgreementSettler is
         // (e.g., computation, storage, and fee management) are compensated.
         //
         // Fees are immutable and determined at the time of agreement creation
-        // (as defined in `previewAgreement`).This design disincentives manipulation, 
+        // (as defined in `previewAgreement`).This design disincentives manipulation,
         // ensuring that no changes can occur later to unfairly benefit or harm the initiator or other parties involved.
 
         //

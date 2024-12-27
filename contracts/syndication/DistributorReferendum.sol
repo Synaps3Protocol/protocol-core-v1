@@ -175,7 +175,7 @@ contract DistributorReferendum is
         /// The enrollment deadline enforces a time-based mechanism where distributors must renew
         /// their registration to maintain their active status. This prevents dormant distributors
         /// from continuing to benefit from the protocol without contributing.
-        
+
         // This mechanism helps to verify the availability of the distributor,
         // forcing recurrent registrations and ensuring ongoing participation.
         bool notExpiredDeadline = _enrollmentDeadline[distributor] > block.timestamp;

@@ -7,7 +7,6 @@ import { LedgerUpgradeable } from "@synaps3/core/primitives/upgradeable/LedgerUp
 
 import { IBalanceOperator } from "@synaps3/core/interfaces/base/IBalanceOperator.sol";
 import { FinancialOps } from "@synaps3/core/libraries/FinancialOps.sol";
-import { LoopOps } from "@synaps3/core/libraries/LoopOps.sol";
 
 /// @title BalanceOperatorUpgradeable
 /// @dev Abstract contract for managing deposits and withdrawals with ledger tracking capabilities.

@@ -84,6 +84,8 @@ contract AssetOwnership is
     /// @param assetId The unique identifier for the asset, which serves as the NFT ID.
     function registerAsset(address to, uint256 assetId) external onlyApprovedAsset(to, assetId) {
         _mint(to, assetId);
+        // TODO: approved content get an incentive:
+        // a cooling mechanism is needed eg: leg decay, max registered asset rate, etc
         emit RegisteredAsset(to, assetId);
     }
 

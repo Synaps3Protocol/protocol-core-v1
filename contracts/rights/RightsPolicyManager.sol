@@ -100,20 +100,41 @@ contract RightsPolicyManager is Initializable, UUPSUpgradeable, AccessControlled
 
     /// @notice Verifies if a specific policy is active for the provided account and criteria.
     /// @param account The address of the user whose compliance is being evaluated.
+    /// @param policy The address of the policy contract to check compliance against.
     /// @param criteria Encoded data containing the parameters required to verify access.
-    /// @param policyAddress The address of the policy contract to check compliance against.
-    function isActivePolicy(address account, bytes memory criteria, address policyAddress) public view returns (bool) {
+    function isActivePolicy(address account, address policy, bytes memory criteria) public view returns (bool) {
         // verify if the policy were registered for account address and comply with the criteria
-        bool registeredPolicy = _closures[account].contains(policyAddress);
+        bool registeredPolicy = _closures[account].contains(policy);
         if (!registeredPolicy) return false; // not registered policy
         // ask to policy about the access to account address
         bytes memory callData = abi.encodeCall(IPolicy.isAccessAllowed, (account, criteria));
-        (bool success, bytes memory result) = policyAddress.staticcall(callData);
+        (bool success, bytes memory result) = policy.staticcall(callData);
         // error during validation
         if (!success) return false;
         // ok verifying access
         bool ok = abi.decode(result, (bool));
         return ok;
+    }
+
+    /// @notice Retrieves the first active policy matching the criteria for an account in LIFO order.
+    /// @param account Address of the account to evaluate.
+    /// @param criteria Encoded data containing parameters for access verification.
+    /// @return active True if a policy matches; otherwise, false.
+    /// @return policyAddress Address of the matching policy or zero if none found.
+    function getActivePolicy(address account, bytes memory criteria) public view returns (bool, address) {
+        address[] memory policies = getPolicies(account);
+        uint256 i = policies.length - 1;
+
+        while (true) {
+            bool comply = isActivePolicy(account, policies[i], criteria);
+            if (comply) return (true, policies[i]);
+            if (i == 0) break;
+            unchecked {
+                --i;
+            }
+        }
+
+        return (false, address(0));
     }
 
     /// @dev Authorizes the upgrade of the contract.

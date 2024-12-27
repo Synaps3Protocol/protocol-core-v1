@@ -54,7 +54,7 @@ contract DistributorFactory is UpgradeableBeacon, Pausable, IDistributorFactory 
     /// @param endpoint The endpoint associated with the new distributor.
     function create(string calldata endpoint) external whenNotPaused returns (address) {
         // avoid duplicated endpoints
-        bytes32 hashed = keccak256(abi.encode(endpoint));
+        bytes32 hashed = keccak256(abi.encodePacked(endpoint));
         if (_registry[hashed] != address(0)) revert DistributorAlreadyRegistered();
         // check-effects-interaction..
         _registry[hashed] = msg.sender;
