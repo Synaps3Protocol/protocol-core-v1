@@ -35,7 +35,7 @@ interface IPolicy {
     /// @notice Retrieves the terms associated with a specific criteria.
     /// @param criteria Encoded data containing the parameters required to retrieve terms.
     /// @return A struct containing the terms applicable to the matching criteria.
-    function resolveTerms(bytes memory criteria) external view returns (T.Terms memory);
+    function resolveTerms(bytes calldata criteria) external view returns (T.Terms memory);
 
     /// @notice Retrieves the address of the attestation provider.
     /// @return The address of the provider associated with the policy.

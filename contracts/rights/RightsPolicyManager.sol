@@ -78,8 +78,10 @@ contract RightsPolicyManager is Initializable, UUPSUpgradeable, AccessControlled
 
         // type safe low level call to policy
         // the policy is registered to the parties..
-        (bool success, bytes memory result) = policyAddress.call(abi.encodeCall(IPolicy.enforce, (holder, agreement)));
+        bytes memory callData = abi.encodeCall(IPolicy.enforce, (holder, agreement));
+        (bool success, bytes memory result) = policyAddress.call(callData);
         if (!success) revert InvalidPolicyEnforcement("Error during policy enforcement call");
+
         // expected returned attestation as agreement confirmation
         uint256[] memory attestationIds = abi.decode(result, (uint256[]));
         _registerBatchPolicies(proof, policyAddress, attestationIds, agreement.parties);
@@ -88,11 +90,15 @@ contract RightsPolicyManager is Initializable, UUPSUpgradeable, AccessControlled
 
     /// @notice Retrieves the first active policy matching the criteria for an account in LIFO order.
     /// @param account Address of the account to evaluate.
-    /// @param criteria Encoded data containing parameters for access verification.
-    /// @return active True if a policy matches; otherwise, false.
-    /// @return policyAddress Address of the matching policy or zero if none found.
+    /// @param criteria Encoded data containing parameters for access verification. eg: assetId, holder
     function getActivePolicy(address account, bytes memory criteria) external view returns (bool, address) {
-        address[] memory policies = getPolicies(account);
+        // https://docs.openzeppelin.com/contracts/5.x/api/utils#EnumerableSet-values-struct-EnumerableSet-AddressSet-
+        // This operation (.values()) will copy the entire storage to memory, which can be quite expensive.
+        // This is designed to mostly be used by view accessors that are queried without any gas fees.
+        // Developers should keep in mind that this function has an unbounded cost,
+        /// and using it as part of a state-changing function may render the function uncallable
+        /// if the set grows to a point where copying to memory consumes too much gas to fit in a block.
+        address[] memory policies = _closures[account].values();
         uint256 policiesLen = policies.length;
 
         for (uint256 i = 0; i < policiesLen; i = i.uncheckedInc()) {
@@ -103,18 +109,6 @@ contract RightsPolicyManager is Initializable, UUPSUpgradeable, AccessControlled
         return (false, address(0));
     }
 
-    /// @notice Retrieves the list of policys associated with a specific account and content ID.
-    /// @param account The address of the account for which policies are being retrieved.
-    function getPolicies(address account) public view returns (address[] memory) {
-        // https://docs.openzeppelin.com/contracts/5.x/api/utils#EnumerableSet-values-struct-EnumerableSet-AddressSet-
-        // This operation will copy the entire storage to memory, which can be quite expensive.
-        // This is designed to mostly be used by view accessors that are queried without any gas fees.
-        // Developers should keep in mind that this function has an unbounded cost,
-        /// and using it as part of a state-changing function may render the function uncallable
-        /// if the set grows to a point where copying to memory consumes too much gas to fit in a block.
-        return _closures[account].values();
-    }
-
     /// @notice Verifies if a specific policy is active for the provided account and criteria.
     /// @param account The address of the user whose compliance is being evaluated.
     /// @param policy The address of the policy contract to check compliance against.
@@ -122,12 +116,12 @@ contract RightsPolicyManager is Initializable, UUPSUpgradeable, AccessControlled
     function isActivePolicy(address account, address policy, bytes memory criteria) public view returns (bool) {
         // verify if the policy were registered for account address and comply with the criteria
         bool registeredPolicy = _closures[account].contains(policy);
-        if (!registeredPolicy) return false; // not registered policy
-        // ask to policy about the access to account address
+        if (!registeredPolicy) return false; // fail fast: not registered policy
+        // ask to policy about the access for account address
         bytes memory callData = abi.encodeCall(IPolicy.isAccessAllowed, (account, criteria));
         (bool success, bytes memory result) = policy.staticcall(callData);
         if (!success) return false; // silent failure
-        // ok verifying access
+        // ok => verified access
         bool ok = abi.decode(result, (bool));
         return ok;
     }

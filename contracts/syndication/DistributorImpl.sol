@@ -60,23 +60,23 @@ contract DistributorImpl is Initializable, ERC165Upgradeable, OwnableUpgradeable
         emit EndpointUpdated(oldEndpoint, _endpoint);
     }
 
-    /// @notice Retrieves the contract's balance for a given currency.
-    /// @param currency The token address to check the balance of (use `address(0)` for native currency).
-    /// @dev This function is restricted to the contract owner.
-    function getBalance(address currency) public view onlyOwner returns (uint256) {
-        return address(this).balanceOf(currency);
-    }
-
     /// @notice Withdraws tokens or native currency from the contract to the specified recipient.
     /// @param recipient The address that will receive the withdrawn tokens or native currency.
     /// @param amount The amount of tokens or native currency to withdraw.
     /// @param currency The address of the token to withdraw (use `address(0)` for native currency).
     /// @dev Transfers the specified amount of tokens or native currency to the recipient.
     /// Emits a {FundWithdrawn} event.
-    function withdraw(address recipient, uint256 amount, address currency) public onlyOwner returns (uint256) {
+    function withdraw(address recipient, uint256 amount, address currency) external onlyOwner returns (uint256) {
         if (getBalance(currency) == 0) revert NoFundsToWithdraw();
         recipient.transfer(amount, currency);
         emit FundsWithdrawn(recipient, amount, currency);
         return amount;
+    }
+
+    /// @notice Retrieves the contract's balance for a given currency.
+    /// @param currency The token address to check the balance of (use `address(0)` for native currency).
+    /// @dev This function is restricted to the contract owner.
+    function getBalance(address currency) public view onlyOwner returns (uint256) {
+        return address(this).balanceOf(currency);
     }
 }

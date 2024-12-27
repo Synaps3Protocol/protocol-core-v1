@@ -103,7 +103,7 @@ contract RightsPolicyAuthorizer is
         address[] memory policies = _authorizedPolicies[holder].values();
         address[] memory filtered = new address[](policies.length);
         uint256 policiesLen = policies.length;
-        uint256 j = 0;
+        uint256 j = 0; // filtered cursor
 
         for (uint256 i = 0; i < policiesLen; i = i.uncheckedInc()) {
             if(!_isValidPolicy(policies[i])) continue;
