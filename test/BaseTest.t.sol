@@ -7,27 +7,29 @@ import { DeployCreate3Factory } from "script/deployment/01_Deploy_Base_Create3.s
 import { DeployAccessManager } from "script/deployment/02_Deploy_Access_AccessManager.s.sol";
 import { DeployTollgate } from "script/deployment/04_Deploy_Economics_Tollgate.s.sol";
 import { DeployToken } from "script/deployment/03_Deploy_Economics_Token.s.sol";
+import { DeployLedgerVault } from "script/deployment/06_Deploy_Financial_LedgerVault.s.sol";
 import { DeployTreasury } from "script/deployment/05_Deploy_Economics_Treasury.s.sol";
 import { DeployAssetReferendum } from "script/deployment/11_Deploy_Assets_AssetReferendum.s.sol";
 import { DeployDistributorFactory } from "script/deployment/09_Deploy_Syndication_DistributorFactory.s.sol";
 import { DeployDistributorReferendum } from "script/deployment/10_Deploy_Syndication_DistributorReferendum.s.sol";
 
-
-import {getGovPermissions as TollgateGovPermissions} from "script/permissions/Permissions_Tollgate.sol";
-import {getGovPermissions as TreasuryGovPermissions} from "script/permissions/Permissions_Treasury.sol";
-import {getGovPermissions as DistributorReferendumGovPermissions} from "script/permissions/Permissions_DistributorReferendum.sol";
-import {getGovPermissions as AssetReferendumGovPermissions} from "script/permissions/Permissions_AssetReferendum.sol";
+import { getGovPermissions as TollgateGovPermissions } from "script/permissions/Permissions_Tollgate.sol";
+import { getGovPermissions as TreasuryGovPermissions } from "script/permissions/Permissions_Treasury.sol";
+import { getGovPermissions as DistributorReferendumGovPermissions } from "script/permissions/Permissions_DistributorReferendum.sol";
+import { getGovPermissions as AssetReferendumGovPermissions } from "script/permissions/Permissions_AssetReferendum.sol";
+import { getOpsPermissions as LedgerVaultOpsPermissions } from "script/permissions/Permissions_LedgerVault.sol";
 
 import { IAccessManager } from "contracts/core/interfaces/access/IAccessManager.sol";
 import { C } from "contracts/core/primitives/Constants.sol";
 
-import {console} from "forge-std/console.sol";
+import { console } from "forge-std/console.sol";
 
 abstract contract BaseTest is Test {
     address admin = vm.addr(vm.envUint("PRIVATE_KEY"));
     address user;
     address governor;
     address accessManager;
+    address ledger;
 
     modifier initialize() {
         // setup the admin to operate in tests..
@@ -36,6 +38,7 @@ abstract contract BaseTest is Test {
         admin = vm.addr(vm.envUint("PRIVATE_KEY"));
         deployCreate3Factory();
         deployAccessManager();
+        deployLedgerVault();
         _;
     }
 
@@ -64,6 +67,19 @@ abstract contract BaseTest is Test {
         address tollgate = tollgateDeployer.run();
         _setTargetGovRole(tollgate, tollgateAllowed);
         return tollgate;
+    }
+
+    // 02_DeployTollgate
+    function deployLedgerVault() public returns (address) {
+        // set default admin as deployer..
+        DeployLedgerVault ledgerDeployer = new DeployLedgerVault();
+        bytes4[] memory ledgerAllowed = LedgerVaultOpsPermissions();
+        ledger = ledgerDeployer.run();
+
+        // op role needed to call ledgerAllowed in ledger contract
+        IAccessManager authority = IAccessManager(accessManager);
+        authority.setTargetFunctionRole(ledger, ledgerAllowed, C.OPS_ROLE);
+        return ledger;
     }
 
     // 03_DeployToken
@@ -100,13 +116,14 @@ abstract contract BaseTest is Test {
         return distDeployer.run();
     }
 
-
     // 09_DeployDistributorReferendum
     function deployDistributorReferendum() public returns (address) {
         // set default admin as deployer..
         DeployDistributorReferendum distReferendumDeployer = new DeployDistributorReferendum();
         bytes4[] memory distributorReferendumAllowed = DistributorReferendumGovPermissions();
         address distributorReferendum = distReferendumDeployer.run();
+        // OP role granted to distributor referendum
+        _setOpRole(distributorReferendum);
         _setTargetGovRole(distributorReferendum, distributorReferendumAllowed);
         return distributorReferendum;
     }
@@ -116,6 +133,13 @@ abstract contract BaseTest is Test {
         IAccessManager authority = IAccessManager(accessManager);
         authority.setTargetFunctionRole(target, allowed, C.GOV_ROLE);
         authority.grantRole(C.GOV_ROLE, governor, 0);
+        vm.stopPrank();
+    }
+
+    function _setOpRole(address target) public {
+        vm.startPrank(admin);
+        IAccessManager authority = IAccessManager(accessManager);
+        authority.grantRole(C.OPS_ROLE, target, 0);
         vm.stopPrank();
     }
 }

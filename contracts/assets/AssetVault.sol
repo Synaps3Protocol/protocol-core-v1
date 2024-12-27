@@ -50,7 +50,7 @@ contract AssetVault is Initializable, UUPSUpgradeable, AccessControlledUpgradeab
     /// @notice Retrieves the encrypted content for a given content ID.
     /// @param assetId The identifier of the asset.
     /// @param vault The vault type used to retrieve the asset (e.g., LIT, RSA, EC).
-    function getContent(uint256 assetId, T.VaultType vault) public view returns (bytes memory) {
+    function getContent(uint256 assetId, T.VaultType vault) external view returns (bytes memory) {
         return _secured[assetId][vault];
     }
 
@@ -58,7 +58,7 @@ contract AssetVault is Initializable, UUPSUpgradeable, AccessControlledUpgradeab
     /// @param assetId The identifier of the asset.
     /// @param vault The vault type to associate with the encrypted content (e.g., LIT, RSA, EC).
     /// @param data The secure content to store, represented as bytes.
-    function setContent(uint256 assetId, T.VaultType vault, bytes memory data) public onlyHolder(assetId) {
+    function setContent(uint256 assetId, T.VaultType vault, bytes memory data) external onlyHolder(assetId) {
         _secured[assetId][vault] = data;
     }
 

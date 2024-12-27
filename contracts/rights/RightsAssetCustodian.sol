@@ -61,6 +61,9 @@ contract RightsAssetCustodian is Initializable, UUPSUpgradeable, AccessControlle
         _maxDistributionRedundancy = 3;
     }
 
+
+    // TODO revoke custody 
+
     /// @notice Grants custodial rights over the asset held by a holder to a distributor.
     /// @dev This function assigns custodial rights for the asset held by a specific
     /// account to a designated distributor.
@@ -85,13 +88,13 @@ contract RightsAssetCustodian is Initializable, UUPSUpgradeable, AccessControlle
 
     /// @notice Retrieves the total number of holders in custody for a given distributor.
     /// @param distributor The address of the distributor whose custodial content count is being requested.
-    function getCustodyCount(address distributor) public view returns (uint256) {
+    function getCustodyCount(address distributor) external view returns (uint256) {
         return _holdersUnderCustodian[distributor].length();
     }
 
     /// @notice Retrieves the holders under custody for a specific distributor.
     /// @param distributor The address of the distributor whose custody records are to be retrieved.
-    function getCustodyRegistry(address distributor) public view returns (address[] memory) {
+    function getCustodyRegistry(address distributor) external view returns (address[] memory) {
         // https://docs.openzeppelin.com/contracts/5.x/api/utils#EnumerableSet-values-struct-EnumerableSet-AddressSet-
         // This operation will copy the entire storage to memory, which can be quite expensive.
         // This function is designed to mostly be used by view accessors that are queried without any gas fees.
@@ -111,7 +114,7 @@ contract RightsAssetCustodian is Initializable, UUPSUpgradeable, AccessControlle
     /// The random number is generated using the block hash and the holder's address, and is used to determine
     /// which custodian is selected.
     /// @param holder The address of the asset rights holder whose custodian is to be selected.
-    function getBalancedCustodian(address holder) public view returns (address chosen) {
+    function getBalancedCustodian(address holder) external view returns (address chosen) {
         uint256 i = 0;
         uint256 acc = 0;
         bytes32 blockHash = blockhash(block.number - 1);
@@ -156,7 +159,7 @@ contract RightsAssetCustodian is Initializable, UUPSUpgradeable, AccessControlle
     /// @notice Retrieves the addresses of the custodians assigned to a specific content holder.
     /// @dev Is not guaranteed that returned custodians are actives. use `getBalancedCustodian` in place.
     /// @param holder The address of the asset holder whose custodians are being retrieved.
-    function getCustodians(address holder) public view returns (address[] memory) {
+    function getCustodians(address holder) external view returns (address[] memory) {
         return _custodiansByHolder[holder].values();
     }
 

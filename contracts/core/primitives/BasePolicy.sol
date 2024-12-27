@@ -112,17 +112,17 @@ abstract contract BasePolicy is ReentrancyGuard, IPolicy, ERC165 {
         return _attestations[recipient][holder];
     }
 
+    /// @notice Retrieves the address of the attestation provider.
+    /// @return The address of the provider associated with the policy.
+    function getAttestationProvider() external view returns (address) {
+        return address(ATTESTATION_PROVIDER);
+    }
+
     /// @notice Checks if a given interface ID is supported by this contract.
     /// @param interfaceId The bytes4 identifier of the interface to check for support.
     /// @return A boolean indicating whether the interface ID is supported (true) or not (false).
     function supportsInterface(bytes4 interfaceId) public view virtual override returns (bool) {
         return interfaceId == type(IPolicy).interfaceId || super.supportsInterface(interfaceId);
-    }
-
-    /// @notice Retrieves the address of the attestation provider.
-    /// @return The address of the provider associated with the policy.
-    function getAttestationProvider() public view returns (address) {
-        return address(ATTESTATION_PROVIDER);
     }
 
     /// @notice Verifies whether the on-chain access terms are satisfied for an account.

@@ -19,11 +19,11 @@ contract OrchestrateProtocolSyndication is DeployBase {
 
         vm.startBroadcast(admin);
         // approve initial distributor
-        address distributor = IDistributorFactory(distributorFactory).create("https://guardian.watchit.movie");
+        address distributor = IDistributorFactory(distributorFactory).create("https://g.watchit.movie");
         IDistributorReferendum referendum = IDistributorReferendum(distributorReferendum);
 
         bytes32 got = keccak256(abi.encodePacked(IDistributor(distributor).getEndpoint()));
-        bytes32 expected = keccak256(abi.encodePacked("https://guardian.watchit.movie"));
+        bytes32 expected = keccak256(abi.encodePacked("https://g.watchit.movie"));
 
         require(IDistributor(distributor).getManager() == vm.addr(admin));
         require(got == expected);

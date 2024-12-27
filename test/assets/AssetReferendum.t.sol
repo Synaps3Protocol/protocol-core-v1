@@ -38,10 +38,11 @@ contract AssetReferendumTest is BaseTest {
         uint256 assetId = 1;
         _submitContentAsUser(assetId);
         vm.warp(1641070805);
-        vm.prank(governor); // approve by governance..
+        vm.startPrank(governor); // approve by governance..
         vm.expectEmit(false, false, false, true, address(referendum));
         emit AssetReferendum.Approved(assetId, 1641070805);
         IAssetRegistrable(referendum).approve(assetId);
+        vm.stopPrank();
     }
 
     function test_Approve_ApprovedValidStates() public {

@@ -98,13 +98,6 @@ contract DistributorReferendum is
         _expirationPeriod = 180 days;
     }
 
-    /// @notice Sets a new expiration period for an enrollment or registration.
-    /// @param newPeriod The new expiration period, in seconds.
-    function setExpirationPeriod(uint256 newPeriod) external restricted {
-        _expirationPeriod = newPeriod;
-        emit PeriodSet(msg.sender, newPeriod);
-    }
-
     /// @notice Registers a distributor by sending a payment to the contract.
     /// @param distributor The address of the distributor to register.
     /// @param currency The currency used to pay enrollment.
@@ -134,14 +127,6 @@ contract DistributorReferendum is
         emit Registered(distributor, block.timestamp, fees);
     }
 
-    /// @notice Revokes the registration of a distributor.
-    /// @param distributor The address of the distributor to revoke.
-    function revoke(address distributor) external restricted onlyValidDistributor(distributor) {
-        _enrollmentsCount--;
-        _revoke(uint160(distributor));
-        emit Revoked(distributor, block.timestamp);
-    }
-
     /// @notice Approves a distributor's registration.
     /// @param distributor The address of the distributor to approve.
     function approve(address distributor) external restricted onlyValidDistributor(distributor) {
@@ -150,14 +135,29 @@ contract DistributorReferendum is
         emit Approved(distributor, block.timestamp);
     }
 
+    /// @notice Revokes the registration of a distributor.
+    /// @param distributor The address of the distributor to revoke.
+    function revoke(address distributor) external restricted onlyValidDistributor(distributor) {
+        _enrollmentsCount--;
+        _revoke(uint160(distributor));
+        emit Revoked(distributor, block.timestamp);
+    }
+
+    /// @notice Sets a new expiration period for an enrollment or registration.
+    /// @param newPeriod The new expiration period, in seconds.
+    function setExpirationPeriod(uint256 newPeriod) external restricted {
+        _expirationPeriod = newPeriod;
+        emit PeriodSet(msg.sender, newPeriod);
+    }
+
     /// @notice Retrieves the current expiration period for enrollments or registrations.
-    function getExpirationPeriod() public view returns (uint256) {
+    function getExpirationPeriod() external view returns (uint256) {
         return _expirationPeriod;
     }
 
     /// @notice Retrieves the enrollment deadline for a distributor.
     /// @param distributor The address of the distributor.
-    function getEnrollmentDeadline(address distributor) public view returns (uint256) {
+    function getEnrollmentDeadline(address distributor) external view returns (uint256) {
         return _enrollmentDeadline[distributor];
     }
 
@@ -169,7 +169,7 @@ contract DistributorReferendum is
     /// @notice Checks if the entity is active.
     /// @dev This function verifies the active status of the distributor.
     /// @param distributor The distributor's address to check.
-    function isActive(address distributor) public view onlyValidDistributor(distributor) returns (bool) {
+    function isActive(address distributor) external view onlyValidDistributor(distributor) returns (bool) {
         // TODO a renovation mechanism is needed to update the enrollment time
         /// It ensures that distributors remain engaged and do not become inactive for extended periods.
         /// The enrollment deadline enforces a time-based mechanism where distributors must renew
@@ -185,14 +185,14 @@ contract DistributorReferendum is
     /// @notice Checks if the entity is waiting.
     /// @dev This function verifies the waiting status of the distributor.
     /// @param distributor The distributor's address to check.
-    function isWaiting(address distributor) public view onlyValidDistributor(distributor) returns (bool) {
+    function isWaiting(address distributor) external view onlyValidDistributor(distributor) returns (bool) {
         return _status(uint160(distributor)) == Status.Waiting;
     }
 
     /// @notice Checks if the entity is blocked.
     /// @dev This function verifies the blocked status of the distributor.
     /// @param distributor The distributor's address to check.
-    function isBlocked(address distributor) public view onlyValidDistributor(distributor) returns (bool) {
+    function isBlocked(address distributor) external view onlyValidDistributor(distributor) returns (bool) {
         return _status(uint160(distributor)) == Status.Blocked;
     }
 

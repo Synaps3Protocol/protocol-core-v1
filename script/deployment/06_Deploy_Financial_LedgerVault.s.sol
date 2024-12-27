@@ -4,7 +4,7 @@ pragma solidity 0.8.26;
 import { DeployBase } from "script/deployment/00_Deploy_Base.s.sol";
 import { LedgerVault } from "contracts/financial/LedgerVault.sol";
 
-contract DeployRightsAccessAgrement is DeployBase {
+contract DeployLedgerVault is DeployBase {
     function run() external returns (address) {
 
         vm.startBroadcast(getAdminPK());

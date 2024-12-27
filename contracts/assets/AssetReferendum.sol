@@ -124,21 +124,21 @@ contract AssetReferendum is
         emit Approved(assetId, block.timestamp);
     }
 
-    /// @notice Checks if the asset is active nor blocked.
-    /// @param assetId The ID of the asset.
-    function isActive(uint256 assetId) public view returns (bool) {
-        return _status(assetId) == Status.Active;
-    }
-
     /// @notice Checks if the asset is approved.
     /// @param initiator The submission account address .
     /// @param assetId The ID of the asset.
-    function isApproved(address initiator, uint256 assetId) public view returns (bool) {
+    function isApproved(address initiator, uint256 assetId) external view returns (bool) {
         bool approved = isActive(assetId);
         bool validAccount = _submissions[initiator].contains(assetId);
         bool verifiedRole = _hasRole(C.VERIFIED_ROLE, initiator);
         // is approved with a valid submission account or is verified account..
         return (approved && validAccount) || verifiedRole;
+    }
+
+    /// @notice Checks if the asset is active nor blocked.
+    /// @param assetId The ID of the asset.
+    function isActive(uint256 assetId) public view returns (bool) {
+        return _status(assetId) == Status.Active;
     }
 
     /// @notice Function that should revert when msg.sender is not authorized to upgrade the contract.

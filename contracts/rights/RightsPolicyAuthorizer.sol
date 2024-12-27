@@ -10,6 +10,7 @@ import { AccessControlledUpgradeable } from "@synaps3/core/primitives/upgradeabl
 import { IPolicy } from "@synaps3/core/interfaces/policies/IPolicy.sol";
 import { IRightsPolicyAuthorizer } from "@synaps3/core/interfaces/rights/IRightsPolicyAuthorizer.sol";
 import { IPolicyAuditorVerifiable } from "@synaps3/core/interfaces/policies/IPolicyAuditorVerifiable.sol";
+import { LoopOps } from "@synaps3/core/libraries/LoopOps.sol";
 
 contract RightsPolicyAuthorizer is
     Initializable,
@@ -17,6 +18,7 @@ contract RightsPolicyAuthorizer is
     AccessControlledUpgradeable,
     IRightsPolicyAuthorizer
 {
+    using LoopOps for uint256;
     using EnumerableSet for EnumerableSet.AddressSet;
 
     /// KIM: any initialization here is ephemeral and not included in bytecode..
@@ -84,21 +86,37 @@ contract RightsPolicyAuthorizer is
     /// @dev Verify if the specified policy contract has been delegated the rights by the asset holder.
     /// @param policy The address of the policy contract to check for delegation.
     /// @param holder the asset rights holder to check for delegation.
-    function isPolicyAuthorized(address policy, address holder) public view returns (bool) {
+    function isPolicyAuthorized(address policy, address holder) external view returns (bool) {
         return _authorizedPolicies[holder].contains(policy) && _isValidPolicy(policy);
     }
 
     /// @notice Retrieves all policies authorized by a specific content holder.
     /// @dev This function returns an array of policy addresses that have been granted rights by the holder.
     /// @param holder The address of the asset rights holder whose authorized policies are being queried.
-    function getAuthorizedPolicies(address holder) public view returns (address[] memory) {
+    function getAuthorizedPolicies(address holder) external view returns (address[] memory) {
         // https://docs.openzeppelin.com/contracts/5.x/api/utils#EnumerableSet-values-struct-EnumerableSet-AddressSet-
-        // This operation will copy the entire storage to memory, which can be quite expensive.
+        // This operation (.values()) will copy the entire storage to memory, which can be quite expensive.
         // This function is designed to be used primarily as a view accessor, queried without any gas fees.
         // Developers should note that this function has an unbounded cost, and using it as part of a state-changing
         // function may render the function uncallable if the set grows to a point where copying to memory
-        /// consumes too much gas to fit in a block.
-        return _authorizedPolicies[holder].values();
+        // consumes too much gas to fit in a block.
+        address[] memory policies = _authorizedPolicies[holder].values();
+        address[] memory filtered = new address[](policies.length);
+        uint256 policiesLen = policies.length;
+        uint256 j = 0;
+
+        for (uint256 i = 0; i < policiesLen; i = i.uncheckedInc()) {
+            if(!_isValidPolicy(policies[i])) continue;
+            filtered[j] = policies[i];
+            
+            // safe unchecked
+            // limited to i increment = max policy length
+            unchecked {
+                ++j;
+            }
+        }
+
+        return filtered;
     }
 
     /// @dev Authorizes the upgrade of the contract.

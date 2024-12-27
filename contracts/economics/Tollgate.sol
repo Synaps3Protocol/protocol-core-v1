@@ -94,7 +94,7 @@ contract Tollgate is Initializable, UUPSUpgradeable, AccessControlledUpgradeable
     /// @notice Retrieves the fees for a specified context and currency.
     /// @param ctx The context for which to retrieve the fees.
     /// @param currency The address of the currency for which to retrieve the fees.
-    function getFees(T.Context ctx, address currency) public view returns (uint256) {
+    function getFees(T.Context ctx, address currency) external view returns (uint256) {
         if (!isCurrencySupported(ctx, currency)) revert InvalidUnsupportedCurrency(currency);
         return _currencyFees[currency][ctx];
     }

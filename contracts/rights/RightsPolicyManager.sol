@@ -63,24 +63,12 @@ contract RightsPolicyManager is Initializable, UUPSUpgradeable, AccessControlled
         return address(RIGHTS_AUTHORIZER);
     }
 
-    /// @notice Retrieves the list of policys associated with a specific account and content ID.
-    /// @param account The address of the account for which policies are being retrieved.
-    function getPolicies(address account) public view returns (address[] memory) {
-        // https://docs.openzeppelin.com/contracts/5.x/api/utils#EnumerableSet-values-struct-EnumerableSet-AddressSet-
-        // This operation will copy the entire storage to memory, which can be quite expensive.
-        // This is designed to mostly be used by view accessors that are queried without any gas fees.
-        // Developers should keep in mind that this function has an unbounded cost,
-        /// and using it as part of a state-changing function may render the function uncallable
-        /// if the set grows to a point where copying to memory consumes too much gas to fit in a block.
-        return _closures[account].values();
-    }
-
     /// @notice Finalizes the agreement by registering the agreed-upon policy, effectively closing the agreement.
     /// @dev This function verifies the policy's authorization, executes the agreement and registers the policy.
     /// @param proof The unique identifier of the agreement to be enforced.
     /// @param holder The rights holder whose authorization is required for accessing the asset.
     /// @param policyAddress The address of the policy contract managing the agreement.
-    function registerPolicy(uint256 proof, address holder, address policyAddress) public returns (uint256[] memory) {
+    function registerPolicy(uint256 proof, address holder, address policyAddress) external returns (uint256[] memory) {
         // 1- retrieves the agreement and marks it as settled..
         T.Agreement memory agreement = AGREEMENT_SETTLER.settleAgreement(proof, holder);
         // 2- only authorized policies by holder can be registered..
@@ -98,6 +86,35 @@ contract RightsPolicyManager is Initializable, UUPSUpgradeable, AccessControlled
         return attestationIds;
     }
 
+    /// @notice Retrieves the first active policy matching the criteria for an account in LIFO order.
+    /// @param account Address of the account to evaluate.
+    /// @param criteria Encoded data containing parameters for access verification.
+    /// @return active True if a policy matches; otherwise, false.
+    /// @return policyAddress Address of the matching policy or zero if none found.
+    function getActivePolicy(address account, bytes memory criteria) external view returns (bool, address) {
+        address[] memory policies = getPolicies(account);
+        uint256 policiesLen = policies.length;
+
+        for (uint256 i = 0; i < policiesLen; i = i.uncheckedInc()) {
+            bool comply = isActivePolicy(account, policies[i], criteria);
+            if (comply) return (true, policies[i]);
+        }
+
+        return (false, address(0));
+    }
+
+    /// @notice Retrieves the list of policys associated with a specific account and content ID.
+    /// @param account The address of the account for which policies are being retrieved.
+    function getPolicies(address account) public view returns (address[] memory) {
+        // https://docs.openzeppelin.com/contracts/5.x/api/utils#EnumerableSet-values-struct-EnumerableSet-AddressSet-
+        // This operation will copy the entire storage to memory, which can be quite expensive.
+        // This is designed to mostly be used by view accessors that are queried without any gas fees.
+        // Developers should keep in mind that this function has an unbounded cost,
+        /// and using it as part of a state-changing function may render the function uncallable
+        /// if the set grows to a point where copying to memory consumes too much gas to fit in a block.
+        return _closures[account].values();
+    }
+
     /// @notice Verifies if a specific policy is active for the provided account and criteria.
     /// @param account The address of the user whose compliance is being evaluated.
     /// @param policy The address of the policy contract to check compliance against.
@@ -109,32 +126,10 @@ contract RightsPolicyManager is Initializable, UUPSUpgradeable, AccessControlled
         // ask to policy about the access to account address
         bytes memory callData = abi.encodeCall(IPolicy.isAccessAllowed, (account, criteria));
         (bool success, bytes memory result) = policy.staticcall(callData);
-        // error during validation
-        if (!success) return false;
+        if (!success) return false; // silent failure
         // ok verifying access
         bool ok = abi.decode(result, (bool));
         return ok;
-    }
-
-    /// @notice Retrieves the first active policy matching the criteria for an account in LIFO order.
-    /// @param account Address of the account to evaluate.
-    /// @param criteria Encoded data containing parameters for access verification.
-    /// @return active True if a policy matches; otherwise, false.
-    /// @return policyAddress Address of the matching policy or zero if none found.
-    function getActivePolicy(address account, bytes memory criteria) public view returns (bool, address) {
-        address[] memory policies = getPolicies(account);
-        uint256 i = policies.length - 1;
-
-        while (true) {
-            bool comply = isActivePolicy(account, policies[i], criteria);
-            if (comply) return (true, policies[i]);
-            if (i == 0) break;
-            unchecked {
-                --i;
-            }
-        }
-
-        return (false, address(0));
     }
 
     /// @dev Authorizes the upgrade of the contract.

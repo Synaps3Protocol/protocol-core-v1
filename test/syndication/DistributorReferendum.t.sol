@@ -5,6 +5,7 @@ import "forge-std/Test.sol";
 import { IERC20 } from "@openzeppelin/contracts/interfaces/IERC20.sol";
 import { ITreasury } from "contracts/core/interfaces/economics/ITreasury.sol";
 import { ITollgate } from "contracts/core/interfaces/economics/ITollgate.sol";
+import { ILedgerVault } from "contracts/core/interfaces/financial/ILedgerVault.sol";
 import { IDistributorVerifiable } from "contracts/core/interfaces/syndication/IDistributorVerifiable.sol";
 import { IDistributorExpirable } from "contracts/core/interfaces/syndication/IDistributorExpirable.sol";
 import { IDistributorRegistrable } from "contracts/core/interfaces/syndication/IDistributorRegistrable.sol";
@@ -72,6 +73,8 @@ contract DistributorReferendumTest is BaseTest {
         vm.startPrank(admin);
         // approve fees payment: admin default account
         IERC20(token).approve(referendum, expectedFees);
+        ILedgerVault(ledger).deposit(admin, expectedFees, token);
+
         vm.expectEmit(true, false, false, true, address(referendum));
         emit DistributorReferendum.Registered(distributor, 1641070803, expectedFees);
         IDistributorRegistrable(referendum).register(distributor, token);
@@ -194,6 +197,8 @@ contract DistributorReferendumTest is BaseTest {
         // only manager can pay enrollment..
         vm.startPrank(admin);
         IERC20(token).approve(referendum, approval);
+        ILedgerVault(ledger).deposit(admin, approval, token);
+        
         IDistributorRegistrable(referendum).register(d9r, token);
         vm.stopPrank();
     }
