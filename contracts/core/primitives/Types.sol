@@ -35,10 +35,8 @@ library T {
         address broker; // the authorized account to manage the agreement.
         address currency; // the currency used in transaction
         address initiator; // the initiator of the transaction
-        uint256 createdAt; // the agreement creation date
-        uint256 amount; // the transaction total amount
+        uint256 total; // the transaction total amount
         uint256 fees; // the agreement protocol fees
-        uint256 available; // the remaining amount after fees
         address[] parties; // the accounts related to agreement
         bytes payload; // any additional data needed during agreement execution
     }

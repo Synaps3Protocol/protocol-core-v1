@@ -6,5 +6,6 @@ function getGovPermissions() pure returns (bytes4[] memory) {
     // tollgate grant access to collectors
     bytes4[] memory treasuryAllowed = new bytes4[](1);
     treasuryAllowed[0] = Treasury.collectFees.selector;
+    treasuryAllowed[0] = Treasury.withdraw.selector;
     return treasuryAllowed;
 }

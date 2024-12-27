@@ -46,6 +46,7 @@ compile:
 .PHONY: generate ## generate contract using abigen
 generate:
 	@abigen --abi ${file}.abi.json --bin ${file}.bin --pkg contracts --type ${contract} --out ${contract}.go
+	@forge build --extra-output-files bin
 
 .PHONY: force-compile ## compile contracts
 force-compile:

@@ -30,7 +30,7 @@ contract AccessManager is Initializable, UUPSUpgradeable, AccessManagerUpgradeab
 
         _setRoleAdmin(C.VERIFIED_ROLE, C.GOV_ROLE);
         _setRoleAdmin(C.MOD_ROLE, C.ADMIN_ROLE);
-        _setRoleAdmin(C.COLLECTOR_ROLE, C.ADMIN_ROLE);
+        _setRoleAdmin(C.OPS_ROLE, C.ADMIN_ROLE);
     }
 
     /// @dev Authorizes the upgrade of the contract.

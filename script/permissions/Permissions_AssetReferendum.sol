@@ -10,3 +10,4 @@ function getGovPermissions() pure returns (bytes4[] memory) {
     referendumAllowed[2] = AssetReferendum.approve.selector;
     return referendumAllowed;
 }
+

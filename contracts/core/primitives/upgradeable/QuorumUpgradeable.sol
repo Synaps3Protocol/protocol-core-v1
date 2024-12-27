@@ -44,7 +44,7 @@ abstract contract QuorumUpgradeable is Initializable {
     /// @notice Error to be thrown when an entity is inactive.
     error InvalidInactiveState();
     /// @notice Error to be thrown when an entity is already pending approval.
-    error AlreadyPendingApproval();
+    error NotPendingApproval();
     /// @notice Error to be thrown when an entity is not waiting for approval.
     error NotWaitingApproval();
 
@@ -102,7 +102,7 @@ abstract contract QuorumUpgradeable is Initializable {
     /// @param entry The ID of the entity.
     function _register(uint256 entry) internal {
         RegistryStorage storage $ = _getRegistryStorage();
-        if (_status(entry) != Status.Pending) revert AlreadyPendingApproval();
+        if (_status(entry) != Status.Pending) revert NotPendingApproval();
         $._status[entry] = Status.Waiting;
     }
 

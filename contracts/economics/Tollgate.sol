@@ -24,8 +24,12 @@ contract Tollgate is Initializable, UUPSUpgradeable, AccessControlledUpgradeable
     using ERC165Checker for address;
     using EnumerableSet for EnumerableSet.AddressSet;
 
+    /// @dev Constant representing the ERC-20 interface ID, used to validate token compliance.
     bytes4 private constant INTERFACE_ID_ERC20 = type(IERC20).interfaceId;
+    /// @dev Mapping of supported currencies for each context, stored using EnumerableSet for efficient querying.
     mapping(T.Context => EnumerableSet.AddressSet) private _registeredCurrencies;
+    /// @dev Mapping to store fees for each currency and context pair.
+    /// @notice Fees are expressed either as a flat amount or in basis points depending on the context.
     mapping(address => mapping(T.Context => uint256)) private _currencyFees;
 
     /// @notice Emitted when fees are set.

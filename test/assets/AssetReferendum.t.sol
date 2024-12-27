@@ -5,7 +5,7 @@ import "forge-std/Test.sol";
 import { IAccessControl } from "@openzeppelin/contracts/access/IAccessControl.sol";
 import { IAssetRegistrable } from "contracts/core/interfaces/assets/IAssetRegistrable.sol";
 import { IAssetVerifiable } from "contracts/core/interfaces/assets/IAssetVerifiable.sol";
-import { INonceVerifiable } from "contracts/core/interfaces/INonceVerifiable.sol";
+import { INonceVerifiable } from "contracts/core/interfaces/base/INonceVerifiable.sol";
 import { AssetReferendum } from "contracts/assets/AssetReferendum.sol";
 
 import { BaseTest } from "test/BaseTest.t.sol";

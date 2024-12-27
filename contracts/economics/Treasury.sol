@@ -7,16 +7,12 @@ import { UUPSUpgradeable } from "@openzeppelin/contracts-upgradeable/proxy/utils
 // solhint-disable-next-line max-line-length
 import { ReentrancyGuardTransientUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardTransientUpgradeable.sol";
 import { AccessControlledUpgradeable } from "@synaps3/core/primitives/upgradeable/AccessControlledUpgradeable.sol";
-import { LedgerUpgradeable } from "@synaps3/core/primitives/upgradeable/LedgerUpgradeable.sol";
+import { BalanceOperatorUpgradeable } from "@synaps3/core/primitives/upgradeable/BalanceOperatorUpgradeable.sol";
 
 import { IFeesCollector } from "@synaps3/core/interfaces/economics/IFeesCollector.sol";
 import { ITreasury } from "@synaps3/core/interfaces/economics/ITreasury.sol";
 import { FinancialOps } from "@synaps3/core/libraries/FinancialOps.sol";
 import { LoopOps } from "@synaps3/core/libraries/LoopOps.sol";
-
-// TODO payment splitter
-// TODO aca se puede tener un metodo que collecte todos los fees
-// https://docs.openzeppelin.com/contracts/4.x/api/finance#PaymentSplitter
 
 /// @title Treasury Contract
 /// @dev This contract is designed to manage the storage and distribution of funds.
@@ -25,7 +21,7 @@ contract Treasury is
     UUPSUpgradeable,
     AccessControlledUpgradeable,
     ReentrancyGuardTransientUpgradeable,
-    LedgerUpgradeable,
+    BalanceOperatorUpgradeable,
     ITreasury
 {
     using FinancialOps for address;
@@ -40,31 +36,41 @@ contract Treasury is
 
     function initialize(address accessManager) public initializer {
         __UUPSUpgradeable_init();
+        __BalanceOperator_init();
         __ReentrancyGuardTransient_init();
         __AccessControlled_init(accessManager);
     }
 
-    /// @notice Deposits a specified amount of currency into the treasury for a given recipient.
-    /// @param recipient The address of the account to credit with the deposit.
+    /// @notice Deposits a specified amount of currency into the ledger of the specified pool.
+    /// @param pool The address of the pool to credit with the deposit.
     /// @param amount The amount of currency to deposit.
     /// @param currency The address of the ERC20 token to deposit.
-    function deposit(address recipient, uint256 amount, address currency) external {
-        uint256 confirmed = msg.sender.safeDeposit(amount, currency);
-        _sumLedgerEntry(recipient, confirmed, currency);
-        emit FundsDeposited(recipient, confirmed, currency);
+    function deposit(address pool, uint256 amount, address currency) external returns (uint256) {
+        uint256 confirmed = _deposit(pool, amount, currency);
+        emit FundsDeposited(pool, confirmed, currency);
+        return confirmed;
     }
 
-    // TODO withdraw speed bump time lock
+    /// @notice Transfers a specified amount of currency from the caller pool's balance to a given pool.
+    /// @dev Ensures the caller has sufficient balance before performing the transfer.
+    /// @param pool The address of the pool to credit with the transfer.
+    /// @param amount The amount of currency to transfer.
+    /// @param currency The address of the ERC20 token to transfer. Use `address(0)` for native tokens.
+    function transfer(address pool, uint256 amount, address currency) external nonReentrant returns (uint256) {
+        uint256 confirmed = _transfer(pool, amount, currency);
+        emit FundsTransferred(msg.sender, pool, confirmed, currency);
+        return confirmed;
+    }
+
     /// @notice Withdraws tokens from the contract to a specified recipient's address.
     /// @dev This function withdraws funds from the caller's balance and transfers them to the recipient.
     /// @param recipient The address that will receive the withdrawn tokens.
     /// @param amount The amount of tokens to withdraw.
     /// @param currency The currency to associate fees with. Use address(0) for the native coin.
-    function withdraw(address recipient, uint256 amount, address currency) external nonReentrant {
-        if (getLedgerBalance(msg.sender, currency) < amount) revert NoFundsToWithdraw();
-        _subLedgerEntry(msg.sender, amount, currency);
-        recipient.transfer(amount, currency);
-        emit FundsWithdrawn(recipient, amount, currency);
+    function withdraw(address recipient, uint256 amount, address currency) external nonReentrant returns (uint256) {
+        uint256 confirmed = _withdraw(recipient, amount, currency);
+        emit FundsWithdrawn(recipient, confirmed, currency);
+        return confirmed;
     }
 
     // TODO burn fees
@@ -76,9 +82,9 @@ contract Treasury is
     ///      for the given currency. The collected funds are credited to the treasury pool.
     /// @param collectors An array of addresses, each representing an authorized fee collector .
     /// @param currency The address of the ERC20 token for which fees are being collected.
-    function collectFees(address[] calldata collectors, address currency) external onlyAdmin {
+    function collectFees(address[] calldata collectors, address currency) external restricted {
         uint256 collectorsLen = collectors.length;
-        address pool = address(this);
+        address pool = address(this); // fees pool is treasury
 
         // For each collector, request the collected fees and add them to the treasury pool balance
         for (uint256 i = 0; i < collectorsLen; i = i.uncheckedInc()) {
@@ -86,7 +92,7 @@ contract Treasury is
             uint256 collected = collector.disburse(currency);
             // register funds in treasury pool...
             _sumLedgerEntry(pool, collected, currency);
-            emit FundsCollected(collectors[i], collected, currency);
+            emit FeesCollected(collectors[i], collected, currency);
         }
     }
 

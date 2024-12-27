@@ -8,7 +8,7 @@ import { DeployAccessManager } from "script/deployment/02_Deploy_Access_AccessMa
 import { DeployTollgate } from "script/deployment/04_Deploy_Economics_Tollgate.s.sol";
 import { DeployToken } from "script/deployment/03_Deploy_Economics_Token.s.sol";
 import { DeployTreasury } from "script/deployment/05_Deploy_Economics_Treasury.s.sol";
-import { DeployAssetReferendum } from "script/deployment/06_Deploy_Assets_AssetReferendum.s.sol";
+import { DeployAssetReferendum } from "script/deployment/11_Deploy_Assets_AssetReferendum.s.sol";
 import { DeployDistributorFactory } from "script/deployment/09_Deploy_Syndication_DistributorFactory.s.sol";
 import { DeployDistributorReferendum } from "script/deployment/10_Deploy_Syndication_DistributorReferendum.s.sol";
 

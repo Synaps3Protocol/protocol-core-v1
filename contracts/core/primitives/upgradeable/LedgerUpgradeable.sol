@@ -3,7 +3,7 @@
 pragma solidity 0.8.26;
 
 import { Initializable } from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
-import { ILedgerVerifiable } from "@synaps3/core/interfaces/ILedgerVerifiable.sol";
+import { ILedgerVerifiable } from "@synaps3/core/interfaces/base/ILedgerVerifiable.sol";
 
 /// @title LedgerUpgradeable
 /// @notice Abstract contract for managing accounts ledger that support upgradability.
@@ -21,7 +21,7 @@ abstract contract LedgerUpgradeable is Initializable, ILedgerVerifiable {
     /// @notice Retrieves the ledger balance of an account for a specific currency.
     /// @param account The address of the account whose balance is being queried.
     /// @param currency The address of the currency to retrieve the balance for.
-    function getLedgerBalance(address account, address currency) public view returns (uint256) {
+    function getLedgerBalance(address account, address currency) public view virtual returns (uint256) {
         LedgerStorage storage $ = _getLedgerStorage();
         return $._ledger[account][currency];
     }

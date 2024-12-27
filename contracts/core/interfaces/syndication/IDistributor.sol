@@ -2,8 +2,8 @@
 // NatSpec format convention - https://docs.soliditylang.org/en/v0.5.10/natspec-format.html
 pragma solidity 0.8.26;
 
-import { IBalanceVerifiable } from "@synaps3/core/interfaces/IBalanceVerifiable.sol";
-import { IBalanceWithdrawable } from "@synaps3/core/interfaces/IBalanceWithdrawable.sol";
+import { IBalanceVerifiable } from "@synaps3/core/interfaces/base/IBalanceVerifiable.sol";
+import { IBalanceWithdrawable } from "@synaps3/core/interfaces/base/IBalanceWithdrawable.sol";
 
 interface IDistributor is IBalanceVerifiable, IBalanceWithdrawable {
     /// @notice Set the endpoint of the distributor.

@@ -9,9 +9,9 @@ import { AccessControlledUpgradeable } from "@synaps3/core/primitives/upgradeabl
 import { ERC165Checker } from "@openzeppelin/contracts/utils/introspection/ERC165Checker.sol";
 
 import { IPolicy } from "@synaps3/core/interfaces/policies/IPolicy.sol";
+import { IAgreementSettler } from "@synaps3/core/interfaces/financial/IAgreementSettler.sol";
 import { IRightsPolicyManager } from "@synaps3/core/interfaces/rights/IRightsPolicyManager.sol";
 import { IRightsPolicyAuthorizer } from "@synaps3/core/interfaces/rights/IRightsPolicyAuthorizer.sol";
-import { IRightsAccessAgreement } from "@synaps3/core/interfaces/rights/IRightsAccessAgreement.sol";
 import { LoopOps } from "@synaps3/core/libraries/LoopOps.sol";
 import { T } from "@synaps3/core/primitives/Types.sol";
 
@@ -21,7 +21,7 @@ contract RightsPolicyManager is Initializable, UUPSUpgradeable, AccessControlled
     using LoopOps for uint256;
 
     /// @custom:oz-upgrades-unsafe-allow state-variable-immutable
-    IRightsAccessAgreement public immutable RIGHTS_AGREEMENT;
+    IAgreementSettler public immutable AGREEMENT_SETTLER;
     /// @custom:oz-upgrades-unsafe-allow state-variable-immutable
     IRightsPolicyAuthorizer public immutable RIGHTS_AUTHORIZER;
 
@@ -43,11 +43,11 @@ contract RightsPolicyManager is Initializable, UUPSUpgradeable, AccessControlled
     error InvalidPolicyEnforcement(string);
 
     /// @custom:oz-upgrades-unsafe-allow constructor
-    constructor(address rightsAgreement, address rightsAuthorizer) {
+    constructor(address agreementSettler, address rightsAuthorizer) {
         /// https://forum.openzeppelin.com/t/uupsupgradeable-vulnerability-post-mortem/15680
         /// https://forum.openzeppelin.com/t/what-does-disableinitializers-function-mean/28730/5
         _disableInitializers();
-        RIGHTS_AGREEMENT = IRightsAccessAgreement(rightsAgreement);
+        AGREEMENT_SETTLER = IAgreementSettler(agreementSettler);
         RIGHTS_AUTHORIZER = IRightsPolicyAuthorizer(rightsAuthorizer);
     }
 
@@ -82,7 +82,7 @@ contract RightsPolicyManager is Initializable, UUPSUpgradeable, AccessControlled
     /// @param policyAddress The address of the policy contract managing the agreement.
     function registerPolicy(uint256 proof, address holder, address policyAddress) public returns (uint256[] memory) {
         // 1- retrieves the agreement and marks it as settled..
-        T.Agreement memory agreement = RIGHTS_AGREEMENT.settleAgreement(proof, holder);
+        T.Agreement memory agreement = AGREEMENT_SETTLER.settleAgreement(proof, holder);
         // 2- only authorized policies by holder can be registered..
         if (!RIGHTS_AUTHORIZER.isPolicyAuthorized(policyAddress, holder)) {
             revert InvalidNotRightsDelegated(policyAddress, holder);
@@ -100,33 +100,40 @@ contract RightsPolicyManager is Initializable, UUPSUpgradeable, AccessControlled
 
     /// @notice Verifies if a specific policy is active for the provided account and criteria.
     /// @param account The address of the user whose compliance is being evaluated.
-    /// @param assetId The identifier of the asset to validate the policy status.
-    /// @param policyAddress The address of the policy contract to check compliance against.
-    function isActivePolicy(address account, uint256 assetId, address policyAddress) public view returns (bool) {
+    /// @param policy The address of the policy contract to check compliance against.
+    /// @param criteria Encoded data containing the parameters required to verify access.
+    function isActivePolicy(address account, address policy, bytes memory criteria) public view returns (bool) {
         // verify if the policy were registered for account address and comply with the criteria
-        IPolicy policy = IPolicy(policyAddress);
-        bool registeredPolicy = _closures[account].contains(policyAddress);
-        return registeredPolicy && policy.isAccessAllowed(account, assetId);
+        bool registeredPolicy = _closures[account].contains(policy);
+        if (!registeredPolicy) return false; // not registered policy
+        // ask to policy about the access to account address
+        bytes memory callData = abi.encodeCall(IPolicy.isAccessAllowed, (account, criteria));
+        (bool success, bytes memory result) = policy.staticcall(callData);
+        // error during validation
+        if (!success) return false;
+        // ok verifying access
+        bool ok = abi.decode(result, (bool));
+        return ok;
     }
 
-    /// @notice Retrieves the first active policy for a specific account in LIFO order.
-    /// @param account The address of the account to evaluate.
-    /// @param assetId The identifier of the asset to validate the policy status.
-    function getActivePolicy(address account, uint256 assetId) public view returns (bool, address) {
+    /// @notice Retrieves the first active policy matching the criteria for an account in LIFO order.
+    /// @param account Address of the account to evaluate.
+    /// @param criteria Encoded data containing parameters for access verification.
+    /// @return active True if a policy matches; otherwise, false.
+    /// @return policyAddress Address of the matching policy or zero if none found.
+    function getActivePolicy(address account, bytes memory criteria) public view returns (bool, address) {
         address[] memory policies = getPolicies(account);
         uint256 i = policies.length - 1;
 
         while (true) {
-            bool comply = isActivePolicy(account, assetId, policies[i]);
+            bool comply = isActivePolicy(account, policies[i], criteria);
             if (comply) return (true, policies[i]);
             if (i == 0) break;
-            // i == 0 avoids underflow, we can safely decrement using unchecked
             unchecked {
                 --i;
             }
         }
 
-        // No active policy found
         return (false, address(0));
     }
 
