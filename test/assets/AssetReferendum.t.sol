@@ -20,7 +20,7 @@ contract AssetReferendumTest is BaseTest {
         referendum = deployAssetReferendum();
     }
 
-    function test_Submit_SubmittedEventEmmitted() public {
+    function test_Submit_SubmittedEventEmitted() public {
         vm.warp(1641070800);
         vm.prank(user);
         vm.expectEmit(true, false, false, true, address(referendum));

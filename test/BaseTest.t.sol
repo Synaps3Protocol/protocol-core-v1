@@ -25,7 +25,7 @@ import { C } from "contracts/core/primitives/Constants.sol";
 import { console } from "forge-std/console.sol";
 
 abstract contract BaseTest is Test {
-    address admin = vm.addr(vm.envUint("PRIVATE_KEY"));
+    address admin;
     address user;
     address governor;
     address accessManager;
@@ -57,6 +57,11 @@ abstract contract BaseTest is Test {
         // set default admin as deployer..
         DeployAccessManager accessManagerDeployer = new DeployAccessManager();
         accessManager = accessManagerDeployer.run();
+        
+        vm.prank(admin);
+        // add to governor the gov role
+        IAccessManager authority = IAccessManager(accessManager);
+        authority.grantRole(C.GOV_ROLE, governor, 0);
     }
 
     // 02_DeployTollgate
@@ -65,7 +70,8 @@ abstract contract BaseTest is Test {
         DeployTollgate tollgateDeployer = new DeployTollgate();
         bytes4[] memory tollgateAllowed = TollgateGovPermissions();
         address tollgate = tollgateDeployer.run();
-        _setTargetGovRole(tollgate, tollgateAllowed);
+        // add permission to gov role to set fees
+        _setGovPermissions(tollgate, tollgateAllowed);
         return tollgate;
     }
 
@@ -76,7 +82,8 @@ abstract contract BaseTest is Test {
         bytes4[] memory ledgerAllowed = LedgerVaultOpsPermissions();
         ledger = ledgerDeployer.run();
 
-        // op role needed to call ledgerAllowed in ledger contract
+        vm.prank(admin);
+        // op role needed to call functions in ledger contract
         IAccessManager authority = IAccessManager(accessManager);
         authority.setTargetFunctionRole(ledger, ledgerAllowed, C.OPS_ROLE);
         return ledger;
@@ -96,7 +103,7 @@ abstract contract BaseTest is Test {
         DeployTreasury treasuryDeployer = new DeployTreasury();
         bytes4[] memory treasuryAllowed = TreasuryGovPermissions();
         address treasury = treasuryDeployer.run();
-        _setTargetGovRole(treasury, treasuryAllowed);
+        _setGovPermissions(treasury, treasuryAllowed);
         return treasury;
     }
 
@@ -106,7 +113,7 @@ abstract contract BaseTest is Test {
         DeployAssetReferendum AssetReferendumDeployer = new DeployAssetReferendum();
         bytes4[] memory referendumAllowed = AssetReferendumGovPermissions();
         address assetReferendum = AssetReferendumDeployer.run();
-        _setTargetGovRole(assetReferendum, referendumAllowed);
+        _setGovPermissions(assetReferendum, referendumAllowed);
         return assetReferendum;
     }
 
@@ -122,21 +129,22 @@ abstract contract BaseTest is Test {
         DeployDistributorReferendum distReferendumDeployer = new DeployDistributorReferendum();
         bytes4[] memory distributorReferendumAllowed = DistributorReferendumGovPermissions();
         address distributorReferendum = distReferendumDeployer.run();
-        // OP role granted to distributor referendum
-        _setOpRole(distributorReferendum);
-        _setTargetGovRole(distributorReferendum, distributorReferendumAllowed);
+        // OP role granted to distributor referendum to operate on ledger
+        _assignOpRole(distributorReferendum);
+        // GOV permission set to distributor referendum functions
+        _setGovPermissions(distributorReferendum, distributorReferendumAllowed);
         return distributorReferendum;
     }
 
-    function _setTargetGovRole(address target, bytes4[] memory allowed) public {
+    function _setGovPermissions(address target, bytes4[] memory allowed) public {
         vm.startPrank(admin);
         IAccessManager authority = IAccessManager(accessManager);
+        // assign permissions to GOV_ROLE for allowed functions to call in target
         authority.setTargetFunctionRole(target, allowed, C.GOV_ROLE);
-        authority.grantRole(C.GOV_ROLE, governor, 0);
         vm.stopPrank();
     }
 
-    function _setOpRole(address target) public {
+    function _assignOpRole(address target) public {
         vm.startPrank(admin);
         IAccessManager authority = IAccessManager(accessManager);
         authority.grantRole(C.OPS_ROLE, target, 0);

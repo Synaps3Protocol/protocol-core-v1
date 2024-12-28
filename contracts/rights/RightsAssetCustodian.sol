@@ -61,8 +61,7 @@ contract RightsAssetCustodian is Initializable, UUPSUpgradeable, AccessControlle
         _maxDistributionRedundancy = 3;
     }
 
-
-    // TODO revoke custody 
+    // TODO revoke custody
 
     /// @notice Grants custodial rights over the asset held by a holder to a distributor.
     /// @dev This function assigns custodial rights for the asset held by a specific

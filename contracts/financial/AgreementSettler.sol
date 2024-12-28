@@ -21,7 +21,6 @@ import { FeesCollectorUpgradeable } from "@synaps3/core/primitives/upgradeable/F
 import { ILedgerVault } from "@synaps3/core/interfaces/financial/ILedgerVault.sol";
 import { IAgreementManager } from "@synaps3/core/interfaces/financial/IAgreementManager.sol";
 import { IAgreementSettler } from "@synaps3/core/interfaces/financial/IAgreementSettler.sol";
-import { ITollgate } from "@synaps3/core/interfaces/economics/ITollgate.sol";
 import { ITreasury } from "@synaps3/core/interfaces/economics/ITreasury.sol";
 import { FinancialOps } from "@synaps3/core/libraries/FinancialOps.sol";
 import { FeesOps } from "@synaps3/core/libraries/FeesOps.sol";

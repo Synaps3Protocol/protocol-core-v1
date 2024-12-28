@@ -106,9 +106,9 @@ contract RightsPolicyAuthorizer is
         uint256 j = 0; // filtered cursor
 
         for (uint256 i = 0; i < policiesLen; i = i.uncheckedInc()) {
-            if(!_isValidPolicy(policies[i])) continue;
+            if (!_isValidPolicy(policies[i])) continue;
             filtered[j] = policies[i];
-            
+
             // safe unchecked
             // limited to i increment = max policy length
             unchecked {

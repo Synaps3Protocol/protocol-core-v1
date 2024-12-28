@@ -38,7 +38,7 @@ contract DistributorReferendumTest is BaseTest {
 
     /// ----------------------------------------------------------------
 
-    function test_Init_ExpriationPeriod() public view {
+    function test_Init_ExpirationPeriod() public view {
         // test initialized treasury address
         uint256 expected = 180 days;
         uint256 period = IDistributorExpirable(referendum).getExpirationPeriod();
@@ -72,7 +72,7 @@ contract DistributorReferendumTest is BaseTest {
         vm.warp(1641070803);
         vm.startPrank(admin);
         // approve fees payment: admin default account
-        IERC20(token).approve(referendum, expectedFees);
+        IERC20(token).approve(ledger, expectedFees);
         ILedgerVault(ledger).deposit(admin, expectedFees, token);
 
         vm.expectEmit(true, false, false, true, address(referendum));
@@ -81,7 +81,7 @@ contract DistributorReferendumTest is BaseTest {
         vm.stopPrank();
     }
 
-    function test_Registrer_ValidFees() public {
+    function test_Register_ValidFees() public {
         uint256 expectedFees = 100 * 1e18; // 100 MMC
         // 1-set enrollment fees.
         _setFeesAsGovernor(expectedFees);
@@ -95,7 +95,7 @@ contract DistributorReferendumTest is BaseTest {
         uint256 expectedFees = 100 * 1e18; // 100 MMC
         _setFeesAsGovernor(expectedFees);
         // expected revert if not valid allowance
-        vm.expectRevert(abi.encodeWithSignature("FailDuringDeposit(string)", "Amount exceeds allowance."));
+        vm.expectRevert(abi.encodeWithSignature("NoFundsToLock()"));
         IDistributorRegistrable(referendum).register(distributor, token);
     }
 
@@ -137,7 +137,6 @@ contract DistributorReferendumTest is BaseTest {
         // after register a distributor a Registered event is expected
         vm.expectEmit(true, false, false, true, address(referendum));
         emit DistributorReferendum.Approved(distributor, 1641070802);
-        // distribuitor approved only by governor..
         IDistributorRegistrable(referendum).approve(distributor);
     }
 
@@ -165,7 +164,6 @@ contract DistributorReferendumTest is BaseTest {
         // after register a distributor a Registered event is expected
         vm.expectEmit(true, false, false, true, address(referendum));
         emit DistributorReferendum.Revoked(distributor, 1641070801);
-        // distribuitor get revoked by governance..
         IDistributorRegistrable(referendum).revoke(distributor);
     }
 
@@ -196,9 +194,10 @@ contract DistributorReferendumTest is BaseTest {
         // manager = contract deployer
         // only manager can pay enrollment..
         vm.startPrank(admin);
-        IERC20(token).approve(referendum, approval);
+        // approve approval to ledger to deposit funds
+        IERC20(token).approve(ledger, approval);
         ILedgerVault(ledger).deposit(admin, approval, token);
-        
+        // operate over msg.sender ledger registered funds
         IDistributorRegistrable(referendum).register(d9r, token);
         vm.stopPrank();
     }

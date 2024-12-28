@@ -8,9 +8,7 @@ import { UUPSUpgradeable } from "@openzeppelin/contracts-upgradeable/proxy/utils
 import { ReentrancyGuardTransientUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardTransientUpgradeable.sol";
 import { AccessControlledUpgradeable } from "@synaps3/core/primitives/upgradeable/AccessControlledUpgradeable.sol";
 import { BalanceOperatorUpgradeable } from "@synaps3/core/primitives/upgradeable/BalanceOperatorUpgradeable.sol";
-
 import { FinancialOps } from "@synaps3/core/libraries/FinancialOps.sol";
-import { LoopOps } from "@synaps3/core/libraries/LoopOps.sol";
 
 /// @title LedgerVault
 /// @notice A vault contract designed to store, lock, release, and manage funds securely.
@@ -26,7 +24,7 @@ contract LedgerVault is
     using FinancialOps for address;
 
     /// @dev Holds the registry of locked funds for accounts.
-    mapping(address => mapping(address => uint256)) _locked;
+    mapping(address => mapping(address => uint256)) private _locked;
 
     /// @notice Emitted when funds are locked in the ledger.
     /// @param account The address of the account whose funds were locked.
