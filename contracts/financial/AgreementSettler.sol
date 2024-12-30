@@ -92,6 +92,8 @@ contract AgreementSettler is
         __ReentrancyGuardTransient_init();
     }
 
+    // TODO add hook management for royalties and earning splits
+
     /// @notice Allows the initiator to quit the agreement and receive the committed funds.
     /// @param proof The unique identifier of the agreement.
     function quitAgreement(uint256 proof) external onlyValidAgreement(proof) nonReentrant returns (T.Agreement memory) {

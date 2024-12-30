@@ -37,7 +37,7 @@ contract PolicyAudit is Initializable, UUPSUpgradeable, AccessControlledUpgradea
     /// @dev Modifier to check that a policy contract implements the IPolicy interface.
     /// @param policy The address of the license policy contract.
     /// Reverts if the policy does not implement the required interface.
-    modifier onlyPolicyContract(address policy) {
+    modifier onlyValidPolicy(address policy) {
         if (!policy.supportsInterface(INTERFACE_POLICY)) {
             revert InvalidPolicyContract(policy);
         }
@@ -63,7 +63,7 @@ contract PolicyAudit is Initializable, UUPSUpgradeable, AccessControlledUpgradea
     /// @notice Submits an audit request for the given policy.
     /// This registers the policy for audit within the system.
     /// @param policy The address of the policy to be submitted for auditing.
-    function submit(address policy) external onlyPolicyContract(policy) {
+    function submit(address policy) external onlyValidPolicy(policy) {
         _register(uint160(policy));
         emit PolicySubmitted(policy, msg.sender);
     }
@@ -71,7 +71,7 @@ contract PolicyAudit is Initializable, UUPSUpgradeable, AccessControlledUpgradea
     /// @notice Approves the audit of a given policy by a specified auditor.
     /// @param policy The address of the policy to be audited.
     /// @dev This function emits the PolicyApproved event upon successful audit approval.
-    function approve(address policy) external onlyPolicyContract(policy) restricted {
+    function approve(address policy) external onlyValidPolicy(policy) restricted {
         _approve(uint160(policy));
         emit PolicyApproved(policy, msg.sender);
     }
@@ -79,7 +79,7 @@ contract PolicyAudit is Initializable, UUPSUpgradeable, AccessControlledUpgradea
     /// @notice Revokes the audit of a given policy by a specified auditor.
     /// @param policy The address of the policy whose audit is to be revoked.
     /// @dev This function emits the PolicyRevoked event upon successful audit revocation.
-    function reject(address policy) external onlyPolicyContract(policy) restricted {
+    function reject(address policy) external onlyValidPolicy(policy) restricted {
         _revoke(uint160(policy));
         emit PolicyRevoked(policy, msg.sender);
     }

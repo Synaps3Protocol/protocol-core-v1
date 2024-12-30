@@ -12,7 +12,9 @@ import { AccessControlledUpgradeable } from "@synaps3/core/primitives/upgradeabl
 import { IAssetVerifiable } from "@synaps3/core/interfaces/assets/IAssetVerifiable.sol";
 import { IAssetOwnership } from "@synaps3/core/interfaces/assets/IAssetOwnership.sol";
 
-// TODO imp ERC404
+// TODO check ERC404
+// TODO check ERC-2981
+// TODO check ERC-4804
 
 /// @title Ownership ERC721 Upgradeable
 /// @notice This abstract contract manages the ownership.
@@ -76,6 +78,7 @@ contract AssetOwnership is
     }
 
     // TODO build getURI => from distributor custodian /erc721-metadata
+    // TODO transfer ownership + fee
 
     /// @notice Mints a new NFT representing an asset to the specified address.
     /// @dev The assumption is that only those who know the asset ID

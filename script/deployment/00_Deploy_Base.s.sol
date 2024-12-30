@@ -92,6 +92,7 @@ abstract contract DeployBase is Script {
     }
 
     function _logAddress(string memory index, address contractAddress) internal {
+        if (vm.envBool("CI")) return; // avoid writing to env if the function is running in CI mode
         string memory output = string.concat(index, "=", Strings.toHexString(contractAddress));
         vm.writeLine(".env", output);
     }

@@ -3,7 +3,6 @@
 pragma solidity 0.8.26;
 
 import { ERC165 } from "@openzeppelin/contracts/utils/introspection/ERC165.sol";
-import { ReentrancyGuard } from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 import { IAssetOwnership } from "@synaps3/core/interfaces/assets/IAssetOwnership.sol";
 import { IRightsPolicyManager } from "@synaps3/core/interfaces/rights/IRightsPolicyManager.sol";
 import { IAttestationProvider } from "@synaps3/core/interfaces/base/IAttestationProvider.sol";
@@ -13,7 +12,7 @@ import { T } from "@synaps3/core/primitives/Types.sol";
 
 /// @title BasePolicy
 /// @notice This abstract contract serves as a base for policies that manage access to content.
-abstract contract BasePolicy is ReentrancyGuard, IPolicy, ERC165 {
+abstract contract BasePolicy is IPolicy, ERC165 {
     using LoopOps for uint256;
 
     // Immutable public variables to store the addresses of the Rights Manager and Ownership.
@@ -65,7 +64,7 @@ abstract contract BasePolicy is ReentrancyGuard, IPolicy, ERC165 {
 
     /// @dev Modifier to restrict function calls to the Rights Manager address.
     modifier onlyPolicyAuthorizer() {
-        if (msg.sender != address(RIGHTS_POLICY_MANAGER.getPolicyAuthorizer())) {
+        if (msg.sender != RIGHTS_POLICY_MANAGER.getPolicyAuthorizer()) {
             revert InvalidUnauthorizedCall("Only rights policy authorizer allowed.");
         }
         _;

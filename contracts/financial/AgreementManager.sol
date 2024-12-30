@@ -70,7 +70,6 @@ contract AgreementManager is Initializable, UUPSUpgradeable, AccessControlledUpg
         address[] calldata parties,
         bytes calldata payload
     ) external returns (uint256) {
-        // TODO Even if we are covered by gas fees, a good way to avoid abuse is penalize parties after N length
         // IMPORTANT: The process of distributing funds to accounts should be handled within the settlement logic.
         uint256 confirmed = VAULT.lock(msg.sender, amount, currency); // msg.sender.safeDeposit(amount, currency);
         T.Agreement memory agreement = previewAgreement(confirmed, currency, broker, parties, payload);
@@ -104,6 +103,9 @@ contract AgreementManager is Initializable, UUPSUpgradeable, AccessControlledUpg
             revert InvalidAgreementOp("Agreement must include at least one party");
         }
 
+        // TODO Even if we are covered by gas fees, a good way to avoid abuse is penalize parties after N length
+        // eg. The max parties allowed is 5, any extra parties are charged with a extra * fee 
+        
         // IMPORTANT:
         // Agreements transport value and represent a defined commitment between parties.
         // Think of an agreement as similar to a bonus, gift card, prepaid card, or check:

@@ -51,6 +51,9 @@ contract AssetVault is Initializable, UUPSUpgradeable, AccessControlledUpgradeab
     /// @param assetId The identifier of the asset.
     /// @param vault The vault type used to retrieve the asset (e.g., LIT, RSA, EC).
     function getContent(uint256 assetId, T.VaultType vault) external view returns (bytes memory) {
+        // aca se deberia retornar directamente el vault utilizado en lugar de pasarlo?
+        // se podria almacenar la relacion del vault con el asset
+        // o retornar getVaultsForContent(assetId) return list of vaults
         return _secured[assetId][vault];
     }
 
