@@ -104,8 +104,8 @@ contract AgreementManager is Initializable, UUPSUpgradeable, AccessControlledUpg
         }
 
         // TODO Even if we are covered by gas fees, a good way to avoid abuse is penalize parties after N length
-        // eg. The max parties allowed is 5, any extra parties are charged with a extra * fee 
-        
+        // eg. The max parties allowed is 5, any extra parties are charged with a extra * fee
+
         // IMPORTANT:
         // Agreements transport value and represent a defined commitment between parties.
         // Think of an agreement as similar to a bonus, gift card, prepaid card, or check:
