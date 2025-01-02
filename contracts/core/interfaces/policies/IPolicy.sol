@@ -32,6 +32,11 @@ interface IPolicy {
     /// @param criteria Encoded data containing the parameters required to verify access.
     function isAccessAllowed(address account, bytes calldata criteria) external view returns (bool);
 
+    /// @notice Retrieves the license id associated with a specific account.
+    /// @param account The address of the account for which the attestation is being retrieved.
+    /// @param criteria Encoded data containing the parameters required to retrieve attestation.
+    function getLicense(address account, bytes calldata criteria) external view returns (uint256);
+
     /// @notice Retrieves the terms associated with a specific criteria.
     /// @param criteria Encoded data containing the parameters required to retrieve terms.
     /// @return A struct containing the terms applicable to the matching criteria.
@@ -40,9 +45,4 @@ interface IPolicy {
     /// @notice Retrieves the address of the attestation provider.
     /// @return The address of the provider associated with the policy.
     function getAttestationProvider() external view returns (address);
-
-    /// @notice Retrieves the attestation id associated with a specific account.
-    /// @param account The address of the account for which the attestation is being retrieved.
-    /// @param criteria Encoded data containing the parameters required to retrieve attestation.
-    function getAttestation(address account, bytes calldata criteria) external view returns (uint256);
 }

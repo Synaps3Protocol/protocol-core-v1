@@ -34,7 +34,8 @@ contract RightsPolicyAuthorizer is
     /// @notice Emitted when rights are granted to a policy for content.
     /// @param policy The policy contract address granted rights.
     /// @param holder The address of the asset rights holder.
-    event RightsGranted(address indexed policy, address indexed holder);
+    /// @param data The data used to initialize policy.
+    event RightsGranted(address indexed policy, address indexed holder, bytes data);
     /// @notice Emitted when rights are revoked from a policy for content.
     /// @param policy The policy contract address whose rights are being revoked.
     /// @param holder The address of the asset rights holder.
@@ -73,7 +74,7 @@ contract RightsPolicyAuthorizer is
         (bool success, ) = policy.call(abi.encodeCall(IPolicy.initialize, (msg.sender, data)));
         if (!success) revert InvalidPolicyInitialization("Error during policy initialization call");
         _authorizedPolicies[msg.sender].add(policy); // register policy as authorized for the authorizer
-        emit RightsGranted(policy, msg.sender);
+        emit RightsGranted(policy, msg.sender, data);
     }
 
     /// @notice Revokes the delegation of rights to a policy contract.

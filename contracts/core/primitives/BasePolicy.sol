@@ -7,16 +7,17 @@ import { IAssetOwnership } from "@synaps3/core/interfaces/assets/IAssetOwnership
 import { IRightsPolicyManager } from "@synaps3/core/interfaces/rights/IRightsPolicyManager.sol";
 import { IAttestationProvider } from "@synaps3/core/interfaces/base/IAttestationProvider.sol";
 import { IPolicy } from "@synaps3/core/interfaces/policies/IPolicy.sol";
+import { MetricsOps } from "@synaps3/core/libraries/MetricsOps.sol";
 import { T } from "@synaps3/core/primitives/Types.sol";
 
 /// @title BasePolicy
 /// @notice This abstract contract serves as a base for policies that manage access to content.
 abstract contract BasePolicy is IPolicy, ERC165 {
+
     // Immutable public variables to store the addresses of the Rights Manager and Ownership.
     IAttestationProvider public immutable ATTESTATION_PROVIDER;
     IRightsPolicyManager public immutable RIGHTS_POLICY_MANAGER;
     IAssetOwnership public immutable ASSET_OWNERSHIP;
-
     bool private _initialized;
 
     /// @notice Emitted when an enforcement process is successfully completed for a given account and holder.
@@ -129,8 +130,10 @@ abstract contract BasePolicy is IPolicy, ERC165 {
     ) internal returns (uint256[] memory) {
         bytes memory encodedAgreement = abi.encode(agreement);
         bytes memory data = abi.encode(holder, agreement.initiator, address(this), agreement.parties, encodedAgreement);
-        uint256[] memory attestationIds = ATTESTATION_PROVIDER.attest(agreement.parties, expireAt, data);
-        return attestationIds;
+        MetricsOps.logMetricWithContext("policy_agreement_total", agreement.total, encodedAgreement);
+        MetricsOps.logMetricWithContext("policy_agreement_fees", agreement.fees, encodedAgreement);
+        MetricsOps.logMetricWithContext("policy_agreement_parties_count", agreement.parties.length, encodedAgreement);
+        return ATTESTATION_PROVIDER.attest(agreement.parties, expireAt, data);
     }
 
     // /// @dev Distributes the amount based on the provided shares array.

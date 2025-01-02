@@ -93,6 +93,14 @@ contract AgreementSettler is
     }
 
     // TODO add hook management for royalties and earning splits
+    // TODOpotential improvement to scaling custom actions in protocol using hooks
+    // eg: access handling for gating content. etc..
+    // function isAccessAllowed(bytes calldata criteria) external view return (bool) {
+    //  // get registered access hooks for this contract
+    //  IHook hook = HOOKS.get(address(this), IAccessHook) <- internal handling of any logic needed to get the valid hook
+    //  if (!hook) return false // need conf hook
+    //  return hook.exec(criteria)
+    //}
 
     /// @notice Allows the initiator to quit the agreement and receive the committed funds.
     /// @param proof The unique identifier of the agreement.
