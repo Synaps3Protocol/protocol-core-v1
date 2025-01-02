@@ -76,7 +76,7 @@ contract LedgerVault is
     /// @param currency The address of the ERC20 token to deposit.
     function deposit(address recipient, uint256 amount, address currency) external returns (uint256) {
         uint256 confirmed = _deposit(recipient, amount, currency);
-        emit FundsDeposited(recipient, confirmed, currency);
+        emit FundsDeposited(recipient, msg.sender, confirmed, currency);
         return confirmed;
     }
 
@@ -88,7 +88,7 @@ contract LedgerVault is
     /// @param currency The currency to associate fees with. Use address(0) for the native coin.
     function withdraw(address recipient, uint256 amount, address currency) external nonReentrant returns (uint256) {
         uint256 confirmed = _withdraw(recipient, amount, currency);
-        emit FundsWithdrawn(recipient, confirmed, currency);
+        emit FundsWithdrawn(recipient, msg.sender, confirmed, currency);
         return confirmed;
     }
 
@@ -99,7 +99,7 @@ contract LedgerVault is
     /// @param currency The address of the ERC20 token to transfer. Use `address(0)` for native tokens.
     function transfer(address recipient, uint256 amount, address currency) external returns (uint256) {
         uint256 confirmed = _transfer(recipient, amount, currency);
-        emit FundsTransferred(msg.sender, recipient, confirmed, currency);
+        emit FundsTransferred(recipient, msg.sender, confirmed, currency);
         return confirmed;
     }
 

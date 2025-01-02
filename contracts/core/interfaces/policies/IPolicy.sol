@@ -41,8 +41,8 @@ interface IPolicy {
     /// @return The address of the provider associated with the policy.
     function getAttestationProvider() external view returns (address);
 
-    /// @notice Retrieves the attestation id associated with a specific account and rights holder.
-    /// @param recipient The address of the account for which the attestation is being retrieved.
-    /// @param holder The address of the rights holder with whom the agreement was made.
-    function getAttestation(address recipient, address holder) external view returns (uint256);
+    /// @notice Retrieves the attestation id associated with a specific account.
+    /// @param account The address of the account for which the attestation is being retrieved.
+    /// @param criteria Encoded data containing the parameters required to retrieve attestation.
+    function getAttestation(address account, bytes calldata criteria) external view returns (uint256);
 }

@@ -11,6 +11,7 @@ import { DeployLedgerVault } from "script/deployment/06_Deploy_Financial_LedgerV
 import { DeployTreasury } from "script/deployment/05_Deploy_Economics_Treasury.s.sol";
 import { DeployAssetReferendum } from "script/deployment/11_Deploy_Assets_AssetReferendum.s.sol";
 import { DeployAssetVault } from "script/deployment/13_Deploy_Assets_AssetVault.s.sol";
+import { DeployAssetOwnership } from "script/deployment/12_Deploy_Assets_AssetOwnership.s.sol";
 import { DeployDistributorFactory } from "script/deployment/09_Deploy_Syndication_DistributorFactory.s.sol";
 import { DeployDistributorReferendum } from "script/deployment/10_Deploy_Syndication_DistributorReferendum.s.sol";
 
@@ -116,6 +117,13 @@ abstract contract BaseTest is Test {
         bytes4[] memory referendumAllowed = AssetReferendumGovPermissions();
         address assetReferendum = assetReferendumDeployer.run();
         _setGovPermissions(assetReferendum, referendumAllowed);
+        return assetReferendum;
+    }
+
+    function deployAssetOwnership() public returns (address) {
+        // set default admin as deployer..
+        DeployAssetOwnership assetOwnershipDeployer = new DeployAssetOwnership();
+        address assetReferendum = assetOwnershipDeployer.run();
         return assetReferendum;
     }
 

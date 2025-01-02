@@ -92,7 +92,7 @@ contract DistributorImplTest is BaseTest {
         IERC20(token).transfer(distributor, expected);
         // only owner can withdraw funds by default deployer
         vm.expectEmit(true, true, false, true, address(distributor));
-        emit IBalanceWithdrawable.FundsWithdrawn(user, expected, token);
+        emit IBalanceWithdrawable.FundsWithdrawn(user, admin, expected, token);
         IBalanceWithdrawable(distributor).withdraw(user, expected, token);
     }
 

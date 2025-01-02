@@ -7,22 +7,17 @@ import { IAssetOwnership } from "@synaps3/core/interfaces/assets/IAssetOwnership
 import { IRightsPolicyManager } from "@synaps3/core/interfaces/rights/IRightsPolicyManager.sol";
 import { IAttestationProvider } from "@synaps3/core/interfaces/base/IAttestationProvider.sol";
 import { IPolicy } from "@synaps3/core/interfaces/policies/IPolicy.sol";
-import { LoopOps } from "@synaps3/core/libraries/LoopOps.sol";
 import { T } from "@synaps3/core/primitives/Types.sol";
 
 /// @title BasePolicy
 /// @notice This abstract contract serves as a base for policies that manage access to content.
 abstract contract BasePolicy is IPolicy, ERC165 {
-    using LoopOps for uint256;
-
     // Immutable public variables to store the addresses of the Rights Manager and Ownership.
     IAttestationProvider public immutable ATTESTATION_PROVIDER;
     IRightsPolicyManager public immutable RIGHTS_POLICY_MANAGER;
     IAssetOwnership public immutable ASSET_OWNERSHIP;
 
     bool private _initialized;
-    /// @dev registry to store the relation between holder & account = attestation
-    mapping(address => mapping(address => uint256)) private _attestations;
 
     /// @notice Emitted when an enforcement process is successfully completed for a given account and holder.
     /// @param holder The address of the rights holder managing the asset or access.
@@ -104,13 +99,6 @@ abstract contract BasePolicy is IPolicy, ERC165 {
         return _initialized;
     }
 
-    /// @notice Retrieves the attestation id associated with a specific account and rights holder.
-    /// @param recipient The address of the account for which the attestation is being retrieved.
-    /// @param holder The address of the rights holder with whom the agreement was made.
-    function getAttestation(address recipient, address holder) external view returns (uint256) {
-        return _attestations[recipient][holder];
-    }
-
     /// @notice Retrieves the address of the attestation provider.
     /// @return The address of the provider associated with the policy.
     function getAttestationProvider() external view returns (address) {
@@ -122,16 +110,6 @@ abstract contract BasePolicy is IPolicy, ERC165 {
     /// @return A boolean indicating whether the interface ID is supported (true) or not (false).
     function supportsInterface(bytes4 interfaceId) public view virtual override returns (bool) {
         return interfaceId == type(IPolicy).interfaceId || super.supportsInterface(interfaceId);
-    }
-
-    /// @notice Verifies whether the on-chain access terms are satisfied for an account.
-    /// @dev The function checks if the provided account complies with the attestation.
-    /// @param account The address of the user whose access is being verified.
-    function isCompliant(address account, address holder) public view returns (bool) {
-        uint256 attestationId = _attestations[account][holder];
-        // default uint256 attestation is zero <- means not registered
-        if (attestationId == 0) return false; // false if not registered
-        return ATTESTATION_PROVIDER.verify(attestationId, account);
     }
 
     /// @notice Returns the asset holder registered in the ownership contract.
@@ -152,23 +130,7 @@ abstract contract BasePolicy is IPolicy, ERC165 {
         bytes memory encodedAgreement = abi.encode(agreement);
         bytes memory data = abi.encode(holder, agreement.initiator, address(this), agreement.parties, encodedAgreement);
         uint256[] memory attestationIds = ATTESTATION_PROVIDER.attest(agreement.parties, expireAt, data);
-        _updateBatchAttestation(holder, attestationIds, agreement.parties);
         return attestationIds;
-    }
-
-    /// @notice Updates the attestation records for each account.
-    /// @param attestationIds The ID of the attestations.
-    /// @param parties The list of account to assign attestation id.
-    function _updateBatchAttestation(
-        address holder,
-        uint256[] memory attestationIds,
-        address[] memory parties
-    ) private {
-        uint256 partiesLen = parties.length;
-        for (uint256 i = 0; i < partiesLen; i = i.uncheckedInc()) {
-            _attestations[parties[i]][holder] = attestationIds[i];
-            emit AttestedAgreement(holder, parties[i], attestationIds[i]);
-        }
     }
 
     // /// @dev Distributes the amount based on the provided shares array.

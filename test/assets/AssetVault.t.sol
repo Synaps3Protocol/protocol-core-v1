@@ -14,10 +14,14 @@ import { C } from "contracts/core/primitives/Constants.sol";
 
 contract AssetVaultTest is BaseTest {
     address vault;
+    address ownership;
+    address referendum;
 
     function setUp() public initialize  {
         // setup the access manager to use during tests..
         vault = deployAssetVault();
+        ownership = deployAssetOwnership();
+        referendum = deployAssetReferendum();
     }
 
     function test_SetContent_ExpectedOwner() public {

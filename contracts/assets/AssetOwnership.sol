@@ -15,6 +15,7 @@ import { IAssetOwnership } from "@synaps3/core/interfaces/assets/IAssetOwnership
 // TODO check ERC404
 // TODO check ERC-2981
 // TODO check ERC-4804
+// TODO check ERC-6551: potential improvement to attach asset level terms, restrictions, etc
 
 /// @title Ownership ERC721 Upgradeable
 /// @notice This abstract contract manages the ownership.
@@ -79,6 +80,7 @@ contract AssetOwnership is
 
     // TODO build getURI => from distributor custodian /erc721-metadata
     // TODO transfer ownership + fee
+    // TODO: approved content get an incentive: a cooling mechanism is needed eg: leg decay, max registered asset rate, etc
 
     /// @notice Mints a new NFT representing an asset to the specified address.
     /// @dev The assumption is that only those who know the asset ID
@@ -86,9 +88,8 @@ contract AssetOwnership is
     /// @param to The address to mint the NFT to.
     /// @param assetId The unique identifier for the asset, which serves as the NFT ID.
     function registerAsset(address to, uint256 assetId) external onlyApprovedAsset(to, assetId) {
-        _mint(to, assetId);
-        // TODO: approved content get an incentive:
-        // a cooling mechanism is needed eg: leg decay, max registered asset rate, etc
+        _mint(to, assetId); // register asset as 721 token
+        // TODO bind account h
         emit RegisteredAsset(to, assetId);
     }
 

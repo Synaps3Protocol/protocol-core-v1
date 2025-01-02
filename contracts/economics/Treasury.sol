@@ -47,7 +47,7 @@ contract Treasury is
     /// @param currency The address of the ERC20 token to deposit.
     function deposit(address pool, uint256 amount, address currency) external returns (uint256) {
         uint256 confirmed = _deposit(pool, amount, currency);
-        emit FundsDeposited(pool, confirmed, currency);
+        emit FundsDeposited(pool, msg.sender, confirmed, currency);
         return confirmed;
     }
 
@@ -69,7 +69,7 @@ contract Treasury is
     /// @param currency The currency to associate fees with. Use address(0) for the native coin.
     function withdraw(address recipient, uint256 amount, address currency) external nonReentrant returns (uint256) {
         uint256 confirmed = _withdraw(recipient, amount, currency);
-        emit FundsWithdrawn(recipient, confirmed, currency);
+        emit FundsWithdrawn(recipient, msg.sender, confirmed, currency);
         return confirmed;
     }
 

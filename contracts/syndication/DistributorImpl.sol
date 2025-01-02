@@ -68,8 +68,8 @@ contract DistributorImpl is Initializable, ERC165Upgradeable, OwnableUpgradeable
     /// Emits a {FundWithdrawn} event.
     function withdraw(address recipient, uint256 amount, address currency) external onlyOwner returns (uint256) {
         if (getBalance(currency) == 0) revert NoFundsToWithdraw();
-        recipient.transfer(amount, currency);
-        emit FundsWithdrawn(recipient, amount, currency);
+        recipient.transfer(amount, currency); // transfer amount to recipient
+        emit FundsWithdrawn(recipient, msg.sender, amount, currency);
         return amount;
     }
 
