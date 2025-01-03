@@ -85,6 +85,7 @@ contract Treasury is
     function collectFees(address[] calldata collectors, address currency) external restricted {
         uint256 collectorsLen = collectors.length;
         address pool = address(this); // fees pool is treasury
+        uint256 totalCollected = 0;
 
         // For each collector, request the collected fees and add them to the treasury pool balance
         for (uint256 i = 0; i < collectorsLen; i = i.uncheckedInc()) {
@@ -93,7 +94,9 @@ contract Treasury is
             // register funds in treasury pool...
             _sumLedgerEntry(pool, collected, currency);
             emit FeesCollected(collectors[i], collected, currency);
+            totalCollected += collected;
         }
+
     }
 
     /// @notice Function that should revert when msg.sender is not authorized to upgrade the contract.
