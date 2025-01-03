@@ -178,4 +178,48 @@ contract AgreementSettler is
     function _setProofAsSettled(uint256 proof) private {
         _settledProofs[proof] = true;
     }
+
+    // /// @dev Distributes the amount based on the provided shares array.
+    // /// @param amount The total amount to be allocated.
+    // /// @param currency The address of the currency being allocated.
+    // /// @param shares An array of Splits structs specifying split percentages and target addresses.
+    // function _allocate(
+    //     uint256 amount,
+    //     address currency,
+    //     T.Shares[] memory shares
+    // ) private returns (uint256) {
+    //     // If there is no distribution, return the full amount.
+    //     if (shares.length == 0) return amount;
+    //     if (shares.length > 100) {
+    //         revert NoDeal(
+    //             "Invalid split allocations. Cannot exceed 100."
+    //         );
+    //     }
+
+    //     uint8 i = 0;
+    //     uint256 accBps = 0; // Accumulated base points.
+    //     uint256 accTotal = 0; // Accumulated total allocation.
+
+    //     while (i < shares.length) {
+    //         // Retrieve base points and target address from the distribution array.
+    //         uint256 bps = shares[i].bps;
+    //         address target = shares[i].target;
+    //         // Safely increment i (unchecked overflow).
+    //         unchecked {
+    //             ++i;
+    //         }
+
+    //         if (bps == 0) continue;
+    //         // Calculate and register the allocation for each distribution.
+    //         uint256 registeredAmount = amount.perOf(bps);
+    //         target.transfer(registeredAmount, currency);
+    //         accTotal += registeredAmount;
+    //         accBps += bps;
+    //     }
+
+    //     // Ensure total base points do not exceed the maximum allowed (100%).
+    //     if (accBps > C.BPS_MAX)
+    //         revert NoDeal("Invalid split base points overflow.");
+    //     return amount - accTotal; // Returns the remaining unallocated amount.
+    // }
 }

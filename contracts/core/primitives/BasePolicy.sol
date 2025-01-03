@@ -13,18 +13,21 @@ import { T } from "@synaps3/core/primitives/Types.sol";
 /// @title BasePolicy
 /// @notice This abstract contract serves as a base for policies that manage access to content.
 abstract contract BasePolicy is IPolicy, ERC165 {
-
     // Immutable public variables to store the addresses of the Rights Manager and Ownership.
     IAttestationProvider public immutable ATTESTATION_PROVIDER;
     IRightsPolicyManager public immutable RIGHTS_POLICY_MANAGER;
     IAssetOwnership public immutable ASSET_OWNERSHIP;
-    bool private _initialized;
 
-    /// @notice Emitted when an enforcement process is successfully completed for a given account and holder.
-    /// @param holder The address of the rights holder managing the asset or access.
+    /// @dev Policy state
+    bool private _initialized;
+    /// @dev registry to store the relation between (context & account) key => attestation
+    mapping(bytes32 => uint256) private _attestations;
+
+    /// @notice Emitted when an enforcement process is successfully completed for a given account.
+    /// @param context The attested agreement key map relations. eg: (account & holder address), (account & asset id), etc
     /// @param account The address of the user whose access or compliance is being enforced.
     /// @param attestationId The unique identifier of the attestations that confirms compliance or access.
-    event AttestedAgreement(address indexed holder, address indexed account, uint256 attestationId);
+    event AttestedAgreement(bytes32 indexed context, address indexed account, uint256 attestationId);
 
     /// @dev Thrown when an attempt is made to access content without proper authorization.
     /// This error is used to prevent unauthorized access to content protected by policies or rights.
@@ -119,6 +122,15 @@ abstract contract BasePolicy is IPolicy, ERC165 {
         return ASSET_OWNERSHIP.ownerOf(assetId); // Returns the registered owner.
     }
 
+    /// @notice Retrieves the license id associated with a specific account.
+    /// @param account The address of the account for which the attestation is being retrieved.
+    /// @param criteria Encoded data containing the parameters required to retrieve attestation.
+    function getLicense(address account, bytes memory criteria) public view returns (uint256) {
+        // recompute the composed key based on account and criteria = to match context
+        bytes32 key = _computeComposedKey(criteria, account);
+        return _attestations[key];
+    }
+
     /// @dev Internal function to commit an agreement and create an attestation.
     ///      The attestation will be stored on-chain and will have a validity period.
     /// @param agreement The agreement structure containing necessary details for the attestation.
@@ -128,55 +140,34 @@ abstract contract BasePolicy is IPolicy, ERC165 {
         T.Agreement memory agreement,
         uint256 expireAt
     ) internal returns (uint256[] memory) {
-        bytes memory encodedAgreement = abi.encode(agreement);
-        bytes memory data = abi.encode(holder, agreement.initiator, address(this), agreement.parties, encodedAgreement);
-        MetricsOps.logMetricWithContext("policy_agreement_total", agreement.total, encodedAgreement);
-        MetricsOps.logMetricWithContext("policy_agreement_fees", agreement.fees, encodedAgreement);
-        MetricsOps.logMetricWithContext("policy_agreement_parties_count", agreement.parties.length, encodedAgreement);
+        bytes memory context = abi.encode(holder);
+        bytes memory payload = abi.encode(agreement);
+        bytes memory data = abi.encode(holder, agreement.initiator, address(this), agreement.parties, payload);
+        // register policy metrics in the holder context to track analytics
+        MetricsOps.logMetricWithContext("policy_agreement_parties", agreement.parties.length, context); // consumers
+        MetricsOps.logMetricWithContext("policy_agreement_total", agreement.total, context);
+        MetricsOps.logMetricWithContext("policy_agreement_fees", agreement.fees, context);
         return ATTESTATION_PROVIDER.attest(agreement.parties, expireAt, data);
     }
 
-    // /// @dev Distributes the amount based on the provided shares array.
-    // /// @param amount The total amount to be allocated.
-    // /// @param currency The address of the currency being allocated.
-    // /// @param shares An array of Splits structs specifying split percentages and target addresses.
-    // function _allocate(
-    //     uint256 amount,
-    //     address currency,
-    //     T.Shares[] memory shares
-    // ) private returns (uint256) {
-    //     // If there is no distribution, return the full amount.
-    //     if (shares.length == 0) return amount;
-    //     if (shares.length > 100) {
-    //         revert NoDeal(
-    //             "Invalid split allocations. Cannot exceed 100."
-    //         );
-    //     }
+    /// @notice Internal function to create and register an attestation.
+    /// @dev This function stores the attestation on-chain and emits an event for tracking purposes.
+    /// @param account The address of the user for whom the attestation is being created.
+    /// @param context Encoded data representing the context (e.g., holder address or asset details).
+    /// @param attestationId The unique identifier for the attestation being created.
+    function _setAttestation(address account, bytes memory context, uint256 attestationId) internal {
+        // Composed key to store the relationship between account and context.
+        bytes32 key = _computeComposedKey(context, account);
+        _attestations[key] = attestationId;
+        emit AttestedAgreement(key, account, attestationId);
+    }
 
-    //     uint8 i = 0;
-    //     uint256 accBps = 0; // Accumulated base points.
-    //     uint256 accTotal = 0; // Accumulated total allocation.
-
-    //     while (i < shares.length) {
-    //         // Retrieve base points and target address from the distribution array.
-    //         uint256 bps = shares[i].bps;
-    //         address target = shares[i].target;
-    //         // Safely increment i (unchecked overflow).
-    //         unchecked {
-    //             ++i;
-    //         }
-
-    //         if (bps == 0) continue;
-    //         // Calculate and register the allocation for each distribution.
-    //         uint256 registeredAmount = amount.perOf(bps);
-    //         target.transfer(registeredAmount, currency);
-    //         accTotal += registeredAmount;
-    //         accBps += bps;
-    //     }
-
-    //     // Ensure total base points do not exceed the maximum allowed (100%).
-    //     if (accBps > C.BPS_MAX)
-    //         revert NoDeal("Invalid split base points overflow.");
-    //     return amount - accTotal; // Returns the remaining unallocated amount.
-    // }
+    /// @notice Computes a unique key by combining a context and an account address.
+    /// @dev This key is used to map relationships between accounts and context data in the `_attestations` mapping.
+    /// @param context Encoded data representing the context for the operation.
+    /// @param account The address of the user for whom the key is being generated.
+    /// @return A `bytes32` hash that uniquely identifies the context-account pair.
+    function _computeComposedKey(bytes memory context, address account) private pure returns (bytes32) {
+        return keccak256(abi.encodePacked(context, account));
+    }
 }

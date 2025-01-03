@@ -12,10 +12,10 @@ import { AccessControlledUpgradeable } from "@synaps3/core/primitives/upgradeabl
 import { IAssetVerifiable } from "@synaps3/core/interfaces/assets/IAssetVerifiable.sol";
 import { IAssetOwnership } from "@synaps3/core/interfaces/assets/IAssetOwnership.sol";
 
-// TODO check ERC404
-// TODO check ERC-2981
-// TODO check ERC-4804
-// TODO check ERC-6551: potential improvement to attach asset level terms, restrictions, etc
+// TODO check ERC-404: fractional
+// TODO check ERC-2981: royalties
+// TODO check ERC-4804: url scheme
+// TODO check ERC-6551: attach asset level terms, restrictions, etc
 
 /// @title Ownership ERC721 Upgradeable
 /// @notice This abstract contract manages the ownership.

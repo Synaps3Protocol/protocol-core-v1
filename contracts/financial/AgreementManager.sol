@@ -60,7 +60,7 @@ contract AgreementManager is Initializable, UUPSUpgradeable, AccessControlledUpg
     /// @notice Creates and stores a new agreement.
     /// @param amount The total amount committed.
     /// @param currency The currency used for the agreement.
-    /// @param broker The authorized account to manage the agreement.
+    /// @param broker The authorized address to manage the agreement.
     /// @param parties The parties in the agreement.
     /// @param payload Additional data for execution.
     function createAgreement(
