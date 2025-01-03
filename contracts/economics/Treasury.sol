@@ -96,7 +96,6 @@ contract Treasury is
             emit FeesCollected(collectors[i], collected, currency);
             totalCollected += collected;
         }
-
     }
 
     /// @notice Function that should revert when msg.sender is not authorized to upgrade the contract.

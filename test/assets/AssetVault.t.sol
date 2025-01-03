@@ -51,6 +51,11 @@ contract AssetVaultTest is BaseTest {
         assert(keccak256(abi.encodePacked(expected)) == keccak256(abi.encodePacked(b64)));
     }
 
+     function test_SetContent_StoredEventEmitted() public {
+        vm.warp(1641070800);
+        vm.prank(user);
+    }
+
     function test_SetContent_RevertIf_InvalidOwner() public {
         vm.warp(1641070800);
         vm.prank(user);

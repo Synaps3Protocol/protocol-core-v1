@@ -97,7 +97,9 @@ contract AgreementSettler is
     // eg: access handling for gating content. etc..
     // function isAccessAllowed(bytes calldata criteria) external view return (bool) {
     //  // get registered access hooks for this contract
-    //  IHook hook = HOOKS.get(address(this), IAccessHook) <- internal handling of any logic needed to get the valid hook
+    //  IHook hook = HOOKS.get(address(this), IAccessHook) <- internal handling of any logic needed
+    //  to get the valid hook
+
     //  if (!hook) return false // need conf hook
     //  return hook.exec(criteria)
     //}

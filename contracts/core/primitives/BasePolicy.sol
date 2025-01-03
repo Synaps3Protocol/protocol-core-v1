@@ -24,7 +24,7 @@ abstract contract BasePolicy is IPolicy, ERC165 {
     mapping(bytes32 => uint256) private _attestations;
 
     /// @notice Emitted when an enforcement process is successfully completed for a given account.
-    /// @param context The attested agreement key map relations. eg: (account & holder address), (account & asset id), etc
+    /// @param context The attested agreement key map relations. eg: (account & holder), (account & asset id)
     /// @param account The address of the user whose access or compliance is being enforced.
     /// @param attestationId The unique identifier of the attestations that confirms compliance or access.
     event AttestedAgreement(bytes32 indexed context, address indexed account, uint256 attestationId);

@@ -80,7 +80,8 @@ contract AssetOwnership is
 
     // TODO build getURI => from distributor custodian /erc721-metadata
     // TODO transfer ownership + fee
-    // TODO: approved content get an incentive: a cooling mechanism is needed eg: leg decay, max registered asset rate, etc
+    // TODO: approved content get an incentive: a cooling mechanism is needed eg:
+    // log decay, max registered asset rate, etc
 
     /// @notice Mints a new NFT representing an asset to the specified address.
     /// @dev The assumption is that only those who know the asset ID
