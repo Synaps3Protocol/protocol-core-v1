@@ -20,6 +20,4 @@ interface IBalanceOperator is
     IBalanceReservable,
     IBalanceVerifiable,
     ILedgerVerifiable
-{
-
-}
+{}

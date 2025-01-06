@@ -107,8 +107,6 @@ contract LedgerVault is
     }
 
     /// @notice Reserves a specific amount of funds from the caller's balance for a recipient.
-    /// @dev Deducts the specified `amount` from the caller's ledger balance and marks it as reserved for the `to` address.
-    ///      Emits a `FundsReserved` event upon successful reservation.
     /// @param to The address of the recipient for whom the funds are being reserved.
     /// @param amount The amount of funds to reserve.
     /// @param currency The address of the ERC20 token to reserve. Use `address(0)` for native tokens.
@@ -119,8 +117,6 @@ contract LedgerVault is
     }
 
     /// @notice Collects a specific amount of previously reserved funds.
-    /// @dev Deducts the reserved amount from the `from` address for the caller and credits it to the caller's ledger balance.
-    ///      Emits a `FundsCollected` event upon successful collection.
     /// @param from The address of the account from which the reserved funds are being collected.
     /// @param amount The amount of funds to collect.
     /// @param currency The address of the ERC20 token to collect. Use `address(0)` for native tokens.

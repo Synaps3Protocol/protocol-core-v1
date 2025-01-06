@@ -101,7 +101,6 @@ abstract contract BalanceOperatorUpgradeable is Initializable, LedgerUpgradeable
     }
 
     /// @notice Reduces the reserved funds for a specific relationship and currency.
-    /// @dev Deducts the specified `amount` from the `_reserved` mapping for the given `from` and `to` relationship and `currency`.
     /// @param from The address of the account from which the funds were reserved.
     /// @param to The address of the account for which the funds were reserved.
     /// @param amount The amount to subtract from the reserved balance.
@@ -113,7 +112,6 @@ abstract contract BalanceOperatorUpgradeable is Initializable, LedgerUpgradeable
     }
 
     /// @notice Increases the reserved funds for a specific relationship and currency.
-    /// @dev Adds the specified `amount` to the `_reserved` mapping for the given `from` and `to` relationship and `currency`.
     /// @param from The address of the account from which the funds are reserved.
     /// @param to The address of the account for which the funds are reserved.
     /// @param amount The amount to add to the reserved balance.
@@ -125,7 +123,6 @@ abstract contract BalanceOperatorUpgradeable is Initializable, LedgerUpgradeable
     }
 
     /// @notice Retrieves the reserved balance for a specific relationship and currency.
-    /// @dev Returns the value stored in the `_reserved` mapping for the given `from` and `to` relationship and `currency`.
     /// @param from The address of the account from which the funds are reserved.
     /// @param to The address of the account for which the funds are reserved.
     /// @param currency The address of the currency to check the reserved balance for.

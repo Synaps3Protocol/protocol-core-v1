@@ -5,7 +5,7 @@
   "devDependencies": {
     "dotenv": "^16.4.5",
     "prettier-plugin-solidity": "^1.4.1",
-    "solhint": "^5.0.1",
+    "solhint": "^5.0.4",
     "solhint-plugin-prettier": "^0.1.0"
   },
   "peerDependencies": {
