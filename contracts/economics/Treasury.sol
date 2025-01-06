@@ -9,8 +9,8 @@ import { ReentrancyGuardTransientUpgradeable } from "@openzeppelin/contracts-upg
 import { AccessControlledUpgradeable } from "@synaps3/core/primitives/upgradeable/AccessControlledUpgradeable.sol";
 import { BalanceOperatorUpgradeable } from "@synaps3/core/primitives/upgradeable/BalanceOperatorUpgradeable.sol";
 
-import { IFeesCollector } from "@synaps3/core/interfaces/economics/IFeesCollector.sol";
 import { ITreasury } from "@synaps3/core/interfaces/economics/ITreasury.sol";
+import { IFeesCollector } from "@synaps3/core/interfaces/economics/IFeesCollector.sol";
 import { FinancialOps } from "@synaps3/core/libraries/FinancialOps.sol";
 import { LoopOps } from "@synaps3/core/libraries/LoopOps.sol";
 
@@ -71,6 +71,26 @@ contract Treasury is
         uint256 confirmed = _withdraw(recipient, amount, currency);
         emit FundsWithdrawn(recipient, msg.sender, confirmed, currency);
         return confirmed;
+    }
+
+    /// @notice Reserves a specific amount of funds from the caller's balance for a recipient.
+    /// @param to The address of the recipient for whom the funds are being reserved.
+    /// @param amount The amount of funds to reserve.
+    /// @param currency The address of the ERC20 token to reserve. Use `address(0)` for native tokens.
+    function reserve(address to, uint256 amount, address currency) external returns (uint256) {
+        uint256 confirmed = _reserve(to, amount, currency);
+        emit FundsReserved(msg.sender, to, confirmed, currency);
+        return amount;
+    }
+
+    /// @notice Collects a specific amount of previously reserved funds.
+    /// @param from The address of the account from which the reserved funds are being collected.
+    /// @param amount The amount of funds to collect.
+    /// @param currency The address of the ERC20 token to collect. Use `address(0)` for native tokens.
+    function collect(address from, uint256 amount, address currency) external returns (uint256) {
+        uint256 confirmed = _collect(from, amount, currency);
+        emit FundsCollected(from, msg.sender, confirmed, currency);
+        return amount;
     }
 
     // TODO burn fees

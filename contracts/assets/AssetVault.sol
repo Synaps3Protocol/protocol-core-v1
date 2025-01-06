@@ -60,6 +60,7 @@ contract AssetVault is Initializable, UUPSUpgradeable, AccessControlledUpgradeab
     /// @param data The secure content to store, represented as bytes.
     function setContent(uint256 assetId, T.VaultType vault, bytes memory data) external onlyHolder(assetId) {
         _secured[assetId][vault] = data;
+        // TODO emit event
     }
 
     /// @notice Function that authorizes the contract upgrade. It ensures that only the admin

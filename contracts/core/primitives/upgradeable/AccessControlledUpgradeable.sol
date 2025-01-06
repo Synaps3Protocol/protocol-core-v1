@@ -30,7 +30,7 @@ abstract contract AccessControlledUpgradeable is Initializable, AccessManagedUpg
         // !WARNING The restricted modifier should never be used on internal functions,
         // judiciously used in public functions,  and ideally only used in external functions.
         // See restricted:
-        // Since we can't use the `restricted` modifier and we still need to check the admin role..
+        // -> Since we can't use the `restricted` modifier and we still need to check the admin role..
         if (!_hasRole(C.ADMIN_ROLE, msg.sender)) {
             revert InvalidUnauthorizedOperation("Only admin can perform this action.");
         }

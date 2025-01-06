@@ -67,7 +67,7 @@ library FinancialOps {
         }
 
         if (amount > allowance(from, token)) revert FailDuringDeposit("Amount exceeds allowance.");
-        // disable slitter use 'arbitraty transfer form' since the use of `safeDeposit` is handled in a safe manner.
+        // disable slitter use 'arbitrary transfer form' since the use of `safeDeposit` is handled in a safe manner.
         // eg. msg.sender.safeDeposit(total, currency); <- Use msg.sender as from in transferFrom.
         // slither-disable-next-line arbitrary-send-erc20
         IERC20(token).safeTransferFrom(from, address(this), amount);

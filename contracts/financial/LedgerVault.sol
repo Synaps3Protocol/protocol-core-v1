@@ -8,6 +8,8 @@ import { UUPSUpgradeable } from "@openzeppelin/contracts-upgradeable/proxy/utils
 import { ReentrancyGuardTransientUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardTransientUpgradeable.sol";
 import { AccessControlledUpgradeable } from "@synaps3/core/primitives/upgradeable/AccessControlledUpgradeable.sol";
 import { BalanceOperatorUpgradeable } from "@synaps3/core/primitives/upgradeable/BalanceOperatorUpgradeable.sol";
+
+import { ILedgerVault } from "@synaps3/core/interfaces/financial/ILedgerVault.sol";
 import { FinancialOps } from "@synaps3/core/libraries/FinancialOps.sol";
 
 /// @title LedgerVault
@@ -19,7 +21,8 @@ contract LedgerVault is
     UUPSUpgradeable,
     AccessControlledUpgradeable,
     ReentrancyGuardTransientUpgradeable,
-    BalanceOperatorUpgradeable
+    BalanceOperatorUpgradeable,
+    ILedgerVault
 {
     using FinancialOps for address;
 
@@ -101,6 +104,30 @@ contract LedgerVault is
         uint256 confirmed = _transfer(recipient, amount, currency);
         emit FundsTransferred(recipient, msg.sender, confirmed, currency);
         return confirmed;
+    }
+
+    /// @notice Reserves a specific amount of funds from the caller's balance for a recipient.
+    /// @dev Deducts the specified `amount` from the caller's ledger balance and marks it as reserved for the `to` address.
+    ///      Emits a `FundsReserved` event upon successful reservation.
+    /// @param to The address of the recipient for whom the funds are being reserved.
+    /// @param amount The amount of funds to reserve.
+    /// @param currency The address of the ERC20 token to reserve. Use `address(0)` for native tokens.
+    function reserve(address to, uint256 amount, address currency) external returns (uint256) {
+        uint256 confirmed = _reserve(to, amount, currency);
+        emit FundsReserved(msg.sender, to, confirmed, currency);
+        return amount;
+    }
+
+    /// @notice Collects a specific amount of previously reserved funds.
+    /// @dev Deducts the reserved amount from the `from` address for the caller and credits it to the caller's ledger balance.
+    ///      Emits a `FundsCollected` event upon successful collection.
+    /// @param from The address of the account from which the reserved funds are being collected.
+    /// @param amount The amount of funds to collect.
+    /// @param currency The address of the ERC20 token to collect. Use `address(0)` for native tokens.
+    function collect(address from, uint256 amount, address currency) external returns (uint256) {
+        uint256 confirmed = _collect(from, amount, currency);
+        emit FundsCollected(from, msg.sender, confirmed, currency);
+        return amount;
     }
 
     /// @notice Locks a specific amount of funds for a given account.
