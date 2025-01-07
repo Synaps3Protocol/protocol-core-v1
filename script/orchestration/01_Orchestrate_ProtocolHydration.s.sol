@@ -71,8 +71,10 @@ contract OrchestrateProtocolHydration is Script {
         tollgate.setFees(T.Scheme.BPS, rightPolicyManager, agrFee, currency);
         tollgate.setFees(T.Scheme.FLAT, distributorReferendum, synFees, currency);
 
-        require(tollgate.getFees(T.Scheme.BPS, rightPolicyManager, currency) == agrFee, "Invalid BPS Fees Set");
-        require(tollgate.getFees(T.Scheme.FLAT, distributorReferendum, currency) == synFees, "Invalid Flat Fees Set");
+        (uint256 feeA, )= tollgate.getFees(rightPolicyManager, currency);
+        (uint256 feeB, )= tollgate.getFees(distributorReferendum, currency);
+        require(feeA == agrFee, "Invalid BPS Fees Set");
+        require(feeB == synFees, "Invalid Flat Fees Set");
 
         vm.stopBroadcast();
     }

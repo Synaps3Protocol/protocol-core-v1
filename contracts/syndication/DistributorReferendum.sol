@@ -68,6 +68,10 @@ contract DistributorReferendum is
     /// @param invalid The address of the distributor contract that is invalid
     error InvalidDistributorContract(address invalid);
 
+    /// @notice Error thrown when an invalid fee scheme is provided for a referendum operation.
+    /// @param message A descriptive message explaining the reason for the invalid fee scheme.
+    error InvalidFeeSchemeProvided(string message);
+
     /// @notice Modifier to ensure that the given distributor contract supports the IDistributor interface.
     /// @param distributor The distributor contract address.
     modifier onlyValidDistributor(address distributor) {
@@ -160,7 +164,8 @@ contract DistributorReferendum is
         // The collected fees are used to support the protocol's operations, aligning
         // individual actions with the broader sustainability of the network.
         // !IMPORTANT If tollgate does not support the currency, will revert..
-        uint256 fees = TOLLGATE.getFees(T.Scheme.FLAT, address(this), currency);
+        (uint256 fees, T.Scheme scheme) = TOLLGATE.getFees(address(this), currency);
+        if (scheme != T.Scheme.FLAT) revert InvalidFeeSchemeProvided("Expected a FLAT fee scheme.");
 
         VAULT.lock(msg.sender, fees, currency); // lock funds for distributor
         VAULT.claim(msg.sender, fees, currency); // claim the funds on behalf referendum

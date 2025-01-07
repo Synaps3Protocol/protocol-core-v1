@@ -28,6 +28,8 @@ contract Tollgate is Initializable, UUPSUpgradeable, AccessControlledUpgradeable
     mapping(address => EnumerableSet.AddressSet) private _registeredCurrencies;
     /// @dev Stores fees associated with specific target and currencies..
     mapping(bytes32 => uint256) private _currencyFees;
+    /// @dev Stores the target supported schema.
+    mapping(address => T.Scheme) private _targetScheme;
 
     /// @notice Emitted when fees are set or updated.
     /// @param target The address or context where the fee applies.
@@ -79,25 +81,20 @@ contract Tollgate is Initializable, UUPSUpgradeable, AccessControlledUpgradeable
         return _registeredCurrencies[target].values();
     }
 
-    /// @notice Checks if a fee scheme is supported for a given target and currency.
-    /// @param scheme The fee representation scheme (flat, nominal, or basis points).
-    /// @param target The address or context to check.
-    /// @param currency The address of the currency to verify.
-    /// @return `true` if the currency is supported, otherwise `false`.
-    function isSchemeSupported(T.Scheme scheme, address target, address currency) public view returns (bool) {
-        bytes32 composedKey = _computeComposedKey(target, currency, scheme);
-        return _registeredCurrencies[target].contains(currency) && _currencyFees[composedKey] > 0;
-    }
-
     /// @notice Retrieves the fee value for a specific target and currency.
-    /// @param scheme The fee representation scheme.
     /// @param target The context or address for which to retrieve the fee.
     /// @param currency The address of the currency.
     /// @return The fee value.
-    function getFees(T.Scheme scheme, address target, address currency) external view returns (uint256) {
-        if (!isSchemeSupported(scheme, target, currency)) revert InvalidUnsupportedCurrency(currency);
+    function getFees(address target, address currency) external view returns (uint256, T.Scheme) {
+        T.Scheme scheme = _targetScheme[target];
+        if (!_isSchemeSupported(scheme, target, currency)) {
+            revert InvalidUnsupportedCurrency(currency);
+        }
+
+        // if scheme is supported return the fee and scheme
         bytes32 composedKey = _computeComposedKey(target, currency, scheme);
-        return _currencyFees[composedKey];
+        uint256 fee = _currencyFees[composedKey];
+        return (fee, scheme);
     }
 
     /// @notice Sets or updates fees for a specific target and currency.
@@ -120,9 +117,20 @@ contract Tollgate is Initializable, UUPSUpgradeable, AccessControlledUpgradeable
         // "In the agreement contract, for MMC, using a nominal scheme, the fee is 10%."
         if (target == address(0)) revert InvalidTargetContext();
         bytes32 composedKey = _computeComposedKey(target, currency, scheme);
-        _registeredCurrencies[target].add(currency);
+        _targetScheme[target] = scheme;
         _currencyFees[composedKey] = fee; // target + currency + scheme = fee
+        _registeredCurrencies[target].add(currency);
         emit FeesSet(target, currency, scheme, fee);
+    }
+
+    /// @notice Checks if a fee scheme is supported for a given target and currency.
+    /// @param scheme The fee representation scheme (flat, nominal, or basis points).
+    /// @param target The address or context to check.
+    /// @param currency The address of the currency to verify.
+    /// @return `true` if the currency is supported, otherwise `false`.
+    function _isSchemeSupported(T.Scheme scheme, address target, address currency) private view returns (bool) {
+        bytes32 composedKey = _computeComposedKey(target, currency, scheme);
+        return _registeredCurrencies[target].contains(currency) && _currencyFees[composedKey] > 0;
     }
 
     /// @notice Computes a unique key for a currency and scheme combination.

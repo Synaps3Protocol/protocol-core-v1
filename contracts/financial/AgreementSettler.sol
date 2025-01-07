@@ -38,7 +38,7 @@ contract AgreementSettler is
     using FinancialOps for address;
     using EnumerableSet for EnumerableSet.UintSet;
 
-    /// KIM: any initialization here is ephimeral and not included in bytecode..
+    /// KIM: any initialization here is ephemeral and not included in bytecode..
     /// so the code within a logic contract’s constructor or global declaration
     /// will never be executed in the context of the proxy’s state
     /// https://docs.openzeppelin.com/upgrades-plugins/1.x/proxies#the-constructor-caveat
@@ -61,15 +61,17 @@ contract AgreementSettler is
     /// @param initiator The account that initiated the cancellation.
     /// @param proof The unique identifier (hash or proof) of the canceled agreement.
     event AgreementCancelled(address indexed initiator, uint256 proof);
-
-    /// @dev Custom error thrown for invalid operations on an agreement, with a descriptive message.
-    /// @param message A string explaining the invalid operation.
-    error InvalidAgreementOp(string message);
+    /// @notice Error thrown when the agreement proof has already been settled.
+    error AgreementAlreadySettled();
+    /// @notice Error thrown when the caller is not authorized to settle the agreement.
+    error UnauthorizedBroker();
+    /// @notice Error thrown when the initiator is not authorized to quit the agreement.
+    error UnauthorizedInitiator();
 
     /// @notice Ensures the agreement associated with the provided `proof` is valid and active.
     modifier onlyValidAgreement(uint256 proof) {
         if (_settledProofs[proof]) {
-            revert InvalidAgreementOp("Invalid settled agreement.");
+            revert AgreementAlreadySettled();
         }
         _;
     }
@@ -108,9 +110,7 @@ contract AgreementSettler is
     /// @param proof The unique identifier of the agreement.
     function quitAgreement(uint256 proof) external onlyValidAgreement(proof) nonReentrant returns (T.Agreement memory) {
         T.Agreement memory agreement = AGREEMENT_MANAGER.getAgreement(proof);
-        if (agreement.initiator != msg.sender) {
-            revert InvalidAgreementOp("Only initiator can quit the agreement.");
-        }
+        if (agreement.initiator != msg.sender) revert UnauthorizedInitiator();
 
         // IMPORTANT:
         // The protocol enforces a penalty for quitting the agreement to ensure fairness
@@ -148,9 +148,7 @@ contract AgreementSettler is
     ) public onlyValidAgreement(proof) returns (T.Agreement memory) {
         // retrieve the agreement to storage to inactivate it and return it
         T.Agreement memory agreement = AGREEMENT_MANAGER.getAgreement(proof);
-        if (agreement.broker != msg.sender) {
-            revert InvalidAgreementOp("Only broker can settle the agreement.");
-        }
+        if (agreement.broker != msg.sender) revert UnauthorizedBroker();
 
         uint256 total = agreement.total; // protocol
         uint256 fees = agreement.fees; // protocol

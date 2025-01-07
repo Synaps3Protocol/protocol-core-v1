@@ -16,18 +16,10 @@ interface ITollgate {
     function setFees(T.Scheme scheme, address target, uint256 fee, address currency) external;
 
     /// @notice Retrieves the fee value for a specific target and currency.
-    /// @param scheme The fee representation scheme.
     /// @param target The context or address for which the fee is being retrieved.
     /// @param currency The address of the currency for which to retrieve the fee.
     /// @return The fee value associated with the given parameters.
-    function getFees(T.Scheme scheme, address target, address currency) external view returns (uint256);
-
-    /// @notice Checks if a fee scheme is supported for a given target and currency.
-    /// @param scheme The fee representation scheme (flat, nominal, or basis points).
-    /// @param target The address or context to check.
-    /// @param currency The address of the currency to verify.
-    /// @return `true` if the currency is supported, otherwise `false`.
-    function isSchemeSupported(T.Scheme scheme, address target, address currency) external view returns (bool);
+    function getFees(address target, address currency) external view returns (uint256, T.Scheme);
 
     /// @notice Returns the list of supported currencies for a given target.
     /// @param target The context or address for which to retrieve supported currencies.
