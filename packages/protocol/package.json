@@ -1,6 +1,6 @@
 {
   "name": "@synaps3/protocol",
-  "version": "1.8.0",
+  "version": "1.8.1",
   "description": "Core contracts for the Synapse Protocol",
   "homepage": "https://github.com/Synaps3Protocol/protocol-core-v1#readme",
   "bugs": {

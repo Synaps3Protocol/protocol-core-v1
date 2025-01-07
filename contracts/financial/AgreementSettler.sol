@@ -61,10 +61,13 @@ contract AgreementSettler is
     /// @param initiator The account that initiated the cancellation.
     /// @param proof The unique identifier (hash or proof) of the canceled agreement.
     event AgreementCancelled(address indexed initiator, uint256 proof);
+
     /// @notice Error thrown when the agreement proof has already been settled.
     error AgreementAlreadySettled();
+
     /// @notice Error thrown when the caller is not authorized to settle the agreement.
     error UnauthorizedBroker();
+
     /// @notice Error thrown when the initiator is not authorized to quit the agreement.
     error UnauthorizedInitiator();
 
@@ -155,7 +158,6 @@ contract AgreementSettler is
         uint256 available = total - fees; // holder earnings
         address initiator = agreement.initiator;
         address currency = agreement.currency;
-
         // TODO: Implement a time window to enforce the validity period for agreement settlement.
         // Once the window expires, the agreement should be marked as invalid or revert,
         // then quit is only way to close the agreement.
