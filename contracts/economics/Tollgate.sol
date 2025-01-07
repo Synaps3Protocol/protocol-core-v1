@@ -32,16 +32,9 @@ contract Tollgate is Initializable, UUPSUpgradeable, AccessControlledUpgradeable
     /// @notice Emitted when fees are set or updated.
     /// @param target The address or context where the fee applies.
     /// @param currency The currency associated with the fee.
-    /// @param setBy The address that set the fee.
     /// @param scheme The fee representation scheme (flat, nominal, or basis points).
     /// @param fee The value of the fee being set.
-    event FeesSet(
-        address indexed target,
-        address indexed currency,
-        address indexed setBy,
-        T.Scheme scheme,
-        uint256 fee
-    );
+    event FeesSet(address indexed target, address indexed currency, T.Scheme scheme, uint256 fee);
 
     /// @notice Error for unsupported currencies.
     /// @param currency The address of the unsupported currency.
@@ -129,7 +122,7 @@ contract Tollgate is Initializable, UUPSUpgradeable, AccessControlledUpgradeable
         bytes32 composedKey = _computeComposedKey(target, currency, scheme);
         _registeredCurrencies[target].add(currency);
         _currencyFees[composedKey] = fee; // target + currency + scheme = fee
-        emit FeesSet(target, currency, msg.sender, scheme, fee);
+        emit FeesSet(target, currency, scheme, fee);
     }
 
     /// @notice Computes a unique key for a currency and scheme combination.
