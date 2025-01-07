@@ -6,14 +6,15 @@ pragma solidity 0.8.26;
 /// @notice This library provides common type definitions for use in other contracts.
 /// @dev This library defines types and structures that can be imported and used in other contracts.
 library T {
-    /// @title Context
-    /// @notice Enum to represent different operational contexts within the protocol.
-    /// Depending on the context, different logic or parameters may apply.
-    /// eg: Fees are set based on the context of the protocol operation.
-    enum Context {
-        __,
-        SYN, // Syndication context
-        RMA // Rights Management Agreement
+    /// @title Scheme
+    /// @notice Enum representing different fee calculation schemes in the protocol.
+    /// Each scheme determines how fees are computed based on the operation's context.
+    /// Examples include flat amounts, percentages, or basis points (BPS).
+    enum Scheme {
+        __, // Undefined or default value
+        FLAT, // Flat fee: a fixed amount, independent of transaction value
+        NOMINAL, // Nominal fee: a percentage of the transaction value (e.g., 5%)
+        BPS // Basis points: fractional fee, where 1 BPS = 0.01% (e.g., 100 BPS = 1%)
     }
 
     /// @title VaultType

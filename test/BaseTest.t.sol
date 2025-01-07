@@ -52,7 +52,6 @@ abstract contract BaseTest is Test {
         // we need access to create3 factory globally
         string memory factoryAddress = Strings.toHexString(factory);
         vm.setEnv("CREATE3_FACTORY", factoryAddress);
-        vm.setEnv("CI", "true"); // avoid write in env the deploy output
     }
 
     // 01_DeployAccessManager

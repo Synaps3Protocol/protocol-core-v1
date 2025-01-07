@@ -14,108 +14,134 @@ import { T } from "@synaps3/core/primitives/Types.sol";
 import { FeesOps } from "@synaps3/core/libraries/FeesOps.sol";
 
 /// @title Tollgate Contract
-/// @dev This contract acts as a financial gateway, managing fees and the currencies allowed
-/// within the platform. It ensures that only valid currencies (ERC-20 or native) are accepted
-/// and provides mechanisms to set, retrieve, and validate fees for different contexts.
-/// @notice The name "Tollgate" reflects the contract's role as a checkpoint that regulates
-/// financial access through fees and approved currencies.
+/// @notice Manages fees and approved currencies for various operations within the protocol.
+/// @dev This contract ensures proper fee validation and currency registration for different operational contexts.
 contract Tollgate is Initializable, UUPSUpgradeable, AccessControlledUpgradeable, ITollgate {
     using FeesOps for uint256;
     using ERC165Checker for address;
     using EnumerableSet for EnumerableSet.AddressSet;
 
-    /// @dev Constant representing the ERC-20 interface ID, used to validate token compliance.
+    /// @dev ERC-20 interface ID used to validate token compliance.
     bytes4 private constant INTERFACE_ID_ERC20 = type(IERC20).interfaceId;
-    /// @dev Mapping of supported currencies for each context, stored using EnumerableSet for efficient querying.
-    mapping(T.Context => EnumerableSet.AddressSet) private _registeredCurrencies;
-    /// @dev Mapping to store fees for each currency and context pair.
-    /// @notice Fees are expressed either as a flat amount or in basis points depending on the context.
-    mapping(address => mapping(T.Context => uint256)) private _currencyFees;
+    /// @dev Tracks registered currencies for specific targets.
+    /// Uses EnumerableSet for efficient storage and querying of currency addresses.
+    mapping(address => EnumerableSet.AddressSet) private _registeredCurrencies;
+    /// @dev Stores fees associated with specific target and currencies..
+    mapping(bytes32 => uint256) private _currencyFees;
 
-    /// @notice Emitted when fees are set.
-    /// @param fee The amount of fees being set.
-    /// @param ctx The context where the fees are set.
-    /// @param currency The currency of the fees being set.
-    /// @param setBy The address that set the fees.
-    event FeesSet(uint256 fee, T.Context ctx, address indexed currency, address indexed setBy);
-    /// @notice Error to be thrown when an unsupported currency is used.
+    /// @notice Emitted when fees are set or updated.
+    /// @param target The address or context where the fee applies.
+    /// @param currency The currency associated with the fee.
+    /// @param setBy The address that set the fee.
+    /// @param scheme The fee representation scheme (flat, nominal, or basis points).
+    /// @param fee The value of the fee being set.
+    event FeesSet(
+        address indexed target,
+        address indexed currency,
+        address indexed setBy,
+        T.Scheme scheme,
+        uint256 fee
+    );
+
+    /// @notice Error for unsupported currencies.
     /// @param currency The address of the unsupported currency.
     error InvalidUnsupportedCurrency(address currency);
-    /// @notice Error to be thrown when basis point fees are invalid.
-    error InvalidBasisPointRange(uint256 bps);
-    /// @notice Error thrown when trying to operate with an unsupported currency.
-    /// @param currency The address of the unsupported currency.
-    error InvalidCurrency(address currency);
 
-    /// @notice Ensures valid fee representation based on the context.
-    /// @param ctx The context for which the fee is being set.
-    /// @param fee The fee to validate.
-    /// @dev This modifier ensures that fees are represented correctly based on the context,
-    ///      avoiding calculation errors.
-    modifier onlyValidFeeRepresentation(T.Context ctx, uint256 fee) {
-        if (T.Context.RMA == ctx && !fee.isBasePoint()) {
-            revert InvalidBasisPointRange(fee);
-        }
+    /// @notice Error invalid unsupported context.
+    error InvalidTargetContext();
+
+    /// @notice Error for invalid basis point fees.
+    /// @param bps The provided basis point value.
+    error InvalidBasisPointRange(uint256 bps);
+
+    /// @notice Error for invalid nominal fees.
+    /// @param nominal The provided nominal fee value.
+    error InvalidNominalRange(uint256 nominal);
+
+    /// @notice Ensures the validity of fee representation based on the selected scheme.
+    /// @param scheme The fee scheme (flat, nominal, or basis points).
+    /// @param fee The fee value to validate.
+    modifier onlyValidFeeRepresentation(T.Scheme scheme, uint256 fee) {
+        if (T.Scheme.BPS == scheme && !fee.isBasePoint()) revert InvalidBasisPointRange(fee);
+        if (T.Scheme.NOMINAL == scheme && !fee.isNominal()) revert InvalidNominalRange(fee);
         _;
     }
 
     /// @custom:oz-upgrades-unsafe-allow constructor
     constructor() {
-        /// https://forum.openzeppelin.com/t/what-does-disableinitializers-function-mean/28730/5
-        /// https://forum.openzeppelin.com/t/uupsupgradeable-vulnerability-post-mortem/15680
         _disableInitializers();
     }
 
-    /// @notice Initializes the proxy state.
+    /// @notice Initializes the contract state.
+    /// @param accessManager The address of the access control manager.
     function initialize(address accessManager) public initializer {
         __UUPSUpgradeable_init();
         __AccessControlled_init(accessManager);
     }
 
-    /// @notice Returns the list of supported currencies for a given context.
-    /// @param ctx The context under which the currencies are being queried.
-    function supportedCurrencies(T.Context ctx) public view returns (address[] memory) {
-        // https://docs.openzeppelin.com/contracts/5.x/api/utils#EnumerableSet-values-struct-EnumerableSet-AddressSet-
-        // This operation will copy the entire storage to memory, which can be quite expensive.
-        // This is designed to mostly be used by view accessors that are queried without any gas fees.
-        // Developers should keep in mind that this function has an unbounded cost,
-        /// and using it as part of a state-changing function may render the function uncallable
-        /// if the set grows to a point where copying to memory consumes too much gas to fit in a block.
-        return _registeredCurrencies[ctx].values();
+    /// @notice Retrieves the list of supported currencies for a given target.
+    /// @param target The address or context for which to retrieve supported currencies.
+    /// @return An array of supported currency addresses.
+    function supportedCurrencies(address target) public view returns (address[] memory) {
+        return _registeredCurrencies[target].values();
     }
 
-    /// @notice Checks if a currency is supported for a given context.
-    /// @param ctx The context under which the currency is being checked.
-    /// @param currency The address of the currency to check.
-    function isCurrencySupported(T.Context ctx, address currency) public view returns (bool) {
-        return _registeredCurrencies[ctx].contains(currency) && _currencyFees[currency][ctx] > 0;
+    /// @notice Checks if a fee scheme is supported for a given target and currency.
+    /// @param scheme The fee representation scheme (flat, nominal, or basis points).
+    /// @param target The address or context to check.
+    /// @param currency The address of the currency to verify.
+    /// @return `true` if the currency is supported, otherwise `false`.
+    function isSchemeSupported(T.Scheme scheme, address target, address currency) public view returns (bool) {
+        bytes32 composedKey = _computeComposedKey(target, currency, scheme);
+        return _registeredCurrencies[target].contains(currency) && _currencyFees[composedKey] > 0;
     }
 
-    /// @notice Retrieves the fees for a specified context and currency.
-    /// @param ctx The context for which to retrieve the fees.
-    /// @param currency The address of the currency for which to retrieve the fees.
-    function getFees(T.Context ctx, address currency) external view returns (uint256) {
-        if (!isCurrencySupported(ctx, currency)) revert InvalidUnsupportedCurrency(currency);
-        return _currencyFees[currency][ctx];
+    /// @notice Retrieves the fee value for a specific target and currency.
+    /// @param scheme The fee representation scheme.
+    /// @param target The context or address for which to retrieve the fee.
+    /// @param currency The address of the currency.
+    /// @return The fee value.
+    function getFees(T.Scheme scheme, address target, address currency) external view returns (uint256) {
+        if (!isSchemeSupported(scheme, target, currency)) revert InvalidUnsupportedCurrency(currency);
+        bytes32 composedKey = _computeComposedKey(target, currency, scheme);
+        return _currencyFees[composedKey];
     }
 
-    /// @notice Sets a new fee for a specific context and currency.
-    /// @param ctx The context for which the new fee is being set (e.g., registration, access).
-    /// @param fee The new fee to set (can be flat fee or basis points depending on the context).
-    /// @param currency The currency associated with the fee (can be ERC-20 or native currency).
-    /// @dev Only the governance account can call this function to set or update fees.
+    /// @notice Sets or updates fees for a specific target and currency.
+    /// @param scheme The fee representation scheme.
+    /// @param fee The new fee value.
+    /// @param target The context or address for which the fee is being set.
+    /// @param currency The currency associated with the fee.
     function setFees(
-        T.Context ctx,
+        T.Scheme scheme,
+        address target,
         uint256 fee,
         address currency
-    ) external restricted onlyValidFeeRepresentation(ctx, fee) {
-        _currencyFees[currency][ctx] = fee;
-        _registeredCurrencies[ctx].add(currency); // set avoid duplication..
-        emit FeesSet(fee, ctx, currency, msg.sender);
+    ) external restricted onlyValidFeeRepresentation(scheme, fee) {
+        // Compute a unique composed key based on the target, currency, and scheme.
+        // The composed key is used to uniquely identify a combination of these parameters
+        // in a flat storage mapping. This avoids the need for nested mappings, improving gas efficiency
+        // and simplifying data access.
+        // Example: If the target is an agreement contract, the currency is MMC (ERC20 token),
+        // and the scheme is NOMINAL, setting a fee of 10% means:
+        // "In the agreement contract, for MMC, using a nominal scheme, the fee is 10%."
+        if (target == address(0)) revert InvalidTargetContext();
+        bytes32 composedKey = _computeComposedKey(target, currency, scheme);
+        _registeredCurrencies[target].add(currency);
+        _currencyFees[composedKey] = fee; // target + currency + scheme = fee
+        emit FeesSet(target, currency, msg.sender, scheme, fee);
     }
 
-    /// @notice Function that should revert when msg.sender is not authorized to upgrade the contract.
-    /// @param newImplementation The address of the new implementation contract.
-    /// @dev See https://docs.openzeppelin.com/contracts/4.x/api/proxy#UUPSUpgradeable-_authorizeUpgrade-address-
+    /// @notice Computes a unique key for a currency and scheme combination.
+    /// @param target The target context.
+    /// @param currency The currency associated with the fee.
+    /// @param scheme The fee scheme.
+    /// @return The computed key as a `bytes32` hash.
+    function _computeComposedKey(address target, address currency, T.Scheme scheme) private pure returns (bytes32) {
+        return keccak256(abi.encodePacked(target, currency, scheme));
+    }
+
+    /// @notice Ensures only authorized accounts can upgrade the contract.
+    /// @param newImplementation The address of the new contract implementation.
     function _authorizeUpgrade(address newImplementation) internal override onlyAdmin {}
 }

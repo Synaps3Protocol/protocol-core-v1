@@ -30,7 +30,7 @@ contract DistributorReferendumTest is BaseTest {
         distributor = deployDistributor("contentrider.com");
     }
 
-     function deployDistributor(string memory endpoint) public returns(address) {
+    function deployDistributor(string memory endpoint) public returns (address) {
         vm.prank(admin);
         IDistributorFactory distributorFactory = IDistributorFactory(distFactory);
         return distributorFactory.create(endpoint);
@@ -177,7 +177,7 @@ contract DistributorReferendumTest is BaseTest {
 
     function test_Revoke_SetBlockedState() public {
         _registerAndApproveDistributor(distributor); // still governor prank
-        // distribuitor get revoked by governance..
+        // distributor get revoked by governance..
         vm.prank(governor);
         IDistributorRegistrable(referendum).revoke(distributor);
         assertTrue(IDistributorVerifiable(referendum).isBlocked(distributor));
@@ -185,8 +185,7 @@ contract DistributorReferendumTest is BaseTest {
 
     function _setFeesAsGovernor(uint256 fees) internal {
         vm.startPrank(governor);
-        T.Context syndication = T.Context.SYN;
-        ITollgate(tollgate).setFees(syndication, fees, token);
+        ITollgate(tollgate).setFees(T.Scheme.FLAT, referendum, fees, token);
         vm.stopPrank();
     }
 
