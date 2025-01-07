@@ -11,9 +11,7 @@ import { EnumerableSet } from "@openzeppelin/contracts/utils/structs/EnumerableS
 import { AccessControlledUpgradeable } from "@synaps3/core/primitives/upgradeable/AccessControlledUpgradeable.sol";
 import { QuorumUpgradeable } from "@synaps3/core/primitives/upgradeable/QuorumUpgradeable.sol";
 import { IAssetReferendum } from "@synaps3/core/interfaces/assets/IAssetReferendum.sol";
-
 import { C } from "@synaps3/core/primitives/Constants.sol";
-import { T } from "@synaps3/core/primitives/Types.sol";
 
 /// @title Asset curation contract.
 /// @notice This contract allows for the submission, voting, and approval/rejection of asset.
