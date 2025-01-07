@@ -26,14 +26,14 @@ contract AssetVault is Initializable, UUPSUpgradeable, AccessControlledUpgradeab
     event ContentStored(uint256 indexed assetId, address indexed holder, T.VaultType vault);
 
     /// @notice Error thrown when a non-owner tries to modify or access the asset.
-    error InvalidAssetHolder();
+    error InvalidAssetRightsHolder();
 
     /// @notice Modifier that restricts access to the asset holder only.
     /// @param assetId The identifier of the asset.
     /// @dev Reverts if the sender is not the owner of the asset based on the Ownership contract.
     modifier onlyHolder(uint256 assetId) {
         if (ASSET_OWNERSHIP.ownerOf(assetId) != msg.sender) {
-            revert InvalidAssetHolder();
+            revert InvalidAssetRightsHolder();
         }
         _;
     }

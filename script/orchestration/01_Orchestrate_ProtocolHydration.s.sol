@@ -20,11 +20,11 @@ contract OrchestrateProtocolHydration is Script {
         address tollgateAddress = vm.envAddress("TOLLGATE");
         address treasuryAddress = vm.envAddress("TREASURY");
         address auditorAddress = vm.envAddress("POLICY_AUDIT");
-        address assetReferendum = vm.envAddress("ASSET_REFERENDUM");
-        address rightPolicyManager = vm.envAddress("RIGHT_POLICY_MANAGER");
         address accessManager = vm.envAddress("ACCESS_MANAGER");
+        address assetReferendum = vm.envAddress("ASSET_REFERENDUM");
         address agreementManager = vm.envAddress("AGREEMENT_MANAGER");
         address agreementSettler = vm.envAddress("AGREEMENT_SETTLER");
+        address rightPolicyManager = vm.envAddress("RIGHT_POLICY_MANAGER");
         address distributorReferendum = vm.envAddress("DISTRIBUTION_REFERENDUM");
         address ledgerVault = vm.envAddress("LEDGER_VAULT");
 
@@ -71,8 +71,11 @@ contract OrchestrateProtocolHydration is Script {
         tollgate.setFees(T.Scheme.BPS, rightPolicyManager, agrFee, currency);
         tollgate.setFees(T.Scheme.FLAT, distributorReferendum, synFees, currency);
 
-        require(tollgate.getFees(T.Scheme.BPS, rightPolicyManager, currency) == agrFee, "Invalid BPS Fees Set");
-        require(tollgate.getFees(T.Scheme.FLAT, distributorReferendum, currency) == synFees, "Invalid Flat Fees Set");
+        (uint256 feeA, ) = tollgate.getFees(rightPolicyManager, currency);
+        (uint256 feeB, ) = tollgate.getFees(distributorReferendum, currency);
+
+        require(feeA == agrFee);
+        require(feeB == synFees);
 
         vm.stopBroadcast();
     }

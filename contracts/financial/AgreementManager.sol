@@ -32,14 +32,21 @@ contract AgreementManager is Initializable, UUPSUpgradeable, AccessControlledUpg
     /// @dev Holds a bounded key expressing the agreement between the parts.
     mapping(uint256 => T.Agreement) private _agreementsByProof;
 
-    /// @notice Emitted when an agreement is created.
-    /// @param initiator The account that initiated or created the agreement.
-    /// @param proof The unique identifier (hash or proof) of the created agreement.
-    event AgreementCreated(address indexed initiator, uint256 proof);
+    /// @notice Emitted when a new agreement is successfully created.
+    /// @param initiator The address of the account that initiated or created the agreement.
+    /// @param proof A unique identifier (hash or proof) representing the created agreement.
+    /// @param amount The monetary amount specified in the agreement.
+    /// @param currency The address of the token used as currency in the agreement.
+    event AgreementCreated(address indexed initiator, uint256 proof, uint256 amount, address currency);
 
-    /// @dev Custom error thrown for invalid operations on an agreement, with a descriptive message.
-    /// @param message A string explaining the invalid operation.
-    error InvalidAgreementOp(string message);
+    /// @notice Error thrown when an agreement includes no parties.
+    error NoPartiesInAgreement();
+
+    /// @notice Error thrown when a flat fee exceeds the total amount.
+    error FlatFeeExceedsTotal(uint256 total, uint256 fee);
+
+    /// @notice Error thrown when an unsupported fee scheme is encountered.
+    error UnsupportedFeeScheme(T.Scheme scheme);
 
     /// @custom:oz-upgrades-unsafe-allow constructor
     constructor(address tollgate, address vault) {
@@ -76,7 +83,7 @@ contract AgreementManager is Initializable, UUPSUpgradeable, AccessControlledUpg
         // only the initiator can operate with this agreement proof, or transfer the proof to the other party..
         // each agreement is unique and immutable, ensuring that it cannot be modified or reconstructed.
         uint256 proof = _createAndStoreProof(agreement);
-        emit AgreementCreated(msg.sender, proof);
+        emit AgreementCreated(msg.sender, proof, amount, currency);
         return proof;
     }
 
@@ -100,7 +107,7 @@ contract AgreementManager is Initializable, UUPSUpgradeable, AccessControlledUpg
         bytes calldata payload
     ) public view returns (T.Agreement memory) {
         if (parties.length == 0) {
-            revert InvalidAgreementOp("Agreement must include at least one party");
+            revert NoPartiesInAgreement();
         }
 
         // TODO Even if we are covered by gas fees, a good way to avoid abuse is penalize parties after N length
@@ -147,19 +154,18 @@ contract AgreementManager is Initializable, UUPSUpgradeable, AccessControlledUpg
         return proof;
     }
 
-    /// @notice Calculates the fee based on the provided total amount and currency.
-    /// @dev Reverts if the currency is not supported by the fees manager.
+    /// @notice Calculates the fee based on the provided total amount, broker, and currency.
+    /// @dev Reverts if the currency is not supported by the Tollgate or if no fee scheme is defined for the broker.
     /// @param total The total amount from which the fee will be calculated.
-    /// @param broker The address or context for which the fee applies.
+    /// @param broker The address or context (e.g., agreement or service) for which the fee applies.
     /// @param currency The address of the currency for which the fee is being calculated.
+    /// @return The calculated fee amount based on the applicable fee scheme.
     function _calcFees(uint256 total, address broker, address currency) private view returns (uint256) {
-        // The broker acts as the operational context for retrieving the applicable fee.
-        if (!TOLLGATE.isSchemeSupported(T.Scheme.BPS, broker, currency)) {
-            revert InvalidAgreementOp("Invalid not supported broker");
-        }
-
         // !IMPORTANT if fees manager does not support the currency, will revert..
-        uint256 fees = TOLLGATE.getFees(T.Scheme.BPS, broker, currency);
-        return total.perOf(fees); // bps repr enforced by tollgate..
+        (uint256 fees, T.Scheme scheme) = TOLLGATE.getFees(broker, currency);
+        if (scheme == T.Scheme.BPS) return total.perOf(fees); // bps calc
+        if (scheme == T.Scheme.NOMINAL) return total.perOf(fees.calcBps()); // nominal to bps
+        if (total < fees) revert FlatFeeExceedsTotal(total, fees); // if flat fee
+        return fees; // ok flat fee is safe
     }
 }

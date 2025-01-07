@@ -11,9 +11,7 @@ import { EnumerableSet } from "@openzeppelin/contracts/utils/structs/EnumerableS
 import { AccessControlledUpgradeable } from "@synaps3/core/primitives/upgradeable/AccessControlledUpgradeable.sol";
 import { QuorumUpgradeable } from "@synaps3/core/primitives/upgradeable/QuorumUpgradeable.sol";
 import { IAssetReferendum } from "@synaps3/core/interfaces/assets/IAssetReferendum.sol";
-
 import { C } from "@synaps3/core/primitives/Constants.sol";
-import { T } from "@synaps3/core/primitives/Types.sol";
 
 /// @title Asset curation contract.
 /// @notice This contract allows for the submission, voting, and approval/rejection of asset.
@@ -53,14 +51,8 @@ contract AssetReferendum is
     /// @param timestamp The timestamp indicating when the asset was revoked.
     event Rejected(uint256 assetId, uint256 timestamp);
 
-    /// @dev Error thrown when the asset submission is invalid (e.g., incorrect or missing data).
-    error InvalidSubmissionAsset();
-
-    /// @dev Error thrown when the signature of the asset submission is invalid.
-    error InvalidSubmissionSignature();
-
-    /// @dev Error thrown when the initiator of the submission is invalid (e.g., not authorized to submit content).
-    error InvalidSubmissionInitiator();
+    // /// @dev Error thrown when the signature of the asset submission is invalid.
+    // error InvalidSubmissionSignature();
 
     /// @dev Constructor that disables initializers to prevent the implementation contract from being initialized.
     /// @notice This constructor prevents the implementation contract from being initialized.
@@ -83,25 +75,27 @@ contract AssetReferendum is
     /// @param assetId The ID of the asset to be submitted.
     /// @dev The asset ID is reviewed by governance.
     function submit(uint256 assetId) external {
-        _submit(assetId, msg.sender);
+        _register(assetId); // bundled check-effects-interaction
+        _submissions[msg.sender].add(assetId);
+        emit Submitted(msg.sender, block.timestamp, assetId);
     }
 
-    /// @notice Submits a content proposition for referendum with a signature.
-    /// @param assetId The ID of the asset to be submitted.
-    /// @param sig The EIP712 signature for the submission.
-    function submitWithSig(uint256 assetId, T.EIP712Signature calldata sig) external {
-        // https://eips.ethereum.org/EIPS/eip-712
-        bytes32 structHash = keccak256(
-            abi.encode(C.REFERENDUM_SUBMIT_TYPEHASH, assetId, sig.signer, _useNonce(sig.signer))
-        );
+    // /// @notice Submits a content proposition for referendum with a signature.
+    // /// @param assetId The ID of the asset to be submitted.
+    // /// @param sig The EIP712 signature for the submission.
+    // function submitWithSig(uint256 assetId, T.EIP712Signature calldata sig) external {
+    //     // https://eips.ethereum.org/EIPS/eip-712
+    //     bytes32 structHash = keccak256(
+    //         abi.encode(C.REFERENDUM_SUBMIT_TYPEHASH, assetId, sig.signer, _useNonce(sig.signer))
+    //     );
 
-        // retrieve the signer from digest and register the resultant signer as initiator.
-        // expected keccak256("\x19\x01" ‖ domainSeparator ‖ hashStruct(message))
-        bytes32 digest = _hashTypedDataV4(structHash);
-        address initiator = ecrecover(digest, sig.v, sig.r, sig.s);
-        if (initiator == address(0) || sig.signer != initiator) revert InvalidSubmissionSignature();
-        _submit(assetId, initiator);
-    }
+    //     // retrieve the signer from digest and register the resultant signer as initiator.
+    //     // expected keccak256("\x19\x01" ‖ domainSeparator ‖ hashStruct(message))
+    //     bytes32 digest = _hashTypedDataV4(structHash);
+    //     address initiator = ecrecover(digest, sig.v, sig.r, sig.s);
+    //     if (initiator == address(0) || sig.signer != initiator) revert InvalidSubmissionSignature();
+    //     _submit(assetId, initiator);
+    // }
 
     /// @notice Revoke an approved content.
     /// @param assetId The ID of the asset to be revoked.
@@ -145,14 +139,4 @@ contract AssetReferendum is
     /// @param newImplementation The address of the new implementation contract.
     /// @dev See https://docs.openzeppelin.com/contracts/4.x/api/proxy#UUPSUpgradeable-_authorizeUpgrade-address-
     function _authorizeUpgrade(address newImplementation) internal override onlyAdmin {}
-
-    /// @notice Submits content for registration and tracks the submission for the initiator.
-    /// @dev This function registers the asset, records the submission, and emits an event.
-    /// @param assetId The unique identifier of the asset being submitted.
-    /// @param initiator The address of the entity initiating the asset submission.
-    function _submit(uint256 assetId, address initiator) private {
-        _register(assetId); // bundled check-effects-interaction
-        _submissions[initiator].add(assetId);
-        emit Submitted(initiator, block.timestamp, assetId);
-    }
 }
