@@ -99,7 +99,7 @@ contract Tollgate is Initializable, UUPSUpgradeable, AccessControlledUpgradeable
 
     /// @notice Sets or updates fees for a specific target and currency.
     /// @param scheme The fee representation scheme.
-    /// @param fee The new fee value.
+    /// @param fee The new fee value to associate with target.
     /// @param target The context or address for which the fee is being set.
     /// @param currency The currency associated with the fee.
     function setFees(
@@ -117,7 +117,8 @@ contract Tollgate is Initializable, UUPSUpgradeable, AccessControlledUpgradeable
         // "In the agreement contract, for MMC, using a nominal scheme, the fee is 10%."
         if (target == address(0)) revert InvalidTargetContext();
         bytes32 composedKey = _computeComposedKey(target, currency, scheme);
-        _targetScheme[target] = scheme;
+
+        _targetScheme[target] = scheme; // eg: rights manager => FLAT
         _currencyFees[composedKey] = fee; // target + currency + scheme = fee
         _registeredCurrencies[target].add(currency);
         emit FeesSet(target, currency, scheme, fee);

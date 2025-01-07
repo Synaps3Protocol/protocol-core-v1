@@ -29,6 +29,13 @@ abstract contract BasePolicy is IPolicy, ERC165 {
     /// @param attestationId The unique identifier of the attestations that confirms compliance or access.
     event AttestedAgreement(bytes32 indexed context, address indexed account, uint256 attestationId);
 
+    /// @notice Emitted when an agreement is committed.
+    /// @param holder The address of the rights holder associated with the agreement.
+    /// @param partiesCount The number of parties involved in the agreement.
+    /// @param totalAmount The total value of the agreement.
+    /// @param fees The fees associated with the agreement.
+    event AgreementCommitted(address indexed holder, uint256 partiesCount, uint256 totalAmount, uint256 fees);
+
     /// @dev Thrown when an attempt is made to access content without proper authorization.
     /// This error is used to prevent unauthorized access to content protected by policies or rights.
     error InvalidAssetHolder();
@@ -132,7 +139,7 @@ abstract contract BasePolicy is IPolicy, ERC165 {
     }
 
     /// @dev Internal function to commit an agreement and create an attestation.
-    ///      The attestation will be stored on-chain and will have a validity period.
+    /// @param holder The address of the rights holder associated with the agreement.
     /// @param agreement The agreement structure containing necessary details for the attestation.
     /// @param expireAt The timestamp at which the attestation will expire.
     function _commit(
@@ -140,13 +147,10 @@ abstract contract BasePolicy is IPolicy, ERC165 {
         T.Agreement memory agreement,
         uint256 expireAt
     ) internal returns (uint256[] memory) {
-        bytes memory context = abi.encode(holder);
         bytes memory payload = abi.encode(agreement);
         bytes memory data = abi.encode(holder, agreement.initiator, address(this), agreement.parties, payload);
         // register policy metrics in the holder context to track analytics
-        MetricsOps.logMetricWithContext("policy_agreement_parties", agreement.parties.length, context); // consumers
-        MetricsOps.logMetricWithContext("policy_agreement_total", agreement.total, context);
-        MetricsOps.logMetricWithContext("policy_agreement_fees", agreement.fees, context);
+        emit AgreementCommitted(holder, agreement.parties.length, agreement.total, agreement.fees);
         return ATTESTATION_PROVIDER.attest(agreement.parties, expireAt, data);
     }
 

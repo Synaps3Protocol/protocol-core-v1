@@ -39,14 +39,11 @@ contract AgreementManager is Initializable, UUPSUpgradeable, AccessControlledUpg
     /// @param currency The address of the token used as currency in the agreement.
     event AgreementCreated(address indexed initiator, uint256 proof, uint256 amount, address currency);
 
-    /// @notice Error thrown when an agreement includes no parties.
-    error NoPartiesInAgreement();
-
     /// @notice Error thrown when a flat fee exceeds the total amount.
     error FlatFeeExceedsTotal(uint256 total, uint256 fee);
 
-    /// @notice Error thrown when an unsupported fee scheme is encountered.
-    error UnsupportedFeeScheme(T.Scheme scheme);
+    /// @notice Error thrown when an agreement includes no parties.
+    error NoPartiesInAgreement();
 
     /// @custom:oz-upgrades-unsafe-allow constructor
     constructor(address tollgate, address vault) {

@@ -30,10 +30,11 @@ contract AssetOwnership is
     /// @custom:oz-upgrades-unsafe-allow state-variable-immutable
     IAssetVerifiable public immutable ASSET_REFERENDUM;
 
-    /// @dev Emitted when a new content item is registered on the platform.
-    /// @param owner The address of the asset creator or owner who registered the asset.
-    /// @param assetId The unique identifier for the registered content.
-    event RegisteredAsset(address indexed owner, uint256 indexed genesis, uint256 assetId);
+    /// @dev Emitted when a new asset is registered on the platform.
+    /// @param owner The address of the creator or owner of the asset being registered.
+    /// @param timestamp The timestamp indicating when the asset was registered.
+    /// @param assetId The unique identifier for the registered asset.
+    event RegisteredAsset(address indexed owner, uint256 indexed timestamp, uint256 assetId);
 
     /// @dev Error indicating that an operation attempted to reference content that has not been approved.
     /// This error is triggered when the asset being accessed or referenced is not in an approved state.

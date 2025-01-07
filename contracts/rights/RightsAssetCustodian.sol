@@ -24,12 +24,15 @@ contract RightsAssetCustodian is Initializable, UUPSUpgradeable, AccessControlle
     /// @dev Mapping to store a registry of rights holders associated with each distributor.
     mapping(address => EnumerableSet.AddressSet) private _holdersUnderCustodian;
 
-    /// @notice Emitted when distribution custodial rights are granted to a distributor.
-    /// @param newCustody The new distributor custodial address.
-    /// @param rightsHolder the asset rights holder.
-    event CustodialGranted(address indexed newCustody, address indexed rightsHolder);
+    /// @notice Emitted when custodial distribution rights are granted to a distributor.
+    /// @param newCustody The address of the distributor granted custodial rights.
+    /// @param rightsHolder The address of the asset's rights holder.
+    /// @param timestamp The timestamp indicating when the custodial rights were granted.
+    event CustodialGranted(address indexed newCustody, address indexed rightsHolder, uint256 timestamp);
+
     /// @dev Error that is thrown when a content hash is already registered.
     error InvalidInactiveDistributor();
+
     /// @dev Error that is thrown when a new granted distributor exceed the max redundancy.
     error MaxRedundancyAllowedReached();
 
@@ -75,7 +78,7 @@ contract RightsAssetCustodian is Initializable, UUPSUpgradeable, AccessControlle
 
         _custodiansByHolder[msg.sender].add(distributor);
         _holdersUnderCustodian[distributor].add(msg.sender);
-        emit CustodialGranted(distributor, msg.sender);
+        emit CustodialGranted(distributor, msg.sender, block.timestamp);
     }
 
     /// @notice Checks if the given distributor is a custodian for the specified content holder

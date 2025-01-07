@@ -34,12 +34,15 @@ contract RightsPolicyAuthorizer is
     /// @notice Emitted when rights are granted to a policy for content.
     /// @param policy The policy contract address granted rights.
     /// @param holder The address of the asset rights holder.
-    /// @param data The data used to initialize policy.
-    event RightsGranted(address indexed policy, address indexed holder, bytes data);
+    /// @param data The data used to initialize the policy.
+    /// @param timestamp The timestamp indicating when the rights were granted.
+    event RightsGranted(address indexed policy, address indexed holder, uint256 timestamp, bytes data);
+
     /// @notice Emitted when rights are revoked from a policy for content.
     /// @param policy The policy contract address whose rights are being revoked.
     /// @param holder The address of the asset rights holder.
-    event RightsRevoked(address indexed policy, address indexed holder);
+    /// @param timestamp The timestamp indicating when the rights were revoked.
+    event RightsRevoked(address indexed policy, address indexed holder, uint256 timestamp);
 
     /// @dev Error thrown when a policy has not been audited or approved for operation.
     /// @param policy The address of the unaudited policy.
@@ -74,14 +77,14 @@ contract RightsPolicyAuthorizer is
         (bool success, ) = policy.call(abi.encodeCall(IPolicy.initialize, (msg.sender, data)));
         if (!success) revert InvalidPolicyInitialization("Error during policy initialization call");
         _authorizedPolicies[msg.sender].add(policy); // register policy as authorized for the authorizer
-        emit RightsGranted(policy, msg.sender, data);
+        emit RightsGranted(policy, msg.sender, block.timestamp, data);
     }
 
     /// @notice Revokes the delegation of rights to a policy contract.
     /// @param policy The address of the policy contract whose rights delegation is being revoked.
     function revokePolicy(address policy) external {
         _authorizedPolicies[msg.sender].remove(policy);
-        emit RightsRevoked(policy, msg.sender);
+        emit RightsRevoked(policy, msg.sender, block.timestamp);
     }
 
     /// @dev Verify if the specified policy contract has been delegated the rights by the asset holder.
