@@ -39,7 +39,7 @@ contract AssetReferendumTest is BaseTest {
         vm.warp(1641070805);
         vm.startPrank(governor); // approve by governance..
         vm.expectEmit(false, false, false, true, address(referendum));
-        emit AssetReferendum.Approved(assetId, 1641070805);
+        emit AssetReferendum.Approved(assetId, governor, 1641070805);
         IAssetRegistrable(referendum).approve(assetId);
         vm.stopPrank();
     }
@@ -60,7 +60,7 @@ contract AssetReferendumTest is BaseTest {
         vm.warp(1641070805);
         vm.prank(governor); // approve by governance..
         vm.expectEmit(false, false, false, true, address(referendum));
-        emit AssetReferendum.Rejected(assetId, 1641070805);
+        emit AssetReferendum.Rejected(assetId, governor, 1641070805);
         IAssetRegistrable(referendum).reject(assetId);
     }
 
@@ -84,7 +84,7 @@ contract AssetReferendumTest is BaseTest {
         IAssetRegistrable(referendum).approve(assetId);
 
         vm.expectEmit(false, false, false, true, address(referendum));
-        emit AssetReferendum.Revoked(assetId, 1641070805);
+        emit AssetReferendum.Revoked(assetId, governor, 1641070805);
         IAssetRegistrable(referendum).revoke(assetId);
         vm.stopPrank(); // reject by governance..
 

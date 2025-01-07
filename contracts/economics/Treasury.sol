@@ -41,58 +41,6 @@ contract Treasury is
         __AccessControlled_init(accessManager);
     }
 
-    /// @notice Deposits a specified amount of currency into the ledger of the specified pool.
-    /// @param pool The address of the pool to credit with the deposit.
-    /// @param amount The amount of currency to deposit.
-    /// @param currency The address of the ERC20 token to deposit.
-    function deposit(address pool, uint256 amount, address currency) external returns (uint256) {
-        uint256 confirmed = _deposit(pool, amount, currency);
-        emit FundsDeposited(pool, msg.sender, confirmed, currency);
-        return confirmed;
-    }
-
-    /// @notice Transfers a specified amount of currency from the caller pool's balance to a given pool.
-    /// @dev Ensures the caller has sufficient balance before performing the transfer.
-    /// @param pool The address of the pool to credit with the transfer.
-    /// @param amount The amount of currency to transfer.
-    /// @param currency The address of the ERC20 token to transfer. Use `address(0)` for native tokens.
-    function transfer(address pool, uint256 amount, address currency) external nonReentrant returns (uint256) {
-        uint256 confirmed = _transfer(pool, amount, currency);
-        emit FundsTransferred(msg.sender, pool, confirmed, currency);
-        return confirmed;
-    }
-
-    /// @notice Withdraws tokens from the contract to a specified recipient's address.
-    /// @dev This function withdraws funds from the caller's balance and transfers them to the recipient.
-    /// @param recipient The address that will receive the withdrawn tokens.
-    /// @param amount The amount of tokens to withdraw.
-    /// @param currency The currency to associate fees with. Use address(0) for the native coin.
-    function withdraw(address recipient, uint256 amount, address currency) external nonReentrant returns (uint256) {
-        uint256 confirmed = _withdraw(recipient, amount, currency);
-        emit FundsWithdrawn(recipient, msg.sender, confirmed, currency);
-        return confirmed;
-    }
-
-    /// @notice Reserves a specific amount of funds from the caller's balance for a recipient.
-    /// @param to The address of the recipient for whom the funds are being reserved.
-    /// @param amount The amount of funds to reserve.
-    /// @param currency The address of the ERC20 token to reserve. Use `address(0)` for native tokens.
-    function reserve(address to, uint256 amount, address currency) external returns (uint256) {
-        uint256 confirmed = _reserve(to, amount, currency);
-        emit FundsReserved(msg.sender, to, confirmed, currency);
-        return amount;
-    }
-
-    /// @notice Collects a specific amount of previously reserved funds.
-    /// @param from The address of the account from which the reserved funds are being collected.
-    /// @param amount The amount of funds to collect.
-    /// @param currency The address of the ERC20 token to collect. Use `address(0)` for native tokens.
-    function collect(address from, uint256 amount, address currency) external returns (uint256) {
-        uint256 confirmed = _collect(from, amount, currency);
-        emit FundsCollected(from, msg.sender, confirmed, currency);
-        return amount;
-    }
-
     // TODO burn fees
     // TODO burn MMC only
     // TODO burn fees rate

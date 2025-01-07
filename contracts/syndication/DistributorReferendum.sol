@@ -98,58 +98,6 @@ contract DistributorReferendum is
         _expirationPeriod = 180 days;
     }
 
-    /// @notice Registers a distributor by sending a payment to the contract.
-    /// @param distributor The address of the distributor to register.
-    /// @param currency The currency used to pay enrollment.
-    function register(address distributor, address currency) external onlyValidDistributor(distributor) {
-        // !IMPORTANT:
-        // Fees act as a mechanism to prevent abuse or spam by users
-        // when submitting distributors for approval. This discourages users from
-        // making frivolous or excessive registrations without genuine intent.
-        //
-        // Additionally, the fees establish a foundation of real interest and commitment
-        // from the distributor. This ensures that only those who see value in the protocol
-        // and are willing to contribute to its ecosystem will participate.
-        //
-        // The collected fees are used to support the protocol's operations, aligning
-        // individual actions with the broader sustainability of the network.
-        // !IMPORTANT If fees manager does not support the currency, will revert..
-        uint256 fees = TOLLGATE.getFees(T.Context.SYN, currency);
-        VAULT.lock(msg.sender, fees, currency); // lock funds for distributor
-        VAULT.claim(msg.sender, fees, currency); // claim the funds on behalf referendum
-        VAULT.withdraw(address(this), fees, currency); // transfer the funds to referendum
-
-        // register distributor as pending approval
-        _register(uint160(distributor));
-        // set the distributor active enrollment period..
-        // after this time the distributor is considered inactive and cannot collect his profits...
-        _enrollmentDeadline[distributor] = block.timestamp + _expirationPeriod;
-        emit Registered(distributor, block.timestamp, fees);
-    }
-
-    /// @notice Approves a distributor's registration.
-    /// @param distributor The address of the distributor to approve.
-    function approve(address distributor) external restricted onlyValidDistributor(distributor) {
-        _enrollmentsCount++;
-        _approve(uint160(distributor));
-        emit Approved(distributor, block.timestamp);
-    }
-
-    /// @notice Revokes the registration of a distributor.
-    /// @param distributor The address of the distributor to revoke.
-    function revoke(address distributor) external restricted onlyValidDistributor(distributor) {
-        _enrollmentsCount--;
-        _revoke(uint160(distributor));
-        emit Revoked(distributor, block.timestamp);
-    }
-
-    /// @notice Sets a new expiration period for an enrollment or registration.
-    /// @param newPeriod The new expiration period, in seconds.
-    function setExpirationPeriod(uint256 newPeriod) external restricted {
-        _expirationPeriod = newPeriod;
-        emit PeriodSet(msg.sender, newPeriod);
-    }
-
     /// @notice Retrieves the current expiration period for enrollments or registrations.
     function getExpirationPeriod() external view returns (uint256) {
         return _expirationPeriod;
@@ -194,6 +142,59 @@ contract DistributorReferendum is
     /// @param distributor The distributor's address to check.
     function isBlocked(address distributor) external view onlyValidDistributor(distributor) returns (bool) {
         return _status(uint160(distributor)) == Status.Blocked;
+    }
+
+    /// @notice Registers a distributor by sending a payment to the contract.
+    /// @param distributor The address of the distributor to register.
+    /// @param currency The currency used to pay enrollment.
+    function register(address distributor, address currency) external onlyValidDistributor(distributor) {
+        // !IMPORTANT:
+        // Fees act as a mechanism to prevent abuse or spam by users
+        // when submitting distributors for approval. This discourages users from
+        // making frivolous or excessive registrations without genuine intent.
+        //
+        // Additionally, the fees establish a foundation of real interest and commitment
+        // from the distributor. This ensures that only those who see value in the protocol
+        // and are willing to contribute to its ecosystem will participate.
+        //
+        // The collected fees are used to support the protocol's operations, aligning
+        // individual actions with the broader sustainability of the network.
+        // !IMPORTANT If tollgate does not support the currency, will revert..
+        uint256 fees = TOLLGATE.getFees(T.Scheme.FLAT, address(this), currency);
+
+        VAULT.lock(msg.sender, fees, currency); // lock funds for distributor
+        VAULT.claim(msg.sender, fees, currency); // claim the funds on behalf referendum
+        VAULT.withdraw(address(this), fees, currency); // transfer the funds to referendum
+
+        // register distributor as pending approval
+        _register(uint160(distributor));
+        // set the distributor active enrollment period..
+        // after this time the distributor is considered inactive and cannot collect his profits...
+        _enrollmentDeadline[distributor] = block.timestamp + _expirationPeriod;
+        emit Registered(distributor, block.timestamp, fees);
+    }
+
+    /// @notice Approves a distributor's registration.
+    /// @param distributor The address of the distributor to approve.
+    function approve(address distributor) external restricted onlyValidDistributor(distributor) {
+        _enrollmentsCount++;
+        _approve(uint160(distributor));
+        emit Approved(distributor, block.timestamp);
+    }
+
+    /// @notice Revokes the registration of a distributor.
+    /// @param distributor The address of the distributor to revoke.
+    function revoke(address distributor) external restricted onlyValidDistributor(distributor) {
+        _enrollmentsCount--;
+        _revoke(uint160(distributor));
+        emit Revoked(distributor, block.timestamp);
+    }
+
+    /// @notice Sets a new expiration period for an enrollment or registration.
+    /// @param newPeriod The new expiration period, in seconds.
+    function setExpirationPeriod(uint256 newPeriod) external restricted {
+        _expirationPeriod = newPeriod;
+        emit PeriodSet(msg.sender, newPeriod);
     }
 
     /// @notice Function that should revert when msg.sender is not authorized to upgrade the contract.

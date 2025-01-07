@@ -21,6 +21,7 @@ contract OrchestrateProtocolHydration is Script {
         address treasuryAddress = vm.envAddress("TREASURY");
         address auditorAddress = vm.envAddress("POLICY_AUDIT");
         address assetReferendum = vm.envAddress("ASSET_REFERENDUM");
+        address rightPolicyManager = vm.envAddress("RIGHT_POLICY_MANAGER");
         address accessManager = vm.envAddress("ACCESS_MANAGER");
         address agreementManager = vm.envAddress("AGREEMENT_MANAGER");
         address agreementSettler = vm.envAddress("AGREEMENT_SETTLER");
@@ -61,16 +62,17 @@ contract OrchestrateProtocolHydration is Script {
         authority.setTargetFunctionRole(ledgerVault, vaultAllowed, C.OPS_ROLE);
 
         // 2 set mmc as the initial currency and fees
-        uint256 rmaFees = vm.envUint("AGREEMENT_FEES"); // 5% 500 bps
+        uint256 agrFee = vm.envUint("AGREEMENT_FEES"); // 5% 500 bps
         uint256 synFees = vm.envUint("SYNDICATION_FEES"); // 100 MMC flat fee
-        address mmcAddress = vm.envAddress("MMC");
+        address currency = vm.envAddress("MMC");
 
         ITollgate tollgate = ITollgate(tollgateAddress);
-        tollgate.setFees(T.Context.RMA, rmaFees, mmcAddress);
-        tollgate.setFees(T.Context.SYN, synFees, mmcAddress);
+        // assign bps scheme to right policy manager + fees + mmc
+        tollgate.setFees(T.Scheme.BPS, rightPolicyManager, agrFee, currency);
+        tollgate.setFees(T.Scheme.FLAT, distributorReferendum, synFees, currency);
 
-        require(tollgate.getFees(T.Context.RMA, mmcAddress) == rmaFees, "Invalid RMA Fees Set");
-        require(tollgate.getFees(T.Context.SYN, mmcAddress) == synFees, "Invalid SYN Fees Set");
+        require(tollgate.getFees(T.Scheme.BPS, rightPolicyManager, currency) == agrFee, "Invalid BPS Fees Set");
+        require(tollgate.getFees(T.Scheme.FLAT, distributorReferendum, currency) == synFees, "Invalid Flat Fees Set");
 
         vm.stopBroadcast();
     }

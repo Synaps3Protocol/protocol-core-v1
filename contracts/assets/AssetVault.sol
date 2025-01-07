@@ -19,6 +19,12 @@ contract AssetVault is Initializable, UUPSUpgradeable, AccessControlledUpgradeab
     /// @dev Mapping to store encrypted content, identified by content ID.
     mapping(uint256 => mapping(T.VaultType => bytes)) private _secured;
 
+    /// @dev Event emitted when encrypted content is successfully stored in a vault.
+    /// @param assetId The unique identifier of the asset whose content was stored.
+    /// @param holder The address of the account that owns or manages the asset content.
+    /// @param vault The type of vault where the content is stored.
+    event ContentStored(uint256 indexed assetId, address indexed holder, T.VaultType vault);
+
     /// @notice Error thrown when a non-owner tries to modify or access the asset.
     error InvalidAssetHolder();
 
@@ -60,7 +66,7 @@ contract AssetVault is Initializable, UUPSUpgradeable, AccessControlledUpgradeab
     /// @param data The secure content to store, represented as bytes.
     function setContent(uint256 assetId, T.VaultType vault, bytes memory data) external onlyHolder(assetId) {
         _secured[assetId][vault] = data;
-        // TODO emit event
+        emit ContentStored(assetId, msg.sender, vault);
     }
 
     /// @notice Function that authorizes the contract upgrade. It ensures that only the admin

@@ -118,7 +118,7 @@ contract AgreementManager is Initializable, UUPSUpgradeable, AccessControlledUpg
         // By locking in fees during agreement creation, the protocol avoids scenarios
         // where fee structures change (favorably or unfavorably) after creation,
         // which could lead to abuse or exploitation.
-        uint256 deductions = _calcFees(amount, currency);
+        uint256 deductions = _calcFees(amount, broker, currency);
         // This design ensures fairness and transparency by preventing any future
         // adjustments to fees or protocol conditions from affecting the terms of this agreement.
         return
@@ -150,10 +150,16 @@ contract AgreementManager is Initializable, UUPSUpgradeable, AccessControlledUpg
     /// @notice Calculates the fee based on the provided total amount and currency.
     /// @dev Reverts if the currency is not supported by the fees manager.
     /// @param total The total amount from which the fee will be calculated.
+    /// @param broker The address or context for which the fee applies.
     /// @param currency The address of the currency for which the fee is being calculated.
-    function _calcFees(uint256 total, address currency) private view returns (uint256) {
-        //!IMPORTANT if fees manager does not support the currency, will revert..
-        uint256 fees = TOLLGATE.getFees(T.Context.RMA, currency);
+    function _calcFees(uint256 total, address broker, address currency) private view returns (uint256) {
+        // The broker acts as the operational context for retrieving the applicable fee.
+        if (!TOLLGATE.isSchemeSupported(T.Scheme.BPS, broker, currency)) {
+            revert InvalidAgreementOp("Invalid not supported broker");
+        }
+
+        // !IMPORTANT if fees manager does not support the currency, will revert..
+        uint256 fees = TOLLGATE.getFees(T.Scheme.BPS, broker, currency);
         return total.perOf(fees); // bps repr enforced by tollgate..
     }
 }
