@@ -32,9 +32,8 @@ contract AssetOwnership is
 
     /// @dev Emitted when a new asset is registered on the platform.
     /// @param owner The address of the creator or owner of the asset being registered.
-    /// @param timestamp The timestamp indicating when the asset was registered.
     /// @param assetId The unique identifier for the registered asset.
-    event RegisteredAsset(address indexed owner, uint256 indexed timestamp, uint256 assetId);
+    event RegisteredAsset(address indexed owner, uint256 assetId);
 
     /// @dev Error indicating that an operation attempted to reference content that has not been approved.
     /// This error is triggered when the asset being accessed or referenced is not in an approved state.
@@ -91,7 +90,7 @@ contract AssetOwnership is
     /// @param assetId The unique identifier for the asset, which serves as the NFT ID.
     function registerAsset(address to, uint256 assetId) external onlyApprovedAsset(to, assetId) {
         _mint(to, assetId); // register asset as 721 token
-        emit RegisteredAsset(to, block.timestamp, assetId);
+        emit RegisteredAsset(to, assetId);
     }
 
     /// @dev Internal function to update the ownership of a token.

@@ -27,8 +27,7 @@ contract RightsAssetCustodian is Initializable, UUPSUpgradeable, AccessControlle
     /// @notice Emitted when custodial distribution rights are granted to a distributor.
     /// @param newCustody The address of the distributor granted custodial rights.
     /// @param rightsHolder The address of the asset's rights holder.
-    /// @param timestamp The timestamp indicating when the custodial rights were granted.
-    event CustodialGranted(address indexed newCustody, address indexed rightsHolder, uint256 timestamp);
+    event CustodialGranted(address indexed newCustody, address indexed rightsHolder);
 
     /// @dev Error that is thrown when a content hash is already registered.
     error InvalidInactiveDistributor();
@@ -78,7 +77,7 @@ contract RightsAssetCustodian is Initializable, UUPSUpgradeable, AccessControlle
 
         _custodiansByHolder[msg.sender].add(distributor);
         _holdersUnderCustodian[distributor].add(msg.sender);
-        emit CustodialGranted(distributor, msg.sender, block.timestamp);
+        emit CustodialGranted(distributor, msg.sender);
     }
 
     /// @notice Checks if the given distributor is a custodian for the specified content holder

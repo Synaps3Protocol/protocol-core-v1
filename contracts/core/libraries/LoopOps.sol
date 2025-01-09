@@ -16,4 +16,15 @@ library LoopOps {
             j = i + 1;
         }
     }
+
+    /// @notice Decrements a given integer by 1 without overflow checks.
+    /// @dev The `unchecked` keyword is used to skip overflow checks, reducing gas costs.
+    ///      This is safe when you know that the variable `i` will not reach the minimum value of `uint256`.
+    /// @param i The integer to decrement.
+    /// @return j The decremented integer.
+    function uncheckedDec(uint256 i) internal pure returns (uint256 j) {
+        unchecked {
+            j = i - 1;
+        }
+    }
 }

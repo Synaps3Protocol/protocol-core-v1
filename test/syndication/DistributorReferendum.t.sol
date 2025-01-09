@@ -56,7 +56,7 @@ contract DistributorReferendumTest is BaseTest {
         uint256 expireIn = 3600; // seconds
         vm.prank(governor);
         vm.expectEmit(true, false, false, true, address(referendum));
-        emit DistributorReferendum.PeriodSet(governor, expireIn);
+        emit DistributorReferendum.PeriodSet(expireIn);
         IDistributorExpirable(referendum).setExpirationPeriod(expireIn);
     }
 
@@ -76,7 +76,7 @@ contract DistributorReferendumTest is BaseTest {
         ILedgerVault(ledger).deposit(admin, expectedFees, token);
 
         vm.expectEmit(true, false, false, true, address(referendum));
-        emit DistributorReferendum.Registered(distributor, 1641070803, expectedFees);
+        emit DistributorReferendum.Registered(distributor, expectedFees);
         IDistributorRegistrable(referendum).register(distributor, token);
         vm.stopPrank();
     }
@@ -136,7 +136,7 @@ contract DistributorReferendumTest is BaseTest {
         vm.warp(1641070802);
         // after register a distributor a Registered event is expected
         vm.expectEmit(true, false, false, true, address(referendum));
-        emit DistributorReferendum.Approved(distributor, 1641070802);
+        emit DistributorReferendum.Approved(distributor);
         IDistributorRegistrable(referendum).approve(distributor);
     }
 
@@ -163,7 +163,7 @@ contract DistributorReferendumTest is BaseTest {
         vm.warp(1641070801);
         // after register a distributor a Registered event is expected
         vm.expectEmit(true, false, false, true, address(referendum));
-        emit DistributorReferendum.Revoked(distributor, 1641070801);
+        emit DistributorReferendum.Revoked(distributor);
         IDistributorRegistrable(referendum).revoke(distributor);
     }
 

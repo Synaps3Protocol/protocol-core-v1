@@ -92,21 +92,55 @@ contract RightsPolicyManager is Initializable, UUPSUpgradeable, AccessControlled
     /// @param account Address of the account to evaluate.
     /// @param criteria Encoded data containing parameters for access verification. eg: assetId, holder
     function getActivePolicy(address account, bytes memory criteria) external view returns (bool, address) {
+        address[] memory policies = getPolicies(account);
+        uint256 i = policies.length;
+
+        // Get the first active policy in LIFO order and return it
+        while (i > 0) {
+            address currentPolicy = policies[i - 1];
+            if (isActivePolicy(account, currentPolicy, criteria)) {
+                return (true, currentPolicy);
+            }
+
+            // safe unchecked
+            // limited to i > 0
+            i = i.uncheckedDec();
+        }
+
+        return (false, address(0));
+    }
+
+    /// @notice Retrieves the list of active policies matching the criteria for an account.
+    /// @param account Address of the account to evaluate.
+    /// @param criteria Encoded data containing parameters for access verification. eg: assetId, holder
+    function getActivePolicies(address account, bytes memory criteria) external view returns (address[] memory) {
+        address[] memory policies = getPolicies(account);
+        address[] memory filtered = new address[](policies.length);
+        uint256 policiesLen = policies.length;
+        uint256 j = 0; // filtered cursor
+
+        for (uint256 i = 0; i < policiesLen; i = i.uncheckedInc()) {
+            if (!isActivePolicy(account, policies[i], criteria)) continue;
+            filtered[j] = policies[i];
+
+            // safe unchecked
+            // limited to i increment = max policy length
+            j = j.uncheckedDec();
+        }
+
+        return filtered;
+    }
+
+    /// @notice Retrieves the list of policys associated with a specific account and content ID.
+    /// @param account The address of the account for which policies are being retrieved.
+    function getPolicies(address account) public view returns (address[] memory) {
         // https://docs.openzeppelin.com/contracts/5.x/api/utils#EnumerableSet-values-struct-EnumerableSet-AddressSet-
-        // This operation (.values()) will copy the entire storage to memory, which can be quite expensive.
+        // This operation will copy the entire storage to memory, which can be quite expensive.
         // This is designed to mostly be used by view accessors that are queried without any gas fees.
         // Developers should keep in mind that this function has an unbounded cost,
         /// and using it as part of a state-changing function may render the function uncallable
         /// if the set grows to a point where copying to memory consumes too much gas to fit in a block.
-        address[] memory policies = _closures[account].values();
-        uint256 policiesLen = policies.length;
-
-        for (uint256 i = 0; i < policiesLen; i = i.uncheckedInc()) {
-            bool comply = isActivePolicy(account, policies[i], criteria);
-            if (comply) return (true, policies[i]);
-        }
-
-        return (false, address(0));
+        return _closures[account].values();
     }
 
     /// @notice Verifies if a specific policy is active for the provided account and criteria.

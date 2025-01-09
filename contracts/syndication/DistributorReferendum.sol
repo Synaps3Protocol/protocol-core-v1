@@ -45,24 +45,20 @@ contract DistributorReferendum is
 
     /// @notice Event emitted when a distributor is registered
     /// @param distributor The address of the registered distributor
-    /// @param timestamp The timestamp indicating when the distributor was registered
     /// @param paidFees The amount of fees that were paid upon registration
-    event Registered(address indexed distributor, uint256 timestamp, uint256 paidFees);
+    event Registered(address indexed distributor, uint256 paidFees);
 
     /// @notice Event emitted when a distributor is approved
     /// @param distributor The address of the approved distributor
-    /// @param timestamp The timestamp indicating when the distributor was approved
-    event Approved(address indexed distributor, uint256 timestamp);
+    event Approved(address indexed distributor);
 
     /// @notice Event emitted when a distributor is revoked
     /// @param distributor The address of the revoked distributor
-    /// @param timestamp The timestamp indicating when the distributor was revoked
-    event Revoked(address indexed distributor, uint256 timestamp);
+    event Revoked(address indexed distributor);
 
     /// @notice Emitted when a new period is set
-    /// @param setBy The address that set the new period
     /// @param newPeriod The new period that is set, could be in seconds, blocks, or any other unit
-    event PeriodSet(address indexed setBy, uint256 newPeriod);
+    event PeriodSet(uint256 newPeriod);
 
     /// @notice Error thrown when a distributor contract is invalid
     /// @param invalid The address of the distributor contract that is invalid
@@ -176,7 +172,7 @@ contract DistributorReferendum is
         // set the distributor active enrollment period..
         // after this time the distributor is considered inactive and cannot collect his profits...
         _enrollmentDeadline[distributor] = block.timestamp + _expirationPeriod;
-        emit Registered(distributor, block.timestamp, fees);
+        emit Registered(distributor, fees);
     }
 
     /// @notice Approves a distributor's registration.
@@ -184,7 +180,7 @@ contract DistributorReferendum is
     function approve(address distributor) external restricted onlyValidDistributor(distributor) {
         _enrollmentsCount++;
         _approve(uint160(distributor));
-        emit Approved(distributor, block.timestamp);
+        emit Approved(distributor);
     }
 
     /// @notice Revokes the registration of a distributor.
@@ -192,14 +188,14 @@ contract DistributorReferendum is
     function revoke(address distributor) external restricted onlyValidDistributor(distributor) {
         _enrollmentsCount--;
         _revoke(uint160(distributor));
-        emit Revoked(distributor, block.timestamp);
+        emit Revoked(distributor);
     }
 
     /// @notice Sets a new expiration period for an enrollment or registration.
     /// @param newPeriod The new expiration period, in seconds.
     function setExpirationPeriod(uint256 newPeriod) external restricted {
         _expirationPeriod = newPeriod;
-        emit PeriodSet(msg.sender, newPeriod);
+        emit PeriodSet(newPeriod);
     }
 
     /// @notice Function that should revert when msg.sender is not authorized to upgrade the contract.

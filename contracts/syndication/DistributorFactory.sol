@@ -29,8 +29,7 @@ contract DistributorFactory is UpgradeableBeacon, Pausable, IDistributorFactory 
     /// @notice Event emitted when a new distributor is created.
     /// @param distributorAddress Address of the newly created distributor.
     /// @param endpoint Endpoint associated with the new distributor.
-    /// @param timestamp The timestamp indicating when the distributor was created.
-    event DistributorCreated(address indexed distributorAddress, string endpoint, uint256 timestamp);
+    event DistributorCreated(address indexed distributorAddress, string endpoint);
 
     /// @notice Error to be thrown when attempting to register an already registered distributor.
     error DistributorAlreadyRegistered();
@@ -63,7 +62,7 @@ contract DistributorFactory is UpgradeableBeacon, Pausable, IDistributorFactory 
         // initialize storage layout using Distributor contract impl..
         bytes memory data = abi.encodeWithSignature("initialize(string,address)", endpoint, msg.sender);
         address newContract = address(new BeaconProxy(address(this), data));
-        emit DistributorCreated(newContract, endpoint, block.timestamp);
+        emit DistributorCreated(newContract, endpoint);
         return newContract;
     }
 }

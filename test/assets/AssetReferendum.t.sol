@@ -14,7 +14,7 @@ import { C } from "contracts/core/primitives/Constants.sol";
 contract AssetReferendumTest is BaseTest {
     address referendum;
 
-    function setUp() public initialize  {
+    function setUp() public initialize {
         // setup the access manager to use during tests..
         referendum = deployAssetReferendum();
     }
@@ -23,7 +23,7 @@ contract AssetReferendumTest is BaseTest {
         vm.warp(1641070800);
         vm.prank(user);
         vm.expectEmit(true, false, false, true, address(referendum));
-        emit AssetReferendum.Submitted(user, 1641070800, 1);
+        emit AssetReferendum.Submitted(user, 1);
         IAssetRegistrable(referendum).submit(1);
     }
 
@@ -39,7 +39,7 @@ contract AssetReferendumTest is BaseTest {
         vm.warp(1641070805);
         vm.startPrank(governor); // approve by governance..
         vm.expectEmit(false, false, false, true, address(referendum));
-        emit AssetReferendum.Approved(assetId, 1641070805);
+        emit AssetReferendum.Approved(assetId);
         IAssetRegistrable(referendum).approve(assetId);
         vm.stopPrank();
     }
@@ -60,7 +60,7 @@ contract AssetReferendumTest is BaseTest {
         vm.warp(1641070805);
         vm.prank(governor); // approve by governance..
         vm.expectEmit(false, false, false, true, address(referendum));
-        emit AssetReferendum.Rejected(assetId, 1641070805);
+        emit AssetReferendum.Rejected(assetId);
         IAssetRegistrable(referendum).reject(assetId);
     }
 
@@ -84,10 +84,9 @@ contract AssetReferendumTest is BaseTest {
         IAssetRegistrable(referendum).approve(assetId);
 
         vm.expectEmit(false, false, false, true, address(referendum));
-        emit AssetReferendum.Revoked(assetId, 1641070805);
+        emit AssetReferendum.Revoked(assetId);
         IAssetRegistrable(referendum).revoke(assetId);
         vm.stopPrank(); // reject by governance..
-
     }
 
     function test_Revoked_RevokedValidStates() public {

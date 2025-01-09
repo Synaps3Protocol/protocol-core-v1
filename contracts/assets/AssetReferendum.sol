@@ -33,23 +33,19 @@ contract AssetReferendum is
     /// @dev Event emitted when a content is submitted for referendum.
     /// @param assetId The ID of the asset that has been submitted.
     /// @param initiator The address of the initiator who submitted the asset.
-    /// @param timestamp The timestamp indicating when the asset was submitted.
-    event Submitted(address indexed initiator, uint256 timestamp, uint256 assetId);
+    event Submitted(address indexed initiator, uint256 assetId);
 
     /// @dev Event emitted when a content is approved.
     /// @param assetId The ID of the asset that has been approved.
-    /// @param timestamp The timestamp indicating when the asset was approved.
-    event Approved(uint256 assetId, uint256 timestamp);
+    event Approved(uint256 assetId);
 
     /// @dev Event emitted when a content is revoked.
     /// @param assetId The ID of the asset that has been revoked.
-    /// @param timestamp The timestamp indicating when the asset was revoked.
-    event Revoked(uint256 assetId, uint256 timestamp);
+    event Revoked(uint256 assetId);
 
     /// @dev Event emitted when a content is rejected.
     /// @param assetId The ID of the asset that has been rejected.
-    /// @param timestamp The timestamp indicating when the asset was revoked.
-    event Rejected(uint256 assetId, uint256 timestamp);
+    event Rejected(uint256 assetId);
 
     // /// @dev Error thrown when the signature of the asset submission is invalid.
     // error InvalidSubmissionSignature();
@@ -77,7 +73,7 @@ contract AssetReferendum is
     function submit(uint256 assetId) external {
         _register(assetId); // bundled check-effects-interaction
         _submissions[msg.sender].add(assetId);
-        emit Submitted(msg.sender, block.timestamp, assetId);
+        emit Submitted(msg.sender, assetId);
     }
 
     // /// @notice Submits a content proposition for referendum with a signature.
@@ -101,21 +97,21 @@ contract AssetReferendum is
     /// @param assetId The ID of the asset to be revoked.
     function revoke(uint256 assetId) external restricted {
         _revoke(assetId); // bundled check-effects-interaction
-        emit Revoked(assetId, block.timestamp);
+        emit Revoked(assetId);
     }
 
     /// @notice Reject a content proposition.
     /// @param assetId The ID of the asset to be rejected.
     function reject(uint256 assetId) external restricted {
         _block(assetId); // bundled check-effects-interaction
-        emit Rejected(assetId, block.timestamp);
+        emit Rejected(assetId);
     }
 
     /// @notice Approves a content proposition.
     /// @param assetId The ID of the asset to be approved.
     function approve(uint256 assetId) external restricted {
         _approve(assetId); // bundled check-effects-interaction
-        emit Approved(assetId, block.timestamp);
+        emit Approved(assetId);
     }
 
     /// @notice Checks if the asset is approved.
