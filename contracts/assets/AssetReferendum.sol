@@ -120,7 +120,7 @@ contract AssetReferendum is
     function isApproved(address initiator, uint256 assetId) external view returns (bool) {
         bool approved = isActive(assetId);
         bool validAccount = _submissions[initiator].contains(assetId);
-        bool verifiedRole = _hasRole(C.VERIFIED_ROLE, initiator);
+        bool verifiedRole = _hasRole(C.VER_ROLE, initiator);
         // is approved with a valid submission account or is verified account..
         return (approved && validAccount) || verifiedRole;
     }
