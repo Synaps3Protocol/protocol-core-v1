@@ -10,9 +10,9 @@ import { IPolicy } from "@synaps3/core/interfaces/policies/IPolicy.sol";
 import { MetricsOps } from "@synaps3/core/libraries/MetricsOps.sol";
 import { T } from "@synaps3/core/primitives/Types.sol";
 
-/// @title BasePolicy
+/// @title PolicyBase
 /// @notice This abstract contract serves as a base for policies that manage access to content.
-abstract contract BasePolicy is IPolicy, ERC165 {
+abstract contract PolicyBase is IPolicy, ERC165 {
     // Immutable public variables to store the addresses of the Rights Manager and Ownership.
     IAttestationProvider public immutable ATTESTATION_PROVIDER;
     IRightsPolicyManager public immutable RIGHTS_POLICY_MANAGER;
