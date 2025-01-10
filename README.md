@@ -11,26 +11,25 @@ The architecture is structured into distinct layers, starting from interaction a
 
 ![image](https://github.com/user-attachments/assets/a567d283-90cc-4b71-8f0b-83ee207dab07)
 
-### Operational Layer
-The topmost layer comprises **Finance**, **Apps**, and **Distribution Network**, which interact directly with the validated framework.
-- **Finance** handles agreements, settlements, and economic interactions.
-- **Apps** provide user-facing interfaces.
-- **Distribution Network** ensures the secure distribution of assets to authorized parties.
+### Level 4: Operational Layer
+- **Finance**: Handles agreements, settlements, and economic interactions.
+- **Apps**: Provides user-facing interfaces to interact with the system.
+- **Distribution Network**: Ensures the secure distribution of assets to authorized parties.
 
-### Rights and Policies
-Beneath the operational layer:
-- **Rights** manages access, custody, and usage of assets, ensuring compliance with validated distributors and governance rules.
-- **Policies** define the terms, conditions, and operational frameworks governing assets and their distribution.
+### Level 3: Rights and Policies
+- **Rights**: Manages access, custody, and usage of assets, ensuring they align with validated distributors and governance rules.
+- **Policies**: Defines the terms, conditions, and operational frameworks governing assets and their distribution.
 
-### Assets and Distribution Management
-- **Syndication** oversees the network of distributors, validating and authorizing them as custodians of assets.
-- **Assets** manage the registration and validation of resources entering the system, ensuring proper control and compliance with system policies.
+### Level 2: Assets and Distribution Management
+- **Syndication**: Oversees the network of distributors, validating and authorizing them as custodians of assets.
+- **Assets**: Manages the registration and validation of resources entering the system, ensuring compliance with governance policies.
 
-### Foundational Governance
-At the base, **Economics**, **Governance**, and **Access Control** govern and sustain the entire protocol.
-- **Economics** ensures financial stability through treasury management, tokens, and tollgates.
-- **Governance** establishes rules and strategic decisions.
-- **Access Control** enforces these rules by managing permissions and roles across all layers.
+### Level 1: Foundational Governance
+- **Economics**: Ensures financial stability through treasury management, tokens, and tollgates.
+- **Governance**: Establishes the rules and strategic decisions for the entire protocol.
+- **Access Control**: Enforces governance rules by managing permissions and roles across all layers.
+
+---
 
 ## Join the Fun
 Found a bug? Got a cool idea? Open a pull request or start a discussion on GitHub. We’d love to build this together!
