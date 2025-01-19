@@ -30,6 +30,38 @@ contract AssetVaultTest is BaseTest {
         uint256 assetId = 123456;
         _registerAndApproveAsset(user, assetId);
 
+        vm.prank(user);
+        IAssetVault assetVault = IAssetVault(vault);
+        assetVault.setContent(assetId, T.VaultType.LIT, "");
+    }
+
+    function test_SetContent_ContentEventEmitted() public {
+        uint256 assetId = 123456;
+        _registerAndApproveAsset(user, assetId);
+
+        vm.prank(user);
+        vm.expectEmit(true, true, false, true, address(vault));
+        emit AssetVault.ContentStored(assetId, user, T.VaultType.LIT);
+        IAssetVault assetVault = IAssetVault(vault);
+        assetVault.setContent(assetId, T.VaultType.LIT, "");
+    }
+
+    function test_SetContent_RevertIf_InvalidOwner() public {
+        uint256 assetId = 123456;
+        // registered to admin
+        _registerAndApproveAsset(admin, assetId);
+
+        vm.prank(user);
+        vm.expectRevert(abi.encodeWithSignature("InvalidAssetRightsHolder()"));
+        IAssetVault assetVault = IAssetVault(vault);
+        assetVault.setContent(assetId, T.VaultType.LIT, "");
+    }
+
+    function test_GetContent_ValidStoredData() public {
+        vm.warp(1641070800);
+        uint256 assetId = 123456;
+        _registerAndApproveAsset(user, assetId);
+
         // we could use the vault to store and share data seamlessly:
         // this data is required by lit to decrypt the data:
         // - lit accessControlConditions
@@ -49,33 +81,6 @@ contract AssetVaultTest is BaseTest {
         bytes memory got = assetVault.getContent(assetId, T.VaultType.LIT);
         string memory expected = abi.decode(got, (string));
         assert(keccak256(abi.encodePacked(expected)) == keccak256(abi.encodePacked(b64)));
-    }
-
-    function test_SetContent_ContentEventEmitted() public {
-        uint256 assetId = 123456;
-        _registerAndApproveAsset(user, assetId);
-
-        vm.startPrank(user);
-        vm.expectEmit(true, true, false, true, address(vault));
-        emit AssetVault.ContentStored(assetId, user, T.VaultType.LIT);
-        IAssetVault assetVault = IAssetVault(vault);
-        assetVault.setContent(assetId, T.VaultType.LIT, "");
-        vm.stopPrank();
-    }
-
-    function test_SetContent_RevertIf_InvalidOwner() public {
-        vm.warp(1641070800);
-        vm.prank(user);
-    }
-
-    function test_SetContent_ValidVaultType() public {
-        vm.warp(1641070800);
-        vm.prank(user);
-    }
-
-    function test_Get_ValidStoredContent() public {
-        vm.warp(1641070800);
-        vm.prank(user);
     }
 
     function _registerAndApproveAsset(address to, uint256 assetId) private {
