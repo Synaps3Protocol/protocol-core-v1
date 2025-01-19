@@ -7,7 +7,6 @@ import { IAssetOwnership } from "@synaps3/core/interfaces/assets/IAssetOwnership
 import { IRightsPolicyManager } from "@synaps3/core/interfaces/rights/IRightsPolicyManager.sol";
 import { IAttestationProvider } from "@synaps3/core/interfaces/base/IAttestationProvider.sol";
 import { IPolicy } from "@synaps3/core/interfaces/policies/IPolicy.sol";
-import { MetricsOps } from "@synaps3/core/libraries/MetricsOps.sol";
 import { T } from "@synaps3/core/primitives/Types.sol";
 
 /// @title PolicyBase
