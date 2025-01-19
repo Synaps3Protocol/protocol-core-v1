@@ -44,16 +44,23 @@ contract AssetVaultTest is BaseTest {
         vm.prank(user);
         IAssetVault assetVault = IAssetVault(vault);
         assetVault.setContent(assetId, T.VaultType.LIT, data);
-        
+
         vm.prank(admin);
         bytes memory got = assetVault.getContent(assetId, T.VaultType.LIT);
         string memory expected = abi.decode(got, (string));
         assert(keccak256(abi.encodePacked(expected)) == keccak256(abi.encodePacked(b64)));
     }
 
-     function test_SetContent_StoredEventEmitted() public {
-        vm.warp(1641070800);
-        vm.prank(user);
+    function test_SetContent_ContentEventEmitted() public {
+        uint256 assetId = 123456;
+        _registerAndApproveAsset(user, assetId);
+
+        vm.startPrank(user);
+        vm.expectEmit(true, true, false, true, address(vault));
+        emit AssetVault.ContentStored(assetId, user, T.VaultType.LIT);
+        IAssetVault assetVault = IAssetVault(vault);
+        assetVault.setContent(assetId, T.VaultType.LIT, "");
+        vm.stopPrank();
     }
 
     function test_SetContent_RevertIf_InvalidOwner() public {

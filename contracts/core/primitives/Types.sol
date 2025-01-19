@@ -42,18 +42,10 @@ library T {
         bytes payload; // any additional data needed during agreement execution
     }
 
-    /// @title Setup
-    /// @dev Represents a setup process for initializing and authorizing a policy contract for content.
-    struct Setup {
-        address holder; // the asset rights holder
-        bytes payload; // any additional data needed during setup execution
-    }
-
-    /// @title RateBasis
-    /// @notice Enum representing different time bases for calculating terms or fees.
-    /// @dev Includes options for unset none, hourly, daily, monthly, and yearly bases.
-    enum RateBasis {
-        NONE, // Default value indicating "unset" or "not specified"
+    /// @title TimeFrame
+    /// @notice Enum representing the time frame for calculations or actions.
+    enum TimeFrame {
+        NONE, // Default value indicating "unset" or "no limit"
         HOURLY, // Indicates a rate basis of per hour
         DAILY, // Indicates a rate basis of per day
         MONTHLY // Indicates a rate basis of per month
@@ -66,8 +58,9 @@ library T {
     struct Terms {
         uint256 amount; // The rate amount based on the rate basis, expressed in the smallest unit of the currency
         address currency; // The currency in which the amount is denominated, e.g., MMC or USDC
-        RateBasis rateBasis; // The time basis for the amount, using a standardized enum (e.g., HOURLY, DAILY)
+        TimeFrame timeFrame; // The time frame for the amount, using a standardized enum (e.g., HOURLY, DAILY)
         string uri; // URI pointing to off-chain terms for additional details or extended documentation
+        // TODO we could extend the terms based on the real needs ..
     }
 
     /// @notice A struct containing the necessary information to reconstruct an EIP-712 typed data signature.
