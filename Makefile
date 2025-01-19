@@ -59,7 +59,7 @@ test:
 .PHONY: coverage ## run tests coverage report
 coverage:
 	@forge clean
-	@forge coverage --report $(report)
+	@forge coverage --report $(report) --ir-minimum
 	@npx lcov-badge2 -o ./.github/workflows/cov-badge.svg lcov.info
 
 .PHONY: secreport ## generate a security analysis report using aderyn--verbose
