@@ -30,22 +30,25 @@ contract LedgerVault is
     mapping(address => mapping(address => uint256)) private _locked;
 
     /// @notice Emitted when funds are locked in the ledger.
-    /// @param account The address of the account whose funds were locked.
+    /// @param initiator The address of the entity initiating the lock.
+    /// @param from The address of the account whose funds were locked.
     /// @param amount The amount of funds that were locked.
     /// @param currency The address of the currency in which the funds were locked.
-    event FundsLocked(address indexed account, uint256 amount, address indexed currency);
+    event FundsLocked(address indexed initiator, address indexed from, uint256 amount, address indexed currency);
 
     /// @notice Emitted when locked funds are successfully released.
-    /// @param account The address of the account whose funds were released.
+    /// @param initiator The address of the entity initiating the release.
+    /// @param recipient The address of the account whose funds were released.
     /// @param amount The amount of funds that were locked.
     /// @param currency The address of the currency in which the funds were locked.
-    event FundsReleased(address indexed account, uint256 amount, address indexed currency);
+    event FundsReleased(address indexed initiator, address indexed recipient, uint256 amount, address indexed currency);
 
     /// @notice Emitted when locked funds are successfully claimed.
-    /// @param claimer The address of the entity claiming the funds.
+    /// @param initiator The address of the entity initiating the claim.
+    /// @param from The address of the account whose funds were claimed.
     /// @param amount The amount of funds claimed.
     /// @param currency The address of the currency in which the funds were claimed.
-    event FundsClaimed(address indexed claimer, uint256 amount, address indexed currency);
+    event FundsClaimed(address indexed initiator, address indexed from, uint256 amount, address indexed currency);
 
     /// @notice Thrown when there are no available funds to lock.
     /// @dev This error occurs if an account attempts to lock more funds than available.
@@ -83,7 +86,7 @@ contract LedgerVault is
         if (getLedgerBalance(account, currency) < amount) revert NoFundsToLock();
         _subLedgerEntry(account, amount, currency);
         _sumLockedAmount(account, amount, currency);
-        emit FundsLocked(account, amount, currency);
+        emit FundsLocked(msg.sender, account, amount, currency);
         return amount;
     }
 
@@ -95,7 +98,7 @@ contract LedgerVault is
         if (_getLockedAmount(account, currency) < amount) revert NoFundsToRelease();
         _subLockedAmount(account, amount, currency);
         _sumLedgerEntry(account, amount, currency);
-        emit FundsReleased(account, amount, currency);
+        emit FundsReleased(msg.sender, account, amount, currency);
         return amount;
     }
 
@@ -109,7 +112,7 @@ contract LedgerVault is
         if (_getLockedAmount(account, currency) < amount) revert NoFundsToClaim();
         _subLockedAmount(account, amount, currency); //
         _sumLedgerEntry(msg.sender, amount, currency);
-        emit FundsClaimed(msg.sender, amount, currency);
+        emit FundsClaimed(msg.sender, account, amount, currency);
         return amount;
     }
 
@@ -144,4 +147,5 @@ contract LedgerVault is
     /// @param newImplementation The address of the new implementation contract.
     /// @dev See https://docs.openzeppelin.com/contracts/4.x/api/proxy#UUPSUpgradeable-_authorizeUpgrade-address-
     function _authorizeUpgrade(address newImplementation) internal override onlyAdmin {}
+
 }

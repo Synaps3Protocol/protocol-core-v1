@@ -9,6 +9,7 @@
         "keccak",
         "multicurrency",
         "Reentrancy",
+        "reinitializer",
         "repr",
         "solhint",
         "synaps",

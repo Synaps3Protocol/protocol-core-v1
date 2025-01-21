@@ -45,6 +45,10 @@ abstract contract AccessControlledUpgradeable is Initializable, AccessManagedUpg
     }
 
     function __AccessControlled_init_unchained(address accessManager) internal onlyInitializing {
+        if (accessManager == address(0)) {
+            revert InvalidUnauthorizedOperation("Invalid authority address.");
+        }
+
         AccessControlStorage storage $ = _getAccessControlStorage();
         $._accessManager = accessManager;
     }
