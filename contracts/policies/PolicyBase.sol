@@ -133,7 +133,7 @@ abstract contract PolicyBase is IPolicy, ERC165 {
     /// @param criteria Encoded data containing the parameters required to retrieve attestation.
     function getLicense(address account, bytes memory criteria) public view returns (uint256) {
         // recompute the composed key based on account and criteria = to match context
-        bytes32 key = _computeComposedKey(criteria, account);
+        bytes32 key = _computeComposedKey(account, criteria);
         return _attestations[key];
     }
 
@@ -160,17 +160,17 @@ abstract contract PolicyBase is IPolicy, ERC165 {
     /// @param attestationId The unique identifier for the attestation being created.
     function _setAttestation(address account, bytes memory context, uint256 attestationId) internal {
         // Composed key to store the relationship between account and context.
-        bytes32 key = _computeComposedKey(context, account);
+        bytes32 key = _computeComposedKey(account, context);
         _attestations[key] = attestationId;
         emit AttestedAgreement(key, account, attestationId);
     }
 
     /// @notice Computes a unique key by combining a context and an account address.
     /// @dev This key is used to map relationships between accounts and context data in the `_attestations` mapping.
-    /// @param context Encoded data representing the context for the operation.
     /// @param account The address of the user for whom the key is being generated.
+    /// @param context Encoded data representing the context for the operation.
     /// @return A `bytes32` hash that uniquely identifies the context-account pair.
-    function _computeComposedKey(bytes memory context, address account) private pure returns (bytes32) {
-        return keccak256(abi.encodePacked(context, account));
+    function _computeComposedKey(address account, bytes memory context) private pure returns (bytes32) {
+        return keccak256(abi.encodePacked(account, context));
     }
 }
