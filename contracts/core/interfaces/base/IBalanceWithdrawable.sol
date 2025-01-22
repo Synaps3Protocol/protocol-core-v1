@@ -11,8 +11,8 @@ interface IBalanceWithdrawable {
     /// @param currency The currency used for the withdrawal.
     event FundsWithdrawn(address indexed recipient, address indexed origin, uint256 amount, address indexed currency);
 
-    /// @notice Error indicating that there are no funds available to withdraw.
-    /// @dev This error is triggered when a withdrawal is attempted but the contract has insufficient funds.
+    /// @notice Error emitted when there are insufficient funds for withdrawal.
+    /// @dev Occurs if the caller attempts to withdraw more than their available balance.
     error NoFundsToWithdraw();
 
     /// @notice Withdraws tokens from the contract to a specified recipient's address.

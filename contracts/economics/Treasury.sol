@@ -27,6 +27,12 @@ contract Treasury is
     using FinancialOps for address;
     using LoopOps for uint256;
 
+    /// @notice Emitted when funds are disbursed to the treasury from a collector.
+    /// @param collector The address of the collector disbursing the funds.
+    /// @param amount The amount of tokens that were disbursed.
+    /// @param currency The address of the ERC20 token contract for the currency disbursed.
+    event FeesCollected(address indexed collector, uint256 amount, address currency);
+
     /// @custom:oz-upgrades-unsafe-allow constructor
     constructor() {
         /// https://forum.openzeppelin.com/t/uupsupgradeable-vulnerability-post-mortem/15680

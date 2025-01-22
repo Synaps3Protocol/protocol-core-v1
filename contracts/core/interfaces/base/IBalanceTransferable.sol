@@ -11,8 +11,8 @@ interface IBalanceTransferable {
     /// @param currency The address of the ERC20 token transferred. Use `address(0)` for native tokens.
     event FundsTransferred(address indexed recipient, address indexed origin, uint256 amount, address currency);
 
-    /// @notice Error indicating that there are no funds available to transfer.
-    /// @dev This error is triggered when a transfer is attempted but the sender has insufficient funds or no balance.
+    /// @notice Error emitted when a transfer fails due to insufficient balance.
+    /// @dev Triggered when the sender does not have enough balance to complete the transfer.
     error NoFundsToTransfer();
 
     /// @notice Transfers a specified amount of currency from the caller's balance to a given recipient.

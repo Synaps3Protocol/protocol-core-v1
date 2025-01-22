@@ -77,12 +77,17 @@ contract LedgerVault is
     }
 
     /// @notice Locks a specific amount of funds for a given account.
-    /// @dev The funds are immobilized and cannot be withdrawn or transferred until released or claimed.
+    /// @dev The funds are immobilized and cannot be withdrawn or transferred until released.
     ///      Only operator role can handle this methods.
+    ///      A reserve is not needed, the protocol operate directly on the user funds to simplify operations.
     /// @param account The address of the account for which the funds will be locked.
     /// @param amount The amount of funds to lock.
     /// @param currency The currency to associate lock with. Use address(0) for the native coin.
-    function lock(address account, uint256 amount, address currency) external restricted returns (uint256) {
+    function lock(
+        address account,
+        uint256 amount,
+        address currency
+    ) external restricted onlyValidOperation(account, amount) returns (uint256) {
         if (getLedgerBalance(account, currency) < amount) revert NoFundsToLock();
         _subLedgerEntry(account, amount, currency);
         _sumLockedAmount(account, amount, currency);
@@ -94,7 +99,11 @@ contract LedgerVault is
     /// @param account The address of the account for which the funds will be released.
     /// @param amount The amount of funds to release.
     /// @param currency The currency to associate release with. Use address(0) for the native coin.
-    function release(address account, uint256 amount, address currency) external restricted returns (uint256) {
+    function release(
+        address account,
+        uint256 amount,
+        address currency
+    ) external restricted onlyValidOperation(account, amount) returns (uint256) {
         if (_getLockedAmount(account, currency) < amount) revert NoFundsToRelease();
         _subLockedAmount(account, amount, currency);
         _sumLedgerEntry(account, amount, currency);
@@ -108,7 +117,11 @@ contract LedgerVault is
     /// @param account The address of the account whose funds are being claimed.
     /// @param amount The amount of funds to claim.
     /// @param currency The currency to associate claim with. Use address(0) for the native coin.
-    function claim(address account, uint256 amount, address currency) external restricted returns (uint256) {
+    function claim(
+        address account,
+        uint256 amount,
+        address currency
+    ) external restricted onlyValidOperation(account, amount) returns (uint256) {
         if (_getLockedAmount(account, currency) < amount) revert NoFundsToClaim();
         _subLockedAmount(account, amount, currency); //
         _sumLedgerEntry(msg.sender, amount, currency);
@@ -147,5 +160,4 @@ contract LedgerVault is
     /// @param newImplementation The address of the new implementation contract.
     /// @dev See https://docs.openzeppelin.com/contracts/4.x/api/proxy#UUPSUpgradeable-_authorizeUpgrade-address-
     function _authorizeUpgrade(address newImplementation) internal override onlyAdmin {}
-
 }

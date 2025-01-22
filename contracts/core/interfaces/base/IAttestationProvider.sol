@@ -1,6 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.26;
 
+/// @title IAttestationProvider
+/// @notice Interface for managing attestations, including their creation, retrieval, and verification.
+/// @dev Implementing contracts are expected to provide mechanisms to generate, store, and validate attestations.
 interface IAttestationProvider {
     /// @notice Returns the name of the attestor.
     /// @return The name of the attestor as a string.

@@ -18,6 +18,18 @@ abstract contract LedgerUpgradeable is Initializable, ILedgerVerifiable {
     /// The `LEDGER_SLOT` constant is used to point to the location of the storage.
     bytes32 private constant LEDGER_SLOT = 0xcb711bda070b7bbcc2b711ef3993cc17677144f4419b29e303bef375c5f40f00;
 
+    /// @notice Error emitted when an invalid operation is attempted.
+    error InvalidOperationParameters();
+
+    /// @notice Modifier to validate input for account and amount.
+    /// @dev Ensures the `account` is not a zero address and `amount` is greater than zero.
+    /// @param account The address being validated.
+    /// @param amount The amount being validated.
+    modifier onlyValidOperation(address account, uint256 amount) {
+        if (account == address(0) || amount == 0) revert InvalidOperationParameters();
+        _;
+    }
+
     /// @notice Retrieves the ledger balance of an account for a specific currency.
     /// @param account The address of the account whose balance is being queried.
     /// @param currency The address of the currency to retrieve the balance for.

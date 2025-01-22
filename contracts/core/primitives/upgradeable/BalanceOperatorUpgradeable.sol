@@ -17,8 +17,8 @@ abstract contract BalanceOperatorUpgradeable is Initializable, LedgerUpgradeable
 
     /// @custom:storage-location erc7201:balanceoperatorupgradeable
     struct BalanceOperatorStorage {
-        /// @dev Holds the relation between a reserved funds the currency and amount
-        mapping(bytes32 => mapping(address => uint256)) _reserved;
+        /// @dev Holds the relation between approved funds the currency and amount
+        mapping(bytes32 => mapping(address => uint256)) _approved;
     }
 
     /// @dev Storage slot for BalanceOperatorUpgradeable, calculated using a unique namespace to avoid conflicts.
@@ -39,7 +39,7 @@ abstract contract BalanceOperatorUpgradeable is Initializable, LedgerUpgradeable
     /// @notice Returns the general's balance for the specified currency.
     /// @dev The function checks the balance for both native and ERC-20 tokens.
     /// @param currency The address of the currency to check the balance of.
-    function getBalance(address currency) public view returns (uint256) {
+    function getBalance(address currency) external view returns (uint256) {
         return address(this).balanceOf(currency);
     }
 
@@ -47,7 +47,11 @@ abstract contract BalanceOperatorUpgradeable is Initializable, LedgerUpgradeable
     /// @param recipient The address of the account to credit with the deposit.
     /// @param amount The amount of currency to deposit.
     /// @param currency The address of the ERC20 token to deposit.
-    function deposit(address recipient, uint256 amount, address currency) external virtual returns (uint256) {
+    function deposit(
+        address recipient,
+        uint256 amount,
+        address currency
+    ) external virtual onlyValidOperation(recipient, amount) returns (uint256) {
         uint256 confirmed = msg.sender.safeDeposit(amount, currency);
         _sumLedgerEntry(recipient, confirmed, currency);
         emit FundsDeposited(recipient, msg.sender, confirmed, currency);
@@ -58,7 +62,11 @@ abstract contract BalanceOperatorUpgradeable is Initializable, LedgerUpgradeable
     /// @param recipient The address that will receive the withdrawn tokens.
     /// @param amount The amount of tokens to withdraw.
     /// @param currency The currency to associate fees with. Use address(0) for the native coin.
-    function withdraw(address recipient, uint256 amount, address currency) external virtual returns (uint256) {
+    function withdraw(
+        address recipient,
+        uint256 amount,
+        address currency
+    ) external virtual onlyValidOperation(recipient, amount) returns (uint256) {
         if (getLedgerBalance(msg.sender, currency) < amount) revert NoFundsToWithdraw();
         _subLedgerEntry(msg.sender, amount, currency);
         recipient.transfer(amount, currency); // transfer fund to recipient
@@ -70,7 +78,11 @@ abstract contract BalanceOperatorUpgradeable is Initializable, LedgerUpgradeable
     /// @param recipient The address of the account to credit with the transfer.
     /// @param amount The amount of tokens to transfer.
     /// @param currency The address of the currency to transfer. Use `address(0)` for the native coin.
-    function transfer(address recipient, uint256 amount, address currency) external virtual returns (uint256) {
+    function transfer(
+        address recipient,
+        uint256 amount,
+        address currency
+    ) external virtual onlyValidOperation(recipient, amount) returns (uint256) {
         if (getLedgerBalance(msg.sender, currency) < amount) revert NoFundsToTransfer();
         _subLedgerEntry(msg.sender, amount, currency);
         _sumLedgerEntry(recipient, amount, currency);
@@ -78,15 +90,32 @@ abstract contract BalanceOperatorUpgradeable is Initializable, LedgerUpgradeable
         return amount;
     }
 
-    /// @notice Reserves a specific amount of funds from the caller's balance for a recipient.
-    /// @param to The address of the recipient for whom the funds are being reserved.
-    /// @param amount The amount of funds to reserve.
-    /// @param currency The address of the ERC20 token to reserve. Use `address(0)` for native tokens.
-    function reserve(address to, uint256 amount, address currency) external virtual returns (uint256) {
-        if (getLedgerBalance(msg.sender, currency) < amount) revert NoFundsToReserve();
-        _subLedgerEntry(msg.sender, amount, currency);
-        _sumReservedAmount(msg.sender, to, amount, currency);
-        emit FundsReserved(msg.sender, to, amount, currency);
+    /// @notice Approves a specific amount of funds from the caller's balance for a recipient.
+    /// @param to The address of the recipient for whom the funds are being approved.
+    /// @param amount The amount of funds to approve.
+    /// @param currency The address of the ERC20 token to approve. Use `address(0)` for native tokens.
+    function approve(
+        address to,
+        uint256 amount,
+        address currency
+    ) external virtual onlyValidOperation(to, amount) returns (uint256) {
+        _sumApprovedAmount(msg.sender, to, amount, currency);
+        emit FundsApproved(msg.sender, to, amount, currency);
+        return amount;
+    }
+
+    /// @notice Revokes the approved funds from the caller's balance for a specific recipient.
+    /// @param to The address of the recipient whose approval is being revoked.
+    /// @param currency The address of the ERC20 token associated with the approval. Use `address(0)` for native tokens.
+    /// @return The amount of funds that were revoked from the approval.
+    function revoke(
+        address to,
+        uint256 amount,
+        address currency
+    ) external virtual onlyValidOperation(to, amount) returns (uint256) {
+        if (getApprovedAmount(msg.sender, to, currency) < amount) revert NoFundsToRevoke();
+        _subApprovedAmount(msg.sender, to, amount, currency);
+        emit FundsRevoked(msg.sender, to, amount, currency);
         return amount;
     }
 
@@ -94,45 +123,54 @@ abstract contract BalanceOperatorUpgradeable is Initializable, LedgerUpgradeable
     /// @param from The address of the account from which the reserved funds are being collected.
     /// @param amount The amount of funds to collect.
     /// @param currency The address of the ERC20 token to collect. Use `address(0)` for native tokens.
-    function collect(address from, uint256 amount, address currency) external virtual returns (uint256) {
-        if (_getReservedAmount(from, msg.sender, currency) < amount) revert NoFundsToCollect();
-        _subReservedAmount(from, msg.sender, amount, currency);
+    function collect(
+        address from,
+        uint256 amount,
+        address currency
+    ) external virtual onlyValidOperation(from, amount) returns (uint256) {
+        if (getApprovedAmount(from, msg.sender, currency) < amount) revert NoFundsToCollect(); //
+        if (getLedgerBalance(from, currency) < amount) revert NoFundsToCollect(); // no balance
+
+        _subApprovedAmount(from, msg.sender, amount, currency);
+        _subLedgerEntry(from, amount, currency);
         _sumLedgerEntry(msg.sender, amount, currency);
         emit FundsCollected(from, msg.sender, amount, currency);
         return amount;
     }
 
-    /// @notice Reduces the reserved funds for a specific relationship and currency.
-    /// @param from The address of the account from which the funds were reserved.
-    /// @param to The address of the account for which the funds were reserved.
-    /// @param amount The amount to subtract from the reserved balance.
-    /// @param currency The address of the currency being reduced.
-    function _subReservedAmount(address from, address to, uint256 amount, address currency) private {
+    /// @notice Retrieves the approved balance for a specific relationship and currency.
+    /// @param from The address of the account that granted the approval.
+    /// @param to The address of the recipient for whom the approval was made.
+    /// @param currency The address of the currency approved. Use `address(0)` for native tokens.
+    /// @return The amount of funds approved by `from` for `to` in the specified `currency`.
+    function getApprovedAmount(address from, address to, address currency) public view returns (uint256) {
         BalanceOperatorStorage storage $ = _getBalanceOperatorStorage();
         bytes32 relation = _computeComposedKey(from, to);
-        $._reserved[relation][currency] -= amount;
+        return $._approved[relation][currency];
     }
 
-    /// @notice Increases the reserved funds for a specific relationship and currency.
-    /// @param from The address of the account from which the funds are reserved.
-    /// @param to The address of the account for which the funds are reserved.
-    /// @param amount The amount to add to the reserved balance.
-    /// @param currency The address of the currency being increased.
-    function _sumReservedAmount(address from, address to, uint256 amount, address currency) private {
+    /// @notice Reduces the approved funds for a specific relationship and currency.
+    /// @dev This function is called internally to subtract the amount from the approval mapping.
+    /// @param from The address of the approver.
+    /// @param to The address of the recipient.
+    /// @param amount The amount to subtract from the approved funds.
+    /// @param currency The currency in which the approval was made.
+    function _subApprovedAmount(address from, address to, uint256 amount, address currency) private {
         BalanceOperatorStorage storage $ = _getBalanceOperatorStorage();
         bytes32 relation = _computeComposedKey(from, to);
-        $._reserved[relation][currency] += amount;
+        $._approved[relation][currency] -= amount;
     }
 
-    /// @notice Retrieves the reserved balance for a specific relationship and currency.
-    /// @param from The address of the account from which the funds are reserved.
-    /// @param to The address of the account for which the funds are reserved.
-    /// @param currency The address of the currency to check the reserved balance for.
-    /// @return The reserved balance for the specified relationship and currency.
-    function _getReservedAmount(address from, address to, address currency) private view returns (uint256) {
+    /// @notice Increases the approved funds for a specific relationship and currency.
+    /// @dev Adds the specified amount to the approved mapping for the given account pair and currency.
+    /// @param from The address of the approver.
+    /// @param to The address of the recipient.
+    /// @param amount The amount to add to the approved funds.
+    /// @param currency The currency in which the approval is being made.
+    function _sumApprovedAmount(address from, address to, uint256 amount, address currency) private {
         BalanceOperatorStorage storage $ = _getBalanceOperatorStorage();
         bytes32 relation = _computeComposedKey(from, to);
-        return $._reserved[relation][currency];
+        $._approved[relation][currency] += amount;
     }
 
     /// @notice Computes a unique key by combining two addresses.

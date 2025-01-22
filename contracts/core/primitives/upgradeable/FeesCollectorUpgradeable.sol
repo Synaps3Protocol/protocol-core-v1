@@ -22,6 +22,12 @@ abstract contract FeesCollectorUpgradeable is Initializable, IFeesCollector {
     ///      Namespaced storage layout helps prevent accidental overwrites in upgradeable contracts.
     bytes32 private constant FEES_COLLECTOR_SLOT = 0xad118695963461d59b4e186bb251fe176897e2c57f3362e8dade6f9a4f8e7400;
 
+    /// @notice Emitted when fees are disbursed to the treasury.
+    /// @param target The address receiving the disbursed fees.
+    /// @param amount The amount of fees being disbursed.
+    /// @param currency The currency used for the disbursement.
+    event FeesDisbursed(address indexed target, uint256 amount, address currency);
+
     /// @notice Error thrown when an invalid treasury address is provided.
     /// @param invalidAddress The invalid treasury address.
     error InvalidTreasuryAddress(address invalidAddress);

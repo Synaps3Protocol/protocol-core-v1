@@ -8,8 +8,9 @@ import { IBalanceDepositor } from "@synaps3/core/interfaces/base/IBalanceDeposit
 import { IBalanceWithdrawable } from "@synaps3/core/interfaces/base/IBalanceWithdrawable.sol";
 import { IBalanceTransferable } from "@synaps3/core/interfaces/base/IBalanceTransferable.sol";
 import { IBalanceVerifiable } from "@synaps3/core/interfaces/base/IBalanceVerifiable.sol";
-import { IBalanceReservable } from "@synaps3/core/interfaces/base/IBalanceReservable.sol";
-import { ILedgerVerifiable } from "@synaps3/core/interfaces/base/ILedgerVerifiable.sol";
+import { IBalanceCollectable } from "@synaps3/core/interfaces/base/IBalanceCollectable.sol";
+import { IBalanceApprovable } from "@synaps3/core/interfaces/base/IBalanceApprovable.sol";
+import { IBalanceRevokable } from "@synaps3/core/interfaces/base/IBalanceRevokable.sol";
 
 /// @dev The `IBalanceOperator` interface extends multiple interfaces to provide a comprehensive suite of
 /// balance-related operations, including deposit, withdrawal, transfer, reserve, and balance verification.
@@ -17,7 +18,8 @@ interface IBalanceOperator is
     IBalanceWithdrawable,
     IBalanceDepositor,
     IBalanceTransferable,
-    IBalanceReservable,
-    IBalanceVerifiable,
-    ILedgerVerifiable
+    IBalanceApprovable,
+    IBalanceRevokable,
+    IBalanceCollectable,
+    IBalanceVerifiable
 {}

@@ -6,12 +6,6 @@ import { IBalanceOperator } from "@synaps3/core/interfaces/base/IBalanceOperator
 /// @title ITreasury Interface
 /// @notice Defines the standard functions for a Treasury contract.
 interface ITreasury is IBalanceOperator {
-    /// @notice Emitted when funds are disbursed to the treasury from a collector.
-    /// @param collector The address of the collector disbursing the funds.
-    /// @param amount The amount of tokens that were disbursed.
-    /// @param currency The address of the ERC20 token contract for the currency disbursed.
-    event FeesCollected(address indexed collector, uint256 amount, address currency);
-
     /// @notice Collects all accrued fees for a specified currency from a list of authorized collectors.
     /// @dev This function aggregates the fees from specified collectors and prepares them for distribution.
     /// @param collectors The list of addresses authorized to collect fees on behalf of the treasury.

@@ -13,10 +13,10 @@ abstract contract UpgradeBase is Script {
     }
 
     function upgradeAndCallUUPS(address proxy, address implementation, bytes memory initData) public returns (address) {
-        //!IMPORTANT: This is not a safe upgrade, take any caution or 2-check needed before run this method
         require(proxy != address(0));
         require(implementation != address(0));
         require(implementation.code.length > 0);
+        //!IMPORTANT: This is not a safe upgrade, take any caution or 2-check needed before run this method
         // UUPS proxy upgrade logic is directly available in the implementation, handled by proxy..
         (bool success, ) = proxy.call(abi.encodeCall(UUPSUpgradeable.upgradeToAndCall, (implementation, initData)));
         require(success, "Error upgrading contract");
