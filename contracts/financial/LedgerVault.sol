@@ -7,6 +7,7 @@ import { UUPSUpgradeable } from "@openzeppelin/contracts-upgradeable/proxy/utils
 // solhint-disable-next-line max-line-length
 import { ReentrancyGuardTransientUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardTransientUpgradeable.sol";
 import { AccessControlledUpgradeable } from "@synaps3/core/primitives/upgradeable/AccessControlledUpgradeable.sol";
+import { AllowanceOperatorUpgradeable } from "@synaps3/core/primitives/upgradeable/AllowanceOperatorUpgradeable.sol";
 import { BalanceOperatorUpgradeable } from "@synaps3/core/primitives/upgradeable/BalanceOperatorUpgradeable.sol";
 
 import { ILedgerVault } from "@synaps3/core/interfaces/financial/ILedgerVault.sol";
@@ -21,6 +22,7 @@ contract LedgerVault is
     UUPSUpgradeable,
     AccessControlledUpgradeable,
     ReentrancyGuardTransientUpgradeable,
+    AllowanceOperatorUpgradeable,
     BalanceOperatorUpgradeable,
     ILedgerVault
 {
@@ -72,6 +74,7 @@ contract LedgerVault is
     function initialize(address accessManager) public initializer {
         __UUPSUpgradeable_init();
         __BalanceOperator_init();
+        __AllowanceOperator_init();
         __ReentrancyGuardTransient_init();
         __AccessControlled_init(accessManager);
     }
@@ -79,7 +82,7 @@ contract LedgerVault is
     /// @notice Locks a specific amount of funds for a given account.
     /// @dev The funds are immobilized and cannot be withdrawn or transferred until released.
     ///      Only operator role can handle this methods.
-    ///      A reserve is not needed, the protocol operate directly on the user funds to simplify operations.
+    ///      An approval is not needed, the protocol operate directly on the user funds to simplify operations.
     /// @param account The address of the account for which the funds will be locked.
     /// @param amount The amount of funds to lock.
     /// @param currency The currency to associate lock with. Use address(0) for the native coin.

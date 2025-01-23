@@ -1,2 +1,3 @@
 // each pool admin funds directly operating them over global treasury pool
 // treasury keep a balance ledger for each pool
+// eg: function transfer(to) restricted <- forward call to treasury as pool

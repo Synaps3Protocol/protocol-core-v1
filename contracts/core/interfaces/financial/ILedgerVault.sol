@@ -2,11 +2,12 @@
 pragma solidity 0.8.26;
 
 import { IBalanceOperator } from "@synaps3/core/interfaces/base/IBalanceOperator.sol";
+import { IAllowanceOperator } from "@synaps3/core/interfaces/base/IAllowanceOperator.sol";
 
 /// @title ILedgerVault
 /// @notice Interface for managing locked funds and their operations.
 /// @dev Extends IBalanceOperator for managing user balances in a vault-like system.
-interface ILedgerVault is IBalanceOperator {
+interface ILedgerVault is IBalanceOperator, IAllowanceOperator {
     /// @notice Locks a specific amount of funds for a given account.
     /// @dev The funds are immobilized and cannot be withdrawn or transferred until released or claimed.
     /// @param account The address of the account for which the funds will be locked.

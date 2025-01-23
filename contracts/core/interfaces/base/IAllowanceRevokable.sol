@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.26;
 
-/// @title IBalanceRevokable
+/// @title IAllowanceRevokable
 /// @notice Interface for revoking approved funds in a ledger-based system.
-interface IBalanceRevokable {
+interface IAllowanceRevokable {
     /// @notice Emitted when an approval is revoked by the approver.
     /// @param from The address of the approver.
     /// @param to The address of the recipient whose approval was revoked.

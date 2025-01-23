@@ -168,9 +168,15 @@ abstract contract PolicyBase is IPolicy, ERC165 {
     /// @notice Computes a unique key by combining a context and an account address.
     /// @dev This key is used to map relationships between accounts and context data in the `_attestations` mapping.
     /// @param account The address of the user for whom the key is being generated.
-    /// @param context Encoded data representing the context for the operation.
+    /// @param context Encoded data representing the context for the operation. eg: holder, assetId, etc
     /// @return A `bytes32` hash that uniquely identifies the context-account pair.
     function _computeComposedKey(address account, bytes memory context) private pure returns (bytes32) {
+        // Combines the user address (`account`) with a specific context (`context`)
+        // to generate a unique key. This is useful for representing relationships like:
+        // - User-level licenses: account + "holder"
+        // - Resource-level licenses: account + assetId
+        // - Group-level licenses: account + "groupId", etc etc
+        // This answers: "the account has a license for the asset id?""..
         return keccak256(abi.encodePacked(account, context));
     }
 }

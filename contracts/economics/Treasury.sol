@@ -11,6 +11,7 @@ import { BalanceOperatorUpgradeable } from "@synaps3/core/primitives/upgradeable
 
 import { ITreasury } from "@synaps3/core/interfaces/economics/ITreasury.sol";
 import { IFeesCollector } from "@synaps3/core/interfaces/economics/IFeesCollector.sol";
+import { IBalanceDepositor } from "@synaps3/core/interfaces/base/IBalanceDepositor.sol";
 import { FinancialOps } from "@synaps3/core/libraries/FinancialOps.sol";
 import { LoopOps } from "@synaps3/core/libraries/LoopOps.sol";
 
@@ -50,6 +51,24 @@ contract Treasury is
     // TODO burn fees
     // TODO burn MMC only
     // TODO burn fees rate
+
+    // TODO after burn % distribute remaining fees to designated pools based on governance vote
+    // function allocate(address pool, uint256 amount) restricted;
+    // eg: proposal: deposit N fees to staking pool, deposit N fees to development pool, rewards, etc
+
+    /// @notice Deposits a specified amount of currency into the treasury for a given recipient.
+    /// @param pool The address of the pool to credit with the deposit.
+    /// @param amount The amount of currency to deposit.
+    /// @param currency The address of the ERC20 token to deposit.
+    function deposit(
+        address pool,
+        uint256 amount,
+        address currency
+    ) public override(BalanceOperatorUpgradeable, IBalanceDepositor) restricted returns (uint256) {
+        // restricted deposit to avoid invalid operations
+        // only allowed accounts can interact with this method
+        return super.deposit(pool, amount, currency);
+    }
 
     /// @notice Collects all accrued fees for a specified currency from a list of authorized collectors.
     /// @dev This function iterates over the list of collectors, requesting each to disburse their collected fees

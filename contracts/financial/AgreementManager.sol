@@ -27,7 +27,7 @@ contract AgreementManager is Initializable, UUPSUpgradeable, AccessControlledUpg
     /// @custom:oz-upgrades-unsafe-allow state-variable-immutable
     ITollgate public immutable TOLLGATE;
     /// @custom:oz-upgrades-unsafe-allow state-variable-immutable
-    ILedgerVault public immutable VAULT;
+    ILedgerVault public immutable LEDGER_VAULT;
 
     /// @dev Holds a bounded key expressing the agreement between the parts.
     mapping(uint256 => T.Agreement) private _agreementsByProof;
@@ -52,7 +52,7 @@ contract AgreementManager is Initializable, UUPSUpgradeable, AccessControlledUpg
         _disableInitializers();
         // we need to collect the fees during the agreement creation.
         TOLLGATE = ITollgate(tollgate);
-        VAULT = ILedgerVault(vault);
+        LEDGER_VAULT = ILedgerVault(vault);
     }
 
     /// Initialize the proxy state.
@@ -75,7 +75,7 @@ contract AgreementManager is Initializable, UUPSUpgradeable, AccessControlledUpg
         bytes calldata payload
     ) external returns (uint256) {
         // IMPORTANT: The process of distributing funds to accounts should be handled within the settlement logic.
-        uint256 confirmed = VAULT.lock(msg.sender, amount, currency); // msg.sender.safeDeposit(amount, currency);
+        uint256 confirmed = LEDGER_VAULT.lock(msg.sender, amount, currency); // msg.sender.safeDeposit(amount, currency);
         T.Agreement memory agreement = previewAgreement(confirmed, currency, broker, parties, payload);
         // only the initiator can operate with this agreement proof, or transfer the proof to the other party..
         // each agreement is unique and immutable, ensuring that it cannot be modified or reconstructed.
