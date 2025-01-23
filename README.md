@@ -9,10 +9,10 @@ Welcome! 🎉 Synapse is redefining how creative IP distribution works. Whether 
 
 The architecture is structured into distinct layers, starting from interaction and execution at the top and progressing down to the foundational governance layer:
 
-![image](https://github.com/user-attachments/assets/1a514778-bca4-4378-b6bb-19344a52491d)
+![image](https://github.com/user-attachments/assets/9016c428-d7dc-404f-b89f-7710e01d22da)
+
 
 ### Level 4: Operational Layer
-- **Finance**: Handles agreements, settlements, and economic interactions.
 - **Apps**: Provides user-facing interfaces to interact with the system.
 - **Distribution Network**: Ensures the secure distribution of assets to authorized parties.
 
@@ -23,6 +23,7 @@ The architecture is structured into distinct layers, starting from interaction a
 ### Level 2: Assets and Distribution Management
 - **Syndication**: Oversees the network of distributors, validating and authorizing them as custodians of assets.
 - **Assets**: Manages the registration and validation of resources entering the system, ensuring compliance with governance policies.
+- **Finance**: Handles agreements, settlements, and economic interactions.
 
 ### Level 1: Foundational Governance
 - **Economics**: Ensures financial stability through treasury management, tokens, and tollgates.
