@@ -112,9 +112,9 @@ contract Tollgate is Initializable, UUPSUpgradeable, AccessControlledUpgradeable
         // The composed key is used to uniquely identify a combination of these parameters
         // in a flat storage mapping. This avoids the need for nested mappings, improving gas efficiency
         // and simplifying data access.
-        // Example: If the target is an agreement contract, the currency is MMC (ERC20 token),
+        // Example: If the target is the policy manager contract, the currency is MMC (ERC20 token),
         // and the scheme is NOMINAL, setting a fee of 10% means:
-        // "In the agreement contract, for MMC, using a nominal scheme, the fee is 10%."
+        // "In the policy manager contract, for MMC, using a nominal scheme, the fee is 10%."
         if (target == address(0)) revert InvalidTargetContext();
         bytes32 composedKey = _computeComposedKey(target, currency, scheme);
 

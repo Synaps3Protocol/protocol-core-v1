@@ -44,13 +44,6 @@ abstract contract FeesCollectorUpgradeable is Initializable, IFeesCollector {
         _;
     }
 
-    /// @notice Returns the current address of the treasury.
-    /// @return The address of the treasury.
-    function getTreasuryAddress() public view returns (address) {
-        FeesCollectorStorage storage $ = _getFeesCollectorStorage();
-        return $._treasury;
-    }
-
     /// @notice Disburses all collected funds of a specified currency from the contract to the treasury.
     /// @dev This function can only be called by the treasury. It transfers the full balance of the specified currency.
     /// @param currency The address of the ERC20 token to disburse.
@@ -63,6 +56,13 @@ abstract contract FeesCollectorUpgradeable is Initializable, IFeesCollector {
         treasuryAddress.transfer(amount, currency);
         emit FeesDisbursed(treasuryAddress, amount, currency);
         return amount;
+    }
+
+    /// @notice Returns the current address of the treasury.
+    /// @return The address of the treasury.
+    function getTreasuryAddress() public view returns (address) {
+        FeesCollectorStorage storage $ = _getFeesCollectorStorage();
+        return $._treasury;
     }
 
     /// @notice Initializes the fees collector with the specified treasury address.

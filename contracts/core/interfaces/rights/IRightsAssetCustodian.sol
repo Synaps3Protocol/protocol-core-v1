@@ -25,4 +25,8 @@ interface IRightsAssetCustodian {
     /// @notice Grants custodial rights over the asset held by a holder to a distributor.
     /// @param distributor The address of the distributor who will receive custodial rights.
     function grantCustody(address distributor) external;
+
+    /// @notice Revokes custodial rights of a distributor for the caller's assets.
+    /// @param distributor The distributor to revoke custody from.
+    function revokeCustody(address distributor) external;
 }

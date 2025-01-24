@@ -3,6 +3,8 @@
 pragma solidity 0.8.26;
 
 import { Initializable } from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
+// solhint-disable-next-line max-line-length
+import { ReentrancyGuardTransientUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardTransientUpgradeable.sol";
 import { LedgerUpgradeable } from "@synaps3/core/primitives/upgradeable/LedgerUpgradeable.sol";
 import { IBalanceOperator } from "@synaps3/core/interfaces/base/IBalanceOperator.sol";
 import { FinancialOps } from "@synaps3/core/libraries/FinancialOps.sol";
@@ -11,7 +13,12 @@ import { FinancialOps } from "@synaps3/core/libraries/FinancialOps.sol";
 /// @dev Abstract contract for managing deposits and withdrawals with ledger tracking capabilities.
 ///      Provides core functionalities to handle funds in an upgradeable system.
 ///      This contract integrates with the ledger system to record balances and transactions.
-abstract contract BalanceOperatorUpgradeable is Initializable, LedgerUpgradeable, IBalanceOperator {
+abstract contract BalanceOperatorUpgradeable is
+    Initializable,
+    LedgerUpgradeable,
+    ReentrancyGuardTransientUpgradeable,
+    IBalanceOperator
+{
     using FinancialOps for address;
 
     /// @custom:storage-location erc7201:balanceoperatorupgradeable
@@ -29,6 +36,7 @@ abstract contract BalanceOperatorUpgradeable is Initializable, LedgerUpgradeable
     /// This is the method to initialize this contract and any other extended contracts.
     function __BalanceOperator_init() internal onlyInitializing {
         __Ledger_init();
+        __ReentrancyGuardTransient_init();
     }
 
     /// @dev Function to initialize the contract without chaining, typically used in child contracts.
@@ -65,7 +73,7 @@ abstract contract BalanceOperatorUpgradeable is Initializable, LedgerUpgradeable
         address recipient,
         uint256 amount,
         address currency
-    ) public virtual onlyValidOperation(recipient, amount) returns (uint256) {
+    ) public virtual onlyValidOperation(recipient, amount) nonReentrant returns (uint256) {
         if (getLedgerBalance(msg.sender, currency) < amount) revert NoFundsToWithdraw();
         _subLedgerEntry(msg.sender, amount, currency);
         recipient.transfer(amount, currency); // transfer fund to recipient

@@ -29,6 +29,11 @@ contract RightsAssetCustodian is Initializable, UUPSUpgradeable, AccessControlle
     /// @param rightsHolder The address of the asset's rights holder.
     event CustodialGranted(address indexed newCustody, address indexed rightsHolder);
 
+    /// @notice Emitted when custodial distribution rights are granted to a distributor.
+    /// @param revokedCustody The address of the distributor granted custodial rights.
+    /// @param rightsHolder The address of the asset's rights holder.
+    event CustodialRevoked(address indexed revokedCustody, address indexed rightsHolder);
+
     /// @dev Error that is thrown when a content hash is already registered.
     error InvalidInactiveDistributor();
 
@@ -59,15 +64,31 @@ contract RightsAssetCustodian is Initializable, UUPSUpgradeable, AccessControlle
         // we can use this attribute to control de "stress" in the network
         // eg: if the network is growing we can adjust this attribute to allow more
         // redundancy and more backend distributors..
-        // TODO add method to set this attribute
         _maxDistributionRedundancy = 3;
     }
 
-    // TODO revoke custody
+    /// @notice Updates the maximum allowed number of distributors per holder.
+    /// @dev This function allows to dynamically adjust the redundancy limit,
+    ///      providing flexibility based on network conditions.
+    /// @param value The new maximum number of distributors allowed per holder.
+    function setMaxAllowedRedundancy(uint256 value) external restricted {
+        _maxDistributionRedundancy = value;
+    }
+
+    /// @notice Revokes custodial rights of a distributor for the caller's assets.
+    /// @param distributor The distributor to revoke custody from.
+    function revokeCustody(address distributor) external onlyActiveDistributor(distributor) {
+        // msg.sender expected to be the holder revoking his/her content custody..
+        if (!_custodiansByHolder[msg.sender].contains(distributor)) {
+            revert InvalidInactiveDistributor();
+        }
+
+        _custodiansByHolder[msg.sender].remove(distributor);
+        _holdersUnderCustodian[distributor].remove(msg.sender);
+        emit CustodialRevoked(distributor, msg.sender);
+    }
 
     /// @notice Grants custodial rights over the asset held by a holder to a distributor.
-    /// @dev This function assigns custodial rights for the asset held by a specific
-    /// account to a designated distributor.
     /// @param distributor The address of the distributor who will receive custodial rights.
     function grantCustody(address distributor) external onlyActiveDistributor(distributor) {
         // msg.sender expected to be the holder declaring his/her content custody..
@@ -119,14 +140,34 @@ contract RightsAssetCustodian is Initializable, UUPSUpgradeable, AccessControlle
         uint256 i = 0;
         uint256 acc = 0;
         bytes32 blockHash = blockhash(block.number - 1);
+        // This calculation limits the resulting range to 0-9999.
+        // Example: a % b => 153_000 % 10_000
+        // Step 1: 153_000 / 10_000 = 15.3 (integer part = 15)
+        // Step 2: 15 * 10_000 = 150_000
+        // Step 3: 153_000 - 150_000 = [3_000]
+        // The remainder [3_000] represents the leftover from the division,
+        // as the divisor covers the largest possible portion of the dividend
+        // with complete multiples, leaving the rest as the remainder.
+        // 15 integer parts make up 150_000, while the remaining 3_000 is the residue.
         uint256 random = uint256(keccak256(abi.encodePacked(blockHash, holder))) % C.BPS_MAX;
         uint256 n = _custodiansByHolder[holder].length();
         // Adjust 'n' to comply with the maximum distribution redundancy:
         // This ensures that no more redundancy than allowed is used,
         // even if more custodians are available.
-        n = _maxDistributionRedundancy <= n ? _maxDistributionRedundancy : n;
-        // arithmetic succession
-        // eg: 3 = 1+2+3 =  n(n+1) / 2 = 6
+        n = _maxDistributionRedundancy < n ? _maxDistributionRedundancy : n;
+        // Arithmetic succession of weights:
+        // Example: n = total number of nodes
+        // Node 1 = weight 3
+        // Node 2 = weight 2
+        // Node 3 = weight 1
+        // Total weight = 6 (sum of weights in descending order)
+        //
+        // To calculate the sum of all node weights dynamically:
+        // Adding a new node automatically adjusts both the weights and their total sum.
+        // Formula for the sum of an arithmetic succession: S = n(n + 1) / 2
+        // Example:
+        // Before: n = 3 -> 1 + 2 + 3 = 6
+        // After:  n = 4 -> 1 + 2 + 3 + 4 = 10
         uint256 s = (n * (n + 1)) / 2;
 
         while (i < n) {
@@ -140,10 +181,16 @@ contract RightsAssetCustodian is Initializable, UUPSUpgradeable, AccessControlle
             // of being selected. The random value is checked against the cumulative weight.
             // Example distribution:
             // |------------50------------|--------30--------|-----20------|
-            // |          0 - 50          |      51 - 80     |   81 - 100  | <- acc hit range
+            // |          0 - 50          |      51 - 80     |   81 - 100  | <- acc <> random hit range
             // The first node (50%) has the highest chance, followed by the second (30%) and the third (20%).
 
             // += weight for node i
+            // Each node's weight is calculated as a proportion of the total weight (`s`),
+            // based on its position (order). The first node has the highest weight, with
+            // subsequent nodes receiving progressively smaller weights.
+            // Example: First node = weight 3 * 10,000 / total weight (s)
+            // This ensures nodes with higher weights (closer to the start) have a greater
+            // probability of being selected.
             acc += ((n - i) * C.BPS_MAX) / s;
             address candidate = _custodiansByHolder[holder].at(i);
             if (acc >= random && _isValidActiveDistributor(candidate)) {

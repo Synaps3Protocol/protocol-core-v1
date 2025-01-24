@@ -4,8 +4,6 @@ pragma solidity 0.8.26;
 
 import { Initializable } from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import { UUPSUpgradeable } from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
-// solhint-disable-next-line max-line-length
-import { ReentrancyGuardTransientUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardTransientUpgradeable.sol";
 import { AccessControlledUpgradeable } from "@synaps3/core/primitives/upgradeable/AccessControlledUpgradeable.sol";
 import { BalanceOperatorUpgradeable } from "@synaps3/core/primitives/upgradeable/BalanceOperatorUpgradeable.sol";
 
@@ -21,7 +19,6 @@ contract Treasury is
     Initializable,
     UUPSUpgradeable,
     AccessControlledUpgradeable,
-    ReentrancyGuardTransientUpgradeable,
     BalanceOperatorUpgradeable,
     ITreasury
 {
@@ -44,7 +41,6 @@ contract Treasury is
     function initialize(address accessManager) public initializer {
         __UUPSUpgradeable_init();
         __BalanceOperator_init();
-        __ReentrancyGuardTransient_init();
         __AccessControlled_init(accessManager);
     }
 
