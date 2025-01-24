@@ -11,9 +11,4 @@ import { IBalanceVerifiable } from "@synaps3/core/interfaces/base/IBalanceVerifi
 
 /// @dev The `IBalanceOperator` interface extends multiple interfaces to provide a comprehensive suite of
 /// balance-related operations, including deposit, withdrawal, transfer, reserve, and balance verification.
-interface IBalanceOperator is
-    IBalanceDepositor,
-    IBalanceWithdrawable,
-    IBalanceTransferable,
-    IBalanceVerifiable
-{}
+interface IBalanceOperator is IBalanceDepositor, IBalanceWithdrawable, IBalanceTransferable, IBalanceVerifiable {}
