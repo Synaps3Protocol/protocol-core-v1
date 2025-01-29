@@ -124,6 +124,8 @@ The features detailed above have been introduced into the [Space and Tokens simu
 The results projected here are based on growth assumptions for the **Rent/Subscription/Purchase/etc** value proposition, reflected in the following chart:
 
 ![Projected KPIs](resources/kpi.png)
+By month 48, the treasury is expected to manage approximately 52.25 million tokens, reflecting a growth of 3.65 million tokens (+7.51%) during the period. The circulating supply is projected to reach 528.4 million tokens, with an annualized inflation rate of 0.137%, while the token price is estimated to rise to $0.77, contributing to a market cap of $407.1 million.
+
 ![Rent/Subscription/Purchase/etc growth](resources/rent/subscription/purchase/etc_growth.png)
 
 ### **Token Price and Market Cap**
