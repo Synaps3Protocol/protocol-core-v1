@@ -4,7 +4,7 @@ pragma solidity 0.8.26;
 
 import { ERC165 } from "@openzeppelin/contracts/utils/introspection/ERC165.sol";
 import { IAssetOwnership } from "@synaps3/core/interfaces/assets/IAssetOwnership.sol";
-import { IRightsPolicyManager } from "@synaps3/core/interfaces/rights/IRightsPolicyManager.sol";
+import { IRightsPolicyManagerVerifiable } from "@synaps3/core/interfaces/rights/IRightsPolicyManagerVerifiable.sol";
 import { IAttestationProvider } from "@synaps3/core/interfaces/base/IAttestationProvider.sol";
 import { IPolicy } from "@synaps3/core/interfaces/policies/IPolicy.sol";
 import { T } from "@synaps3/core/primitives/Types.sol";
@@ -12,9 +12,11 @@ import { T } from "@synaps3/core/primitives/Types.sol";
 /// @title PolicyBase
 /// @notice This abstract contract serves as a base for policies that manage access to content.
 abstract contract PolicyBase is IPolicy, ERC165 {
-    // Immutable public variables to store the addresses of the Rights Manager and Ownership.
+    /// @custom:oz-upgrades-unsafe-allow state-variable-immutable
     IAttestationProvider public immutable ATTESTATION_PROVIDER;
-    IRightsPolicyManager public immutable RIGHTS_POLICY_MANAGER;
+    /// @custom:oz-upgrades-unsafe-allow state-variable-immutable
+    IRightsPolicyManagerVerifiable public immutable RIGHTS_POLICY_MANAGER;
+    /// @custom:oz-upgrades-unsafe-allow state-variable-immutable
     IAssetOwnership public immutable ASSET_OWNERSHIP;
 
     /// @dev Policy state
@@ -100,7 +102,7 @@ abstract contract PolicyBase is IPolicy, ERC165 {
 
     constructor(address rightsPolicyManager, address assetOwnership, address providerAddress) {
         ATTESTATION_PROVIDER = IAttestationProvider(providerAddress);
-        RIGHTS_POLICY_MANAGER = IRightsPolicyManager(rightsPolicyManager);
+        RIGHTS_POLICY_MANAGER = IRightsPolicyManagerVerifiable(rightsPolicyManager);
         ASSET_OWNERSHIP = IAssetOwnership(assetOwnership);
     }
 

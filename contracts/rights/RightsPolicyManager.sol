@@ -11,7 +11,7 @@ import { ERC165Checker } from "@openzeppelin/contracts/utils/introspection/ERC16
 import { IPolicy } from "@synaps3/core/interfaces/policies/IPolicy.sol";
 import { IAgreementSettler } from "@synaps3/core/interfaces/financial/IAgreementSettler.sol";
 import { IRightsPolicyManager } from "@synaps3/core/interfaces/rights/IRightsPolicyManager.sol";
-import { IRightsPolicyAuthorizer } from "@synaps3/core/interfaces/rights/IRightsPolicyAuthorizer.sol";
+import { IRightsPolicyAuthorizerVerifiable } from "@synaps3/core/interfaces/rights/IRightsPolicyAuthorizerVerifiable.sol";
 import { LoopOps } from "@synaps3/core/libraries/LoopOps.sol";
 import { ArrayOps } from "@synaps3/core/libraries/ArrayOps.sol";
 import { T } from "@synaps3/core/primitives/Types.sol";
@@ -25,7 +25,7 @@ contract RightsPolicyManager is Initializable, UUPSUpgradeable, AccessControlled
     /// @custom:oz-upgrades-unsafe-allow state-variable-immutable
     IAgreementSettler public immutable AGREEMENT_SETTLER;
     /// @custom:oz-upgrades-unsafe-allow state-variable-immutable
-    IRightsPolicyAuthorizer public immutable RIGHTS_AUTHORIZER;
+    IRightsPolicyAuthorizerVerifiable public immutable RIGHTS_AUTHORIZER;
 
     /// @dev Mapping to store the access control list for each content holder and account.
     mapping(address => EnumerableSet.AddressSet) private _closures;
@@ -50,7 +50,7 @@ contract RightsPolicyManager is Initializable, UUPSUpgradeable, AccessControlled
         /// https://forum.openzeppelin.com/t/what-does-disableinitializers-function-mean/28730/5
         _disableInitializers();
         AGREEMENT_SETTLER = IAgreementSettler(agreementSettler);
-        RIGHTS_AUTHORIZER = IRightsPolicyAuthorizer(rightsAuthorizer);
+        RIGHTS_AUTHORIZER = IRightsPolicyAuthorizerVerifiable(rightsAuthorizer);
     }
 
     /// @notice Initializes the proxy state.
