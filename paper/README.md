@@ -8,7 +8,7 @@ The total supply of MMC is capped at 1,000,000,000 tokens vested over a total of
 The initial price per token is determined as:
 
 *Initial Price per Token = Target Funds / Tokens Allocated for Private Sale*
-![alt text](image.png)
+![Price Formula](resources/initial.png)
 
 To ensure market stability and liquidity:
 
