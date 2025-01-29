@@ -46,13 +46,13 @@ contract AgreementManager is Initializable, UUPSUpgradeable, AccessControlledUpg
     error NoPartiesInAgreement();
 
     /// @custom:oz-upgrades-unsafe-allow constructor
-    constructor(address tollgate, address vault) {
+    constructor(address tollgate, address ledgerVault) {
         /// https://forum.openzeppelin.com/t/uupsupgradeable-vulnerability-post-mortem/15680
         /// https://forum.openzeppelin.com/t/what-does-disableinitializers-function-mean/28730/5
         _disableInitializers();
         // we need to collect the fees during the agreement creation.
         TOLLGATE = ITollgate(tollgate);
-        LEDGER_VAULT = ILedgerVault(vault);
+        LEDGER_VAULT = ILedgerVault(ledgerVault);
     }
 
     /// Initialize the proxy state.

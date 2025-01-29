@@ -36,7 +36,7 @@ contract DistributorReferendum is
     /// @custom:oz-upgrades-unsafe-allow state-variable-immutable
     ITreasury public immutable TREASURY;
     /// @custom:oz-upgrades-unsafe-allow state-variable-immutable
-    ILedgerVault public immutable VAULT;
+    ILedgerVault public immutable LEDGER_VAULT;
 
     uint256 private _expirationPeriod; // Period for enrollment
     uint256 private _enrollmentsCount; // Count of enrollments
@@ -78,13 +78,13 @@ contract DistributorReferendum is
     }
 
     /// @custom:oz-upgrades-unsafe-allow constructor
-    constructor(address treasury, address tollgate, address vault) {
+    constructor(address treasury, address tollgate, address ledgerVault) {
         /// https://forum.openzeppelin.com/t/what-does-disableinitializers-function-mean/28730/5
         /// https://forum.openzeppelin.com/t/uupsupgradeable-vulnerability-post-mortem/15680
         _disableInitializers();
-        VAULT = ILedgerVault(vault);
         TREASURY = ITreasury(treasury);
         TOLLGATE = ITollgate(tollgate);
+        LEDGER_VAULT = ILedgerVault(ledgerVault);
     }
 
     /// @notice Initializes the proxy state.
@@ -163,9 +163,9 @@ contract DistributorReferendum is
         (uint256 fees, T.Scheme scheme) = TOLLGATE.getFees(address(this), currency);
         if (scheme != T.Scheme.FLAT) revert InvalidFeeSchemeProvided("Expected a FLAT fee scheme.");
 
-        VAULT.lock(msg.sender, fees, currency); // lock funds for distributor
-        VAULT.claim(msg.sender, fees, currency); // claim the funds on behalf referendum
-        VAULT.withdraw(address(this), fees, currency); // transfer the funds to referendum
+        LEDGER_VAULT.lock(msg.sender, fees, currency); // lock funds for distributor
+        LEDGER_VAULT.claim(msg.sender, fees, currency); // claim the funds on behalf referendum
+        LEDGER_VAULT.withdraw(address(this), fees, currency); // transfer the funds to referendum
 
         // register distributor as pending approval
         _register(uint160(distributor));

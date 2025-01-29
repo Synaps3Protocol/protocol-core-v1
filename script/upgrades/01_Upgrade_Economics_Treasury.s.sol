@@ -2,7 +2,6 @@
 pragma solidity 0.8.26;
 
 import { UpgradeBase } from "script/upgrades/00_Upgrade_Base.s.sol";
-import { IAccessManager } from "contracts/core/interfaces/access/IAccessManager.sol";
 import { Treasury } from "contracts/economics/Treasury.sol";
 import { C } from "contracts/core/primitives/Constants.sol";
 

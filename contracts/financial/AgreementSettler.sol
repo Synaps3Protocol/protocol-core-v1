@@ -47,7 +47,7 @@ contract AgreementSettler is
     /// @custom:oz-upgrades-unsafe-allow state-variable-immutable
     IAgreementManager public immutable AGREEMENT_MANAGER;
     /// @custom:oz-upgrades-unsafe-allow state-variable-immutable
-    ILedgerVault public immutable VAULT;
+    ILedgerVault public immutable LEDGER_VAULT;
 
     /// @dev Holds a the list of closed/settled proof for accounts.
     mapping(uint256 => bool) private _settledProofs;
@@ -80,12 +80,12 @@ contract AgreementSettler is
     }
 
     /// @custom:oz-upgrades-unsafe-allow constructor
-    constructor(address treasury, address agreementManager, address vault) {
+    constructor(address treasury, address agreementManager, address ledgerVault) {
         /// https://forum.openzeppelin.com/t/uupsupgradeable-vulnerability-post-mortem/15680
         /// https://forum.openzeppelin.com/t/what-does-disableinitializers-function-mean/28730/5
         _disableInitializers();
-        VAULT = ILedgerVault(vault);
         TREASURY = ITreasury(treasury);
+        LEDGER_VAULT = ILedgerVault(ledgerVault);
         AGREEMENT_MANAGER = IAgreementManager(agreementManager);
     }
 
@@ -135,9 +135,9 @@ contract AgreementSettler is
 
         _setProofAsSettled(proof);
         // part of the agreement locked amount is released to the account
-        VAULT.claim(initiator, fees, currency);
-        VAULT.release(initiator, available, currency);
-        VAULT.withdraw(address(this), fees, currency);
+        LEDGER_VAULT.claim(initiator, fees, currency);
+        LEDGER_VAULT.release(initiator, available, currency);
+        LEDGER_VAULT.withdraw(address(this), fees, currency);
         emit AgreementCancelled(initiator, proof);
         return agreement;
     }
@@ -163,9 +163,9 @@ contract AgreementSettler is
         // then quit is only way to close the agreement.
         _setProofAsSettled(proof);
         // move the funds to settler and transfer the available to counterparty
-        VAULT.claim(initiator, total, currency);
-        VAULT.transfer(counterparty, available, currency);
-        VAULT.withdraw(address(this), fees, currency);
+        LEDGER_VAULT.claim(initiator, total, currency);
+        LEDGER_VAULT.transfer(counterparty, available, currency);
+        LEDGER_VAULT.withdraw(address(this), fees, currency);
         emit AgreementSettled(msg.sender, counterparty, proof);
         return agreement;
     }

@@ -131,6 +131,7 @@ abstract contract PolicyBase is IPolicy, ERC165 {
     /// @notice Retrieves the license id associated with a specific account.
     /// @param account The address of the account for which the attestation is being retrieved.
     /// @param criteria Encoded data containing the parameters required to retrieve attestation.
+    /// eg: assetId, holder, groups, etc
     function getLicense(address account, bytes memory criteria) public view returns (uint256) {
         // recompute the composed key based on account and criteria = to match context
         bytes32 key = _computeComposedKey(account, criteria);
@@ -173,7 +174,7 @@ abstract contract PolicyBase is IPolicy, ERC165 {
     function _computeComposedKey(address account, bytes memory context) private pure returns (bytes32) {
         // Combines the user address (`account`) with a specific context (`context`)
         // to generate a unique key. This is useful for representing relationships like:
-        // - User-level licenses: account + "holder"
+        // - Holder-level licenses: account + "holder"
         // - Resource-level licenses: account + assetId
         // - Group-level licenses: account + "groupId", etc etc
         // This answers: "the account has a license for the asset id?""..

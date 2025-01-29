@@ -112,7 +112,7 @@ contract RightsPolicyManager is Initializable, UUPSUpgradeable, AccessControlled
 
     /// @notice Retrieves the list of active policies matching the criteria for an account.
     /// @param account Address of the account to evaluate.
-    /// @param criteria Encoded data containing parameters for access verification. eg: assetId, holder
+    /// @param criteria Encoded data containing parameters for access verification. eg: assetId, holder, groups, etc
     function getActivePolicies(address account, bytes memory criteria) external view returns (address[] memory) {
         address[] memory policies = getPolicies(account);
         address[] memory filtered = new address[](policies.length);
@@ -131,7 +131,7 @@ contract RightsPolicyManager is Initializable, UUPSUpgradeable, AccessControlled
         return filtered;
     }
 
-    /// @notice Retrieves the list of policys associated with a specific account and content ID.
+    /// @notice Retrieves the list of policies associated with a specific account and content ID.
     /// @param account The address of the account for which policies are being retrieved.
     function getPolicies(address account) public view returns (address[] memory) {
         // https://docs.openzeppelin.com/contracts/5.x/api/utils#EnumerableSet-values-struct-EnumerableSet-AddressSet-

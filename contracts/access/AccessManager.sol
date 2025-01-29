@@ -33,6 +33,8 @@ contract AccessManager is Initializable, UUPSUpgradeable, AccessManagerUpgradeab
         _setRoleAdmin(C.VER_ROLE, C.GOV_ROLE);
     }
 
+    // TODO pause protocol based on permission and roles
+
     /// @dev Authorizes the upgrade of the contract.
     /// @notice Only the admin can authorize the upgrade.
     function _authorizeUpgrade(address) internal view override {
