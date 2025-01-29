@@ -8,6 +8,4 @@ import { IRightsAssetCustodianRegistrable } from "@synaps3/core/interfaces/right
 /// @notice Unified interface for verifying, retrieving, and managing custodial rights over assets.
 /// @dev This interface extends both `IRightsAssetCustodianVerifiable` (which enables querying custodianship status)
 ///      and `IRightsAssetCustodianRegistrable` (which handles granting and revoking custodial rights).
-interface IRightsAssetCustodian is IRightsAssetCustodianVerifiable, IRightsAssetCustodianRegistrable {
-
-}
+interface IRightsAssetCustodian is IRightsAssetCustodianVerifiable, IRightsAssetCustodianRegistrable {}

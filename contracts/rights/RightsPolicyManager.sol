@@ -11,6 +11,7 @@ import { ERC165Checker } from "@openzeppelin/contracts/utils/introspection/ERC16
 import { IPolicy } from "@synaps3/core/interfaces/policies/IPolicy.sol";
 import { IAgreementSettler } from "@synaps3/core/interfaces/financial/IAgreementSettler.sol";
 import { IRightsPolicyManager } from "@synaps3/core/interfaces/rights/IRightsPolicyManager.sol";
+// solhint-disable-next-line max-line-length
 import { IRightsPolicyAuthorizerVerifiable } from "@synaps3/core/interfaces/rights/IRightsPolicyAuthorizerVerifiable.sol";
 import { LoopOps } from "@synaps3/core/libraries/LoopOps.sol";
 import { ArrayOps } from "@synaps3/core/libraries/ArrayOps.sol";

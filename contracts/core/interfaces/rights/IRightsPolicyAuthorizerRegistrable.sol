@@ -3,8 +3,8 @@ pragma solidity 0.8.26;
 
 /// @title IRightsPolicyAuthorizerRegistrable
 /// @notice Interface for managing the authorization and registration of policies governing content rights.
-/// @dev This interface allows content holders to grant and revoke authorization for policies 
-///      that control the rights associated with their assets. It provides mechanisms to register 
+/// @dev This interface allows content holders to grant and revoke authorization for policies
+///      that control the rights associated with their assets. It provides mechanisms to register
 ///      policies and manage their permissions.
 interface IRightsPolicyAuthorizerRegistrable {
     /// @notice Grants authorization to a policy contract, allowing it to enforce rules on the asset holder's content.
