@@ -123,6 +123,7 @@ The features detailed above have been introduced into the [Space and Tokens simu
 
 The results projected here are based on growth assumptions for the **Rent/Subscription/Purchase/etc** value proposition, reflected in the following chart:
 
+![Projected KPIs](resources/kpi.png)
 ![Rent/Subscription/Purchase/etc growth](resources/rent/subscription/purchase/etc_growth.png)
 
 ### **Token Price and Market Cap**
