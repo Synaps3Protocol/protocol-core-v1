@@ -1,14 +1,13 @@
 # MMC Whitepaper
 
+The issuer, MMC, commits to having a maximum supply of **1,000,000,000** tokens, ensuring scarcity and supporting long-term value. These tokens will be vested over a total of 132 months. During the private sale, 10% of the total supply (100,000,000 MMC) will be offered, with a target to raise **$10,000,000**.
 
-## 1.1 Token Supply and Initial Price
-
-The total supply of MMC is capped at 1,000,000,000 tokens vested over a total of 132 months, ensuring scarcity and supporting long-term value. During the private sale, 10% of the total supply (100,000,000 MMC) will be offered, with a target to raise $10,000,000.
+## 1.1 Initial Price
 
 The initial price per token is determined as:
 
-*Initial Price per Token = Target Funds / Tokens Allocated for Private Sale*
 ![Price Formula](resources/initial.png)
+*Initial Price per Token = Target Funds / Tokens Allocated for Private Sale*
 
 To ensure market stability and liquidity:
 
@@ -20,7 +19,6 @@ To ensure market stability and liquidity:
 ## 1.2 Allocation and Vesting Schedule
 
 The MMC Token distribution is designed to incentivize early adopters, contributors, and network participants while ensuring ecosystem sustainability. The allocation and vesting of tokens are as follows:
-
 
 | Entity                            |   Allocation (%) |   Vesting Start (month) |   Vesting Cliff (month) |   Vesting Duration (months) |
 |:----------------------------------|-----------------:|------------------------:|------------------------:|----------------------------:|
@@ -43,13 +41,12 @@ The MMC Token distribution is designed to incentivize early adopters, contributo
 | Ecosystem Growth & Partnership 3  |                3 |                      72 |                       0 |                          24 |
 | Private Sale                      |               10 |                       0 |                       8 |                          36 |
 
-
 ## 1.3 Distribution Mechanism (Token Distribution)
 
 The MMC Token distribution is designed to incentivize early adopters, contributors, and network participants while ensuring the ecosystem's sustainability. Key mechanisms include:
 
 - **Conditional Exclusive Airdrops**: Rewards for loyalty, early adoption during testnet, and early creators.  
-  _(Details: HackMD Airdrops)_
+  _(Details: [HackMD Airdrops](https://hackmd.io/@cKICHHrfSOqOUrWKb1sFbg/Sy9sinJMJx))_
 - **Private Sale**: Raising initial funds for product development, operations, and team expansion.
 - **Vesting**: Gradual token releases for long-term stakeholders.
 - **Grants & Partnerships**: Supporting ecosystem growth through strategic collaborations.
