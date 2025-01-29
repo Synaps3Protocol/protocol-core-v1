@@ -125,7 +125,7 @@ contract RightsPolicyManager is Initializable, UUPSUpgradeable, AccessControlled
 
             // safe unchecked
             // limited to i increment = max policy length
-            j = j.uncheckedDec();
+            j = j.uncheckedInc();
         }
 
         return filtered;
@@ -177,6 +177,7 @@ contract RightsPolicyManager is Initializable, UUPSUpgradeable, AccessControlled
         address[] memory parties
     ) private {
         uint256 partiesLen = parties.length;
+        // safe unchecked inc limited to partiesLen 
         for (uint256 i = 0; i < partiesLen; i = i.uncheckedInc()) {
             uint256 attestationId = attestationIds[i];
             _closures[parties[i]].add(policyAddress); // associate the policy with party account

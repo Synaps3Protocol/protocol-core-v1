@@ -113,9 +113,7 @@ contract RightsPolicyAuthorizer is
 
             // safe unchecked
             // limited to i increment = max policy length
-            unchecked {
-                ++j;
-            }
+            j = j.uncheckedInc();
         }
 
         return filtered;
