@@ -13,11 +13,13 @@ import { IAgreementSettler } from "@synaps3/core/interfaces/financial/IAgreement
 import { IRightsPolicyManager } from "@synaps3/core/interfaces/rights/IRightsPolicyManager.sol";
 import { IRightsPolicyAuthorizer } from "@synaps3/core/interfaces/rights/IRightsPolicyAuthorizer.sol";
 import { LoopOps } from "@synaps3/core/libraries/LoopOps.sol";
+import { ArrayOps } from "@synaps3/core/libraries/ArrayOps.sol";
 import { T } from "@synaps3/core/primitives/Types.sol";
 
 contract RightsPolicyManager is Initializable, UUPSUpgradeable, AccessControlledUpgradeable, IRightsPolicyManager {
     using EnumerableSet for EnumerableSet.AddressSet;
     using ERC165Checker for address;
+    using ArrayOps for address[];
     using LoopOps for uint256;
 
     /// @custom:oz-upgrades-unsafe-allow state-variable-immutable
@@ -111,6 +113,9 @@ contract RightsPolicyManager is Initializable, UUPSUpgradeable, AccessControlled
     }
 
     /// @notice Retrieves the list of active policies matching the criteria for an account.
+    /// @dev This function filters out policies that are not active, ensuring the returned array
+    ///      contains only valid policies. It first creates a temporary array of the same size as `policies`,
+    ///      then filters and resizes it to the exact number of valid policies using `slice()`.
     /// @param account Address of the account to evaluate.
     /// @param criteria Encoded data containing parameters for access verification. eg: assetId, holder, groups, etc
     function getActivePolicies(address account, bytes memory criteria) external view returns (address[] memory) {
@@ -119,6 +124,7 @@ contract RightsPolicyManager is Initializable, UUPSUpgradeable, AccessControlled
         uint256 policiesLen = policies.length;
         uint256 j = 0; // filtered cursor
 
+        // safe unchecked limited to max policy length
         for (uint256 i = 0; i < policiesLen; i = i.uncheckedInc()) {
             if (!isActivePolicy(account, policies[i], criteria)) continue;
             filtered[j] = policies[i];
@@ -128,7 +134,16 @@ contract RightsPolicyManager is Initializable, UUPSUpgradeable, AccessControlled
             j = j.uncheckedInc();
         }
 
-        return filtered;
+        // Explanation:
+        // - The `filtered` array was initially created with the same length as `policies`, meaning
+        //   it may contain uninitialized elements (`address(0)`) if some policies were invalid.
+        // - The variable `j` represents the number of valid policies that passed the filtering process.
+        // - To ensure that the returned array contains only these valid policies and no extra default values,
+        //   we call `slice(j)`, which creates a new array of exact length `j` and copies only
+        //   the first `j` elements from `filtered`.
+        // - This prevents returning an array with trailing `address(0)` values, ensuring data integrity
+        //   and reducing unnecessary gas costs when the array is processed elsewhere.
+        return filtered.slice(j);
     }
 
     /// @notice Retrieves the list of policies associated with a specific account and content ID.
@@ -177,7 +192,7 @@ contract RightsPolicyManager is Initializable, UUPSUpgradeable, AccessControlled
         address[] memory parties
     ) private {
         uint256 partiesLen = parties.length;
-        // safe unchecked inc limited to partiesLen 
+        // safe unchecked inc limited to partiesLen
         for (uint256 i = 0; i < partiesLen; i = i.uncheckedInc()) {
             uint256 attestationId = attestationIds[i];
             _closures[parties[i]].add(policyAddress); // associate the policy with party account

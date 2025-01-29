@@ -10,6 +10,7 @@ import { AccessControlledUpgradeable } from "@synaps3/core/primitives/upgradeabl
 import { IPolicy } from "@synaps3/core/interfaces/policies/IPolicy.sol";
 import { IRightsPolicyAuthorizer } from "@synaps3/core/interfaces/rights/IRightsPolicyAuthorizer.sol";
 import { IPolicyAuditorVerifiable } from "@synaps3/core/interfaces/policies/IPolicyAuditorVerifiable.sol";
+import { ArrayOps } from "@synaps3/core/libraries/ArrayOps.sol";
 import { LoopOps } from "@synaps3/core/libraries/LoopOps.sol";
 
 contract RightsPolicyAuthorizer is
@@ -19,6 +20,7 @@ contract RightsPolicyAuthorizer is
     IRightsPolicyAuthorizer
 {
     using LoopOps for uint256;
+    using ArrayOps for address[];
     using EnumerableSet for EnumerableSet.AddressSet;
 
     /// KIM: any initialization here is ephemeral and not included in bytecode..
@@ -93,7 +95,8 @@ contract RightsPolicyAuthorizer is
     }
 
     /// @notice Retrieves all policies authorized by a specific content holder.
-    /// @dev This function returns an array of policy addresses that have been granted rights by the holder.
+    /// @dev This function returns an array of policy addresses that have been granted rights by the holder,
+    ///      filtering out any invalid policies.
     /// @param holder The address of the asset rights holder whose authorized policies are being queried.
     function getAuthorizedPolicies(address holder) external view returns (address[] memory) {
         // https://docs.openzeppelin.com/contracts/5.x/api/utils#EnumerableSet-values-struct-EnumerableSet-AddressSet-
@@ -116,7 +119,16 @@ contract RightsPolicyAuthorizer is
             j = j.uncheckedInc();
         }
 
-        return filtered;
+        // Explanation:
+        // - The `filtered` array was initially created with the same length as `policies`, meaning
+        //   it may contain uninitialized elements (`address(0)`) if some policies were invalid.
+        // - The variable `j` represents the number of valid policies that passed the filtering process.
+        // - To ensure that the returned array contains only these valid policies and no extra default values,
+        //   we call `slice(j)`, which creates a new array of exact length `j` and copies only
+        //   the first `j` elements from `filtered`.
+        // - This prevents returning an array with trailing `address(0)` values, ensuring data integrity
+        //   and reducing unnecessary gas costs when the array is processed elsewhere.
+        return filtered.slice(j);
     }
 
     /// @dev Authorizes the upgrade of the contract.
