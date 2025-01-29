@@ -90,6 +90,6 @@ contract AssetVaultTest is BaseTest {
         IAssetRegistrable(referendum).approve(assetId);
 
         vm.prank(to);
-        IAssetOwnership(ownership).registerAsset(to, assetId);
+        IAssetOwnership(ownership).claim(to, assetId);
     }
 }

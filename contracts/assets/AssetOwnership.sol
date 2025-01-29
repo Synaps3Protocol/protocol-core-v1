@@ -32,10 +32,19 @@ contract AssetOwnership is
     /// @custom:oz-upgrades-unsafe-allow state-variable-immutable
     IAssetVerifiable public immutable ASSET_REFERENDUM;
 
-    /// @dev Emitted when a new asset is registered on the platform.
+    /// @dev Emitted when a new asset is claimed on the platform.
     /// @param owner The address of the creator or owner of the asset being registered.
     /// @param assetId The unique identifier for the registered asset.
-    event RegisteredAsset(address indexed owner, uint256 assetId);
+    event ClaimAsset(address indexed owner, uint256 assetId);
+    /// @dev Emitted when an asset is revoked from the platform.
+    /// @param owner The address of the owner of the asset being revoked.
+    /// @param assetId The unique identifier for the revoked asset.
+    event RevokedAsset(address indexed owner, uint256 assetId);
+    /// @dev Emitted when an asset is transferred from one owner to another.
+    /// @param from The address of the current owner of the asset.
+    /// @param to The address of the new owner of the asset.
+    /// @param assetId The unique identifier for the transferred asset.
+    event TransferredAsset(address indexed from, address indexed to, uint256 assetId);
 
     /// @dev Error indicating that an operation attempted to reference content that has not been approved.
     /// This error is triggered when the asset being accessed or referenced is not in an approved state.
@@ -85,15 +94,32 @@ contract AssetOwnership is
     // TODO: approved content get an incentive: a cooling mechanism is needed eg:
     // log decay, max registered asset rate, etc
 
-    /// @notice Mints a new NFT representing an asset to the specified address.
+    /// @notice Claims a new asset as an NFT.
     /// @dev The assumption is that only those who know the asset ID
     /// and have the required approval can mint the corresponding token.
     /// @param to The address to mint the NFT to.
     /// @param assetId The unique identifier for the asset, which serves as the NFT ID.
     /// 0x + base16 + blake2b-208 hash function to gen a short asset id
-    function registerAsset(address to, uint256 assetId) external onlyApprovedAsset(to, assetId) {
+    function claim(address to, uint256 assetId) external onlyApprovedAsset(to, assetId) {
         _mint(to, assetId); // register asset as 721 token
-        emit RegisteredAsset(to, assetId);
+        emit ClaimAsset(to, assetId);
+    }
+
+    /// @notice Revokes an asset, rendering it permanently disabled.
+    /// @param assetId The unique identifier for the asset to revoke.
+    function revoke(uint256 assetId) external restricted {
+        address owner = ownerOf(assetId);
+        _burn(assetId); // Revoke the token
+        emit RevokedAsset(owner, assetId);
+    }
+
+    /// @notice Transfers an asset to a new owner.
+    /// @dev Transfers the ERC721 token representing the asset to a new owner.
+    /// @param to The address of the new owner.
+    /// @param assetId The unique identifier for the asset being transferred.
+    function transfer(address to, uint256 assetId) external {
+        _transfer(msg.sender, to, assetId);
+        emit TransferredAsset(msg.sender, to, assetId);
     }
 
     /// @dev Internal function to update the ownership of a token.
