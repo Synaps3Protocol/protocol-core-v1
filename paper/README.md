@@ -7,6 +7,7 @@ The issuer, MMC, commits to having a maximum supply of **1,000,000,000** tokens,
 The initial price per token is determined as:
 
 ![Price Formula](resources/initial.png)
+
 *Initial Price per Token = Target Funds / Tokens Allocated for Private Sale*
 
 To ensure market stability and liquidity:
