@@ -65,14 +65,14 @@ The MMC Token distribution is designed to incentivize early adopters, contributo
 
 Although token releases are not technically inflationary (since no new tokens are minted), they influence the circulating supply, impacting supply and demand dynamics. The MMC Token employs a balanced inflation/deflation mechanism to ensure long-term sustainability.
 
-### **Inflationary Faucet**
+### 1.4.1 **Inflationary Faucet**
 Tokens are distributed and added to the circulating supply through the mechanisms listed in **1.3**, including:
 
 - Staking rewards.
 - Network incentives.
 - Airdrops.
 
-### **Deflationary Sink**
+### 1.4.2 **Deflationary Sink**
 Tokens are strategically removed or temporarily locked to reduce the circulating supply, leveraging mechanisms like:
 
 - **Token Burn**: A portion of fees is permanently removed from circulation.
@@ -81,7 +81,7 @@ Tokens are strategically removed or temporarily locked to reduce the circulating
 - **Buybacks & Treasury Locking**: Tokens purchased from the market are either stored in the treasury or burned.
 - **Staking**: Temporarily locks tokens, reducing the active circulating supply.
 
-### **Future Approach**
+### 1.4.3 **Future Approach**
 We plan to adopt a hybrid model combining:
 
 - **Token emissions based on new content** (as an inflationary mechanism).
@@ -89,7 +89,7 @@ We plan to adopt a hybrid model combining:
 
 In the long term, combining token emissions and burns balances supply and demand, stabilizes token value, and promotes sustainable ecosystem growth. This hybrid model incentivizes new content creation while controlling inflation and maintaining scarcity, ensuring a robust and engaged blockchain community.
 
-## 1.6 Fee Rate & Distribution
+## 1.5 Fee Rate & Distribution
 
 The protocol charges a **5%** initial fee on transactions, distributed as follows:
 
@@ -100,7 +100,7 @@ The protocol charges a **5%** initial fee on transactions, distributed as follow
 - **Burn Rate: 30%**  
   Permanently removes tokens to create scarcity and stabilize value.
 
-## 1.7 Governance and Voting Rights
+## 1.6 Governance and Voting Rights
 
 MMC Token holders play a crucial role in the decentralized governance of our ecosystem. Governance is powered by a token-weighted voting system, where the voting power of participants is directly proportional to the number of MMC Tokens they hold. This system ensures that those most invested in the platform have a meaningful voice in its direction, fostering a sense of responsibility and accountability within the community.
 
@@ -120,7 +120,7 @@ The community actively shapes the future of the ecosystem by voting on:
 - **Validation of Distribution Network**: Approve and onboard nodes responsible for content delivery and network operations.
 
 
-## Projected Organic Growth of the Token Economy
+## 1.7 Projected Organic Growth of the Token Economy
 
 The features detailed above have been introduced into the [Space and Tokens simulation platform](https://cenit.finance) to project the evolution of the token economy over time. These projections focus on the organic growth of the token economy, that is, on the buying and selling pressure coming from protocol users, and not on speculative trading. The full simulation results are available [here](https://spaceandtokens.ai/simulation/71136d43-fa5e-4db2-958b-6f296a4a3265).
 
