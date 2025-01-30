@@ -35,11 +35,13 @@ contract AssetOwnership is
     /// @dev Emitted when a new asset is claimed on the platform.
     /// @param owner The address of the creator or owner of the asset being registered.
     /// @param assetId The unique identifier for the registered asset.
-    event ClaimAsset(address indexed owner, uint256 assetId);
+    event ClaimedAsset(address indexed owner, uint256 assetId);
+
     /// @dev Emitted when an asset is revoked from the platform.
     /// @param owner The address of the owner of the asset being revoked.
     /// @param assetId The unique identifier for the revoked asset.
     event RevokedAsset(address indexed owner, uint256 assetId);
+
     /// @dev Emitted when an asset is transferred from one owner to another.
     /// @param from The address of the current owner of the asset.
     /// @param to The address of the new owner of the asset.
@@ -77,7 +79,7 @@ contract AssetOwnership is
     function initialize(address accessManager) public initializer {
         __UUPSUpgradeable_init();
         __ERC721Enumerable_init();
-        __ERC721_init("SynapseIP", "SYN");
+        __ERC721_init("SynIP", "SIP");
         __AccessControlled_init(accessManager);
     }
 
@@ -90,26 +92,28 @@ contract AssetOwnership is
     }
 
     // TODO build getURI => from distributor custodian /erc721-metadata
-    // TODO transfer ownership + fee
+    // TODO transfer ownership fee
     // TODO: approved content get an incentive: a cooling mechanism is needed eg:
     // log decay, max registered asset rate, etc
 
     /// @notice Claims a new asset as an NFT.
     /// @dev The assumption is that only those who know the asset ID
-    /// and have the required approval can mint the corresponding token.
+    ///      and have the required approval can mint the corresponding token.
     /// @param to The address to mint the NFT to.
     /// @param assetId The unique identifier for the asset, which serves as the NFT ID.
     /// 0x + base16 + blake2b-208 hash function to gen a short asset id
     function claim(address to, uint256 assetId) external onlyApprovedAsset(to, assetId) {
         _mint(to, assetId); // register asset as 721 token
-        emit ClaimAsset(to, assetId);
+        emit ClaimedAsset(to, assetId);
     }
 
-    /// @notice Revokes an asset, rendering it permanently disabled.
-    /// @param assetId The unique identifier for the asset to revoke.
+    /// @notice Revokes an asset, permanently disabling its functionality within the system.
+    /// @dev This action is irreversible and restricted to governance control.
+    ///      Only authorized governance entities can revoke assets.
+    /// @param assetId The unique identifier of the asset to be revoked.
     function revoke(uint256 assetId) external restricted {
         address owner = ownerOf(assetId);
-        _burn(assetId); // Revoke the token
+        _burn(assetId); // Permanently revoke the asset
         emit RevokedAsset(owner, assetId);
     }
 
