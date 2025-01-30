@@ -39,11 +39,26 @@ contract RightsPolicyManager is Initializable, UUPSUpgradeable, AccessControlled
     event PolicyRegistered(address indexed account, uint256 proof, uint256 attestationId, address policy);
 
     /// @dev Error thrown when attempting to operate on a policy that has not
-    /// been delegated rights for the specified content.
+    /// been delegated rights for the specified content by the rights holder.
     /// @param policy The address of the policy contract attempting to access rights.
-    /// @param holder the asset rights holder.
-    error InvalidNotRightsDelegated(address policy, address holder);
-    error InvalidPolicyEnforcement(string);
+    /// @param holder The address of the asset rights holder who must delegate the policy.
+    error RightsNotDelegated(address policy, address holder);
+
+    /// @dev Error thrown when the execution of a policy fails due to an internal issue,
+    /// such as incorrect conditions, failed checks, or an execution error.
+    /// @param reason A descriptive string explaining the enforcement failure.
+    error PolicyEnforcementFailed(string reason);
+
+    /// @notice Ensures that the specified policy has been authorized by the asset rights holder.
+    /// @dev This modifier checks the `RIGHTS_AUTHORIZER` to verify if `policyAddress`
+    /// has the necessary authorization from `holder`. If not, it reverts with `RightsNotDelegated`.
+    /// @param holder The address of the rights holder who must have authorized the policy.
+    /// @param policy The address of the policy contract attempting to access the rights.
+    modifier onlyAuthorizedPolicy(address holder, address policy) {
+        bool isPolicyAuthorizedByHolder = RIGHTS_AUTHORIZER.isPolicyAuthorized(policy, holder);
+        if (!isPolicyAuthorizedByHolder) revert RightsNotDelegated(policy, holder);
+        _;
+    }
 
     /// @custom:oz-upgrades-unsafe-allow constructor
     constructor(address agreementSettler, address rightsAuthorizer) {
@@ -70,24 +85,22 @@ contract RightsPolicyManager is Initializable, UUPSUpgradeable, AccessControlled
     /// @dev This function verifies the policy's authorization, executes the agreement and registers the policy.
     /// @param proof The unique identifier of the agreement to be enforced.
     /// @param holder The rights holder whose authorization is required for accessing the asset.
-    /// @param policyAddress The address of the policy contract managing the agreement.
-    function registerPolicy(uint256 proof, address holder, address policyAddress) external returns (uint256[] memory) {
+    /// @param policy The address of the policy contract managing the agreement.
+    function registerPolicy(
+        uint256 proof,
+        address holder,
+        address policy
+    ) external onlyAuthorizedPolicy(holder, policy) returns (uint256[] memory) {
         // 1- retrieves the agreement and marks it as settled..
         T.Agreement memory agreement = AGREEMENT_SETTLER.settleAgreement(proof, holder);
-        // 2- only authorized policies by holder can be registered..
-        if (!RIGHTS_AUTHORIZER.isPolicyAuthorized(policyAddress, holder)) {
-            revert InvalidNotRightsDelegated(policyAddress, holder);
-        }
-
-        // type safe low level call to policy
-        // the policy is registered to the parties..
+        // type safe low level call to policy. The policy is registered to the parties..
         bytes memory callData = abi.encodeCall(IPolicy.enforce, (holder, agreement));
-        (bool success, bytes memory result) = policyAddress.call(callData);
-        if (!success) revert InvalidPolicyEnforcement("Error during policy enforcement call");
+        (bool success, bytes memory result) = policy.call(callData);
+        if (!success) revert PolicyEnforcementFailed("Error during policy enforcement call");
 
         // expected returned attestation as agreement confirmation
         uint256[] memory attestationIds = abi.decode(result, (uint256[]));
-        _registerBatchPolicies(proof, policyAddress, attestationIds, agreement.parties);
+        _registerBatchPolicies(proof, policy, attestationIds, agreement.parties);
         return attestationIds;
     }
 
