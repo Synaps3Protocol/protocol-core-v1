@@ -34,7 +34,7 @@ abstract contract QuorumUpgradeable is Initializable {
 
     /// @custom:storage-location erc7201:quorumupgradeable
     struct RegistryStorage {
-        mapping(uint256 => Status) _status; // Mapping to store the status of entities
+        mapping(uint256 => Status) _state; // Mapping to store the status of entities
     }
 
     /// @dev Storage slot for LedgerStorage, calculated using a unique namespace to avoid conflicts.
@@ -61,7 +61,7 @@ abstract contract QuorumUpgradeable is Initializable {
     /// @param entry The ID of the entity.
     function _status(uint256 entry) internal view returns (Status) {
         RegistryStorage storage $ = _getRegistryStorage();
-        return $._status[entry];
+        return $._state[entry];
     }
 
     /// @notice Internal function to revoke an entity's approval status.
@@ -70,7 +70,7 @@ abstract contract QuorumUpgradeable is Initializable {
     function _revoke(uint256 entry) internal {
         RegistryStorage storage $ = _getRegistryStorage();
         if (_status(entry) != Status.Active) revert InvalidInactiveState();
-        $._status[entry] = Status.Blocked;
+        $._state[entry] = Status.Blocked;
     }
 
     /// @notice Internal function to block an entity before approval.
@@ -79,7 +79,7 @@ abstract contract QuorumUpgradeable is Initializable {
     function _block(uint256 entry) internal {
         RegistryStorage storage $ = _getRegistryStorage();
         if (_status(entry) != Status.Waiting) revert NotWaitingApproval();
-        $._status[entry] = Status.Blocked;
+        $._state[entry] = Status.Blocked;
     }
 
     /// @notice Internal function to approve an entity's access.
@@ -87,7 +87,7 @@ abstract contract QuorumUpgradeable is Initializable {
     function _approve(uint256 entry) internal {
         RegistryStorage storage $ = _getRegistryStorage();
         if (_status(entry) != Status.Waiting) revert NotWaitingApproval();
-        $._status[entry] = Status.Active;
+        $._state[entry] = Status.Active;
     }
 
     /// @notice Internal function for an entity to resign.
@@ -95,7 +95,7 @@ abstract contract QuorumUpgradeable is Initializable {
     function _quit(uint256 entry) internal {
         RegistryStorage storage $ = _getRegistryStorage();
         if (_status(entry) != Status.Waiting) revert NotWaitingApproval();
-        $._status[entry] = Status.Pending;
+        $._state[entry] = Status.Pending;
     }
 
     /// @notice Internal function to start an entity's registration.
@@ -103,7 +103,7 @@ abstract contract QuorumUpgradeable is Initializable {
     function _register(uint256 entry) internal {
         RegistryStorage storage $ = _getRegistryStorage();
         if (_status(entry) != Status.Pending) revert NotPendingApproval();
-        $._status[entry] = Status.Waiting;
+        $._state[entry] = Status.Waiting;
     }
 
     /// @notice Internal function to get the registry storage.

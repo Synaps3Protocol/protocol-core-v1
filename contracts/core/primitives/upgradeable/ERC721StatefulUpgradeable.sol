@@ -11,7 +11,7 @@ abstract contract ERC721StatefulUpgradeable is Initializable, IERC721Stateful {
     /// @custom:storage-location erc7201:erc721stateful
     /// @notice Storage structure to track asset states by token ID.
     struct ERC721StateStorage {
-        mapping(uint256 => bool) _status;
+        mapping(uint256 => bool) _state;
     }
 
     /// @dev Storage slot for LedgerStorage, calculated using a unique namespace to avoid conflicts.
@@ -31,14 +31,14 @@ abstract contract ERC721StatefulUpgradeable is Initializable, IERC721Stateful {
     /// @param tokenId The ID of the token to activate.
     function _activate(uint256 tokenId) internal {
         ERC721StateStorage storage $ = _getERC721StateStorage();
-        $._status[tokenId] = true;
+        $._state[tokenId] = true;
     }
 
     /// @dev Internal function to set the state of a token to Inactive.
     /// @param tokenId The ID of the token to deactivate.
     function _deactivate(uint256 tokenId) internal {
         ERC721StateStorage storage $ = _getERC721StateStorage();
-        $._status[tokenId] = false;
+        $._state[tokenId] = false;
     }
 
     /// @notice Check if a token is in an active state.
@@ -46,7 +46,7 @@ abstract contract ERC721StatefulUpgradeable is Initializable, IERC721Stateful {
     /// @return True if the token is active, false otherwise.
     function isActive(uint256 tokenId) public view returns (bool) {
         ERC721StateStorage storage $ = _getERC721StateStorage();
-        return $._status[tokenId] == true;
+        return $._state[tokenId] == true;
     }
 
     /// @notice Internal function to get the registry storage.
