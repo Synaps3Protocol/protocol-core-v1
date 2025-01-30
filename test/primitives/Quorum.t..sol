@@ -6,12 +6,12 @@ import { QuorumUpgradeable } from "contracts/core/primitives/upgradeable/QuorumU
 
 contract QuorumTest is Test, QuorumUpgradeable {
     function test_DefaultStatus() public view {
-        Status status = _status(123456789);
+        Status status = _status(1234536789);
         assertEq(uint(status), 0);
     }
 
     function test_RegisterStatusFlow() public {
-        uint256 entry = 123456789;
+        uint256 entry = 1234567189;
         // initial pending status
         Status status = _status(entry);
         assertEq(uint(status), 0);
@@ -23,7 +23,7 @@ contract QuorumTest is Test, QuorumUpgradeable {
     }
 
     function test_ActiveStatusFlow() public {
-        uint256 entry = 123456789;
+        uint256 entry = 1234526789;
         // waiting status
         _register(entry);
         // active status
@@ -33,7 +33,7 @@ contract QuorumTest is Test, QuorumUpgradeable {
     }
 
     function test_QuitStatusFlow() public {
-        uint256 entry = 123456789;
+        uint256 entry = 1234256789;
         // waiting status
         _register(entry);
         // pending status
@@ -43,7 +43,7 @@ contract QuorumTest is Test, QuorumUpgradeable {
     }
 
     function test_BlockedStatusFlow() public {
-        uint256 entry = 123456789;
+        uint256 entry = 123455589;
         // waiting status
         _register(entry);
         // active status
@@ -54,7 +54,7 @@ contract QuorumTest is Test, QuorumUpgradeable {
         assertEq(uint(blockedStatus), 3);
     }
 
-    function test_RevertWhen_ApproveNotRegisterd() public {
+    function test_RevertWhen_ApproveNotRegistered() public {
         vm.expectRevert(NotWaitingApproval.selector);
         uint256 entry = 123456789;
         // active status
@@ -63,7 +63,7 @@ contract QuorumTest is Test, QuorumUpgradeable {
 
     function test_RevertWhen_BlockedNotActive() public {
         vm.expectRevert(InvalidInactiveState.selector);
-        uint256 entry = 123456789;
+        uint256 entry = 12345677;
         // waiting status
         _register(entry);
         // blocked status
@@ -72,7 +72,7 @@ contract QuorumTest is Test, QuorumUpgradeable {
 
     function test_RevertWhen_QuitNotWaiting() public {
         vm.expectRevert(NotWaitingApproval.selector);
-        uint256 entry = 123456789;
+        uint256 entry = 123456459;
         // blocked status
         _quit(entry);
     }
