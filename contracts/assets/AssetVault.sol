@@ -53,6 +53,8 @@ contract AssetVault is Initializable, UUPSUpgradeable, AccessControlledUpgradeab
         __AccessControlled_init(accessManager);
     }
 
+    // TODO add method to retrieve vault type based on assetId
+
     /// @notice Retrieves the encrypted content for a given content ID.
     /// @param assetId The identifier of the asset.
     /// @param vault The vault type used to retrieve the asset (e.g., LIT, RSA, EC).

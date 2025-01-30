@@ -2,22 +2,27 @@
 pragma solidity 0.8.26;
 
 /// @title IAssetRegistrable Interface
-/// @notice This interface defines the essential functions for a referendum contract.
-/// @dev Implement this interface to create a referendum contract.
+/// @notice Defines the essential functions for managing asset registration and governance through a referendum process.
+/// @dev Implement this interface in a referendum contract to allow
+///      asset proposals, approvals, rejections, and revocations.
 interface IAssetRegistrable {
-    /// @notice Submits a new proposition for referendum.
-    /// @param assetId The ID of the asset to be submitted.
+    /// @notice Submits a new asset proposition for a referendum.
+    /// @dev This function should allow entities to propose an asset for approval.
+    /// @param assetId The unique identifier of the asset being submitted.
     function submit(uint256 assetId) external;
 
-    /// @notice Approves a proposition in the referendum.
-    /// @param assetId The ID of the asset to be approved.
+    /// @notice Approves an asset proposition in the referendum.
+    /// @dev Once approved, the asset is considered verified and usable within the system.
+    /// @param assetId The unique identifier of the asset to be approved.
     function approve(uint256 assetId) external;
 
-    /// @notice Rejects a proposition in the referendum.
-    /// @param assetId The ID of the asset to be rejected.
+    /// @notice Rejects an asset proposition in the referendum.
+    /// @dev If rejected, the asset cannot be used in the system unless resubmitted.
+    /// @param assetId The unique identifier of the asset to be rejected.
     function reject(uint256 assetId) external;
 
-    /// @notice Revoke an approved content.
-    /// @param assetId The ID of the asset to be revoked.
+    /// @notice Revokes a previously approved asset.
+    /// @dev This function allows the system to remove approval from an asset, disabling its functionality.
+    /// @param assetId The unique identifier of the asset to be revoked.
     function revoke(uint256 assetId) external;
 }

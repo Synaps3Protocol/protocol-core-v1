@@ -52,7 +52,7 @@ contract RightsAssetCustodian is Initializable, UUPSUpgradeable, AccessControlle
         /// https://forum.openzeppelin.com/t/uupsupgradeable-vulnerability-post-mortem/15680
         /// https://forum.openzeppelin.com/t/what-does-disableinitializers-function-mean/28730/5
         _disableInitializers();
-        // we need to verify the status of each distributor before allow custodian assigment.
+        // we need to verify the status of each distributor before allow custodian assignment.
         DISTRIBUTOR_REFERENDUM = IDistributorVerifiable(distributorReferendum);
     }
 

@@ -5,5 +5,7 @@ import { IAssetRegistrable } from "@synaps3/core/interfaces/assets/IAssetRegistr
 import { IAssetVerifiable } from "@synaps3/core/interfaces/assets/IAssetVerifiable.sol";
 
 /// @title IAssetReferendum
-/// @notice Interface manage content registration, roles, and verifications within a referendum context.
+/// @notice Unified interface for managing content registration and verifications within a referendum-based system.
+/// @dev This interface extends both IAssetRegistrable and IAssetVerifiable to provide a single entry point for
+///      handling asset registration and verification processes.
 interface IAssetReferendum is IAssetRegistrable, IAssetVerifiable {}
