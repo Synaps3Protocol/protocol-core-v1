@@ -1,12 +1,12 @@
 # MMC Tokenomics
 
-The issuer, MMC, commits to having a maximum supply of **1,000,000,000** tokens, ensuring scarcity and supporting long-term value. These tokens will be vested over a total of 132 months. During the private sale, **10%** of the **total supply (100,000,000 MMC)** will be offered, with a target to raise **$10,000,000**.
+The issuer, MMC, commits to having a maximum supply of **1,000,000,000** tokens, ensuring scarcity and supporting long-term value. These tokens will be vested over a total of 72 months. During the private sale, **10%** of the **total supply (100,000,000 MMC)** will be offered, with a target to raise **$10,000,000**.
 
 ## 1.1 Initial Price
 
 The initial price per token is determined as:
 
-![Price Formula](resources/initial.png)
+![Price Formula](resources/formula.png)
 
 *Initial Price per Token = Target Funds / Tokens Allocated for Private Sale*
 
@@ -21,26 +21,25 @@ To ensure market stability and liquidity:
 
 The MMC Token distribution is designed to incentivize early adopters, contributors, and network participants while ensuring ecosystem sustainability. The allocation and vesting of tokens are as follows:
 
-| Entity                            |   Allocation (%) |   Vesting Start (month) |   Vesting Cliff (month) |   Vesting Duration (months) |
-|:----------------------------------|-----------------:|------------------------:|------------------------:|----------------------------:|
-| Cex/Dex                           |                5 |                       0 |                       0 |                           0 |
-| Investors Round 1                 |                7 |                       0 |                       6 |                          36 |
-| Investors Round 2                 |                5 |                      36 |                       6 |                          36 |
-| Investors Round 3                 |                3 |                      72 |                       3 |                          24 |
-| Founder/Team Round 1              |                4 |                       0 |                      12 |                          48 |
-| Founder/Team Round 2              |                5 |                      48 |                       6 |                          48 |
-| Founder/Team Round 3              |                6 |                      84 |                       3 |                          48 |
-| Exclusive Airdrops                |                2 |                       0 |                       0 |                          24 |
-| Initial Network Reserve           |                6 |                       0 |                       0 |                          60 |
-| Rewards & Incentives 1            |               12 |                       3 |                       0 |                          60 |
-| Rewards & Incentives 2            |               11 |                      60 |                       0 |                          60 |
-| Marketing & Content Development 1 |                4 |                       6 |                       0 |                          36 |
-| Marketing & Content Development 2 |                3 |                      36 |                       0 |                          24 |
-| Marketing & Content Development 3 |                2 |                      60 |                       0 |                          24 |
-| Ecosystem Growth & Partnership 1  |                7 |                       0 |                       0 |                          36 |
-| Ecosystem Growth & Partnership 2  |                5 |                      36 |                       0 |                          36 |
-| Ecosystem Growth & Partnership 3  |                3 |                      72 |                       0 |                          24 |
-| Private Sale                      |               10 |                       0 |                       8 |                          36 |
+| Entity                           |   Allocation (%) |   Vesting Start (month) |   Vesting Cliff (month) |   Vesting Duration (months) |
+|:---------------------------------|-----------------:|------------------------:|------------------------:|----------------------------:|
+| Cex/Dex                          |                5 |                       0 |                       0 |                           0 |
+| Investors Round 1                |                7 |                       0 |                       6 |                          18 |
+| Investors Round 2                |                5 |                      18 |                       6 |                          18 |
+| Investors Round 3                |                3 |                      36 |                       3 |                          18 |
+| Founder/Team Round 1             |                4 |                       0 |                      12 |                          24 |
+| Founder/Team Round 2             |                5 |                      24 |                       6 |                          24 |
+| Founder/Team Round 3             |                6 |                      48 |                       3 |                          24 |
+| Initial Network Reserve          |                6 |                       0 |                       0 |                          48 |
+| Rewards & Incentives             |               12 |                       2 |                       0 |                          60 |
+| Content Growth & Support  1      |                6 |                       6 |                       0 |                          36 |
+| Content Growth & Support  2      |                5 |                      36 |                       0 |                          24 |
+| Marketing                        |                5 |                       6 |                       0 |                          36 |
+| Ecosystem Growth & Partnership 1 |                7 |                       0 |                       0 |                          36 |
+| Ecosystem Growth & Partnership 2 |                5 |                      36 |                       0 |                          24 |
+| Research & Development           |                5 |                       6 |                       0 |                          36 |
+| Private Sale                     |               10 |                       0 |                       8 |                          36 |
+| Advisors/Legals                  |                4 |                       0 |                       6 |                          24 |
 
 ## 1.3 Distribution Mechanism (Token Distribution)
 
@@ -52,7 +51,7 @@ The MMC Token distribution is designed to incentivize early adopters, contributo
 - **Vesting**: Gradual token releases for long-term stakeholders.
 - **Grants & Partnerships**: Supporting ecosystem growth through strategic collaborations.
 - **Rewards**: Distributed for engaging in quests, staking, governance, prizes, and community activities.
-- **Network Effect Incentives**: Encouraging behaviors like:
+- **Network Effects Support**: Encouraging behaviors like:
   - Providing valuable feedback.
   - Uploading high-quality content.
   - Building a strong reputation.
@@ -67,7 +66,7 @@ Although token releases are not technically inflationary (since no new tokens ar
 Tokens are distributed and added to the circulating supply through the mechanisms listed in **1.3**, including:
 
 - Staking rewards.
-- Network incentives.
+- Network Effects Support.
 - Airdrops.
 
 ### 1.4.2 **Deflationary Sink**
@@ -122,29 +121,45 @@ The community actively shapes the future of the ecosystem by voting on:
 
 The features detailed above have been introduced into the [Space and Tokens simulation platform](https://cenit.finance) to project the evolution of the token economy over time. These projections focus on the organic growth of the token economy, that is, on the buying and selling pressure coming from protocol users, and not on speculative trading. The full simulation results are available [here](https://spaceandtokens.ai/simulation/71136d43-fa5e-4db2-958b-6f296a4a3265).
 
-The results projected here are based on growth assumptions for the **Rent/Subscription/Purchase/etc** value proposition, reflected in the following chart:
+The results projected here are based on growth assumptions for the Rent/Subscription/Purchase/etc value proposition, reflected in the following charts:
 
 ![Projected KPIs](resources/kpi.png)
-By month 48, the treasury is expected to manage approximately 52.25 million tokens, reflecting a growth of 3.65 million tokens (+7.51%) during the period. The circulating supply is projected to reach 528.4 million tokens, with an annualized inflation rate of 0.137%, while the token price is estimated to rise to $0.77, contributing to a market cap of $407.1 million.
 
 ![Rent/Subscription/Purchase/etc growth](resources/rent/subscription/purchase/etc_growth.png)
 
-### **Token Price and Market Cap**
+### Token price and market cap
+
+Based on the simulation results, the MMC token is expected to evolve in value as follows:
+
 ![Token price](resources/token_price.png)
+
 ![Monthly buying pressure](resources/monthly_buying_pressure.png)
+
 ![Monthly buying pressure in tokens](resources/monthly_buying_pressure_tokens.png)
 
-### **Supply and Inflation**
+### Supply and inflation
+
 ![Token supply](resources/token_supply.png)
+
 ![Inflation](resources/inflation.png)
 
-### **Protocol Fees**
+### Protocol fees
+
+The following chart showcases how the fees generated by the protocol are expected to evolve over time, and how they will be distributed.
+
 ![Token fees](resources/protocol.png)
 
-By year 4, the protocol is expected to generate approximately **$76,100,000** in fees, estimating an average service fee of **5.0%**.
+By year 4, the protocol is expected to have generated a total value of approximately $76100000 in fees. This is comes from estimating an average service fee of 5.0 %.
 
-### **Treasury Funds**
+### Treasury
+
+The treasury is expected to have the following profit and loss:
+
 ![Treasury P&L](resources/treasury_pnl.png)
+
+The treasury is expected to have the following funds under management:
+
 ![Funds under management](resources/funds_under_management.png)
 
-By year 4, the treasury is expected to manage approximately **$52,300,000**, with **99% in native tokens**.
+By year 4, the treasury is expected to have a total value of approximately $418000000 under management, with 99% in native tokens and 0% in other currencies.
+
