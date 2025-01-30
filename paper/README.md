@@ -121,15 +121,15 @@ The community actively shapes the future of the ecosystem by voting on:
 
 The features detailed above have been introduced into the [Space and Tokens simulation platform](https://cenit.finance) to project the evolution of the token economy over time. These projections focus on the organic growth of the token economy, that is, on the buying and selling pressure coming from protocol users, and not on speculative trading. The full simulation results are available [here](https://spaceandtokens.ai/simulation/71136d43-fa5e-4db2-958b-6f296a4a3265).
 
-The results projected here are based on growth assumptions for the Rent/Subscription/Purchase/etc value proposition, reflected in the following charts:
-
-![Projected KPIs](resources/kpi_48.png)
+The results projected here are based on growth assumptions for the Rent/Subscription/Purchase/etc value proposition, reflected in the following chart:
 
 ![Rent/Subscription/Purchase/etc growth](resources/rent/subscription/purchase/etc_growth.png)
 
 ### Token price and market cap
 
 Based on the simulation results, the MMC token is expected to evolve in value as follows:
+
+![Projected KPIs](resources/kpi_48.png)
 
 ![Token price](resources/token_price.png)
 
