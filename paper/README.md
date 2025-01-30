@@ -19,7 +19,9 @@ To ensure market stability and liquidity:
 
 ## 1.2 Allocation and Vesting Schedule
 
-The MMC Token distribution is designed to incentivize early adopters, contributors, and network participants while ensuring ecosystem sustainability. The allocation and vesting of tokens are as follows:
+The MMC Token distribution is designed to incentivize early adopters, contributors, and network participants while ensuring ecosystem sustainability. 
+**All vesting schedules follow a “cliff + linear” model.** This means that during the cliff period no tokens are released, and once the cliff is reached, tokens are unlocked proportionally (linearly) across the remaining vesting duration.
+The allocation and vesting of tokens are as follows:
 
 | Entity                           |   Allocation (%) |   Vesting Start (month) |   Vesting Cliff (month) |   Vesting Duration (months) |
 |:---------------------------------|-----------------:|------------------------:|------------------------:|----------------------------:|
