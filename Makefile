@@ -69,6 +69,7 @@ secreport:
 .PHONY: sectest ## run secutiry tests using slither
 sectest:
 	@export PATH=$HOME/.local/bin:$PATH	
+	@mythx analyze .
 	@slither . 
 
 .PHONY: format ## auto-format solidity source files

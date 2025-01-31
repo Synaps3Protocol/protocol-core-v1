@@ -30,6 +30,31 @@ library FinancialOps {
         IERC20(token).safeTransfer(to, amount);
     }
 
+    /// @notice Deposits the native currency of the network (e.g., ETH on Ethereum).
+    /// @dev No explicit transfer is needed as the transfer occurs implicitly via msg.value.
+    /// @param amount The amount to deposit.
+    /// @return The deposited amount.
+    function _nativeDeposit(uint256 amount) internal returns (uint256) {
+        if (amount > msg.value) revert FailDuringDeposit("Amount exceeds balance sent.");
+        // the transfer is not needed since the transfer is implicit here
+        return amount;
+    }
+
+    /// @notice Deposits ERC20 tokens from a specified address.
+    /// @dev Requires the `from` address to have previously approved the transfer amount.
+    /// @param from The address of the sender authorizing the transfer.
+    /// @param amount The amount of tokens to transfer.
+    /// @param token The address of the ERC20 token contract.
+    /// @return The deposited amount.
+    function _erc20Deposit(address from, uint256 amount, address token) internal returns (uint256) {
+        if (amount > allowance(from, token)) revert FailDuringDeposit("Amount exceeds allowance.");
+        // disable slitter use 'arbitrary transfer form' since the use of `safeDeposit` is handled in a safe manner.
+        // eg. msg.sender.safeDeposit(total, currency); <- Use msg.sender as from in transferFrom.
+        // slither-disable-next-line arbitrary-send-erc20
+        IERC20(token).safeTransferFrom(from, address(this), amount);
+        return amount;
+    }
+
     /// @notice Increases the allowance of a given `spender` for a specified ERC20 `token`.
     /// @dev This function safely increases the allowance using OpenZeppelin's SafeERC20 library.
     /// @param spender The address that will be granted an additional spending allowance.
@@ -60,18 +85,8 @@ library FinancialOps {
     /// @param token The address of the token to deposit.
     function safeDeposit(address from, uint256 amount, address token) internal returns (uint256) {
         if (amount == 0) revert FailDuringDeposit("Invalid zero amount.");
-        if (token == address(0)) {
-            if (amount > msg.value) revert FailDuringDeposit("Amount exceeds balance.");
-            // the transfer is not needed since the transfer is implicit here
-            return amount;
-        }
-
-        if (amount > allowance(from, token)) revert FailDuringDeposit("Amount exceeds allowance.");
-        // disable slitter use 'arbitrary transfer form' since the use of `safeDeposit` is handled in a safe manner.
-        // eg. msg.sender.safeDeposit(total, currency); <- Use msg.sender as from in transferFrom.
-        // slither-disable-next-line arbitrary-send-erc20
-        IERC20(token).safeTransferFrom(from, address(this), amount);
-        return amount;
+        if (token == address(0)) return _nativeDeposit(amount);
+        return _erc20Deposit(from, amount, token);
     }
 
     /// @notice Retrieves the balance of Native or ERC20 tokens for the specified address.

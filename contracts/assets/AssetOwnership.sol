@@ -36,7 +36,7 @@ contract AssetOwnership is
     /// @dev Emitted when a new asset is registered on the platform.
     /// @param owner The address of the creator or owner of the registered asset.
     /// @param assetId The unique identifier for the registered asset.
-    event RegisterAsset(address indexed owner, uint256 assetId);
+    event RegisteredAsset(address indexed owner, uint256 assetId);
 
     /// @dev Emitted when an asset is revoked and removed from the platform.
     /// @param owner The address of the owner of the revoked asset.
@@ -121,7 +121,7 @@ contract AssetOwnership is
     function register(address to, uint256 assetId) external onlyApprovedAsset(to, assetId) {
         _mint(to, assetId);
         _activateAsset(assetId);
-        emit RegisterAsset(to, assetId);
+        emit RegisteredAsset(to, assetId);
     }
 
     /// @notice Revokes an asset, permanently disabling it within the system.

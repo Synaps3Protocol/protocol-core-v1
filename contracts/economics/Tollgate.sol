@@ -3,7 +3,6 @@
 pragma solidity 0.8.26;
 
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import { ERC165Checker } from "@openzeppelin/contracts/utils/introspection/ERC165Checker.sol";
 import { Initializable } from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import { EnumerableSet } from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 import { UUPSUpgradeable } from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
@@ -18,11 +17,12 @@ import { FeesOps } from "@synaps3/core/libraries/FeesOps.sol";
 /// @dev This contract ensures proper fee validation and currency registration for different operational contexts.
 contract Tollgate is Initializable, UUPSUpgradeable, AccessControlledUpgradeable, ITollgate {
     using FeesOps for uint256;
-    using ERC165Checker for address;
     using EnumerableSet for EnumerableSet.AddressSet;
 
     /// @dev ERC-20 interface ID used to validate token compliance.
     bytes4 private constant INTERFACE_ID_ERC20 = type(IERC20).interfaceId;
+    /// Note: Mappings do not benefit from storage packing, as each mapping entry
+    ///       is stored in a separate slot, making reordering inconsequential for packing efficiency.
     /// @dev Tracks registered currencies for specific targets.
     /// Uses EnumerableSet for efficient storage and querying of currency addresses.
     mapping(address => EnumerableSet.AddressSet) private _registeredCurrencies;
@@ -39,11 +39,13 @@ contract Tollgate is Initializable, UUPSUpgradeable, AccessControlledUpgradeable
     event FeesSet(address indexed target, address indexed currency, T.Scheme scheme, uint256 fee);
 
     /// @notice Error for unsupported currencies.
+    /// @param target The context where the currency is unsupported.
     /// @param currency The address of the unsupported currency.
-    error InvalidUnsupportedCurrency(address currency);
+    error UnsupportedCurrency(address target, address currency);
 
-    /// @notice Error invalid unsupported context.
-    error InvalidTargetContext();
+    /// @notice Error for invalid target contexts.
+    /// @param target The address of the invalid target context.
+    error InvalidTargetContext(address target);
 
     /// @notice Error for invalid basis point fees.
     /// @param bps The provided basis point value.
@@ -74,10 +76,18 @@ contract Tollgate is Initializable, UUPSUpgradeable, AccessControlledUpgradeable
         __AccessControlled_init(accessManager);
     }
 
+    /// @notice Returns true if currency is supported by target.
+    /// @param target The context or address for which to verify supported currencies.
+    /// @param currency The address of the currency to check.
+    /// @return True if the currency is supported, false otherwise.
+    function isSupportedCurrency(address target, address currency) external view returns (bool) {
+        return _isSchemeSupported(target, currency);
+    }
+
     /// @notice Retrieves the list of supported currencies for a given target.
     /// @param target The address or context for which to retrieve supported currencies.
     /// @return An array of supported currency addresses.
-    function supportedCurrencies(address target) public view returns (address[] memory) {
+    function supportedCurrencies(address target) external view returns (address[] memory) {
         return _registeredCurrencies[target].values();
     }
 
@@ -86,12 +96,12 @@ contract Tollgate is Initializable, UUPSUpgradeable, AccessControlledUpgradeable
     /// @param currency The address of the currency.
     /// @return The fee value.
     function getFees(address target, address currency) external view returns (uint256, T.Scheme) {
-        T.Scheme scheme = _targetScheme[target];
-        if (!_isSchemeSupported(scheme, target, currency)) {
-            revert InvalidUnsupportedCurrency(currency);
+        // if scheme is supported return the fee and scheme
+        if (!_isSchemeSupported(target, currency)) {
+            revert UnsupportedCurrency(target, currency);
         }
 
-        // if scheme is supported return the fee and scheme
+        T.Scheme scheme = _targetScheme[target];
         bytes32 composedKey = _computeComposedKey(target, currency, scheme);
         uint256 fee = _currencyFees[composedKey];
         return (fee, scheme);
@@ -115,7 +125,7 @@ contract Tollgate is Initializable, UUPSUpgradeable, AccessControlledUpgradeable
         // Example: If the target is the policy manager contract, the currency is MMC (ERC20 token),
         // and the scheme is NOMINAL, setting a fee of 10% means:
         // "In the policy manager contract, for MMC, using a nominal scheme, the fee is 10%."
-        if (target == address(0)) revert InvalidTargetContext();
+        if (target == address(0)) revert InvalidTargetContext(target);
         bytes32 composedKey = _computeComposedKey(target, currency, scheme);
 
         _targetScheme[target] = scheme; // eg: rights manager => FLAT
@@ -124,12 +134,16 @@ contract Tollgate is Initializable, UUPSUpgradeable, AccessControlledUpgradeable
         emit FeesSet(target, currency, scheme, fee);
     }
 
+    /// @notice Ensures only authorized accounts can upgrade the contract.
+    /// @param newImplementation The address of the new contract implementation.
+    function _authorizeUpgrade(address newImplementation) internal override onlyAdmin {}
+
     /// @notice Checks if a fee scheme is supported for a given target and currency.
-    /// @param scheme The fee representation scheme (flat, nominal, or basis points).
     /// @param target The address or context to check.
     /// @param currency The address of the currency to verify.
     /// @return `true` if the currency is supported, otherwise `false`.
-    function _isSchemeSupported(T.Scheme scheme, address target, address currency) private view returns (bool) {
+    function _isSchemeSupported(address target, address currency) private view returns (bool) {
+        T.Scheme scheme = _targetScheme[target];
         bytes32 composedKey = _computeComposedKey(target, currency, scheme);
         return _registeredCurrencies[target].contains(currency) && _currencyFees[composedKey] > 0;
     }
@@ -142,8 +156,4 @@ contract Tollgate is Initializable, UUPSUpgradeable, AccessControlledUpgradeable
     function _computeComposedKey(address target, address currency, T.Scheme scheme) private pure returns (bytes32) {
         return keccak256(abi.encodePacked(target, currency, scheme));
     }
-
-    /// @notice Ensures only authorized accounts can upgrade the contract.
-    /// @param newImplementation The address of the new contract implementation.
-    function _authorizeUpgrade(address newImplementation) internal override onlyAdmin {}
 }

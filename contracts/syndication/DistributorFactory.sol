@@ -23,46 +23,73 @@ import { IDistributorFactory } from "@synaps3/core/interfaces/syndication/IDistr
 /// @title Distributor factory contract.
 /// @notice Use this contract to create new distributors.
 /// @dev This contract uses OpenZeppelin's Ownable and Pausable contracts for access control and pausing functionality.
-contract DistributorFactory is UpgradeableBeacon, Pausable, IDistributorFactory {
+contract DistributorFactory is UpgradeableBeacon, IDistributorFactory {
     /// @notice Mapping to keep track of registered distributor endpoints.
+    /// @dev The key is a hashed endpoint string, and the value is the address of the distributor contract.
+    ///      This ensures that each endpoint is uniquely assigned to a distributor.
     mapping(bytes32 => address) private _registry;
+    
+    /// @notice Mapping that associates a distributor contract with its creator (manager).
+    /// @dev Stores the address of the entity that deployed a given distributor.
+    mapping(address => address) private _manager;
+
     /// @notice Event emitted when a new distributor is created.
     /// @param distributorAddress Address of the newly created distributor.
     /// @param endpoint Endpoint associated with the new distributor.
     event DistributorCreated(address indexed distributorAddress, string endpoint);
-
+    
     /// @notice Error to be thrown when attempting to register an already registered distributor.
     error DistributorAlreadyRegistered();
 
-    // initialize implementation and initial owner
-    constructor(address implementation) UpgradeableBeacon(implementation, msg.sender) Pausable() {}
+    /// @notice Initializes the contract with an implementation contract and sets the initial owner.
+    /// @param implementation The address of the implementation contract that distributors will use.
+    constructor(address implementation) UpgradeableBeacon(implementation, msg.sender) {}
 
-    /// @notice Function to pause the contract, preventing the creation of new distributors.
-    /// @dev Can only be called by the owner of the contract.
-    function pause() external onlyOwner {
-        _pause();
-    }
-
-    /// @notice Function to unpause the contract, allowing the creation of new distributors.
-    /// @dev Can only be called by the owner of the contract.
-    function unpause() external onlyOwner {
-        _unpause();
+    /// @notice Retrieves the creator of a given distributor contract.
+    /// @param distributor The address of the distributor contract.
+    /// @return The address of the entity that created the distributor.
+    function getCreator(address distributor) external view returns (address) {
+        return _manager[distributor];
     }
 
     /// @notice Function to create a new distributor contract.
-    /// @dev The contract must not be paused to call this function.
+    /// @dev Ensures that the same endpoint is not registered twice.
     /// @param endpoint The endpoint associated with the new distributor.
-    function create(string calldata endpoint) external whenNotPaused returns (address) {
-        // avoid duplicated endpoints
-        bytes32 hashed = keccak256(abi.encodePacked(endpoint));
-        if (_registry[hashed] != address(0)) revert DistributorAlreadyRegistered();
-        // check-effects-interaction..
-        _registry[hashed] = msg.sender;
+    /// @return The address of the newly created distributor contract.
+    function create(string calldata endpoint) external returns (address) {
+        // TODO additional validate endpoint schemes
+        _registerEndpoint(endpoint);
+        address newContract = _deployDistributor(endpoint);
+        _registerManager(newContract, msg.sender);
 
-        // initialize storage layout using Distributor contract impl..
-        bytes memory data = abi.encodeWithSignature("initialize(string,address)", endpoint, msg.sender);
-        address newContract = address(new BeaconProxy(address(this), data));
+        // Emit event to log distributor creation.
         emit DistributorCreated(newContract, endpoint);
         return newContract;
     }
+
+    /// @dev Registers the endpoint by hashing it and ensuring it is not already taken.
+    /// @param endpoint The endpoint to register.
+    /// @return The hashed endpoint.
+    function _registerEndpoint(string calldata endpoint) private returns (bytes32) {
+        bytes32 hashed = keccak256(abi.encodePacked(endpoint));
+        if (_registry[hashed] != address(0)) revert DistributorAlreadyRegistered();
+        _registry[hashed] = msg.sender;
+        return hashed;
+    }
+
+    /// @dev Deploys a new distributor contract using the beacon proxy pattern.
+    /// @param endpoint The endpoint associated with the new distributor.
+    /// @return The address of the newly created distributor contract.
+    function _deployDistributor(string calldata endpoint) private returns (address) {
+        bytes memory data = abi.encodeWithSignature("initialize(string,address)", endpoint, msg.sender);
+        return address(new BeaconProxy(address(this), data));
+    }
+
+    /// @dev Registers the creator of a distributor contract.
+    /// @param distributor The address of the distributor contract.
+    /// @param creator The address of the entity that created the distributor.
+    function _registerManager(address distributor, address creator) private {
+        _manager[distributor] = creator;
+    }
+
 }

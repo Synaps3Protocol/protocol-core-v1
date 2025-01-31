@@ -25,4 +25,10 @@ interface ITollgate {
     /// @param target The context or address for which to retrieve supported currencies.
     /// @return An array of supported currency addresses.
     function supportedCurrencies(address target) external view returns (address[] memory);
+
+    /// @notice Returns true if currency is supported by target.
+    /// @param target The context or address for which to verify supported currencies.
+    /// @param currency The address of the currency to check.
+    /// @return True if the currency is supported, false otherwise.
+    function isSupportedCurrency(address target, address currency) external view returns (bool);
 }

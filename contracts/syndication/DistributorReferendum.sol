@@ -38,10 +38,14 @@ contract DistributorReferendum is
     /// @custom:oz-upgrades-unsafe-allow state-variable-immutable
     ILedgerVault public immutable LEDGER_VAULT;
 
-    uint256 private _expirationPeriod; // Period for enrollment
-    uint256 private _enrollmentsCount; // Count of enrollments
-    mapping(address => uint256) private _enrollmentDeadline; // Timestamp for enrollment periods
+    /// @dev Stores the interface ID for IDistributor, ensuring compatibility verification.
     bytes4 private constant INTERFACE_ID_DISTRIBUTOR = type(IDistributor).interfaceId;
+    /// @dev Defines the expiration period for enrollment, determining how long a distributor remains active.
+    uint256 private _expirationPeriod;
+    /// @dev Tracks the number of active enrollments within the system.
+    uint256 private _enrollmentsCount;
+    /// @dev Maps a distributor's address to their respective enrollment deadline timestamp.
+    mapping(address => uint256) private _enrollmentDeadline;
 
     /// @notice Event emitted when a distributor is registered
     /// @param distributor The address of the registered distributor
@@ -162,6 +166,9 @@ contract DistributorReferendum is
         // !IMPORTANT If tollgate does not support the currency, will revert..
         (uint256 fees, T.Scheme scheme) = TOLLGATE.getFees(address(this), currency);
         if (scheme != T.Scheme.FLAT) revert InvalidFeeSchemeProvided("Expected a FLAT fee scheme.");
+
+        // TODO: additional check if exists in factory to validate emission
+        // distribution.getCreator MUST be equal to msg.sender
 
         LEDGER_VAULT.lock(msg.sender, fees, currency); // lock funds for distributor
         LEDGER_VAULT.claim(msg.sender, fees, currency); // claim the funds on behalf referendum

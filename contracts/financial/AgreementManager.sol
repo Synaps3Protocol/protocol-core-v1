@@ -42,8 +42,24 @@ contract AgreementManager is Initializable, UUPSUpgradeable, AccessControlledUpg
     /// @notice Error thrown when a flat fee exceeds the total amount.
     error FlatFeeExceedsTotal(uint256 total, uint256 fee);
 
+    /// @notice Error thrown when a currency is not supported by the specified target.
+    /// @param target The address or context for which the currency is unsupported.
+    /// @param currency The address of the unsupported currency.
+    error UnsupportedAgreementCurrency(address target, address currency);
+
     /// @notice Error thrown when an agreement includes no parties.
     error NoPartiesInAgreement();
+
+    /// @notice Ensures that the specified currency is supported for the given target.
+    /// @dev This modifier verifies if the `currency` is accepted under the context of `target`.
+    ///      If the currency is not supported, it reverts with `UnsupportedCurrency(target, currency)`.
+    /// @param target The address or context that requires currency validation.
+    /// @param currency The address of the currency being checked.
+    modifier onlySupportedCurrency(address target, address currency) {
+        bool isCurrencySupported = TOLLGATE.isSupportedCurrency(target, currency);
+        if (!isCurrencySupported) revert UnsupportedAgreementCurrency(target, currency);
+        _;
+    }
 
     /// @custom:oz-upgrades-unsafe-allow constructor
     constructor(address tollgate, address ledgerVault) {
@@ -73,7 +89,7 @@ contract AgreementManager is Initializable, UUPSUpgradeable, AccessControlledUpg
         address broker,
         address[] calldata parties,
         bytes calldata payload
-    ) external returns (uint256) {
+    ) external onlySupportedCurrency(broker, currency) returns (uint256) {
         // IMPORTANT: The process of distributing funds to accounts should be handled within the settlement logic.
         uint256 confirmed = LEDGER_VAULT.lock(msg.sender, amount, currency);
         T.Agreement memory agreement = previewAgreement(confirmed, currency, broker, parties, payload);
@@ -102,7 +118,7 @@ contract AgreementManager is Initializable, UUPSUpgradeable, AccessControlledUpg
         address broker,
         address[] calldata parties,
         bytes calldata payload
-    ) public view returns (T.Agreement memory) {
+    ) public view onlySupportedCurrency(broker, currency) returns (T.Agreement memory) {
         if (parties.length == 0) {
             revert NoPartiesInAgreement();
         }
