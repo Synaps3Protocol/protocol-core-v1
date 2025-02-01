@@ -2,7 +2,6 @@
 // NatSpec format convention - https://docs.soliditylang.org/en/v0.5.10/natspec-format.html
 pragma solidity 0.8.26;
 
-import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { Initializable } from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import { EnumerableSet } from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 import { UUPSUpgradeable } from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
@@ -19,8 +18,6 @@ contract Tollgate is Initializable, UUPSUpgradeable, AccessControlledUpgradeable
     using FeesOps for uint256;
     using EnumerableSet for EnumerableSet.AddressSet;
 
-    /// @dev ERC-20 interface ID used to validate token compliance.
-    bytes4 private constant INTERFACE_ID_ERC20 = type(IERC20).interfaceId;
     /// Note: Mappings do not benefit from storage packing, as each mapping entry
     ///       is stored in a separate slot, making reordering inconsequential for packing efficiency.
     /// @dev Tracks registered currencies for specific targets.
