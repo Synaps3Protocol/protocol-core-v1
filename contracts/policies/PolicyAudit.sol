@@ -12,7 +12,7 @@ import { IPolicyAuditor } from "@synaps3/core/interfaces/policies/IPolicyAuditor
 
 /// @title PolicyAudit
 /// @notice This contract audits content policies and ensures that only authorized entities can approve or revoke.
-/// @dev This contract enables the submission, approval, and revocation of policy audits. 
+/// @dev This contract enables the submission, approval, and revocation of policy audits.
 /// It implements a decentralized review process through the `QuorumUpgradeable` module.
 contract PolicyAudit is Initializable, UUPSUpgradeable, AccessControlledUpgradeable, QuorumUpgradeable, IPolicyAuditor {
     using ERC165Checker for address;

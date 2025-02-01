@@ -13,8 +13,9 @@ import { QuorumUpgradeable } from "@synaps3/core/primitives/upgradeable/QuorumUp
 import { IAssetReferendum } from "@synaps3/core/interfaces/assets/IAssetReferendum.sol";
 import { C } from "@synaps3/core/primitives/Constants.sol";
 
-/// @title AssetReferendum.
-/// @notice This contract allows for the submission, voting, and approval/rejection of asset.
+/// @title AssetReferendum
+/// @notice This contract enables a decentralized governance process for asset submission/voting/approval/rejection.
+/// @dev Implements a quorum-based mechanism for governance approval of assets in the system.
 contract AssetReferendum is
     Initializable,
     UUPSUpgradeable,

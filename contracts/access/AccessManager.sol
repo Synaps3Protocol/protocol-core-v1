@@ -8,7 +8,9 @@ import { AccessManagerUpgradeable } from "@openzeppelin/contracts-upgradeable/ac
 import { C } from "@synaps3/core/primitives/Constants.sol";
 
 /// @title AccessManager
-/// @dev Manages roles and permissions across the protocol.
+/// @notice Manages roles and permissions across the Synapse protocol.
+/// @dev Implements OpenZeppelin's `AccessManagerUpgradeable` with a structured role hierarchy.
+///      Uses a UUPS (Universal Upgradeable Proxy Standard) mechanism for upgradeability.
 contract AccessManager is Initializable, UUPSUpgradeable, AccessManagerUpgradeable {
     /// @notice Initializes the proxy state.
     function initialize(address initialAdmin) public override initializer {

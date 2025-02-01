@@ -2,7 +2,6 @@
 // NatSpec format convention - https://docs.soliditylang.org/en/v0.5.10/natspec-format.html
 pragma solidity 0.8.26;
 
-import { Pausable } from "@openzeppelin/contracts/utils/Pausable.sol";
 import { BeaconProxy } from "@openzeppelin/contracts/proxy/beacon/BeaconProxy.sol";
 import { UpgradeableBeacon } from "@openzeppelin/contracts/proxy/beacon/UpgradeableBeacon.sol";
 import { IDistributorFactory } from "@synaps3/core/interfaces/syndication/IDistributorFactory.sol";
