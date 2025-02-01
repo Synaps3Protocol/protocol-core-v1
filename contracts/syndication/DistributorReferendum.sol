@@ -173,18 +173,16 @@ contract DistributorReferendum is
         if (scheme != T.Scheme.FLAT) revert InvalidFeeSchemeProvided("Expected a FLAT fee scheme.");
 
         // TODO: additional check if exists in factory to validate emission
-        // distribution.getCreator MUST be equal to msg.sender
-
-        LEDGER_VAULT.lock(msg.sender, fees, currency); // lock funds for distributor
-        LEDGER_VAULT.claim(msg.sender, fees, currency); // claim the funds on behalf referendum
-        LEDGER_VAULT.withdraw(address(this), fees, currency); // transfer the funds to referendum
-
+        // eg: distribution.getCreator MUST be equal to msg.sender
+        uint256 locked = LEDGER_VAULT.lock(msg.sender, fees, currency); // lock funds
+        uint256 claimed = LEDGER_VAULT.claim(msg.sender, locked, currency); // claim the funds on behalf
+        uint256 confirmed = LEDGER_VAULT.withdraw(address(this), claimed, currency); // collect funds
         // register distributor as pending approval
         _register(uint160(distributor));
         // set the distributor active enrollment period..
         // after this time the distributor is considered inactive and cannot collect his profits...
         _enrollmentDeadline[distributor] = block.timestamp + _expirationPeriod;
-        emit Registered(distributor, fees);
+        emit Registered(distributor, confirmed);
     }
 
     /// @notice Approves a distributor's registration.

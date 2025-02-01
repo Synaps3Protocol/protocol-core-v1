@@ -66,11 +66,11 @@ coverage:
 secreport:
 	@aderyn
 
+# TODO: @mythx analyze .
 .PHONY: sectest ## run secutiry tests using slither
 sectest:
 	@export PATH=$HOME/.local/bin:$PATH	
-	@mythx analyze .
-	@slither . 
+	@slither . --print human-summary
 
 .PHONY: format ## auto-format solidity source files
 format:

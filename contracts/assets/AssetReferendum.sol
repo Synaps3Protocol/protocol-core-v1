@@ -48,8 +48,10 @@ contract AssetReferendum is
     /// @param assetId The ID of the asset that has been rejected.
     event Rejected(uint256 assetId);
 
-    // /// @dev Error thrown when the signature of the asset submission is invalid.
-    // error InvalidSubmissionSignature();
+    /// @dev Error thrown when asset submission fails.
+    /// @param initiator The address of the user who attempted to submit the asset.
+    /// @param assetId The ID of the asset that failed to be registered.
+    error SubmissionFailed(address initiator, uint256 assetId);
 
     /// @dev Constructor that disables initializers to prevent the implementation contract from being initialized.
     /// @notice This constructor prevents the implementation contract from being initialized.
@@ -73,7 +75,8 @@ contract AssetReferendum is
     /// @dev The asset ID is reviewed by governance.
     function submit(uint256 assetId) external {
         _register(assetId); // bundled check-effects-interaction
-        _submissions[msg.sender].add(assetId);
+        bool added = _submissions[msg.sender].add(assetId);
+        if (!added) revert SubmissionFailed(msg.sender, assetId);
         emit Submitted(msg.sender, assetId);
     }
 

@@ -45,6 +45,12 @@ contract RightsAssetCustodian is Initializable, UUPSUpgradeable, AccessControlle
     /// @dev Error that is thrown when a new granted distributor exceed the max redundancy.
     error MaxRedundancyAllowedReached();
 
+    /// @dev Error when failing to grant custody to a distributor.
+    error GrantCustodyFailed(address distributor, address holder);
+
+    /// @dev Error when failing to revoke custody from a distributor.
+    error RevokeCustodyFailed(address distributor, address holder);
+
     /// @notice Modifier to check if the distributor is active and not blocked.
     /// @param distributor The distributor address to check.
     modifier onlyActiveDistributor(address distributor) {
@@ -84,12 +90,13 @@ contract RightsAssetCustodian is Initializable, UUPSUpgradeable, AccessControlle
     /// @param distributor The distributor to revoke custody from.
     function revokeCustody(address distributor) external onlyActiveDistributor(distributor) {
         // msg.sender expected to be the holder revoking his/her content custody..
-        if (!_custodiansByHolder[msg.sender].contains(distributor)) {
-            revert InvalidInactiveDistributor();
-        }
+        bool existingCustodian = _custodiansByHolder[msg.sender].contains(distributor);
+        if (!existingCustodian) revert InvalidInactiveDistributor();
 
-        _custodiansByHolder[msg.sender].remove(distributor);
-        _holdersUnderCustodian[distributor].remove(msg.sender);
+        // remove registries from the storage
+        bool removedCustodian = _custodiansByHolder[msg.sender].remove(distributor);
+        bool removedCustody = _holdersUnderCustodian[distributor].remove(msg.sender);
+        if (!removedCustodian || !removedCustody) revert RevokeCustodyFailed(distributor, msg.sender);
         emit CustodialRevoked(distributor, msg.sender);
     }
 
@@ -97,12 +104,14 @@ contract RightsAssetCustodian is Initializable, UUPSUpgradeable, AccessControlle
     /// @param distributor The address of the distributor who will receive custodial rights.
     function grantCustody(address distributor) external onlyActiveDistributor(distributor) {
         // msg.sender expected to be the holder declaring his/her content custody..
-        if (_custodiansByHolder[msg.sender].length() >= _maxDistributionRedundancy) {
-            revert MaxRedundancyAllowedReached();
-        }
+        uint256 currentRedundancy = _custodiansByHolder[msg.sender].length();
+        bool exceededRedundancy = currentRedundancy >= _maxDistributionRedundancy;
+        if (exceededRedundancy) revert MaxRedundancyAllowedReached();
 
-        _custodiansByHolder[msg.sender].add(distributor);
-        _holdersUnderCustodian[distributor].add(msg.sender);
+        // add registry to the storage
+        bool addedCustodian = _custodiansByHolder[msg.sender].add(distributor);
+        bool addedCustody = _holdersUnderCustodian[distributor].add(msg.sender);
+        if (!addedCustodian || !addedCustody) revert GrantCustodyFailed(distributor, msg.sender);
         emit CustodialGranted(distributor, msg.sender);
     }
 
@@ -136,10 +145,6 @@ contract RightsAssetCustodian is Initializable, UUPSUpgradeable, AccessControlle
     /// acts like a server, and the function balances the requests (custody assignments) based on a weighted
     /// probability distribution. Custodians with higher weights have a greater chance of being selected, much
     /// like how a load balancer directs more traffic to servers with greater capacity.
-    ///
-    /// The randomness used here is not cryptographically secure, but sufficient for this non-critical operation.
-    /// The random number is generated using the block hash and the holder's address, and is used to determine
-    /// which custodian is selected.
     /// @param holder The address of the asset rights holder whose custodian is to be selected.
     function getBalancedCustodian(address holder) external view returns (address chosen) {
         uint256 i = 0;
@@ -154,6 +159,11 @@ contract RightsAssetCustodian is Initializable, UUPSUpgradeable, AccessControlle
         // as the divisor covers the largest possible portion of the dividend
         // with complete multiples, leaving the rest as the remainder.
         // 15 integer parts make up 150_000, while the remaining 3_000 is the residue.
+
+        /// IMPORTANT: The randomness used here is not cryptographically secure,
+        /// but sufficient for this non-critical operation. The random number is generated
+        /// using the block hash and the holder's address, and is used to determine which custodian is selected.
+        // slither-disable-next-line weak-prng
         uint256 random = uint256(keccak256(abi.encodePacked(blockHash, holder))) % C.BPS_MAX;
         uint256 n = _custodiansByHolder[holder].length();
         // Adjust 'n' to comply with the maximum distribution redundancy:

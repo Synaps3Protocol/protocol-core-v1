@@ -59,8 +59,8 @@ abstract contract AccessControlledUpgradeable is Initializable, AccessManagedUpg
     function _hasRole(uint64 role, address account) internal view returns (bool) {
         AccessControlStorage storage $ = _getAccessControlStorage();
         IAccessManager manager = IAccessManager($._accessManager);
-        (bool isMember, ) = manager.hasRole(role, account);
-        return isMember;
+        (bool isMember, uint256 executionDelay) = manager.hasRole(role, account);
+        return isMember && executionDelay == 0; // immediately execution authorization for admin
     }
 
     ///@notice Internal function to access the AccessControlStorage.

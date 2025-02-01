@@ -39,7 +39,12 @@ contract RightsPolicyManager is Initializable, UUPSUpgradeable, AccessControlled
     /// @param proof A unique identifier for the agreement between holder and account.
     /// @param attestationId A unique identifier for the attestation that confirms the registration.
     /// @param policy The address of the registered policy governing the access rights.
-    event PolicyRegistered(address indexed account, uint256 proof, uint256 attestationId, address policy);
+    event Registered(address indexed account, uint256 proof, uint256 attestationId, address policy);
+
+    /// @dev Error thrown when a policy registration fails.
+    /// @param account The address of the account for which the policy registration failed.
+    /// @param policy The address of the policy that could not be registered.
+    error RegistrationFailed(address account, address policy);
 
     /// @dev Error thrown when attempting to operate on a policy that has not
     /// been delegated rights for the specified content by the rights holder.
@@ -50,7 +55,7 @@ contract RightsPolicyManager is Initializable, UUPSUpgradeable, AccessControlled
     /// @dev Error thrown when the execution of a policy fails due to an internal issue,
     /// such as incorrect conditions, failed checks, or an execution error.
     /// @param reason A descriptive string explaining the enforcement failure.
-    error PolicyEnforcementFailed(string reason);
+    error EnforcementFailed(string reason);
 
     /// @notice Ensures that the specified policy has been authorized by the asset rights holder.
     /// @dev This modifier checks the `RIGHTS_AUTHORIZER` to verify if `policyAddress`
@@ -99,7 +104,7 @@ contract RightsPolicyManager is Initializable, UUPSUpgradeable, AccessControlled
         // type safe low level call to policy. The policy is registered to the parties..
         bytes memory callData = abi.encodeCall(IPolicy.enforce, (holder, agreement));
         (bool success, bytes memory result) = policy.call(callData);
-        if (!success) revert PolicyEnforcementFailed("Error during policy enforcement call");
+        if (!success) revert EnforcementFailed("Error during policy enforcement call");
 
         // expected returned attestation as agreement confirmation
         uint256[] memory attestationIds = abi.decode(result, (uint256[]));
@@ -212,8 +217,9 @@ contract RightsPolicyManager is Initializable, UUPSUpgradeable, AccessControlled
         // safe unchecked inc limited to partiesLen
         for (uint256 i = 0; i < partiesLen; i = i.uncheckedInc()) {
             uint256 attestationId = attestationIds[i];
-            _closures[parties[i]].add(policyAddress); // associate the policy with party account
-            emit PolicyRegistered(parties[i], proof, attestationId, policyAddress);
+            bool registered = _closures[parties[i]].add(policyAddress);
+            if (!registered) revert RegistrationFailed(parties[i], policyAddress);
+            emit Registered(parties[i], proof, attestationId, policyAddress);
         }
     }
 }

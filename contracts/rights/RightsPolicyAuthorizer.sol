@@ -55,6 +55,12 @@ contract RightsPolicyAuthorizer is
     /// @param reason A string explaining the reason for the invalid policy setup.
     error InvalidPolicyInitialization(string reason);
 
+    /// @dev Error thrown when a policy authorization fails.
+    error AuthorizationFailed(address holder, address policy);
+
+    /// @dev Error thrown when revoking an authorization fails.
+    error RevocationFailed(address holder, address policy);
+
     /// @custom:oz-upgrades-unsafe-allow constructor
     constructor(address policyAudit) {
         /// https://forum.openzeppelin.com/t/uupsupgradeable-vulnerability-post-mortem/15680
@@ -74,19 +80,16 @@ contract RightsPolicyAuthorizer is
     /// @param policy The address of the policy contract to be initialized and authorized.
     /// @param data The data to initialize policy.
     function authorizePolicy(address policy, bytes calldata data) external {
-        // only valid and audit polices are allowed to be authorized and initialized..
-        if (!_isValidPolicy(policy)) revert InvalidNotAuditedPolicy(policy);
-        // type safe low level call to policy, call policy initialization with provided data..
-        (bool success, ) = policy.call(abi.encodeCall(IPolicy.initialize, (msg.sender, data)));
-        if (!success) revert InvalidPolicyInitialization("Error during policy initialization call");
-        _authorizedPolicies[msg.sender].add(policy); // register policy as authorized for the authorizer
+        _initializePolicy(policy, data);
+        _registerAuthorizedPolicy(msg.sender, policy);
         emit RightsGranted(policy, msg.sender, data);
     }
 
     /// @notice Revokes the delegation of rights to a policy contract.
     /// @param policy The address of the policy contract whose rights delegation is being revoked.
     function revokePolicy(address policy) external {
-        _authorizedPolicies[msg.sender].remove(policy);
+        bool revoked = _authorizedPolicies[msg.sender].remove(policy);
+        if (!revoked) revert RevocationFailed(msg.sender, policy);
         emit RightsRevoked(policy, msg.sender);
     }
 
@@ -145,5 +148,25 @@ contract RightsPolicyAuthorizer is
     /// @param policy The address of the policy contract to verify.
     function _isValidPolicy(address policy) private view returns (bool) {
         return (policy != address(0) && POLICY_AUDIT.isAudited(policy));
+    }
+
+    /// @dev Initializes a policy by calling its `initialize` function.
+    /// @param policy The address of the policy contract.
+    /// @param data The data to initialize the policy.
+    function _initializePolicy(address policy, bytes calldata data) private {
+        // only valid and audit polices are allowed to be authorized and initialized..
+        if (!_isValidPolicy(policy)) revert InvalidNotAuditedPolicy(policy);
+        // type safe low level call to policy, call policy initialization with provided data..
+        (bool success, ) = policy.call(abi.encodeCall(IPolicy.initialize, (msg.sender, data)));
+        if (!success) revert InvalidPolicyInitialization("Error during policy initialization call");
+    }
+
+    /// @dev Registers a policy as authorized for a given holder.
+    /// @param holder The address of the asset rights holder.
+    /// @param policy The address of the policy contract.
+    function _registerAuthorizedPolicy(address holder, address policy) private {
+        // register policy as authorized for the authorizer
+        bool registered = _authorizedPolicies[holder].add(policy);
+        if (!registered) revert AuthorizationFailed(holder, policy);
     }
 }

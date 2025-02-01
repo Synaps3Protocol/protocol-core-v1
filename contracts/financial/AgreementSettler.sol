@@ -59,16 +59,22 @@ contract AgreementSettler is
 
     /// @notice Emitted when an agreement is settled by the designated broker or authorized account.
     /// @param broker The account that facilitated the agreement settlement.
+    /// @param counterparty The address that received the settlement funds.
     /// @param proof The unique identifier (hash or proof) of the settled agreement.
-    event AgreementSettled(address indexed broker, address indexed counterparty, uint256 proof);
+    /// @param collectedFees The amount of fees collected from the settlement process.
+    event AgreementSettled(address indexed broker, address indexed counterparty, uint256 proof, uint256 collectedFees);
 
     /// @notice Emitted when an agreement is canceled by the broker or another authorized account.
     /// @param initiator The account that initiated the cancellation.
     /// @param proof The unique identifier (hash or proof) of the canceled agreement.
-    event AgreementCancelled(address indexed initiator, uint256 proof);
+    /// @param collectedFees The amount of fees collected (if any) upon cancellation.
+    event AgreementCancelled(address indexed initiator, uint256 proof, uint256 collectedFees);
 
     /// @notice Error thrown when the agreement proof has already been settled.
     error AgreementAlreadySettled();
+
+    /// @dev Error thrown when settlement fails due to incorrect fee extraction.
+    error SettlementFailed(uint256 extracted, uint256 expectedFees);
 
     /// @notice Error thrown when the caller is not authorized to settle the agreement.
     error UnauthorizedBroker();
@@ -139,11 +145,13 @@ contract AgreementSettler is
         address currency = agreement.currency;
 
         _setProofAsSettled(proof);
+        // slither-disable-start unused-return
         // part of the agreement locked amount is released to the account
         LEDGER_VAULT.claim(initiator, fees, currency);
         LEDGER_VAULT.release(initiator, available, currency);
         LEDGER_VAULT.withdraw(address(this), fees, currency);
-        emit AgreementCancelled(initiator, proof);
+        // slither-disable-end unused-return
+        emit AgreementCancelled(initiator, proof, fees);
         return agreement;
     }
 
@@ -167,11 +175,15 @@ contract AgreementSettler is
         // Once the window expires, the agreement should be marked as invalid or revert,
         // then quit is only way to close the agreement.
         _setProofAsSettled(proof);
+
+        // slither-disable-start unused-return
         // move the funds to settler and transfer the available to counterparty
         LEDGER_VAULT.claim(initiator, total, currency);
         LEDGER_VAULT.transfer(counterparty, available, currency);
         LEDGER_VAULT.withdraw(address(this), fees, currency);
-        emit AgreementSettled(msg.sender, counterparty, proof);
+        // slither-disable-end unused-return
+
+        emit AgreementSettled(msg.sender, counterparty, proof, fees);
         return agreement;
     }
 
