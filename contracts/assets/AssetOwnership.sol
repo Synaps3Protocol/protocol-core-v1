@@ -17,7 +17,7 @@ import { IAssetOwnership } from "@synaps3/core/interfaces/assets/IAssetOwnership
 // TODO: Evaluate ERC-2981 for royalty management
 // TODO: Evaluate ERC-4804 for URL-based on-chain asset references
 
-/// @title Asset Ownership (Upgradeable ERC721)
+/// @title AssetOwnership
 /// @notice This contract manages ownership and lifecycle of digital assets using ERC721.
 /// @dev Implements UUPS upgradeability, access control, and stateful asset management.
 contract AssetOwnership is

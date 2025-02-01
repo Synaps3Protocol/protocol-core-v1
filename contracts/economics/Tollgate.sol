@@ -12,7 +12,7 @@ import { ITollgate } from "@synaps3/core/interfaces/economics/ITollgate.sol";
 import { T } from "@synaps3/core/primitives/Types.sol";
 import { FeesOps } from "@synaps3/core/libraries/FeesOps.sol";
 
-/// @title Tollgate Contract
+/// @title Tollgate
 /// @notice Manages fees and approved currencies for various operations within the protocol.
 /// @dev This contract ensures proper fee validation and currency registration for different operational contexts.
 contract Tollgate is Initializable, UUPSUpgradeable, AccessControlledUpgradeable, ITollgate {

@@ -13,7 +13,7 @@ import { QuorumUpgradeable } from "@synaps3/core/primitives/upgradeable/QuorumUp
 import { IAssetReferendum } from "@synaps3/core/interfaces/assets/IAssetReferendum.sol";
 import { C } from "@synaps3/core/primitives/Constants.sol";
 
-/// @title Asset curation contract.
+/// @title AssetReferendum.
 /// @notice This contract allows for the submission, voting, and approval/rejection of asset.
 contract AssetReferendum is
     Initializable,

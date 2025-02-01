@@ -11,6 +11,11 @@ import { IRightsAssetCustodian } from "@synaps3/core/interfaces/rights/IRightsAs
 
 import { C } from "@synaps3/core/primitives/Constants.sol";
 
+/// @title RightsAssetCustodian
+/// @notice Manages the assignment and verification of custodial distribution rights for content holders.
+/// @dev This contract ensures that only approved distributors can act as custodians for content holders.
+///      It enforces redundancy limits to balance network distribution and uses an approval mechanism
+///      to validate the activity status of distributors.
 contract RightsAssetCustodian is Initializable, UUPSUpgradeable, AccessControlledUpgradeable, IRightsAssetCustodian {
     using EnumerableSet for EnumerableSet.AddressSet;
 

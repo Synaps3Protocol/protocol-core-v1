@@ -14,6 +14,10 @@ import { FinancialOps } from "@synaps3/core/libraries/FinancialOps.sol";
 import { FeesOps } from "@synaps3/core/libraries/FeesOps.sol";
 import { T } from "@synaps3/core/primitives/Types.sol";
 
+/// @title AgreementManager
+/// @notice Manages the lifecycle of agreements, including creation, retrieval, and fee calculation.
+/// @dev This contract ensures that agreements are immutable upon creation, enforcing fair and transparent terms.
+///      It integrates with `LedgerVault` for fund management and `Tollgate` for fee validation.
 contract AgreementManager is Initializable, UUPSUpgradeable, AccessControlledUpgradeable, IAgreementManager {
     using FeesOps for uint256;
     using FinancialOps for address;

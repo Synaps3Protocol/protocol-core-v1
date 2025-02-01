@@ -13,8 +13,9 @@ import { IBalanceDepositor } from "@synaps3/core/interfaces/base/IBalanceDeposit
 import { FinancialOps } from "@synaps3/core/libraries/FinancialOps.sol";
 import { LoopOps } from "@synaps3/core/libraries/LoopOps.sol";
 
-/// @title Treasury Contract
-/// @dev This contract is designed to manage the storage and distribution of funds.
+/// @title Treasury
+/// @notice Manages the storage, distribution, and collection of protocol fees.
+/// @dev Implements a restricted deposit system where only approved entities can interact.
 contract Treasury is
     Initializable,
     UUPSUpgradeable,

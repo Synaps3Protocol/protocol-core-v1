@@ -16,6 +16,11 @@ import { LoopOps } from "@synaps3/core/libraries/LoopOps.sol";
 import { ArrayOps } from "@synaps3/core/libraries/ArrayOps.sol";
 import { T } from "@synaps3/core/primitives/Types.sol";
 
+/// @title RightsPolicyManager
+/// @notice Handles policy enforcement, registration, and verification for content rights.
+/// @dev This contract ensures that policies are properly authorized before being enforced.
+///      It interacts with the `RightsPolicyAuthorizer` to verify delegation and `AgreementSettler`
+///      to manage agreements.
 contract RightsPolicyManager is Initializable, UUPSUpgradeable, AccessControlledUpgradeable, IRightsPolicyManager {
     using EnumerableSet for EnumerableSet.AddressSet;
     using ArrayOps for address[];

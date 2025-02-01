@@ -7,8 +7,10 @@ import { OwnableUpgradeable } from "@openzeppelin/contracts-upgradeable/access/O
 import { IDistributor } from "@synaps3/core/interfaces/syndication/IDistributor.sol";
 import { FinancialOps } from "@synaps3/core/libraries/FinancialOps.sol";
 
-/// @title Asset Distributor Implementation
-/// @notice This contract handles all the necessary logic for managing content distributors.
+/// @title DistributorImpl
+/// @notice Handles the logic for managing content distributors in a decentralized environment.
+/// @dev Implements `IDistributor`, providing functions for managing distribution endpoints
+///      and fund withdrawals. Uses upgradeable contracts for flexibility and future improvements.
 contract DistributorImpl is Initializable, ERC165Upgradeable, OwnableUpgradeable, IDistributor {
     using FinancialOps for address;
 

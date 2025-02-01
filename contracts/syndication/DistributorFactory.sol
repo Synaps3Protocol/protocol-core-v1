@@ -20,7 +20,7 @@ import { IDistributorFactory } from "@synaps3/core/interfaces/syndication/IDistr
 //             -> beacon
 //             -> beacon
 
-/// @title Distributor factory contract.
+/// @title DistributorFactory.
 /// @notice Use this contract to create new distributors.
 /// @dev This contract uses OpenZeppelin's Ownable and Pausable contracts for access control and pausing functionality.
 contract DistributorFactory is UpgradeableBeacon, IDistributorFactory {
@@ -28,7 +28,7 @@ contract DistributorFactory is UpgradeableBeacon, IDistributorFactory {
     /// @dev The key is a hashed endpoint string, and the value is the address of the distributor contract.
     ///      This ensures that each endpoint is uniquely assigned to a distributor.
     mapping(bytes32 => address) private _registry;
-    
+
     /// @notice Mapping that associates a distributor contract with its creator (manager).
     /// @dev Stores the address of the entity that deployed a given distributor.
     mapping(address => address) private _manager;
@@ -36,8 +36,8 @@ contract DistributorFactory is UpgradeableBeacon, IDistributorFactory {
     /// @notice Event emitted when a new distributor is created.
     /// @param distributorAddress Address of the newly created distributor.
     /// @param endpoint Endpoint associated with the new distributor.
-    event DistributorCreated(address indexed distributorAddress, string endpoint);
-    
+    event DistributorCreated(address indexed distributorAddress, string indexed endpoint, bytes32 endpointHash);
+
     /// @notice Error to be thrown when attempting to register an already registered distributor.
     error DistributorAlreadyRegistered();
 
@@ -52,18 +52,20 @@ contract DistributorFactory is UpgradeableBeacon, IDistributorFactory {
         return _manager[distributor];
     }
 
+    // TODO: check domain existence
+
     /// @notice Function to create a new distributor contract.
     /// @dev Ensures that the same endpoint is not registered twice.
     /// @param endpoint The endpoint associated with the new distributor.
     /// @return The address of the newly created distributor contract.
     function create(string calldata endpoint) external returns (address) {
-        // TODO additional validate endpoint schemes
-        _registerEndpoint(endpoint);
+        // TODO additional validation needed to check endpoint schemes. eg: https, ip, etc
+        // TODO option two, penalize invalid endpoints, and revoked during referendum
+        bytes32 endpointHash = _registerEndpoint(endpoint);
         address newContract = _deployDistributor(endpoint);
         _registerManager(newContract, msg.sender);
-
         // Emit event to log distributor creation.
-        emit DistributorCreated(newContract, endpoint);
+        emit DistributorCreated(newContract, endpoint, endpointHash);
         return newContract;
     }
 
@@ -91,5 +93,4 @@ contract DistributorFactory is UpgradeableBeacon, IDistributorFactory {
     function _registerManager(address distributor, address creator) private {
         _manager[distributor] = creator;
     }
-
 }

@@ -10,7 +10,8 @@ import { IPolicy } from "@synaps3/core/interfaces/policies/IPolicy.sol";
 import { T } from "@synaps3/core/primitives/Types.sol";
 
 /// @title PolicyBase
-/// @notice This abstract contract serves as a base for policies that manage access to content.
+/// @notice Abstract contract serving as the base for policies that manage access control and rights enforcement.
+/// @dev This contract provides attestation management, agreement handling, and authorization mechanisms.
 abstract contract PolicyBase is IPolicy, ERC165 {
     /// @custom:oz-upgrades-unsafe-allow state-variable-immutable
     IAttestationProvider public immutable ATTESTATION_PROVIDER;

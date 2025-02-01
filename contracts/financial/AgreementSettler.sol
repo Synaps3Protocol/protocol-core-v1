@@ -26,6 +26,11 @@ import { FinancialOps } from "@synaps3/core/libraries/FinancialOps.sol";
 import { FeesOps } from "@synaps3/core/libraries/FeesOps.sol";
 import { T } from "@synaps3/core/primitives/Types.sol";
 
+/// @title AgreementSettler
+/// @notice Manages the finalization of agreements, handling fund distribution and settlement.
+/// @dev This contract ensures fair settlements, enforces penalties for agreement cancellations,
+///      and collects protocol fees. It interacts with the Treasury, LedgerVault, and AgreementManager
+///      to properly allocate locked funds upon agreement resolution.
 contract AgreementSettler is
     Initializable,
     UUPSUpgradeable,

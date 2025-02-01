@@ -17,15 +17,14 @@ library T {
         BPS // Basis points: fractional fee, where 1 BPS = 0.01% (e.g., 100 BPS = 1%)
     }
 
-    /// @title VaultType
-    /// @notice Enum representing the different access or cryptographic methods available.
-    /// This enum covers traditional cryptographic algorithms as well as decentralized key
-    /// and access management systems.
-    enum VaultType {
-        __,
-        LIT,
-        RSA,
-        EC
+    /// @title Cipher
+    /// @notice Enum representing available encryption methods.
+    /// @dev Covers traditional encryption schemes and decentralized key management systems.
+    enum Cipher {
+        __, // Undefined or default state
+        LIT, // Decentralized threshold encryption
+        RSA, // Asymmetric encryption (public/private key)
+        EC // Elliptic Curve cryptography
     }
 
     /// @title Agreement

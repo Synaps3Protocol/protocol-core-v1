@@ -13,6 +13,10 @@ import { IPolicyAuditorVerifiable } from "@synaps3/core/interfaces/policies/IPol
 import { ArrayOps } from "@synaps3/core/libraries/ArrayOps.sol";
 import { LoopOps } from "@synaps3/core/libraries/LoopOps.sol";
 
+/// @title RightsPolicyAuthorizer
+/// @notice Manages the authorization of policies related to content access and usage rights.
+/// @dev This contract ensures that only audited and verified policies can be authorized,
+///      maintaining security and consistency across the protocol.
 contract RightsPolicyAuthorizer is
     Initializable,
     UUPSUpgradeable,
@@ -72,8 +76,7 @@ contract RightsPolicyAuthorizer is
     function authorizePolicy(address policy, bytes calldata data) external {
         // only valid and audit polices are allowed to be authorized and initialized..
         if (!_isValidPolicy(policy)) revert InvalidNotAuditedPolicy(policy);
-        // type safe low level call to policy
-        // call policy initialization with provided data..
+        // type safe low level call to policy, call policy initialization with provided data..
         (bool success, ) = policy.call(abi.encodeCall(IPolicy.initialize, (msg.sender, data)));
         if (!success) revert InvalidPolicyInitialization("Error during policy initialization call");
         _authorizedPolicies[msg.sender].add(policy); // register policy as authorized for the authorizer

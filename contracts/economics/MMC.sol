@@ -11,6 +11,10 @@ import { ERC20Burnable } from "@openzeppelin/contracts/token/ERC20/extensions/ER
 
 // https://eips.ethereum.org/EIPS/eip-2612 - permit
 // https://eips.ethereum.org/EIPS/eip-1363 - payable
+
+/// @title Multimedia Coin (MMC)
+/// @notice ERC20 token with governance, burnable and permit functionality.
+/// @dev Implements ERC20Votes, ERC20Burnable, and ERC20Permit for advanced functionality.
 contract MMC is ERC20, ERC20Permit, ERC20Burnable, ERC20Votes {
     constructor(
         address initialHolder,
@@ -18,6 +22,8 @@ contract MMC is ERC20, ERC20Permit, ERC20Burnable, ERC20Votes {
     ) ERC20("Multimedia Coin", "MMC") ERC20Permit("Multimedia Coin") {
         _mint(initialHolder, totalSupply * (10 ** 18));
     }
+
+    // TODO allowed restricted burn by treasury
 
     /// @inheritdoc IERC20Permit
     function nonces(address owner) public view override(ERC20Permit, Nonces) returns (uint256) {

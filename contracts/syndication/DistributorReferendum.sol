@@ -19,6 +19,11 @@ import { IDistributorReferendum } from "@synaps3/core/interfaces/syndication/IDi
 import { FinancialOps } from "@synaps3/core/libraries/FinancialOps.sol";
 import { T } from "@synaps3/core/primitives/Types.sol";
 
+/// @title DistributorReferendum
+/// @notice Manages the registration, approval, and revocation of content distributors.
+/// @dev Implements `IDistributorReferendum` and ensures that only valid distributors can operate.
+///      This contract integrates with `LedgerVault` for financial management, `Tollgate` for fee validation,
+///      and `Treasury` for protocol-wide economic operations.
 contract DistributorReferendum is
     Initializable,
     UUPSUpgradeable,
