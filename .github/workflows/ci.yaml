@@ -58,8 +58,6 @@ jobs:
       - name: Security Tests
         uses: crytic/slither-action@v0.4.0
         id: slither
-        with:
-          target: 'contracts/'
 
       - name: Tests
         run: make test
