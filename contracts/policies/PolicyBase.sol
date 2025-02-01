@@ -12,7 +12,7 @@ import { T } from "@synaps3/core/primitives/Types.sol";
 /// @title PolicyBase
 /// @notice Abstract contract serving as the base for policies that manage access control and rights enforcement.
 /// @dev This contract provides attestation management, agreement handling, and authorization mechanisms.
-// slither-disable unimplemented-functions
+/// slither-disable-next-line unimplemented-functions
 abstract contract PolicyBase is IPolicy, ERC165 {
     /// @custom:oz-upgrades-unsafe-allow state-variable-immutable
     IAttestationProvider public immutable ATTESTATION_PROVIDER;
