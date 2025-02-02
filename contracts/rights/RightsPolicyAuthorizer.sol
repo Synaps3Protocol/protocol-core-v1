@@ -6,10 +6,9 @@ import { Initializable } from "@openzeppelin/contracts-upgradeable/proxy/utils/I
 import { EnumerableSet } from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 import { UUPSUpgradeable } from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import { AccessControlledUpgradeable } from "@synaps3/core/primitives/upgradeable/AccessControlledUpgradeable.sol";
-
-import { IPolicy } from "@synaps3/core/interfaces/policies/IPolicy.sol";
 import { IRightsPolicyAuthorizer } from "@synaps3/core/interfaces/rights/IRightsPolicyAuthorizer.sol";
 import { IPolicyAuditorVerifiable } from "@synaps3/core/interfaces/policies/IPolicyAuditorVerifiable.sol";
+import { IPolicy } from "@synaps3/core/interfaces/policies/IPolicy.sol";
 import { ArrayOps } from "@synaps3/core/libraries/ArrayOps.sol";
 import { LoopOps } from "@synaps3/core/libraries/LoopOps.sol";
 
@@ -157,7 +156,7 @@ contract RightsPolicyAuthorizer is
         // only valid and audit polices are allowed to be authorized and initialized..
         if (!_isValidPolicy(policy)) revert InvalidNotAuditedPolicy(policy);
         // type safe low level call to policy, call policy initialization with provided data..
-        (bool success, ) = policy.call(abi.encodeCall(IPolicy.initialize, (msg.sender, data)));
+        (bool success, ) = policy.call(abi.encodeCall(IPolicy.setup, (msg.sender, data)));
         if (!success) revert InvalidPolicyInitialization("Error during policy initialization call");
     }
 

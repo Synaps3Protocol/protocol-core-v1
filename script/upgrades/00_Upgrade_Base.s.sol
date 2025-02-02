@@ -5,7 +5,6 @@ import "forge-std/Script.sol";
 import { Strings } from "@openzeppelin/contracts/utils/Strings.sol";
 import { UUPSUpgradeable } from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import { ERC1967Proxy } from "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
-import { CREATE3Factory, ICREATE3Factory } from "script/create3/CREATE3Factory.sol";
 
 abstract contract UpgradeBase is Script {
     function getAdminPK() public view returns (uint256) {
@@ -22,5 +21,4 @@ abstract contract UpgradeBase is Script {
         require(success, "Error upgrading contract");
         return proxy;
     }
-
 }

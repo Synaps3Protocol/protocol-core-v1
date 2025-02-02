@@ -19,7 +19,7 @@ interface IPolicy {
     /// @dev Only the Rights Policies Authorizer contract has permission to call this function.
     /// @param holder The address of the holder for whom the policy is being initialized.
     /// @param init Initialization data required to configure the policy.
-    function initialize(address holder, bytes calldata init) external;
+    function setup(address holder, bytes calldata init) external;
 
     /// @notice Executes the agreement between the asset holder and the account based on the policy's rules.
     /// @dev Rights Policies Manager contract should be the only one allowed to call this method.

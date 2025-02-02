@@ -6,9 +6,8 @@ import { UUPSUpgradeable } from "@openzeppelin/contracts-upgradeable/proxy/utils
 import { Initializable } from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import { AccessControlledUpgradeable } from "@synaps3/core/primitives/upgradeable/AccessControlledUpgradeable.sol";
 import { QuorumUpgradeable } from "@synaps3/core/primitives/upgradeable/QuorumUpgradeable.sol";
-
-import { IPolicy } from "@synaps3/core/interfaces/policies/IPolicy.sol";
 import { IPolicyAuditor } from "@synaps3/core/interfaces/policies/IPolicyAuditor.sol";
+import { IPolicy } from "@synaps3/core/interfaces/policies/IPolicy.sol";
 
 /// @title PolicyAudit
 /// @notice This contract audits content policies and ensures that only authorized entities can approve or revoke.

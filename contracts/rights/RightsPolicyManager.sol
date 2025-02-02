@@ -185,22 +185,34 @@ contract RightsPolicyManager is Initializable, UUPSUpgradeable, AccessControlled
     /// @param policy The address of the policy contract to check compliance against.
     /// @param criteria Encoded data containing the parameters required to verify access.
     function isActivePolicy(address account, address policy, bytes memory criteria) public view returns (bool) {
-        // verify if the policy were registered for account address and comply with the criteria
-        bool registeredPolicy = _closures[account].contains(policy);
-        if (!registeredPolicy) return false; // fail fast: not registered policy
-        // ask to policy about the access for account address
-        bytes memory callData = abi.encodeCall(IPolicy.isAccessAllowed, (account, criteria));
-        (bool success, bytes memory result) = policy.staticcall(callData);
-        if (!success) return false; // silent failure
-        // ok => verified access
-        bool ok = abi.decode(result, (bool));
-        return ok;
+        if (!_isRegisteredPolicy(account, policy)) return false;
+        return _verifyPolicyAccess(account, policy, criteria);
     }
 
     /// @dev Authorizes the upgrade of the contract.
     /// @notice Only the owner can authorize the upgrade.
     /// @param newImplementation The address of the new implementation contract.
     function _authorizeUpgrade(address newImplementation) internal override onlyAdmin {}
+
+    /// @dev Checks if a policy is registered under the given account.
+    /// @param account The address of the user.
+    /// @param policy The address of the policy contract.
+    /// @return `true` if the policy is registered for the account, otherwise `false`.
+    function _isRegisteredPolicy(address account, address policy) private view returns (bool) {
+        return _closures[account].contains(policy);
+    }
+
+    /// @dev Verifies access permissions by calling the policy contract.
+    /// @param account The address of the user requesting access.
+    /// @param policy The address of the policy contract.
+    /// @param criteria Encoded parameters required for access verification.
+    /// @return `true` if the policy grants access, otherwise `false`.
+    function _verifyPolicyAccess(address account, address policy, bytes memory criteria) private view returns (bool) {
+        bytes memory callData = abi.encodeCall(IPolicy.isAccessAllowed, (account, criteria));
+        (bool success, bytes memory result) = policy.staticcall(callData);
+        if (!success) return false; // Silent failure
+        return abi.decode(result, (bool));
+    }
 
     /// @notice Registers a new policy for a list of accounts, granting access based on a specific policy contract.
     /// @param proof A cryptographic proof that verifies the authenticity of the agreement.

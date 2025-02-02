@@ -2,7 +2,7 @@ include .env
 export
 
 .DEFAULT_GOAL := all
-package=types
+package=protocol
 network=polygon-amoy
 report=lcov
 stage=development
@@ -69,7 +69,7 @@ secreport:
 .PHONY: sectest ## run secutiry tests using slither
 sectest:
 	@export PATH=$HOME/.local/bin:$PATH	
-	@slither . --print human-summary
+	@slither . 
 
 .PHONY: format ## auto-format solidity source files
 format:

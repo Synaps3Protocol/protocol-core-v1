@@ -3,9 +3,10 @@
 pragma solidity 0.8.26;
 
 import { ERC165 } from "@openzeppelin/contracts/utils/introspection/ERC165.sol";
-import { IAssetOwnership } from "@synaps3/core/interfaces/assets/IAssetOwnership.sol";
+import { AccessControlledUpgradeable } from "@synaps3/core/primitives/upgradeable/AccessControlledUpgradeable.sol";
 import { IRightsPolicyManagerVerifiable } from "@synaps3/core/interfaces/rights/IRightsPolicyManagerVerifiable.sol";
 import { IAttestationProvider } from "@synaps3/core/interfaces/base/IAttestationProvider.sol";
+import { IAssetOwnership } from "@synaps3/core/interfaces/assets/IAssetOwnership.sol";
 import { IPolicy } from "@synaps3/core/interfaces/policies/IPolicy.sol";
 import { T } from "@synaps3/core/primitives/Types.sol";
 
@@ -13,7 +14,7 @@ import { T } from "@synaps3/core/primitives/Types.sol";
 /// @notice Abstract contract serving as the base for policies that manage access control and rights enforcement.
 /// @dev This contract provides attestation management, agreement handling, and authorization mechanisms.
 // slither-disable-next-line unimplemented-functions
-abstract contract PolicyBase is IPolicy, ERC165 {
+abstract contract PolicyBase is ERC165, IPolicy {
     /// @custom:oz-upgrades-unsafe-allow state-variable-immutable
     IAttestationProvider public immutable ATTESTATION_PROVIDER;
     /// @custom:oz-upgrades-unsafe-allow state-variable-immutable
@@ -22,9 +23,11 @@ abstract contract PolicyBase is IPolicy, ERC165 {
     IAssetOwnership public immutable ASSET_OWNERSHIP;
 
     /// @dev Policy state
-    bool private _initialized;
+    bool private _active; 
     /// @dev registry to store the relation between (context & account) key => attestation
-    mapping(bytes32 => uint256) private _attestations;
+    mapping(bytes32 => uint256) private _attestations; 
+    /// @dev Reserved storage slots to avoid conflicts with child storage if upgradeability is required
+    uint256[50] private __gap; // Slots 2 - 51
 
     /// @notice Emitted when an enforcement process is successfully completed for a given account.
     /// @param context The attested agreement key map relations. eg: (account & holder), (account & asset id)
@@ -61,7 +64,7 @@ abstract contract PolicyBase is IPolicy, ERC165 {
     error InvalidAttestation();
 
     /// @dev This error is thrown when there is an issue with the initial setup or configuration.
-    error InvalidInitialization(string reason);
+    error InvalidSetup(string reason);
 
     /// @dev Modifier to restrict function calls to the Rights Manager address.
     modifier onlyPolicyManager() {
@@ -84,10 +87,10 @@ abstract contract PolicyBase is IPolicy, ERC165 {
     ///      Use this in functions that require a one-time setup phase.
     ///      Once executed, the contract is considered initialized.
     /// @custom:modifiers setup
-    modifier initializer() {
-        _initialized = false;
+    modifier activate() {
+        _active = false;
         _;
-        _initialized = true;
+        _active = true;
     }
 
     /// @notice Ensures that the contract has been properly initialized before execution.
@@ -95,8 +98,8 @@ abstract contract PolicyBase is IPolicy, ERC165 {
     ///      If the contract is not initialized, it reverts with an `InvalidPolicyInitialization` error.
     ///      Use this to restrict access to functions that depend on the contract's initial setup.
     /// @custom:modifiers withValidSetup
-    modifier initialized() {
-        if (!_initialized) {
+    modifier active() {
+        if (!_active) {
             revert InvalidPolicyInitialization();
         }
         _;
@@ -109,8 +112,8 @@ abstract contract PolicyBase is IPolicy, ERC165 {
     }
 
     /// @notice Checks if the policy has been initialized.
-    function isInitialized() external view returns (bool) {
-        return _initialized;
+    function isActive() external view returns (bool) {
+        return _active;
     }
 
     /// @notice Retrieves the address of the attestation provider.
