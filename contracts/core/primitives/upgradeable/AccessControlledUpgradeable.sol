@@ -36,13 +36,19 @@ abstract contract AccessControlledUpgradeable is Initializable, AccessManagedUpg
         _;
     }
 
-    /// @notice Initializes the contract with a specified AccessManager address.
+    // @dev Initializes the contract and ensures it is upgradeable.
+    /// Even if the initialization is harmless, this ensures the contract follows upgradeable contract patterns.
+    /// This is the method to initialize this contract and any other extended contracts.
     /// @param accessManager The address of the AccessManager contract.
+    /// slither-disable-next-line naming-convention
     function __AccessControlled_init(address accessManager) internal onlyInitializing {
         __AccessManaged_init(accessManager);
         __AccessControlled_init_unchained(accessManager);
     }
 
+    /// @dev Function to initialize the contract without chaining, typically used in child contracts.
+    /// This is the method to initialize this contract as standalone.
+    /// slither-disable-next-line naming-convention
     function __AccessControlled_init_unchained(address accessManager) internal onlyInitializing {
         if (accessManager == address(0)) {
             revert InvalidUnauthorizedOperation("Invalid authority address.");

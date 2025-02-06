@@ -21,10 +21,12 @@ abstract contract ERC721StatefulUpgradeable is Initializable, IERC721Stateful {
     /// @dev Initializes the contract and ensures it is upgradeable.
     /// Even if the initialization is harmless, this ensures the contract follows upgradeable contract patterns.
     /// This is the method to initialize this contract and any other extended contracts.
+    //slither-disable-next-line naming-convention
     function __ERC721Stateful_init() internal onlyInitializing {}
 
     /// @dev Function to initialize the contract without chaining, typically used in child contracts.
     /// This is the method to initialize this contract as standalone.
+    //slither-disable-next-line naming-convention
     function __ERC721Stateful_init_unchained() internal onlyInitializing {}
 
     /// @dev Internal function to set the state of a token to Active.

@@ -68,6 +68,7 @@ abstract contract FeesCollectorUpgradeable is Initializable, IFeesCollector {
     /// @notice Initializes the fees collector with the specified treasury address.
     /// @dev This is part of the upgradeable pattern for initializing contract state.
     /// @param treasuryAddress The address of the treasury to initialize.
+    //slither-disable-next-line naming-convention
     function __FeesCollector_init(address treasuryAddress) internal onlyInitializing {
         __FeesCollector_init_unchained(treasuryAddress);
     }
@@ -75,6 +76,7 @@ abstract contract FeesCollectorUpgradeable is Initializable, IFeesCollector {
     /// @notice Unchained initializer for the fees collector with the given treasury address.
     /// @dev Internal function for initializing the treasury address.
     /// @param treasuryAddress The address of the treasury.
+    //slither-disable-next-line naming-convention
     function __FeesCollector_init_unchained(address treasuryAddress) internal onlyInitializing {
         _setTreasuryAddress(treasuryAddress);
     }

@@ -14,7 +14,9 @@ import { T } from "@synaps3/core/primitives/Types.sol";
 /// @dev This contract does not store the actual asset but rather manages metadata, access points,
 ///      encrypted keys, licenses, passwords, and other sensitive information required to control asset access.
 contract AssetSafe is Initializable, UUPSUpgradeable, AccessControlledUpgradeable, IAssetSafe {
+    /// Rationale: Our immutables behave as constants after deployment
     /// @custom:oz-upgrades-unsafe-allow state-variable-immutable
+    /// slither-disable-next-line naming-convention
     IAssetOwnership public immutable ASSET_OWNERSHIP;
 
     /// @dev Mapping to securely store encrypted content using a unique key derived from assetId and cipher type.

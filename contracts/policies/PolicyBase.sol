@@ -3,7 +3,6 @@
 pragma solidity 0.8.26;
 
 import { ERC165 } from "@openzeppelin/contracts/utils/introspection/ERC165.sol";
-import { AccessControlledUpgradeable } from "@synaps3/core/primitives/upgradeable/AccessControlledUpgradeable.sol";
 import { IRightsPolicyManagerVerifiable } from "@synaps3/core/interfaces/rights/IRightsPolicyManagerVerifiable.sol";
 import { IAttestationProvider } from "@synaps3/core/interfaces/base/IAttestationProvider.sol";
 import { IAssetOwnership } from "@synaps3/core/interfaces/assets/IAssetOwnership.sol";
@@ -13,20 +12,25 @@ import { T } from "@synaps3/core/primitives/Types.sol";
 /// @title PolicyBase
 /// @notice Abstract contract serving as the base for policies that manage access control and rights enforcement.
 /// @dev This contract provides attestation management, agreement handling, and authorization mechanisms.
-// slither-disable-next-line unimplemented-functions
+/// slither-disable-next-line unimplemented-functions
 abstract contract PolicyBase is ERC165, IPolicy {
+    
+    /// Rationale: Our immutables behave as constants after deployment
+    //slither-disable-start naming-convention
     /// @custom:oz-upgrades-unsafe-allow state-variable-immutable
     IAttestationProvider public immutable ATTESTATION_PROVIDER;
     /// @custom:oz-upgrades-unsafe-allow state-variable-immutable
     IRightsPolicyManagerVerifiable public immutable RIGHTS_POLICY_MANAGER;
     /// @custom:oz-upgrades-unsafe-allow state-variable-immutable
     IAssetOwnership public immutable ASSET_OWNERSHIP;
+    //slither-disable-end naming-convention
 
     /// @dev Policy state
-    bool private _active; 
-    /// @dev registry to store the relation between (context & account) key => attestation
-    mapping(bytes32 => uint256) private _attestations; 
+    bool private _active;
+    /// @dev Registry to store the relation between (context & account) key => attestation
+    mapping(bytes32 => uint256) private _attestations;
     /// @dev Reserved storage slots to avoid conflicts with child storage if upgradeability is required
+    /// slither-disable-next-line naming-convention unused-state
     uint256[50] private __gap; // Slots 2 - 51
 
     /// @notice Emitted when an enforcement process is successfully completed for a given account.

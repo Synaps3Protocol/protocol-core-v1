@@ -48,11 +48,14 @@ contract AgreementSettler is
     /// will never be executed in the context of the proxy’s state
     /// https://docs.openzeppelin.com/upgrades-plugins/1.x/proxies#the-constructor-caveat
 
+    /// Rationale: Our immutables behave as constants after deployment
+    //slither-disable-start naming-convention
     ITreasury public immutable TREASURY;
     /// @custom:oz-upgrades-unsafe-allow state-variable-immutable
     IAgreementManager public immutable AGREEMENT_MANAGER;
     /// @custom:oz-upgrades-unsafe-allow state-variable-immutable
     ILedgerVault public immutable LEDGER_VAULT;
+    //slither-disable-end naming-convention
 
     /// @dev Holds a the list of closed/settled proof for accounts.
     mapping(uint256 => bool) private _settledProofs;

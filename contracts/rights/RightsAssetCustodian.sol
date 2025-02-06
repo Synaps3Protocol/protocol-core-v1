@@ -19,7 +19,9 @@ import { C } from "@synaps3/core/primitives/Constants.sol";
 contract RightsAssetCustodian is Initializable, UUPSUpgradeable, AccessControlledUpgradeable, IRightsAssetCustodian {
     using EnumerableSet for EnumerableSet.AddressSet;
 
+    /// Rationale: Our immutables behave as constants after deployment
     /// @custom:oz-upgrades-unsafe-allow state-variable-immutable
+    //slither-disable-next-line naming-convention
     IDistributorVerifiable public immutable DISTRIBUTOR_REFERENDUM;
 
     /// @dev the max allowed amount of distributors per holder.

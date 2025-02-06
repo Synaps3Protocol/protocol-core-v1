@@ -66,10 +66,10 @@ coverage:
 secreport:
 	@aderyn
 
-.PHONY: sectest ## run secutiry tests using slither
+.PHONY: sectest ## run security tests using slither
 sectest:
 	@export PATH=$HOME/.local/bin:$PATH	
-	@slither . 
+	@slither . --filter-paths "openzeppelin"
 
 .PHONY: format ## auto-format solidity source files
 format:

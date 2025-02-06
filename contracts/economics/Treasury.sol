@@ -67,26 +67,19 @@ contract Treasury is
         return super.deposit(pool, amount, currency);
     }
 
-    /// @notice Collects all accrued fees for a specified currency from a list of authorized collectors.
-    /// @dev This function iterates over the list of collectors, requesting each to disburse their collected fees
-    ///      for the given currency. The collected funds are credited to the treasury pool.
-    /// @param collectors An array of addresses, each representing an authorized fee collector .
+    /// @notice Collects accrued fees for a specified currency from an authorized fee collector.
+    /// @dev This function requests the given collector to disburse its collected fees
+    ///      for the specified currency. The collected funds are then credited to the treasury pool.
+    ///      Only the governor can execute this function, ensuring controlled fee collection.
+    /// @param collector The address of an authorized fee collector.
     /// @param currency The address of the ERC20 token for which fees are being collected.
-    function collectFees(address[] calldata collectors, address currency) external restricted {
-        uint256 collectorsLen = collectors.length;
-        address pool = address(this); // fees pool is treasury
-        uint256 totalCollected = 0;
-
-        // For each collector, request the collected fees and add them to the treasury pool balance
-        for (uint256 i = 0; i < collectorsLen; i = i.uncheckedInc()) {
-            IFeesCollector collector = IFeesCollector(collectors[i]);
-            uint256 collected = collector.disburse(currency);
-            // register funds in treasury pool...
-            _sumLedgerEntry(pool, collected, currency);
-            emit FeesCollected(collectors[i], collected, currency);
-            totalCollected += collected;
-        }
+    function collectFees(address collector, address currency) external restricted {
+        IFeesCollector feesCollector = IFeesCollector(collector);
+        uint256 collected = feesCollector.disburse(currency);
+        _sumLedgerEntry(address(this), collected, currency);
+        emit FeesCollected(collector, collected, currency);
     }
+
 
     /// @notice Function that should revert when msg.sender is not authorized to upgrade the contract.
     /// @param newImplementation The address of the new implementation contract.

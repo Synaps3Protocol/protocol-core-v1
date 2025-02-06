@@ -26,10 +26,13 @@ contract RightsPolicyManager is Initializable, UUPSUpgradeable, AccessControlled
     using ArrayOps for address[];
     using LoopOps for uint256;
 
+    /// Rationale: Our immutables behave as constants after deployment
+    //slither-disable-start naming-convention
     /// @custom:oz-upgrades-unsafe-allow state-variable-immutable
     IAgreementSettler public immutable AGREEMENT_SETTLER;
     /// @custom:oz-upgrades-unsafe-allow state-variable-immutable
     IRightsPolicyAuthorizerVerifiable public immutable RIGHTS_AUTHORIZER;
+    //slither-disable-end naming-convention
 
     /// @dev Mapping to store the access control list for each content holder and account.
     mapping(address => EnumerableSet.AddressSet) private _closures;
@@ -101,8 +104,11 @@ contract RightsPolicyManager is Initializable, UUPSUpgradeable, AccessControlled
     ) external onlyAuthorizedPolicy(holder, policy) returns (uint256[] memory) {
         // 1- retrieves the agreement and marks it as settled..
         T.Agreement memory agreement = AGREEMENT_SETTLER.settleAgreement(proof, holder);
-        // type safe low level call to policy. The policy is registered to the parties..
         bytes memory callData = abi.encodeCall(IPolicy.enforce, (holder, agreement));
+        /// Type-safe low-level call to policy. The policy is registered to the parties.
+        /// Rationale: The policy address is already validated during policy audit and authorization.
+        ///            During `onlyAuthorizedPolicy`, the policy is verified about authorization.
+        //slither-disable-next-line missing-zero-check
         (bool success, bytes memory result) = policy.call(callData);
         if (!success) revert EnforcementFailed("Error during policy enforcement call");
 

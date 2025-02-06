@@ -28,9 +28,11 @@ contract AssetOwnership is
     ERC721EnumerableUpgradeable,
     ERC721StatefulUpgradeable,
     IAssetOwnership
-{
+{   
+    /// Rationale: Our immutables behave as constants after deployment
     /// @custom:oz-upgrades-unsafe-allow state-variable-immutable
     /// @notice Reference to the asset verification contract for content approval.
+    /// slither-disable-next-line naming-convention
     IAssetVerifiable public immutable ASSET_REFERENDUM;
 
     /// @dev Emitted when a new asset is registered on the platform.

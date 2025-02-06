@@ -9,11 +9,11 @@ import { FinancialOps } from "@synaps3/core/libraries/FinancialOps.sol";
 
 /// @title DistributorImpl
 /// @notice Handles the logic for managing content distributors in a decentralized environment.
-/// @dev 
+/// @dev
 /// - The `DistributorImpl` contract is used as an implementation in an `UpgradeableBeacon`.
 /// - Calls to this contract are made through a `BeaconProxy`, meaning that this implementation can be updated.
 /// - This contract itself is NOT upgradeable**, since its updates are managed at the beacon level.
-/// - We inherit from upgradeable contracts **ONLY** to reuse their storage layout (ERC-7201), avoiding manual namespace handling.
+/// - We inherit from upgradeable contracts **ONLY** to reuse their storage layout (ERC-7201).
 contract DistributorImpl is Initializable, ERC165Upgradeable, OwnableUpgradeable, IDistributor {
     using FinancialOps for address;
 
@@ -29,14 +29,14 @@ contract DistributorImpl is Initializable, ERC165Upgradeable, OwnableUpgradeable
     error InvalidEndpoint();
 
     /// @notice Initializes the Distributor contract with the specified endpoint and owner.
-    /// @param _endpoint The distribution endpoint URL.
-    /// @param _owner The address of the owner who will manage the distributor.
+    /// @param endpoint_ The distribution endpoint URL.
+    /// @param owner_ The address of the owner who will manage the distributor.
     /// @dev Ensures that the provided endpoint is valid and initializes ERC165 and Ownable contracts.
-    function initialize(string calldata _endpoint, address _owner) external initializer {
-        if (bytes(_endpoint).length == 0) revert InvalidEndpoint();
+    function initialize(string calldata endpoint_, address owner_) external initializer {
+        if (bytes(endpoint_).length == 0) revert InvalidEndpoint();
         __ERC165_init();
-        __Ownable_init(_owner);
-        endpoint = _endpoint;
+        __Ownable_init(owner_);
+        endpoint = endpoint_;
     }
 
     /// @notice Checks if the contract supports a specific interface based on its ID.
@@ -56,13 +56,13 @@ contract DistributorImpl is Initializable, ERC165Upgradeable, OwnableUpgradeable
     }
 
     /// @notice Updates the distribution endpoint URL.
-    /// @param _endpoint The new endpoint URL to be set.
+    /// @param endpoint_ The new endpoint URL to be set.
     /// @dev Reverts if the provided endpoint is an empty string. Emits an {EndpointUpdated} event.
-    function setEndpoint(string calldata _endpoint) external onlyOwner {
-        if (bytes(_endpoint).length == 0) revert InvalidEndpoint();
+    function setEndpoint(string calldata endpoint_) external onlyOwner {
+        if (bytes(endpoint_).length == 0) revert InvalidEndpoint();
         string memory oldEndpoint = endpoint;
-        endpoint = _endpoint;
-        emit EndpointUpdated(oldEndpoint, _endpoint);
+        endpoint = endpoint_;
+        emit EndpointUpdated(oldEndpoint, endpoint_);
     }
 
     /// @notice Withdraws tokens or native currency from the contract to the specified recipient.

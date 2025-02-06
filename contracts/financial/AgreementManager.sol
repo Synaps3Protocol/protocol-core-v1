@@ -28,10 +28,13 @@ contract AgreementManager is Initializable, UUPSUpgradeable, AccessControlledUpg
     /// will never be executed in the context of the proxy’s state
     /// https://docs.openzeppelin.com/upgrades-plugins/1.x/proxies#the-constructor-caveat
 
+    /// Rationale: Our immutables behave as constants after deployment
+    //slither-disable-start naming-convention
     /// @custom:oz-upgrades-unsafe-allow state-variable-immutable
     ITollgate public immutable TOLLGATE;
     /// @custom:oz-upgrades-unsafe-allow state-variable-immutable
     ILedgerVault public immutable LEDGER_VAULT;
+    //slither-disable-end naming-convention
 
     /// @dev Holds a bounded key expressing the agreement between the parts.
     mapping(uint256 => T.Agreement) private _agreementsByProof;

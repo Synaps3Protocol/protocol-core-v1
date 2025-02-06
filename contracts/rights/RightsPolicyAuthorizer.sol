@@ -31,7 +31,9 @@ contract RightsPolicyAuthorizer is
     /// will never be executed in the context of the proxy’s state
     /// https://docs.openzeppelin.com/upgrades-plugins/1.x/proxies#the-constructor-caveat
 
+    /// Rationale: Our immutables behave as constants after deployment
     /// @custom:oz-upgrades-unsafe-allow state-variable-immutable
+    //slither-disable-next-line naming-convention
     IPolicyAuditorVerifiable public immutable POLICY_AUDIT;
 
     /// @dev Mapping to store the delegated rights for each policy contract (address)

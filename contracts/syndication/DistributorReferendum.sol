@@ -9,11 +9,10 @@ import { Initializable } from "@openzeppelin/contracts-upgradeable/proxy/utils/I
 import { ReentrancyGuardTransientUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardTransientUpgradeable.sol";
 import { AccessControlledUpgradeable } from "@synaps3/core/primitives/upgradeable/AccessControlledUpgradeable.sol";
 import { FeesCollectorUpgradeable } from "@synaps3/core/primitives/upgradeable/FeesCollectorUpgradeable.sol";
-
 import { QuorumUpgradeable } from "@synaps3/core/primitives/upgradeable/QuorumUpgradeable.sol";
-import { ILedgerVault } from "@synaps3/core/interfaces/financial/ILedgerVault.sol";
-import { ITreasury } from "@synaps3/core/interfaces/economics/ITreasury.sol";
 import { ITollgate } from "@synaps3/core/interfaces/economics/ITollgate.sol";
+import { ITreasury } from "@synaps3/core/interfaces/economics/ITreasury.sol";
+import { ILedgerVault } from "@synaps3/core/interfaces/financial/ILedgerVault.sol";
 import { IDistributor } from "@synaps3/core/interfaces/syndication/IDistributor.sol";
 import { IDistributorReferendum } from "@synaps3/core/interfaces/syndication/IDistributorReferendum.sol";
 import { FinancialOps } from "@synaps3/core/libraries/FinancialOps.sol";
@@ -36,15 +35,19 @@ contract DistributorReferendum is
     using FinancialOps for address;
     using ERC165Checker for address;
 
+    /// @dev Stores the interface ID for IDistributor, ensuring compatibility verification.
+    bytes4 private constant INTERFACE_ID_DISTRIBUTOR = type(IDistributor).interfaceId;
+    
+    /// Rationale: Our immutables behave as constants after deployment
+    //slither-disable-start naming-convention
     /// @custom:oz-upgrades-unsafe-allow state-variable-immutable
     ITollgate public immutable TOLLGATE;
     /// @custom:oz-upgrades-unsafe-allow state-variable-immutable
     ITreasury public immutable TREASURY;
     /// @custom:oz-upgrades-unsafe-allow state-variable-immutable
     ILedgerVault public immutable LEDGER_VAULT;
+    //slither-disable-end naming-convention
 
-    /// @dev Stores the interface ID for IDistributor, ensuring compatibility verification.
-    bytes4 private constant INTERFACE_ID_DISTRIBUTOR = type(IDistributor).interfaceId;
     /// @dev Defines the expiration period for enrollment, determining how long a distributor remains active.
     uint256 private _expirationPeriod;
     /// @dev Tracks the number of active enrollments within the system.
