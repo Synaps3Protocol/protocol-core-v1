@@ -38,7 +38,7 @@ contract DistributorReferendum is
     /// @dev Stores the interface ID for IDistributor, ensuring compatibility verification.
     bytes4 private constant INTERFACE_ID_DISTRIBUTOR = type(IDistributor).interfaceId;
     
-    /// Rationale: Our immutables behave as constants after deployment
+    /// Our immutables behave as constants after deployment
     //slither-disable-start naming-convention
     /// @custom:oz-upgrades-unsafe-allow state-variable-immutable
     ITollgate public immutable TOLLGATE;

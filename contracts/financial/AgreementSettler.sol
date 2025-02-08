@@ -48,13 +48,12 @@ contract AgreementSettler is
     /// will never be executed in the context of the proxy’s state
     /// https://docs.openzeppelin.com/upgrades-plugins/1.x/proxies#the-constructor-caveat
 
-    /// Rationale: Our immutables behave as constants after deployment
-    //slither-disable-start naming-convention
-    ITreasury public immutable TREASURY;
     /// @custom:oz-upgrades-unsafe-allow state-variable-immutable
-    IAgreementManager public immutable AGREEMENT_MANAGER;
+    ITreasury public immutable Treasury;
     /// @custom:oz-upgrades-unsafe-allow state-variable-immutable
-    ILedgerVault public immutable LEDGER_VAULT;
+    IAgreementManager public immutable AgreementManager;
+    /// @custom:oz-upgrades-unsafe-allow state-variable-immutable
+    ILedgerVault public immutable LedgerVault;
     //slither-disable-end naming-convention
 
     /// @dev Holds a the list of closed/settled proof for accounts.
@@ -98,16 +97,16 @@ contract AgreementSettler is
         /// https://forum.openzeppelin.com/t/uupsupgradeable-vulnerability-post-mortem/15680
         /// https://forum.openzeppelin.com/t/what-does-disableinitializers-function-mean/28730/5
         _disableInitializers();
-        TREASURY = ITreasury(treasury);
-        LEDGER_VAULT = ILedgerVault(ledgerVault);
-        AGREEMENT_MANAGER = IAgreementManager(agreementManager);
+        Treasury = ITreasury(treasury);
+        LedgerVault = ILedgerVault(ledgerVault);
+        AgreementManager = IAgreementManager(agreementManager);
     }
 
     /// Initialize the proxy state.
     function initialize(address accessManager) public initializer {
         __UUPSUpgradeable_init();
         __AccessControlled_init(accessManager);
-        __FeesCollector_init(address(TREASURY));
+        __FeesCollector_init(address(Treasury));
         __ReentrancyGuardTransient_init();
     }
 
@@ -126,7 +125,7 @@ contract AgreementSettler is
     /// @notice Allows the initiator to quit the agreement and receive the committed funds.
     /// @param proof The unique identifier of the agreement.
     function quitAgreement(uint256 proof) external onlyValidAgreement(proof) nonReentrant returns (T.Agreement memory) {
-        T.Agreement memory agreement = AGREEMENT_MANAGER.getAgreement(proof);
+        T.Agreement memory agreement = AgreementManager.getAgreement(proof);
         if (agreement.initiator != msg.sender) revert UnauthorizedInitiator();
 
         // IMPORTANT:
@@ -150,9 +149,9 @@ contract AgreementSettler is
         _setProofAsSettled(proof);
         // slither-disable-start unused-return
         // part of the agreement locked amount is released to the account
-        LEDGER_VAULT.claim(initiator, fees, currency);
-        LEDGER_VAULT.release(initiator, available, currency);
-        LEDGER_VAULT.withdraw(address(this), fees, currency);
+        LedgerVault.claim(initiator, fees, currency);
+        LedgerVault.release(initiator, available, currency);
+        LedgerVault.withdraw(address(this), fees, currency);
         // slither-disable-end unused-return
         emit AgreementCancelled(initiator, proof, fees);
         return agreement;
@@ -166,7 +165,7 @@ contract AgreementSettler is
         address counterparty
     ) public onlyValidAgreement(proof) returns (T.Agreement memory) {
         // retrieve the agreement to storage to inactivate it and return it
-        T.Agreement memory agreement = AGREEMENT_MANAGER.getAgreement(proof);
+        T.Agreement memory agreement = AgreementManager.getAgreement(proof);
         if (agreement.broker != msg.sender) revert UnauthorizedBroker();
 
         uint256 total = agreement.total; // protocol
@@ -181,9 +180,9 @@ contract AgreementSettler is
 
         // slither-disable-start unused-return
         // move the funds to settler and transfer the available to counterparty
-        LEDGER_VAULT.claim(initiator, total, currency);
-        LEDGER_VAULT.transfer(counterparty, available, currency);
-        LEDGER_VAULT.withdraw(address(this), fees, currency);
+        LedgerVault.claim(initiator, total, currency);
+        LedgerVault.transfer(counterparty, available, currency);
+        LedgerVault.withdraw(address(this), fees, currency);
         // slither-disable-end unused-return
 
         emit AgreementSettled(msg.sender, counterparty, proof, fees);

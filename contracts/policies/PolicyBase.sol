@@ -4,6 +4,8 @@ pragma solidity 0.8.26;
 
 import { ERC165 } from "@openzeppelin/contracts/utils/introspection/ERC165.sol";
 import { IRightsPolicyManagerVerifiable } from "@synaps3/core/interfaces/rights/IRightsPolicyManagerVerifiable.sol";
+// solhint-disable-next-line max-line-length
+import { IRightsPolicyAuthorizerVerifiable } from "@synaps3/core/interfaces/rights/IRightsPolicyAuthorizerVerifiable.sol";
 import { IAttestationProvider } from "@synaps3/core/interfaces/base/IAttestationProvider.sol";
 import { IAssetOwnership } from "@synaps3/core/interfaces/assets/IAssetOwnership.sol";
 import { IPolicy } from "@synaps3/core/interfaces/policies/IPolicy.sol";
@@ -14,16 +16,14 @@ import { T } from "@synaps3/core/primitives/Types.sol";
 /// @dev This contract provides attestation management, agreement handling, and authorization mechanisms.
 /// slither-disable-next-line unimplemented-functions
 abstract contract PolicyBase is ERC165, IPolicy {
-    
-    /// Rationale: Our immutables behave as constants after deployment
-    //slither-disable-start naming-convention
     /// @custom:oz-upgrades-unsafe-allow state-variable-immutable
-    IAttestationProvider public immutable ATTESTATION_PROVIDER;
+    IRightsPolicyAuthorizerVerifiable public immutable RightsPolicyAuthorizer;
     /// @custom:oz-upgrades-unsafe-allow state-variable-immutable
-    IRightsPolicyManagerVerifiable public immutable RIGHTS_POLICY_MANAGER;
+    IRightsPolicyManagerVerifiable public immutable RightsPolicyManager;
     /// @custom:oz-upgrades-unsafe-allow state-variable-immutable
-    IAssetOwnership public immutable ASSET_OWNERSHIP;
-    //slither-disable-end naming-convention
+    IAttestationProvider public immutable AttestationProvider;
+    /// @custom:oz-upgrades-unsafe-allow state-variable-immutable
+    IAssetOwnership public immutable AssetOwnership;
 
     /// @dev Policy state
     bool private _active;
@@ -72,7 +72,7 @@ abstract contract PolicyBase is ERC165, IPolicy {
 
     /// @dev Modifier to restrict function calls to the Rights Manager address.
     modifier onlyPolicyManager() {
-        if (msg.sender != address(RIGHTS_POLICY_MANAGER)) {
+        if (msg.sender != address(RightsPolicyManager)) {
             revert InvalidUnauthorizedCall("Only rights policy manager allowed.");
         }
         _;
@@ -80,7 +80,7 @@ abstract contract PolicyBase is ERC165, IPolicy {
 
     /// @dev Modifier to restrict function calls to the Rights Manager address.
     modifier onlyPolicyAuthorizer() {
-        if (msg.sender != RIGHTS_POLICY_MANAGER.getPolicyAuthorizer()) {
+        if (msg.sender != address(RightsPolicyAuthorizer)) {
             revert InvalidUnauthorizedCall("Only rights policy authorizer allowed.");
         }
         _;
@@ -109,10 +109,16 @@ abstract contract PolicyBase is ERC165, IPolicy {
         _;
     }
 
-    constructor(address rightsPolicyManager, address assetOwnership, address providerAddress) {
-        ATTESTATION_PROVIDER = IAttestationProvider(providerAddress);
-        RIGHTS_POLICY_MANAGER = IRightsPolicyManagerVerifiable(rightsPolicyManager);
-        ASSET_OWNERSHIP = IAssetOwnership(assetOwnership);
+    constructor(
+        address rightsPolicyManager,
+        address rightsAuthorizer,
+        address assetOwnership,
+        address providerAddress
+    ) {
+        RightsPolicyAuthorizer = IRightsPolicyAuthorizerVerifiable(rightsAuthorizer);
+        RightsPolicyManager = IRightsPolicyManagerVerifiable(rightsPolicyManager);
+        AttestationProvider = IAttestationProvider(providerAddress);
+        AssetOwnership = IAssetOwnership(assetOwnership);
     }
 
     /// @notice Checks if the policy has been initialized.
@@ -123,7 +129,7 @@ abstract contract PolicyBase is ERC165, IPolicy {
     /// @notice Retrieves the address of the attestation provider.
     /// @return The address of the provider associated with the policy.
     function getAttestationProvider() external view returns (address) {
-        return address(ATTESTATION_PROVIDER);
+        return address(AttestationProvider);
     }
 
     /// @notice Checks if a given interface ID is supported by this contract.
@@ -131,12 +137,6 @@ abstract contract PolicyBase is ERC165, IPolicy {
     /// @return A boolean indicating whether the interface ID is supported (true) or not (false).
     function supportsInterface(bytes4 interfaceId) public view virtual override returns (bool) {
         return interfaceId == type(IPolicy).interfaceId || super.supportsInterface(interfaceId);
-    }
-
-    /// @notice Returns the asset holder registered in the ownership contract.
-    /// @param assetId the asset ID to retrieve the holder.
-    function getHolder(uint256 assetId) public view returns (address) {
-        return ASSET_OWNERSHIP.ownerOf(assetId); // Returns the registered owner.
     }
 
     /// @notice Retrieves the license id associated with a specific account.
@@ -147,6 +147,12 @@ abstract contract PolicyBase is ERC165, IPolicy {
         // recompute the composed key based on account and criteria = to match context
         bytes32 key = _computeComposedKey(account, criteria);
         return _attestations[key];
+    }
+
+    /// @notice Returns the asset holder registered in the ownership contract.
+    /// @param assetId the asset ID to retrieve the holder.
+    function _getHolder(uint256 assetId) internal view returns (address) {
+        return AssetOwnership.ownerOf(assetId); // Returns the registered owner.
     }
 
     /// @dev Internal function to commit an agreement and create an attestation.
@@ -162,7 +168,7 @@ abstract contract PolicyBase is ERC165, IPolicy {
         bytes memory data = abi.encode(holder, agreement.initiator, address(this), agreement.parties, payload);
         // register policy metrics in the holder context to track analytics
         emit AgreementCommitted(holder, agreement.parties.length, agreement.total, agreement.fees);
-        return ATTESTATION_PROVIDER.attest(agreement.parties, expireAt, data);
+        return AttestationProvider.attest(agreement.parties, expireAt, data);
     }
 
     /// @notice Internal function to create and register an attestation.

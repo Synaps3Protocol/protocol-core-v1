@@ -28,12 +28,12 @@ contract AssetOwnership is
     ERC721EnumerableUpgradeable,
     ERC721StatefulUpgradeable,
     IAssetOwnership
-{   
-    /// Rationale: Our immutables behave as constants after deployment
+{
     /// @custom:oz-upgrades-unsafe-allow state-variable-immutable
     /// @notice Reference to the asset verification contract for content approval.
+    /// Our immutables behave as constants after deployment
     /// slither-disable-next-line naming-convention
-    IAssetVerifiable public immutable ASSET_REFERENDUM;
+    IAssetVerifiable public immutable AssetReferendum;
 
     /// @dev Emitted when a new asset is registered on the platform.
     /// @param owner The address of the creator or owner of the registered asset.
@@ -51,13 +51,13 @@ contract AssetOwnership is
     /// @param assetId The unique identifier for the transferred asset.
     event TransferredAsset(address indexed from, address indexed to, uint256 assetId);
 
-    /// @notice Emitted when an asset is activated.
-    /// @param tokenId The ID of the token that was activated.
-    event AssetActivated(uint256 indexed tokenId);
+    /// @notice Emitted when an asset is enabled.
+    /// @param tokenId The ID of the token that was enabled.
+    event AssetEnabled(uint256 indexed tokenId);
 
-    /// @notice Emitted when an asset is deactivated.
-    /// @param tokenId The ID of the token that was deactivated.
-    event AssetDeactivated(uint256 indexed tokenId);
+    /// @notice Emitted when an asset is disabled.
+    /// @param tokenId The ID of the token that was disabled.
+    event AssetDisabled(uint256 indexed tokenId);
 
     /// @dev Error indicating that an operation attempted to reference content that has not been approved.
     error InvalidNotApprovedAsset();
@@ -67,7 +67,7 @@ contract AssetOwnership is
     /// @param assetId The ID of the asset to be distributed.
     /// @dev The asset must be approved via referendum or the recipient must hold a verified role.
     modifier onlyApprovedAsset(address to, uint256 assetId) {
-        if (!ASSET_REFERENDUM.isApproved(to, assetId)) {
+        if (!AssetReferendum.isApproved(to, assetId)) {
             revert InvalidNotApprovedAsset();
         }
         _;
@@ -89,7 +89,7 @@ contract AssetOwnership is
         /// https://forum.openzeppelin.com/t/what-does-disableinitializers-function-mean/28730/5
         _disableInitializers();
         // we need to verify that asset has passed the community approval.
-        ASSET_REFERENDUM = IAssetVerifiable(assetReferendum);
+        AssetReferendum = IAssetVerifiable(assetReferendum);
     }
 
     /// @notice Initializes the upgradeable contract.
@@ -122,7 +122,7 @@ contract AssetOwnership is
     /// @param assetId The unique identifier for the asset, serving as the NFT ID.
     function register(address to, uint256 assetId) external onlyApprovedAsset(to, assetId) {
         _mint(to, assetId);
-        _activateAsset(assetId);
+        _enableAsset(assetId);
         emit RegisteredAsset(to, assetId);
     }
 
@@ -132,7 +132,7 @@ contract AssetOwnership is
     function revoke(uint256 assetId) external restricted {
         address owner = ownerOf(assetId);
         _burn(assetId);
-        _deactivateAsset(assetId);
+        _disableAsset(assetId);
         emit RevokedAsset(owner, assetId);
     }
 
@@ -151,7 +151,7 @@ contract AssetOwnership is
     function switchState(uint256 assetId) external onlyOwner(assetId) returns (bool newState) {
         bool isActiveState = isActive(assetId); // true or false
         // if isActive then deactivate else activate
-        isActiveState ? _deactivateAsset(assetId) : _activateAsset(assetId);
+        isActiveState ? _disableAsset(assetId) : _enableAsset(assetId);
         // set newState to false if isActive otherwise set true to active
         newState = !isActiveState;
     }
@@ -177,15 +177,15 @@ contract AssetOwnership is
     /// @param newImplementation Address of the new implementation contract.
     function _authorizeUpgrade(address newImplementation) internal override onlyAdmin {}
 
-    /// @dev Internal function to activate an asset.
-    function _activateAsset(uint256 assetId) private {
+    /// @dev Internal function to enable an asset.
+    function _enableAsset(uint256 assetId) private {
         _activate(assetId);
-        emit AssetActivated(assetId);
+        emit AssetEnabled(assetId);
     }
 
-    /// @dev Internal function to deactivate an asset.
-    function _deactivateAsset(uint256 assetId) private {
+    /// @dev Internal function to disable an asset.
+    function _disableAsset(uint256 assetId) private {
         _deactivate(assetId);
-        emit AssetDeactivated(assetId);
+        emit AssetDisabled(assetId);
     }
 }

@@ -26,7 +26,7 @@ contract RightsPolicyManager is Initializable, UUPSUpgradeable, AccessControlled
     using ArrayOps for address[];
     using LoopOps for uint256;
 
-    /// Rationale: Our immutables behave as constants after deployment
+    /// Our immutables behave as constants after deployment
     //slither-disable-start naming-convention
     /// @custom:oz-upgrades-unsafe-allow state-variable-immutable
     IAgreementSettler public immutable AGREEMENT_SETTLER;
@@ -86,12 +86,6 @@ contract RightsPolicyManager is Initializable, UUPSUpgradeable, AccessControlled
         __AccessControlled_init(accessManager);
     }
 
-    /// @notice Retrieves the address of the Rights Policies Authorizer contract.
-    /// @return The address of the contract responsible for authorizing rights policies.
-    function getPolicyAuthorizer() external view returns (address) {
-        return address(RIGHTS_AUTHORIZER);
-    }
-
     /// @notice Finalizes the agreement by registering the agreed-upon policy, effectively closing the agreement.
     /// @dev This function verifies the policy's authorization, executes the agreement and registers the policy.
     /// @param proof The unique identifier of the agreement to be enforced.
@@ -106,8 +100,8 @@ contract RightsPolicyManager is Initializable, UUPSUpgradeable, AccessControlled
         T.Agreement memory agreement = AGREEMENT_SETTLER.settleAgreement(proof, holder);
         bytes memory callData = abi.encodeCall(IPolicy.enforce, (holder, agreement));
         /// Type-safe low-level call to policy. The policy is registered to the parties.
-        /// Rationale: The policy address is already validated during policy audit and authorization.
-        ///            During `onlyAuthorizedPolicy`, the policy is verified about authorization.
+        /// The policy address is already validated during policy audit and authorization.
+        /// During `onlyAuthorizedPolicy`, the policy is verified about authorization.
         //slither-disable-next-line missing-zero-check
         (bool success, bytes memory result) = policy.call(callData);
         if (!success) revert EnforcementFailed("Error during policy enforcement call");

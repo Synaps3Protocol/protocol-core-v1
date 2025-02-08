@@ -11,11 +11,6 @@ interface IRightsPolicyManagerVerifiable {
     /// @return An array of addresses representing the associated policies.
     function getPolicies(address account) external view returns (address[] memory);
 
-    /// @notice Retrieves the address of the Rights Policies Authorizer contract.
-    /// @dev This contract manages policy authorization and verification.
-    /// @return The address of the contract responsible for authorizing rights policies.
-    function getPolicyAuthorizer() external view returns (address);
-
     /// @notice Retrieves the first active policy matching the criteria for an account in LIFO order.
     /// @dev This function searches for a policy that satisfies the provided criteria, returning the most recent match.
     /// @param account Address of the account to evaluate.
