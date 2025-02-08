@@ -32,9 +32,7 @@ contract RightsPolicyAuthorizer is
     /// https://docs.openzeppelin.com/upgrades-plugins/1.x/proxies#the-constructor-caveat
 
     /// @custom:oz-upgrades-unsafe-allow state-variable-immutable
-    /// Our immutables behave as constants after deployment
-    //slither-disable-next-line naming-convention
-    IPolicyAuditorVerifiable public immutable POLICY_AUDIT;
+    IPolicyAuditorVerifiable public immutable PolicyAudit;
 
     /// @dev Mapping to store the delegated rights for each policy contract (address)
     mapping(address => EnumerableSet.AddressSet) private _authorizedPolicies;
@@ -68,7 +66,7 @@ contract RightsPolicyAuthorizer is
         /// https://forum.openzeppelin.com/t/what-does-disableinitializers-function-mean/28730/5
         _disableInitializers();
         // audit contract to validate the approval from mods
-        POLICY_AUDIT = IPolicyAuditorVerifiable(policyAudit);
+        PolicyAudit = IPolicyAuditorVerifiable(policyAudit);
     }
 
     /// @notice Initializes the proxy state.
@@ -148,7 +146,7 @@ contract RightsPolicyAuthorizer is
     ///      and that the policy has been audited.
     /// @param policy The address of the policy contract to verify.
     function _isValidPolicy(address policy) private view returns (bool) {
-        return (policy != address(0) && POLICY_AUDIT.isAudited(policy));
+        return (policy != address(0) && PolicyAudit.isAudited(policy));
     }
 
     /// @dev Initializes a policy by calling its `initialize` function.

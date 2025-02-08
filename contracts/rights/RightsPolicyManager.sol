@@ -26,13 +26,10 @@ contract RightsPolicyManager is Initializable, UUPSUpgradeable, AccessControlled
     using ArrayOps for address[];
     using LoopOps for uint256;
 
-    /// Our immutables behave as constants after deployment
-    //slither-disable-start naming-convention
     /// @custom:oz-upgrades-unsafe-allow state-variable-immutable
-    IAgreementSettler public immutable AGREEMENT_SETTLER;
+    IAgreementSettler public immutable AgreementSettler;
     /// @custom:oz-upgrades-unsafe-allow state-variable-immutable
-    IRightsPolicyAuthorizerVerifiable public immutable RIGHTS_AUTHORIZER;
-    //slither-disable-end naming-convention
+    IRightsPolicyAuthorizerVerifiable public immutable RightsPolicyAuthorizer;
 
     /// @dev Mapping to store the access control list for each content holder and account.
     mapping(address => EnumerableSet.AddressSet) private _closures;
@@ -66,7 +63,7 @@ contract RightsPolicyManager is Initializable, UUPSUpgradeable, AccessControlled
     /// @param holder The address of the rights holder who must have authorized the policy.
     /// @param policy The address of the policy contract attempting to access the rights.
     modifier onlyAuthorizedPolicy(address holder, address policy) {
-        bool isPolicyAuthorizedByHolder = RIGHTS_AUTHORIZER.isPolicyAuthorized(policy, holder);
+        bool isPolicyAuthorizedByHolder = RightsPolicyAuthorizer.isPolicyAuthorized(policy, holder);
         if (!isPolicyAuthorizedByHolder) revert RightsNotDelegated(policy, holder);
         _;
     }
@@ -76,8 +73,8 @@ contract RightsPolicyManager is Initializable, UUPSUpgradeable, AccessControlled
         /// https://forum.openzeppelin.com/t/uupsupgradeable-vulnerability-post-mortem/15680
         /// https://forum.openzeppelin.com/t/what-does-disableinitializers-function-mean/28730/5
         _disableInitializers();
-        AGREEMENT_SETTLER = IAgreementSettler(agreementSettler);
-        RIGHTS_AUTHORIZER = IRightsPolicyAuthorizerVerifiable(rightsAuthorizer);
+        AgreementSettler = IAgreementSettler(agreementSettler);
+        RightsPolicyAuthorizer = IRightsPolicyAuthorizerVerifiable(rightsAuthorizer);
     }
 
     /// @notice Initializes the proxy state.
@@ -97,7 +94,7 @@ contract RightsPolicyManager is Initializable, UUPSUpgradeable, AccessControlled
         address policy
     ) external onlyAuthorizedPolicy(holder, policy) returns (uint256[] memory) {
         // 1- retrieves the agreement and marks it as settled..
-        T.Agreement memory agreement = AGREEMENT_SETTLER.settleAgreement(proof, holder);
+        T.Agreement memory agreement = AgreementSettler.settleAgreement(proof, holder);
         bytes memory callData = abi.encodeCall(IPolicy.enforce, (holder, agreement));
         /// Type-safe low-level call to policy. The policy is registered to the parties.
         /// The policy address is already validated during policy audit and authorization.

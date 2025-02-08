@@ -54,7 +54,6 @@ contract AgreementSettler is
     IAgreementManager public immutable AgreementManager;
     /// @custom:oz-upgrades-unsafe-allow state-variable-immutable
     ILedgerVault public immutable LedgerVault;
-    //slither-disable-end naming-convention
 
     /// @dev Holds a the list of closed/settled proof for accounts.
     mapping(uint256 => bool) private _settledProofs;

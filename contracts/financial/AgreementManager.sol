@@ -32,7 +32,6 @@ contract AgreementManager is Initializable, UUPSUpgradeable, AccessControlledUpg
     ITollgate public immutable Tollgate;
     /// @custom:oz-upgrades-unsafe-allow state-variable-immutable
     ILedgerVault public immutable LedgerVault;
-    //slither-disable-end naming-convention
 
     /// @dev Holds a bounded key expressing the agreement between the parts.
     mapping(uint256 => T.Agreement) private _agreementsByProof;

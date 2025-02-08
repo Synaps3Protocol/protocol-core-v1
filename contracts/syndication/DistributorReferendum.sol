@@ -37,16 +37,12 @@ contract DistributorReferendum is
 
     /// @dev Stores the interface ID for IDistributor, ensuring compatibility verification.
     bytes4 private constant INTERFACE_ID_DISTRIBUTOR = type(IDistributor).interfaceId;
-    
-    /// Our immutables behave as constants after deployment
-    //slither-disable-start naming-convention
     /// @custom:oz-upgrades-unsafe-allow state-variable-immutable
-    ITollgate public immutable TOLLGATE;
+    ITollgate public immutable Tollgate;
     /// @custom:oz-upgrades-unsafe-allow state-variable-immutable
-    ITreasury public immutable TREASURY;
+    ITreasury public immutable Treasury;
     /// @custom:oz-upgrades-unsafe-allow state-variable-immutable
-    ILedgerVault public immutable LEDGER_VAULT;
-    //slither-disable-end naming-convention
+    ILedgerVault public immutable LedgerVault;
 
     /// @dev Defines the expiration period for enrollment, determining how long a distributor remains active.
     uint256 private _expirationPeriod;
@@ -94,9 +90,9 @@ contract DistributorReferendum is
         /// https://forum.openzeppelin.com/t/what-does-disableinitializers-function-mean/28730/5
         /// https://forum.openzeppelin.com/t/uupsupgradeable-vulnerability-post-mortem/15680
         _disableInitializers();
-        TREASURY = ITreasury(treasury);
-        TOLLGATE = ITollgate(tollgate);
-        LEDGER_VAULT = ILedgerVault(ledgerVault);
+        Treasury = ITreasury(treasury);
+        Tollgate = ITollgate(tollgate);
+        LedgerVault = ILedgerVault(ledgerVault);
     }
 
     /// @notice Initializes the proxy state.
@@ -105,7 +101,7 @@ contract DistributorReferendum is
         __UUPSUpgradeable_init();
         __ReentrancyGuardTransient_init();
         __AccessControlled_init(accessManager);
-        __FeesCollector_init(address(TREASURY));
+        __FeesCollector_init(address(Treasury));
         // 6 months initially..
         _expirationPeriod = 180 days;
     }
@@ -172,14 +168,14 @@ contract DistributorReferendum is
         // The collected fees are used to support the protocol's operations, aligning
         // individual actions with the broader sustainability of the network.
         // !IMPORTANT If tollgate does not support the currency, will revert..
-        (uint256 fees, T.Scheme scheme) = TOLLGATE.getFees(address(this), currency);
+        (uint256 fees, T.Scheme scheme) = Tollgate.getFees(address(this), currency);
         if (scheme != T.Scheme.FLAT) revert InvalidFeeSchemeProvided("Expected a FLAT fee scheme.");
 
         // TODO: additional check if exists in factory to validate emission
         // eg: distribution.getCreator MUST be equal to msg.sender
-        uint256 locked = LEDGER_VAULT.lock(msg.sender, fees, currency); // lock funds
-        uint256 claimed = LEDGER_VAULT.claim(msg.sender, locked, currency); // claim the funds on behalf
-        uint256 confirmed = LEDGER_VAULT.withdraw(address(this), claimed, currency); // collect funds
+        uint256 locked = LedgerVault.lock(msg.sender, fees, currency); // lock funds
+        uint256 claimed = LedgerVault.claim(msg.sender, locked, currency); // claim the funds on behalf
+        uint256 confirmed = LedgerVault.withdraw(address(this), claimed, currency); // collect funds
         // register distributor as pending approval
         _register(uint160(distributor));
         // set the distributor active enrollment period..
