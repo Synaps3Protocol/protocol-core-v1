@@ -29,9 +29,12 @@ contract AgreementManager is Initializable, UUPSUpgradeable, AccessControlledUpg
     /// https://docs.openzeppelin.com/upgrades-plugins/1.x/proxies#the-constructor-caveat
 
     /// @custom:oz-upgrades-unsafe-allow state-variable-immutable
-    ITollgate public immutable Tollgate;
+    /// Our immutables behave as constants after deployment
+    //slither-disable-start naming-convention
+    ITollgate public immutable TOLLGATE;
     /// @custom:oz-upgrades-unsafe-allow state-variable-immutable
-    ILedgerVault public immutable LedgerVault;
+    ILedgerVault public immutable LEDGER_VAULT;
+    //slither-disable-end naming-convention
 
     /// @dev Holds a bounded key expressing the agreement between the parts.
     mapping(uint256 => T.Agreement) private _agreementsByProof;
@@ -60,7 +63,7 @@ contract AgreementManager is Initializable, UUPSUpgradeable, AccessControlledUpg
     /// @param target The address or context that requires currency validation.
     /// @param currency The address of the currency being checked.
     modifier onlySupportedCurrency(address target, address currency) {
-        bool isCurrencySupported = Tollgate.isSupportedCurrency(target, currency);
+        bool isCurrencySupported = TOLLGATE.isSupportedCurrency(target, currency);
         if (!isCurrencySupported) revert UnsupportedAgreementCurrency(target, currency);
         _;
     }
@@ -71,8 +74,8 @@ contract AgreementManager is Initializable, UUPSUpgradeable, AccessControlledUpg
         /// https://forum.openzeppelin.com/t/what-does-disableinitializers-function-mean/28730/5
         _disableInitializers();
         // we need to collect the fees during the agreement creation.
-        Tollgate = ITollgate(tollgate);
-        LedgerVault = ILedgerVault(ledgerVault);
+        TOLLGATE = ITollgate(tollgate);
+        LEDGER_VAULT = ILedgerVault(ledgerVault);
     }
 
     /// Initialize the proxy state.
@@ -95,7 +98,7 @@ contract AgreementManager is Initializable, UUPSUpgradeable, AccessControlledUpg
         bytes calldata payload
     ) external onlySupportedCurrency(broker, currency) returns (uint256) {
         // IMPORTANT: The process of distributing funds to accounts should be handled within the settlement logic.
-        uint256 confirmed = LedgerVault.lock(msg.sender, amount, currency);
+        uint256 confirmed = LEDGER_VAULT.lock(msg.sender, amount, currency);
         T.Agreement memory agreement = previewAgreement(confirmed, currency, broker, parties, payload);
         // only the initiator can operate with this agreement proof, or transfer the proof to the other party..
         // each agreement is unique and immutable, ensuring that it cannot be modified or reconstructed.
@@ -179,7 +182,7 @@ contract AgreementManager is Initializable, UUPSUpgradeable, AccessControlledUpg
     /// @return The calculated fee amount based on the applicable fee scheme.
     function _calcFees(uint256 total, address broker, address currency) private view returns (uint256) {
         // !IMPORTANT if fees manager does not support the currency, will revert..
-        (uint256 fees, T.Scheme scheme) = Tollgate.getFees(broker, currency);
+        (uint256 fees, T.Scheme scheme) = TOLLGATE.getFees(broker, currency);
         if (scheme == T.Scheme.BPS) return total.perOf(fees); // bps calc
         if (scheme == T.Scheme.NOMINAL) return total.perOf(fees.calcBps()); // nominal to bps
         if (total < fees) revert FlatFeeExceedsTotal(total, fees); // if flat fee

@@ -15,7 +15,9 @@ import { T } from "@synaps3/core/primitives/Types.sol";
 ///      encrypted keys, licenses, passwords, and other sensitive information required to control asset access.
 contract AssetSafe is Initializable, UUPSUpgradeable, AccessControlledUpgradeable, IAssetSafe {
     /// @custom:oz-upgrades-unsafe-allow state-variable-immutable
-    IAssetOwnership public immutable AssetOwnership;
+    /// Our immutables behave as constants after deployment
+    /// slither-disable-next-line naming-convention
+    IAssetOwnership public immutable ASSET_OWNERSHIP;
 
     /// @dev Mapping to securely store encrypted content using a unique key derived from assetId and cipher type.
     mapping(bytes32 => bytes) private _secured;
@@ -36,7 +38,7 @@ contract AssetSafe is Initializable, UUPSUpgradeable, AccessControlledUpgradeabl
     /// @param assetId The identifier of the asset.
     /// @dev Reverts if the sender is not the owner of the asset based on the Ownership contract.
     modifier onlyHolder(uint256 assetId) {
-        if (AssetOwnership.ownerOf(assetId) != msg.sender) {
+        if (ASSET_OWNERSHIP.ownerOf(assetId) != msg.sender) {
             revert InvalidAssetRightsHolder();
         }
         _;
@@ -45,7 +47,7 @@ contract AssetSafe is Initializable, UUPSUpgradeable, AccessControlledUpgradeabl
     /// @custom:oz-upgrades-unsafe-allow constructor
     constructor(address assetOwnership) {
         _disableInitializers();
-        AssetOwnership = IAssetOwnership(assetOwnership);
+        ASSET_OWNERSHIP = IAssetOwnership(assetOwnership);
     }
 
     /// @notice Initializes the proxy state.

@@ -80,7 +80,6 @@ contract Treasury is
         emit FeesCollected(collector, collected, currency);
     }
 
-
     /// @notice Function that should revert when msg.sender is not authorized to upgrade the contract.
     /// @param newImplementation The address of the new implementation contract.
     /// @dev See https://docs.openzeppelin.com/contracts/4.x/api/proxy#UUPSUpgradeable-_authorizeUpgrade-address-

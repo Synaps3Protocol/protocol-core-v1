@@ -22,7 +22,7 @@ contract RightsAssetCustodian is Initializable, UUPSUpgradeable, AccessControlle
     /// @custom:oz-upgrades-unsafe-allow state-variable-immutable
     /// Our immutables behave as constants after deployment
     //slither-disable-next-line naming-convention
-    IDistributorVerifiable public immutable DistributorReferendum;
+    IDistributorVerifiable public immutable DISTRIBUTOR_REFERENDUM;
 
     /// @dev the max allowed amount of distributors per holder.
     uint256 private _maxDistributionRedundancy;
@@ -66,7 +66,7 @@ contract RightsAssetCustodian is Initializable, UUPSUpgradeable, AccessControlle
         /// https://forum.openzeppelin.com/t/what-does-disableinitializers-function-mean/28730/5
         _disableInitializers();
         // we need to verify the status of each distributor before allow custodian assignment.
-        DistributorReferendum = IDistributorVerifiable(distributorReferendum);
+        DISTRIBUTOR_REFERENDUM = IDistributorVerifiable(distributorReferendum);
     }
 
     /// @notice Initializes the proxy state.
@@ -237,6 +237,6 @@ contract RightsAssetCustodian is Initializable, UUPSUpgradeable, AccessControlle
     /// @param distributor The address of the distributor to validate.
     /// @return A boolean indicating whether the distributor is valid and active.
     function _isValidActiveDistributor(address distributor) private view returns (bool) {
-        return distributor != address(0) && DistributorReferendum.isActive(distributor);
+        return distributor != address(0) && DISTRIBUTOR_REFERENDUM.isActive(distributor);
     }
 }

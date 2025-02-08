@@ -17,13 +17,13 @@ import { T } from "@synaps3/core/primitives/Types.sol";
 /// slither-disable-next-line unimplemented-functions
 abstract contract PolicyBase is ERC165, IPolicy {
     /// @custom:oz-upgrades-unsafe-allow state-variable-immutable
-    IRightsPolicyAuthorizerVerifiable public immutable RightsPolicyAuthorizer;
+    IRightsPolicyAuthorizerVerifiable public immutable RIGHTS_AUTHORIZER;
     /// @custom:oz-upgrades-unsafe-allow state-variable-immutable
-    IRightsPolicyManagerVerifiable public immutable RightsPolicyManager;
+    IRightsPolicyManagerVerifiable public immutable RIGHTS_POLICY_MANAGER;
     /// @custom:oz-upgrades-unsafe-allow state-variable-immutable
-    IAttestationProvider public immutable AttestationProvider;
+    IAttestationProvider public immutable ATTESTATION_PROVIDER;
     /// @custom:oz-upgrades-unsafe-allow state-variable-immutable
-    IAssetOwnership public immutable AssetOwnership;
+    IAssetOwnership public immutable ASSET_OWNERSHIP;
 
     /// @dev Policy state
     bool private _active;
@@ -72,7 +72,7 @@ abstract contract PolicyBase is ERC165, IPolicy {
 
     /// @dev Modifier to restrict function calls to the Rights Manager address.
     modifier onlyPolicyManager() {
-        if (msg.sender != address(RightsPolicyManager)) {
+        if (msg.sender != address(RIGHTS_POLICY_MANAGER)) {
             revert InvalidUnauthorizedCall("Only rights policy manager allowed.");
         }
         _;
@@ -80,7 +80,7 @@ abstract contract PolicyBase is ERC165, IPolicy {
 
     /// @dev Modifier to restrict function calls to the Rights Manager address.
     modifier onlyPolicyAuthorizer() {
-        if (msg.sender != address(RightsPolicyAuthorizer)) {
+        if (msg.sender != address(RIGHTS_AUTHORIZER)) {
             revert InvalidUnauthorizedCall("Only rights policy authorizer allowed.");
         }
         _;
@@ -115,10 +115,10 @@ abstract contract PolicyBase is ERC165, IPolicy {
         address assetOwnership,
         address providerAddress
     ) {
-        RightsPolicyAuthorizer = IRightsPolicyAuthorizerVerifiable(rightsAuthorizer);
-        RightsPolicyManager = IRightsPolicyManagerVerifiable(rightsPolicyManager);
-        AttestationProvider = IAttestationProvider(providerAddress);
-        AssetOwnership = IAssetOwnership(assetOwnership);
+        RIGHTS_AUTHORIZER = IRightsPolicyAuthorizerVerifiable(rightsAuthorizer);
+        RIGHTS_POLICY_MANAGER = IRightsPolicyManagerVerifiable(rightsPolicyManager);
+        ATTESTATION_PROVIDER = IAttestationProvider(providerAddress);
+        ASSET_OWNERSHIP = IAssetOwnership(assetOwnership);
     }
 
     /// @notice Checks if the policy has been initialized.
@@ -129,7 +129,7 @@ abstract contract PolicyBase is ERC165, IPolicy {
     /// @notice Retrieves the address of the attestation provider.
     /// @return The address of the provider associated with the policy.
     function getAttestationProvider() external view returns (address) {
-        return address(AttestationProvider);
+        return address(ATTESTATION_PROVIDER);
     }
 
     /// @notice Checks if a given interface ID is supported by this contract.
@@ -152,7 +152,7 @@ abstract contract PolicyBase is ERC165, IPolicy {
     /// @notice Returns the asset holder registered in the ownership contract.
     /// @param assetId the asset ID to retrieve the holder.
     function _getHolder(uint256 assetId) internal view returns (address) {
-        return AssetOwnership.ownerOf(assetId); // Returns the registered owner.
+        return ASSET_OWNERSHIP.ownerOf(assetId); // Returns the registered owner.
     }
 
     /// @dev Internal function to commit an agreement and create an attestation.
@@ -168,7 +168,7 @@ abstract contract PolicyBase is ERC165, IPolicy {
         bytes memory data = abi.encode(holder, agreement.initiator, address(this), agreement.parties, payload);
         // register policy metrics in the holder context to track analytics
         emit AgreementCommitted(holder, agreement.parties.length, agreement.total, agreement.fees);
-        return AttestationProvider.attest(agreement.parties, expireAt, data);
+        return ATTESTATION_PROVIDER.attest(agreement.parties, expireAt, data);
     }
 
     /// @notice Internal function to create and register an attestation.

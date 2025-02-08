@@ -31,7 +31,9 @@ contract AssetOwnership is
 {
     /// @custom:oz-upgrades-unsafe-allow state-variable-immutable
     /// @notice Reference to the asset verification contract for content approval.
-    IAssetVerifiable public immutable AssetReferendum;
+    /// Our immutables behave as constants after deployment
+    /// slither-disable-next-line naming-convention
+    IAssetVerifiable public immutable ASSET_REFERENDUM;
 
     /// @dev Emitted when a new asset is registered on the platform.
     /// @param owner The address of the creator or owner of the registered asset.
@@ -65,7 +67,7 @@ contract AssetOwnership is
     /// @param assetId The ID of the asset to be distributed.
     /// @dev The asset must be approved via referendum or the recipient must hold a verified role.
     modifier onlyApprovedAsset(address to, uint256 assetId) {
-        if (!AssetReferendum.isApproved(to, assetId)) {
+        if (!ASSET_REFERENDUM.isApproved(to, assetId)) {
             revert InvalidNotApprovedAsset();
         }
         _;
@@ -87,7 +89,7 @@ contract AssetOwnership is
         /// https://forum.openzeppelin.com/t/what-does-disableinitializers-function-mean/28730/5
         _disableInitializers();
         // we need to verify that asset has passed the community approval.
-        AssetReferendum = IAssetVerifiable(assetReferendum);
+        ASSET_REFERENDUM = IAssetVerifiable(assetReferendum);
     }
 
     /// @notice Initializes the upgradeable contract.
