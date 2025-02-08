@@ -31,8 +31,6 @@ contract AssetOwnership is
 {
     /// @custom:oz-upgrades-unsafe-allow state-variable-immutable
     /// @notice Reference to the asset verification contract for content approval.
-    /// Our immutables behave as constants after deployment
-    /// slither-disable-next-line naming-convention
     IAssetVerifiable public immutable AssetReferendum;
 
     /// @dev Emitted when a new asset is registered on the platform.
