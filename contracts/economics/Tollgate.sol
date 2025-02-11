@@ -52,11 +52,6 @@ contract Tollgate is Initializable, UUPSUpgradeable, AccessControlledUpgradeable
     /// @param nominal The provided nominal fee value.
     error InvalidNominalRange(uint256 nominal);
 
-    /// @dev Error thrown when registering a currency fails.
-    /// @param target The target context for currency registration.
-    /// @param currency The currency address that failed to register.
-    error CurrencyRegistrationFailed(address target, address currency);
-
     /// @notice Ensures the validity of fee representation based on the selected scheme.
     /// @param scheme The fee scheme (flat, nominal, or basis points).
     /// @param fee The fee value to validate.
@@ -132,7 +127,7 @@ contract Tollgate is Initializable, UUPSUpgradeable, AccessControlledUpgradeable
 
         _targetScheme[target] = scheme; // eg: rights manager => FLAT
         _currencyFees[composedKey] = fee; // target + currency + scheme = fee
-        _registerCurrency(target, currency);
+        _registeredCurrencies[target].add(currency);
         emit FeesSet(target, currency, scheme, fee);
     }
 
@@ -148,14 +143,6 @@ contract Tollgate is Initializable, UUPSUpgradeable, AccessControlledUpgradeable
         T.Scheme scheme = _targetScheme[target];
         bytes32 composedKey = _computeComposedKey(target, currency, scheme);
         return _registeredCurrencies[target].contains(currency) && _currencyFees[composedKey] > 0;
-    }
-
-    /// @notice Registers a currency for a specific target.
-    /// @param target The context or address where the currency is being registered.
-    /// @param currency The currency to register.
-    function _registerCurrency(address target, address currency) private {
-        bool registered = _registeredCurrencies[target].add(currency);
-        if (!registered) revert CurrencyRegistrationFailed(target, currency);
     }
 
     /// @notice Computes a unique key for a currency and scheme combination.

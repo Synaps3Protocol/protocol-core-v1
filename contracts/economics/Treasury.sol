@@ -67,7 +67,7 @@ contract Treasury is
         return super.deposit(pool, amount, currency);
     }
 
-    /// @notice Collects accrued fees for a specified currency from an authorized fee collector.
+    /// @notice Collects accrued fees for a specified currency from an authorized fee collector. (visitable)
     /// @dev This function requests the given collector to disburse its collected fees
     ///      for the specified currency. The collected funds are then credited to the treasury pool.
     ///      Only the governor can execute this function, ensuring controlled fee collection.

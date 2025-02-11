@@ -142,7 +142,7 @@ abstract contract PolicyBase is ERC165, IPolicy {
     /// @notice Retrieves the license id associated with a specific account.
     /// @param account The address of the account for which the attestation is being retrieved.
     /// @param criteria Encoded data containing the parameters required to retrieve attestation.
-    /// eg: assetId, holder, groups, etc
+    ///                 eg: assetId, holder, groups, etc
     function getLicense(address account, bytes memory criteria) public view returns (uint256) {
         // recompute the composed key based on account and criteria = to match context
         bytes32 key = _computeComposedKey(account, criteria);
@@ -194,7 +194,7 @@ abstract contract PolicyBase is ERC165, IPolicy {
         // - Holder-level licenses: account + "holder"
         // - Resource-level licenses: account + assetId
         // - Group-level licenses: account + "groupId", etc etc
-        // This answers: "the account has a license for the asset id?""..
+        // This answers: "the account has a license for the asset id, etc?""..
         return keccak256(abi.encodePacked(account, context));
     }
 }

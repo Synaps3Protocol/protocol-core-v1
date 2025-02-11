@@ -10,10 +10,11 @@ import { FinancialOps } from "@synaps3/core/libraries/FinancialOps.sol";
 /// @title DistributorImpl
 /// @notice Handles the logic for managing content distributors in a decentralized environment.
 /// @dev
-/// - The `DistributorImpl` contract is used as an implementation in an `UpgradeableBeacon`.
-/// - Calls to this contract are made through a `BeaconProxy`, meaning that this implementation can be updated.
-/// - This contract itself is NOT upgradeable**, since its updates are managed at the beacon level.
-/// - We inherit from upgradeable contracts **ONLY** to reuse their storage layout (ERC-7201).
+/// - The `DistributorImpl` contract serves as an implementation for an `UpgradeableBeacon`.
+/// - Calls to this contract are made through a `BeaconProxy`, allowing upgrades at the beacon level.
+/// - This contract itself is NOT upgradeable directly; its updates are managed by the beacon.
+/// - It inherits from upgradeable contracts **ONLY** to maintain compatibility with their storage layout (ERC-7201).
+/// - This approach ensures that future improvement to the distributor implementation do not break the beacon's storage layout.
 contract DistributorImpl is Initializable, ERC165Upgradeable, OwnableUpgradeable, IDistributor {
     using FinancialOps for address;
 

@@ -21,7 +21,6 @@ import { IDistributorFactory } from "@synaps3/core/interfaces/syndication/IDistr
 
 /// @title DistributorFactory.
 /// @notice Use this contract to create new distributors.
-/// @dev This contract uses OpenZeppelin's Ownable and Pausable contracts for access control and pausing functionality.
 contract DistributorFactory is UpgradeableBeacon, IDistributorFactory {
     /// @notice Mapping to keep track of registered distributor endpoints.
     /// @dev The key is a hashed endpoint string, and the value is the address of the distributor contract.
@@ -51,7 +50,8 @@ contract DistributorFactory is UpgradeableBeacon, IDistributorFactory {
         return _manager[distributor];
     }
 
-    // TODO: check domain existence
+    // TODO: check domain existence eg. existingDomain('an.com')
+    // TODO: avoid domains spam/pollution/faking
 
     /// @notice Function to create a new distributor contract.
     /// @dev Ensures that the same endpoint is not registered twice.

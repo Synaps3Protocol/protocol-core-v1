@@ -56,7 +56,9 @@ contract RightsAssetCustodian is Initializable, UUPSUpgradeable, AccessControlle
     /// @notice Modifier to check if the distributor is active and not blocked.
     /// @param distributor The distributor address to check.
     modifier onlyActiveDistributor(address distributor) {
-        if (!_isValidActiveDistributor(distributor)) revert InvalidInactiveDistributor();
+        if (!_isValidActiveDistributor(distributor)) {
+            revert InvalidInactiveDistributor();
+        }
         _;
     }
 
@@ -90,12 +92,8 @@ contract RightsAssetCustodian is Initializable, UUPSUpgradeable, AccessControlle
 
     /// @notice Revokes custodial rights of a distributor for the caller's assets.
     /// @param distributor The distributor to revoke custody from.
-    function revokeCustody(address distributor) external onlyActiveDistributor(distributor) {
-        // msg.sender expected to be the holder revoking his/her content custody..
-        bool existingCustodian = _custodiansByHolder[msg.sender].contains(distributor);
-        if (!existingCustodian) revert InvalidInactiveDistributor();
-
-        // remove registries from the storage
+    function revokeCustody(address distributor) external {
+        // remove custody from the storage && if does not exist nor granted will revoke
         bool removedCustodian = _custodiansByHolder[msg.sender].remove(distributor);
         bool removedCustody = _holdersUnderCustodian[distributor].remove(msg.sender);
         if (!removedCustodian || !removedCustody) revert RevokeCustodyFailed(distributor, msg.sender);
@@ -105,12 +103,7 @@ contract RightsAssetCustodian is Initializable, UUPSUpgradeable, AccessControlle
     /// @notice Grants custodial rights over the asset held by a holder to a distributor.
     /// @param distributor The address of the distributor who will receive custodial rights.
     function grantCustody(address distributor) external onlyActiveDistributor(distributor) {
-        // msg.sender expected to be the holder declaring his/her content custody..
-        uint256 currentRedundancy = _custodiansByHolder[msg.sender].length();
-        bool exceededRedundancy = currentRedundancy >= _maxDistributionRedundancy;
-        if (exceededRedundancy) revert MaxRedundancyAllowedReached();
-
-        // add registry to the storage
+        // add custodian to the storage && if already exists the grant will revoke
         bool addedCustodian = _custodiansByHolder[msg.sender].add(distributor);
         bool addedCustody = _holdersUnderCustodian[distributor].add(msg.sender);
         if (!addedCustodian || !addedCustody) revert GrantCustodyFailed(distributor, msg.sender);

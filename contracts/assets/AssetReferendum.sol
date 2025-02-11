@@ -74,9 +74,10 @@ contract AssetReferendum is
     /// @param assetId The ID of the asset to be submitted.
     /// @dev The asset ID is reviewed by governance.
     function submit(uint256 assetId) external {
-        _register(assetId); // bundled check-effects-interaction
+        // if the asset was not already present `added` = true;
         bool added = _submissions[msg.sender].add(assetId);
         if (!added) revert SubmissionFailed(msg.sender, assetId);
+        _register(assetId); // set the assets as waiting approval state
         emit Submitted(msg.sender, assetId);
     }
 

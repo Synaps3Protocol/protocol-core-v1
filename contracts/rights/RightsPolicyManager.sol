@@ -101,7 +101,7 @@ contract RightsPolicyManager is Initializable, UUPSUpgradeable, AccessControlled
         bytes memory callData = abi.encodeCall(IPolicy.enforce, (holder, agreement));
         /// Type-safe low-level call to policy. The policy is registered to the parties.
         /// The policy address is already validated during policy audit and authorization.
-        /// During `onlyAuthorizedPolicy`, the policy is verified about authorization.
+        /// During `onlyAuthorizedPolicy`, the policy is verified about safety.
         //slither-disable-next-line missing-zero-check
         (bool success, bytes memory result) = policy.call(callData);
         if (!success) revert EnforcementFailed("Error during policy enforcement call");
@@ -229,6 +229,7 @@ contract RightsPolicyManager is Initializable, UUPSUpgradeable, AccessControlled
         // safe unchecked inc limited to partiesLen
         for (uint256 i = 0; i < partiesLen; i = i.uncheckedInc()) {
             uint256 attestationId = attestationIds[i];
+            // TODO circular buffer?
             bool registered = _closures[parties[i]].add(policyAddress);
             if (!registered) revert RegistrationFailed(parties[i], policyAddress);
             emit Registered(parties[i], proof, attestationId, policyAddress);
