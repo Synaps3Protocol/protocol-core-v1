@@ -64,7 +64,7 @@ contract RollingOpsTest is Test {
     }
 
     function test_Window_ReturnDefaultWindowSize() public view {
-        assertEq(rolling.getWindow(), 5);
+        assertEq(rolling.getWindow(), 3);
     }
 
     function test_Configure_SetValidWindowSize() public {
@@ -154,27 +154,21 @@ contract RollingOpsTest is Test {
         address addr2 = vm.addr(2);
         address addr3 = vm.addr(3);
         address addr4 = vm.addr(4);
-        address addr5 = vm.addr(5);
-        address addr6 = vm.addr(6);
 
         // using default window
         rolling.add(addr1);
         rolling.add(addr2);
         rolling.add(addr3);
-        rolling.add(addr4);
-        rolling.add(addr5);
 
-        // before = [addr1, addr2, addr3, addr4, addr5]
-        // after = [addr2, addr3, addr4, addr5, addr6]
-        rolling.add(addr6);
+        // before = [addr1, addr2, addr3]
+        // after = [ addr2, addr3, addr4]
+        rolling.add(addr4);
 
         address[] memory got = rolling.getAll();
-        address[] memory expected = new address[](5);
+        address[] memory expected = new address[](3);
         expected[0] = addr2;
         expected[1] = addr3;
         expected[2] = addr4;
-        expected[3] = addr5;
-        expected[4] = addr6;
 
         assertEq(got, expected);
     }
@@ -240,8 +234,8 @@ contract RollingOpsTest is Test {
 
         // rolled out should return false
         assertFalse(rolling.exists(addr1));
-        assertTrue(rolling.exists(addr2));
-        assertTrue(rolling.exists(addr3));
+        assertFalse(rolling.exists(addr2));
+        assertFalse(rolling.exists(addr3));
         assertTrue(rolling.exists(addr4));
         assertTrue(rolling.exists(addr5));
         assertTrue(rolling.exists(addr6));
@@ -263,7 +257,7 @@ contract RollingOpsTest is Test {
         rolling.add(addr5);
         // do not grow; default window is 3
         // must keep the same window size
-        assertEq(rolling.getLength(), 5);
+        assertEq(rolling.getLength(), 3);
     }
 
     function test_At_ReturnCorrespondingValue() public {

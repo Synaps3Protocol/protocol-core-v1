@@ -18,8 +18,8 @@ library RollingOps {
         Rolling _inner;
     }
 
-    /// @dev If window is not configured, default use 5
-    uint256 internal constant MAX_DEFAULT_WINDOW = 5;
+    /// @dev If window is not configured, default use 3
+    uint256 internal constant MAX_DEFAULT_WINDOW = 3;
 
     /// @dev Error thrown when attempting to access an index that is out of bounds.
     error IndexOutOfBounds();
@@ -78,6 +78,8 @@ library RollingOps {
     /// @param value The new value to add to the set.
     function _add(Rolling storage set, bytes32 value) private {
         // If the value already exists, move it to the latest position and return.
+        // The idea behind swap is keep the newest element in the tail (newest in LIFO order),
+        // avoiding redundant entries and unnecessary rollout.
         if (_contains(set, value)) {
             _swap(set, value);
             return;
