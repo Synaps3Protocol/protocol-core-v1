@@ -242,7 +242,6 @@ contract RightsPolicyManager is Initializable, UUPSUpgradeable, AccessControlled
     /// @param account The address of the user being assigned the policy.
     /// @param policy The address of the policy contract to associate with the account.
     function _rollInPolicy(address account, address policy) private {
-        if (_closures[account].contains(policy)) return;
         _closures[account].roll(policy);
     }
 }

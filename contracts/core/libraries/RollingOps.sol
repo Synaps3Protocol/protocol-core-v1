@@ -21,9 +21,15 @@ library RollingOps {
     /// @dev If window is not configured, default use 5
     uint256 internal constant MAX_DEFAULT_WINDOW = 5;
 
+    /// @dev Error thrown when attempting to access an index that is out of bounds.
+    error IndexOutOfBounds();
+
+    /// @dev Error thrown when attempting to set an invalid window size (must be greater than zero).
+    error InvalidZeroWindowSize();
+
     /// @dev Sets the maximum window size of the set.
     function configure(AddressArray storage set, uint256 window_) internal {
-        require(window_ > 0, "Window size must be greater than zero");
+        if (window_ == 0) revert InvalidZeroWindowSize();
         set._inner._maxWindowSize = window_;
     }
 
@@ -99,11 +105,12 @@ library RollingOps {
         bytes32 currentValue = set._values[index];
         // Retrieve the index of the existing value to swap.
         if (index == lastIndex) return;
+
         // Swap the existing value with the last value.
         set._values[lastIndex] = currentValue;
         set._values[index] = lastValue;
         // Swap positions
-        set._positions[lastValue] = index + 1; 
+        set._positions[lastValue] = index + 1;
         set._positions[currentValue] = lastIndex + 1;
     }
 
@@ -149,7 +156,7 @@ library RollingOps {
 
     /// @dev Returns all values in the set as an array.
     function _at(Rolling storage set, uint256 index) private view returns (bytes32) {
-        require(index < _length(set), "Invalid outbound index");
+        if (index >= _length(set)) revert IndexOutOfBounds();
         return set._values[index];
     }
 
