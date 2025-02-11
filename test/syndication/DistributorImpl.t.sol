@@ -69,7 +69,7 @@ contract DistributorImplTest is BaseTest {
         vm.stopPrank();
     }
 
-    function test_Withdraw_ValidFundsWitdrawn() public {
+    function test_Withdraw_ValidFundsWithdrawn() public {
         // created with an initial endpoint
         uint256 expected = 100 * 1e18;
         address distributor = deployDistributor("1.1.1.1");

@@ -4,7 +4,6 @@ pragma solidity 0.8.26;
 
 import { Initializable } from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import { UUPSUpgradeable } from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
-import { EnumerableSet } from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 import { AccessControlledUpgradeable } from "@synaps3/core/primitives/upgradeable/AccessControlledUpgradeable.sol";
 
 import { IPolicy } from "@synaps3/core/interfaces/policies/IPolicy.sol";
@@ -12,6 +11,7 @@ import { IAgreementSettler } from "@synaps3/core/interfaces/financial/IAgreement
 import { IRightsPolicyManager } from "@synaps3/core/interfaces/rights/IRightsPolicyManager.sol";
 // solhint-disable-next-line max-line-length
 import { IRightsPolicyAuthorizerVerifiable } from "@synaps3/core/interfaces/rights/IRightsPolicyAuthorizerVerifiable.sol";
+import { RollingOps } from "@synaps3/core/libraries/RollingOps.sol";
 import { LoopOps } from "@synaps3/core/libraries/LoopOps.sol";
 import { ArrayOps } from "@synaps3/core/libraries/ArrayOps.sol";
 import { T } from "@synaps3/core/primitives/Types.sol";
@@ -22,7 +22,7 @@ import { T } from "@synaps3/core/primitives/Types.sol";
 ///      It interacts with the `RightsPolicyAuthorizer` to verify delegation and `AgreementSettler`
 ///      to manage agreements.
 contract RightsPolicyManager is Initializable, UUPSUpgradeable, AccessControlledUpgradeable, IRightsPolicyManager {
-    using EnumerableSet for EnumerableSet.AddressSet;
+    using RollingOps for RollingOps.AddressArray;
     using ArrayOps for address[];
     using LoopOps for uint256;
 
@@ -35,7 +35,7 @@ contract RightsPolicyManager is Initializable, UUPSUpgradeable, AccessControlled
     //slither-disable-end naming-convention
 
     /// @dev Mapping to store the access control list for each content holder and account.
-    mapping(address => EnumerableSet.AddressSet) private _closures;
+    mapping(address => RollingOps.AddressArray) private _closures;
 
     /// @notice Emitted when access rights are granted to an account based on a specific policy.
     /// @param account The address of the account to which the policy applies.
@@ -214,11 +214,13 @@ contract RightsPolicyManager is Initializable, UUPSUpgradeable, AccessControlled
         return abi.decode(result, (bool));
     }
 
-    /// @notice Registers a new policy for a list of accounts, granting access based on a specific policy contract.
+    /// @notice Registers a batch of policies for multiple accounts, associating them with a specific policy contract.
+    /// @dev Iterates through the list of `parties` and registers each one under the given `policyAddress`.
+    ///      Emits a `Registered` event for each account-policy registration.
     /// @param proof A cryptographic proof that verifies the authenticity of the agreement.
-    /// @param attestationIds A list of unique identifiers for the attestation that confirms the registration.
-    /// @param policyAddress The address of the policy contract responsible for validating the access conditions.
-    /// @param parties The addresses of the accounts to be granted access through the policy.
+    /// @param attestationIds A list of unique identifiers for attestations confirming each registration.
+    /// @param policyAddress The address of the policy contract defining access conditions.
+    /// @param parties The list of addresses that will be granted access through the policy.
     function _registerBatchPolicies(
         uint256 proof,
         address policyAddress,
@@ -226,16 +228,21 @@ contract RightsPolicyManager is Initializable, UUPSUpgradeable, AccessControlled
         address[] memory parties
     ) private {
         uint256 partiesLen = parties.length;
-        // safe unchecked inc limited to partiesLen
+        // safe unchecked increment, limited to partiesLen
         for (uint256 i = 0; i < partiesLen; i = i.uncheckedInc()) {
+            _rollInPolicy(parties[i], policyAddress);
             uint256 attestationId = attestationIds[i];
-            // TODO circular buffer?
-            bool registered = _closures[parties[i]].add(policyAddress);
-            if (!registered) revert RegistrationFailed(parties[i], policyAddress);
             emit Registered(parties[i], proof, attestationId, policyAddress);
         }
     }
 
-
-    // function _
+    /// @notice Adds a new policy to an account’s registered policies.
+    /// @dev Uses the `_closures` mapping to store the assigned policies for each account.
+    ///      This ensures that the account retains a history of the policies it has been granted access to.
+    /// @param account The address of the user being assigned the policy.
+    /// @param policy The address of the policy contract to associate with the account.
+    function _rollInPolicy(address account, address policy) private {
+        if (_closures[account].contains(policy)) return;
+        _closures[account].roll(policy);
+    }
 }

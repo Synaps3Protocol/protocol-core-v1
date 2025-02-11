@@ -54,14 +54,14 @@ contract QuorumTest is Test, QuorumUpgradeable {
         assertEq(uint(blockedStatus), 3);
     }
 
-    function test_RevertWhen_ApproveNotRegistered() public {
+    function test_Approve_RevertWhen_ApproveNotRegistered() public {
         vm.expectRevert(NotWaitingApproval.selector);
         uint256 entry = 123456789;
         // active status
         _approve(entry);
     }
 
-    function test_RevertWhen_BlockedNotActive() public {
+    function test_Revoke_RevertWhen_BlockedNotActive() public {
         vm.expectRevert(InvalidInactiveState.selector);
         uint256 entry = 12345677;
         // waiting status
@@ -70,7 +70,7 @@ contract QuorumTest is Test, QuorumUpgradeable {
         _revoke(entry);
     }
 
-    function test_RevertWhen_QuitNotWaiting() public {
+    function test_Quit_RevertWhen_QuitNotWaiting() public {
         vm.expectRevert(NotWaitingApproval.selector);
         uint256 entry = 123456459;
         // blocked status

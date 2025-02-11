@@ -8,8 +8,8 @@ library C {
     // https://en.wikipedia.org/wiki/Basis_point
     // 1 bps = 0.01, 10 bps = 0.1
     // ...
-    uint8 internal constant SCALE_FACTOR = 100;
-    uint16 internal constant BPS_MAX = 10_000;
+    uint256 internal constant SCALE_FACTOR = 100;
+    uint256 internal constant BPS_MAX = 10_000;
 
     uint64 internal constant ADMIN_ROLE = 0; // alias type(uint64).min AccessManager
     uint64 internal constant GOV_ROLE = 1; // governance role

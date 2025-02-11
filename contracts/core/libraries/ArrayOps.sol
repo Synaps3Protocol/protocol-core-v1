@@ -4,6 +4,8 @@ pragma solidity 0.8.26;
 /// @title ArrayOps
 /// @notice Library providing utility functions for manipulating arrays in memory.
 library ArrayOps {
+    // TODO expand types using private methods and bytes32 as base type
+
     /// @notice Returns a new array containing only the first `cap` elements.
     /// @dev Creates a new array with a maximum size of `cap` and copies
     ///      only the first `cap` elements from the original array.

@@ -6,12 +6,15 @@ import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.s
 
 /// @title FinancialOps
 /// @notice Library to assist with financial multicurrency operations.
+// TODO: If needed this library could be deployed separately and linked.
 library FinancialOps {
     using SafeERC20 for IERC20;
 
     /// @notice Error to be thrown when a transfer fails.
     /// @param reason The reason for the transfer failure.
     error FailDuringTransfer(string reason);
+    /// @notice Error to be thrown when a deposit fails.
+    /// @param reason The reason for the deposit failure.
     error FailDuringDeposit(string reason);
 
     /// @notice Handles the transfer of native cryptocurrency.
