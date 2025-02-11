@@ -235,4 +235,7 @@ contract RightsPolicyManager is Initializable, UUPSUpgradeable, AccessControlled
             emit Registered(parties[i], proof, attestationId, policyAddress);
         }
     }
+
+
+    // function _
 }
