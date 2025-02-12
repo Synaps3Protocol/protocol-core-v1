@@ -101,54 +101,6 @@ contract RollingOpsTest is Test {
         assertEq(got, expected);
     }
 
-    function test_Add_RollingSwapExistingElements() public {
-        address addr1 = vm.addr(1);
-        address addr2 = vm.addr(2);
-        address addr3 = vm.addr(3);
-
-        // using default window
-        // [addr1, addr2, addr3]
-        rolling.add(addr1);
-        rolling.add(addr2);
-        rolling.add(addr3);
-
-        // expected [add1, addr3, addr2]
-        rolling.add(addr2);
-
-        address[] memory got = rolling.getAll();
-        address[] memory expected = new address[](3);
-        expected[0] = addr1;
-        expected[1] = addr3;
-        expected[2] = addr2;
-
-        assertEq(got, expected);
-    }
-
-    function test_Add_RollingAvoidSwapIfLast() public {
-        rolling.configureWindow(3);
-        address addr1 = vm.addr(1);
-        address addr2 = vm.addr(2);
-        address addr3 = vm.addr(3);
-
-        // using default window
-        // [addr1, addr2, addr3]
-        rolling.add(addr1);
-        rolling.add(addr2);
-        rolling.add(addr3);
-
-        // expected [add1, addr2, addr3]
-        rolling.add(addr3);
-
-        address[] memory got = rolling.getAll();
-        address[] memory expected = new address[](3);
-        expected[0] = addr1;
-        expected[1] = addr2;
-        expected[2] = addr3;
-
-        // must keep the same expected structure
-        assertEq(got, expected);
-    }
-
     function test_Add_RollingOldestElement() public {
         address addr1 = vm.addr(1);
         address addr2 = vm.addr(2);

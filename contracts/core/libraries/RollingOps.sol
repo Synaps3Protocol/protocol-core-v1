@@ -3,6 +3,10 @@ pragma solidity 0.8.26;
 
 /// @title RollingOps
 /// @notice Library providing utility functions for managing rolling arrays with a fixed window size.
+/// @dev This library maintains a rolling array that ensures the most recent values are prioritized.
+///      - Supports inserting new values and moving existing ones to the latest position.
+///      - Ensures LIFO (Last-In, First-Out) order.
+///      - Can be configured with a maximum window size for `roll`, but `reorder` does not remove elements.
 library RollingOps {
     struct Rolling {
         // Maximum size of the array before rolling out old values.
@@ -35,7 +39,7 @@ library RollingOps {
 
     /// @dev Adds a value to the set, rolling out the oldest if the max window size is reached.
     function roll(AddressArray storage set, address value) internal {
-        _add(set._inner, bytes32(uint256(uint160(value))));
+        _roll(set._inner, bytes32(uint256(uint160(value))));
     }
 
     /// @dev Checks if a value exists in the set. O(1).
@@ -70,21 +74,13 @@ library RollingOps {
         return result;
     }
 
-    /// @dev Internal function to add a value to the rolling set.
-    ///      - If the value already exists, it swaps its position with the last element.
-    ///      - If the set exceeds the maximum window size, the oldest element is removed.
-    ///      - Finally, the new value is added to the set.
+    /// @dev Adds a new value to the rolling set, maintaining a fixed-size window.
+    ///      - If the window size is exceeded, it removes the oldest value (`_rollout`).
+    ///      - Then, the new value is inserted at the end (`_rollin`).
+    ///      - Ensures that only the most recent values up to `window` size are kept.
     /// @param set The Rolling storage set to modify.
-    /// @param value The new value to add to the set.
-    function _add(Rolling storage set, bytes32 value) private {
-        // If the value already exists, move it to the latest position and return.
-        // The idea behind swap is keep the newest element in the tail (newest in LIFO order),
-        // avoiding redundant entries and unnecessary rollout.
-        if (_contains(set, value)) {
-            _swap(set, value);
-            return;
-        }
-
+    /// @param value The new value to add.
+    function _roll(Rolling storage set, bytes32 value) private {
         // If the set has reached its maximum window size, remove the oldest value.
         // Example: [A, B, C] -> Adding D -> Rolls out A -> [B, C, D]
         if (_length(set) >= _window(set)) {
@@ -92,28 +88,6 @@ library RollingOps {
         }
 
         _rollin(set, value);
-    }
-
-    /// @dev Internal function to reposition an existing value in the set by swapping it
-    ///      with the last element. This helps maintain order while avoiding duplicates.
-    /// @param set The Rolling storage set containing the values.
-    /// @param value The value that already exists in the set and needs to be repositioned.
-    function _swap(Rolling storage set, bytes32 value) private {
-        // Retrieve the last element's index and value.
-        uint256 lastIndex = _length(set) - 1;
-        // positions use base 1 indexes
-        uint256 index = set._positions[value] - 1;
-        bytes32 lastValue = set._values[lastIndex];
-        bytes32 currentValue = set._values[index];
-        // Retrieve the index of the existing value to swap.
-        if (index == lastIndex) return;
-
-        // Swap the existing value with the last value.
-        set._values[lastIndex] = currentValue;
-        set._values[index] = lastValue;
-        // Swap positions
-        set._positions[lastValue] = index + 1;
-        set._positions[currentValue] = lastIndex + 1;
     }
 
     /// @dev Internal function to insert a value into the set.
@@ -132,10 +106,8 @@ library RollingOps {
             // original         = [A,B,C]
             // i = 0; index = 1 = [B,B,C]
             // i = 1; index = 2 = [B,C,C]
-            uint256 index = i + 1;
-            set._values[i] = set._values[index];
-            set._positions[set._values[i]] = index;
-
+            set._values[i] = set._values[i + 1];
+            set._positions[set._values[i]] = i + 1;
             // safe unchecked limited to max window
             unchecked {
                 ++i;

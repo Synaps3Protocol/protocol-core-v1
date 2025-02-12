@@ -4,6 +4,7 @@ pragma solidity 0.8.26;
 
 import { Initializable } from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import { UUPSUpgradeable } from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
+import { EnumerableSet } from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 import { AccessControlledUpgradeable } from "@synaps3/core/primitives/upgradeable/AccessControlledUpgradeable.sol";
 
 import { IPolicy } from "@synaps3/core/interfaces/policies/IPolicy.sol";
@@ -11,7 +12,6 @@ import { IAgreementSettler } from "@synaps3/core/interfaces/financial/IAgreement
 import { IRightsPolicyManager } from "@synaps3/core/interfaces/rights/IRightsPolicyManager.sol";
 // solhint-disable-next-line max-line-length
 import { IRightsPolicyAuthorizerVerifiable } from "@synaps3/core/interfaces/rights/IRightsPolicyAuthorizerVerifiable.sol";
-import { RollingOps } from "@synaps3/core/libraries/RollingOps.sol";
 import { LoopOps } from "@synaps3/core/libraries/LoopOps.sol";
 import { ArrayOps } from "@synaps3/core/libraries/ArrayOps.sol";
 import { T } from "@synaps3/core/primitives/Types.sol";
@@ -22,7 +22,7 @@ import { T } from "@synaps3/core/primitives/Types.sol";
 ///      It interacts with the `RightsPolicyAuthorizer` to verify delegation and `AgreementSettler`
 ///      to manage agreements.
 contract RightsPolicyManager is Initializable, UUPSUpgradeable, AccessControlledUpgradeable, IRightsPolicyManager {
-    using RollingOps for RollingOps.AddressArray;
+    using EnumerableSet for EnumerableSet.AddressSet;
     using ArrayOps for address[];
     using LoopOps for uint256;
 
@@ -35,7 +35,7 @@ contract RightsPolicyManager is Initializable, UUPSUpgradeable, AccessControlled
     //slither-disable-end naming-convention
 
     /// @dev Mapping to store the access control list for each content holder and account.
-    mapping(address => RollingOps.AddressArray) private _closures;
+    mapping(address => EnumerableSet.AddressSet) private _closures;
 
     /// @notice Emitted when access rights are granted to an account based on a specific policy.
     /// @param account The address of the account to which the policy applies.
@@ -230,7 +230,7 @@ contract RightsPolicyManager is Initializable, UUPSUpgradeable, AccessControlled
         uint256 partiesLen = parties.length;
         // safe unchecked increment, limited to partiesLen
         for (uint256 i = 0; i < partiesLen; i = i.uncheckedInc()) {
-            _rollInPolicy(parties[i], policyAddress);
+            _registerPolicy(parties[i], policyAddress);
             uint256 attestationId = attestationIds[i];
             emit Registered(parties[i], proof, attestationId, policyAddress);
         }
@@ -241,7 +241,7 @@ contract RightsPolicyManager is Initializable, UUPSUpgradeable, AccessControlled
     ///      This ensures that the account retains a history of the policies it has been granted access to.
     /// @param account The address of the user being assigned the policy.
     /// @param policy The address of the policy contract to associate with the account.
-    function _rollInPolicy(address account, address policy) private {
-        _closures[account].roll(policy);
+    function _registerPolicy(address account, address policy) private {
+        _closures[account].add(policy);
     }
 }
