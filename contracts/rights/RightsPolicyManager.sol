@@ -112,23 +112,19 @@ contract RightsPolicyManager is Initializable, UUPSUpgradeable, AccessControlled
         return attestationIds;
     }
 
-    /// @notice Retrieves the first active policy matching the criteria for an account in LIFO order.
+    /// @notice Retrieves the first active policy matching the criteria for an account .
     /// @param account Address of the account to evaluate.
     /// @param criteria Encoded data containing parameters for access verification. eg: assetId, holder
     function getActivePolicy(address account, bytes memory criteria) external view returns (bool, address) {
         address[] memory policies = getPolicies(account);
-        uint256 i = policies.length;
+        uint256 policiesLen = policies.length;
 
-        // Get the first active policy in LIFO order and return it
-        while (i > 0) {
-            address currentPolicy = policies[i - 1];
-            if (isActivePolicy(account, currentPolicy, criteria)) {
-                return (true, currentPolicy);
+        // safe unchecked limited to max policy length
+        for (uint256 i = 0; i < policiesLen; i = i.uncheckedInc()) {
+            // the first matching criteria is returned
+            if (isActivePolicy(account, policies[i], criteria)) {
+                return (true, policies[i]);
             }
-
-            // safe unchecked
-            // limited to i > 0
-            i = i.uncheckedDec();
         }
 
         return (false, address(0));
@@ -185,22 +181,22 @@ contract RightsPolicyManager is Initializable, UUPSUpgradeable, AccessControlled
     /// @param policy The address of the policy contract to check compliance against.
     /// @param criteria Encoded data containing the parameters required to verify access.
     function isActivePolicy(address account, address policy, bytes memory criteria) public view returns (bool) {
-        if (!_isRegisteredPolicy(account, policy)) return false;
+        if (!isRegisteredPolicy(account, policy)) return false;
         return _verifyPolicyAccess(account, policy, criteria);
+    }
+
+    /// @dev Checks if a policy is registered under the given account.
+    /// @param account The address of the user.
+    /// @param policy The address of the policy contract.
+    /// @return `true` if the policy is registered for the account, otherwise `false`.
+    function isRegisteredPolicy(address account, address policy) public view returns (bool) {
+        return _closures[account].contains(policy);
     }
 
     /// @dev Authorizes the upgrade of the contract.
     /// @notice Only the owner can authorize the upgrade.
     /// @param newImplementation The address of the new implementation contract.
     function _authorizeUpgrade(address newImplementation) internal override onlyAdmin {}
-
-    /// @dev Checks if a policy is registered under the given account.
-    /// @param account The address of the user.
-    /// @param policy The address of the policy contract.
-    /// @return `true` if the policy is registered for the account, otherwise `false`.
-    function _isRegisteredPolicy(address account, address policy) private view returns (bool) {
-        return _closures[account].contains(policy);
-    }
 
     /// @dev Verifies access permissions by calling the policy contract.
     /// @param account The address of the user requesting access.
@@ -230,8 +226,8 @@ contract RightsPolicyManager is Initializable, UUPSUpgradeable, AccessControlled
         uint256 partiesLen = parties.length;
         // safe unchecked increment, limited to partiesLen
         for (uint256 i = 0; i < partiesLen; i = i.uncheckedInc()) {
-            _registerPolicy(parties[i], policyAddress);
             uint256 attestationId = attestationIds[i];
+            _registerPolicy(parties[i], policyAddress);
             emit Registered(parties[i], proof, attestationId, policyAddress);
         }
     }
