@@ -159,5 +159,4 @@ contract RightsPolicyAuthorizer is
         (bool success, ) = policy.call(abi.encodeCall(IPolicy.setup, (msg.sender, data)));
         if (!success) revert InvalidPolicyInitialization("Error during policy initialization call");
     }
-
 }

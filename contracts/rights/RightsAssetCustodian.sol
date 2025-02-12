@@ -29,7 +29,7 @@ contract RightsAssetCustodian is Initializable, UUPSUpgradeable, AccessControlle
     /// @dev Mapping to store the custodial (distributor) address for each content rights holder.
     mapping(address => EnumerableSet.AddressSet) private _custodiansByHolder;
     /// @dev Mapping to store a registry of rights holders associated with each distributor.
-    mapping(address => EnumerableSet.AddressSet) private _holdersUnderCustodian;
+    mapping(address => uint256) private _holdersUnderCustodian;
 
     /// @notice Emitted when custodial distribution rights are granted to a distributor.
     /// @param newCustody The address of the distributor granted custodial rights.
@@ -53,11 +53,20 @@ contract RightsAssetCustodian is Initializable, UUPSUpgradeable, AccessControlle
     /// @dev Error when failing to revoke custody from a distributor.
     error RevokeCustodyFailed(address distributor, address holder);
 
-    /// @notice Modifier to check if the distributor is active and not blocked.
+    /// @dev Modifier to check if the distributor is active and not blocked.
     /// @param distributor The distributor address to check.
     modifier onlyActiveDistributor(address distributor) {
         if (!_isValidActiveDistributor(distributor)) {
             revert InvalidInactiveDistributor();
+        }
+        _;
+    }
+
+    /// @dev Ensures that the caller does not exceed the maximum redundancy limit for custodians.
+    modifier onlyAvailableRedundancy() {
+        uint256 currentRedundancy = _custodiansByHolder[msg.sender].length();
+        if (currentRedundancy >= _maxDistributionRedundancy) {
+            revert MaxRedundancyAllowedReached();
         }
         _;
     }
@@ -95,18 +104,18 @@ contract RightsAssetCustodian is Initializable, UUPSUpgradeable, AccessControlle
     function revokeCustody(address distributor) external {
         // remove custody from the storage && if does not exist nor granted will revoke
         bool removedCustodian = _custodiansByHolder[msg.sender].remove(distributor);
-        bool removedCustody = _holdersUnderCustodian[distributor].remove(msg.sender);
-        if (!removedCustodian || !removedCustody) revert RevokeCustodyFailed(distributor, msg.sender);
+        if (!removedCustodian) revert RevokeCustodyFailed(distributor, msg.sender);
+        _decrementCustody(distributor); // -1 under custody
         emit CustodialRevoked(distributor, msg.sender);
     }
 
     /// @notice Grants custodial rights over the asset held by a holder to a distributor.
     /// @param distributor The address of the distributor who will receive custodial rights.
-    function grantCustody(address distributor) external onlyActiveDistributor(distributor) {
+    function grantCustody(address distributor) external onlyAvailableRedundancy onlyActiveDistributor(distributor) {
         // add custodian to the storage && if already exists the grant will revoke
         bool addedCustodian = _custodiansByHolder[msg.sender].add(distributor);
-        bool addedCustody = _holdersUnderCustodian[distributor].add(msg.sender);
-        if (!addedCustodian || !addedCustody) revert GrantCustodyFailed(distributor, msg.sender);
+        if (!addedCustodian) revert GrantCustodyFailed(distributor, msg.sender);
+        _incrementCustody(distributor); // +1 under custody
         emit CustodialGranted(distributor, msg.sender);
     }
 
@@ -120,19 +129,7 @@ contract RightsAssetCustodian is Initializable, UUPSUpgradeable, AccessControlle
     /// @notice Retrieves the total number of holders in custody for a given distributor.
     /// @param distributor The address of the distributor whose custodial content count is being requested.
     function getCustodyCount(address distributor) external view returns (uint256) {
-        return _holdersUnderCustodian[distributor].length();
-    }
-
-    /// @notice Retrieves the holders under custody for a specific distributor.
-    /// @param distributor The address of the distributor whose custody records are to be retrieved.
-    function getCustodyRegistry(address distributor) external view returns (address[] memory) {
-        // https://docs.openzeppelin.com/contracts/5.x/api/utils#EnumerableSet-values-struct-EnumerableSet-AddressSet-
-        // This operation will copy the entire storage to memory, which can be quite expensive.
-        // This function is designed to mostly be used by view accessors that are queried without any gas fees.
-        // Developers should keep in mind that this function has an unbounded cost,
-        /// and using it as part of a state-changing function may render the function uncallable
-        /// if the set grows to a point where copying to memory consumes too much gas to fit in a block.
-        return _holdersUnderCustodian[distributor].values();
+        return _holdersUnderCustodian[distributor];
     }
 
     /// @notice Selects a balanced custodian for a given content rights holder based on weighted randomness.
@@ -231,5 +228,19 @@ contract RightsAssetCustodian is Initializable, UUPSUpgradeable, AccessControlle
     /// @return A boolean indicating whether the distributor is valid and active.
     function _isValidActiveDistributor(address distributor) private view returns (bool) {
         return distributor != address(0) && DISTRIBUTOR_REFERENDUM.isActive(distributor);
+    }
+
+    /// @dev Increments the count of holders under a given distributor's custody.
+    /// @param distributor The address of the distributor whose custody count will be incremented.
+    function _incrementCustody(address distributor) private {
+        _holdersUnderCustodian[distributor] += 1;
+    }
+
+    /// @dev Decrements the count of holders under a given distributor's custody.
+    /// @param distributor The address of the distributor whose custody count will be decremented.
+    function _decrementCustody(address distributor) private {
+        if (_holdersUnderCustodian[distributor] > 0) {
+            _holdersUnderCustodian[distributor] -= 1;
+        }
     }
 }

@@ -33,4 +33,9 @@ interface IRightsPolicyManagerVerifiable {
     /// @param criteria Encoded data containing the parameters required to verify access.
     /// @return True if the policy is active and valid, false otherwise.
     function isActivePolicy(address account, address policy, bytes calldata criteria) external view returns (bool);
+
+    /// @dev Checks if a policy is registered under the given account.
+    /// @param account The address of the user.
+    /// @param policy The address of the policy contract.
+    function isRegisteredPolicy(address account, address policy) external view returns (bool);
 }

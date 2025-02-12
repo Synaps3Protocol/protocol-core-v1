@@ -23,10 +23,4 @@ interface IRightsAssetCustodianVerifiable {
     /// @param distributor The address of the distributor whose custodial content count is being requested.
     /// @return The total number of assets held in custody by the distributor.
     function getCustodyCount(address distributor) external view returns (uint256);
-
-    /// @notice Retrieves the custody records associated with a specific distributor.
-    /// @dev Returns an array of asset holders whose assets are in custody by the distributor.
-    /// @param distributor The address of the distributor whose custody records are to be retrieved.
-    /// @return An array of addresses representing asset holders.
-    function getCustodyRegistry(address distributor) external view returns (address[] memory);
 }
