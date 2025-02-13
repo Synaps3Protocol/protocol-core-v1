@@ -1,5 +1,5 @@
-// SPDX-License-Identifier: MIT
-
+// SPDX-License-Identifier: BUSL-1.1
+// NatSpec format convention - https://docs.soliditylang.org/en/v0.5.10/natspec-format.html
 pragma solidity 0.8.26;
 
 import { ERC165 } from "@openzeppelin/contracts/utils/introspection/ERC165.sol";
@@ -179,7 +179,7 @@ abstract contract PolicyBase is ERC165, IPolicy {
     function _setAttestation(address account, bytes memory context, uint256 attestationId) internal {
         // Composed key to store the relationship between account and context.
         bytes32 key = _computeComposedKey(account, context);
-        _attestations[key] = attestationId;
+        _attestations[key] = attestationId; // store attestation id
         emit AttestedAgreement(key, account, attestationId);
     }
 

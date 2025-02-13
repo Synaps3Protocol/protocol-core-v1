@@ -1,12 +1,5 @@
-// TODO payment splitter
-// TODO aca se puede tener un metodo que collecte todos los fees
-// https://docs.openzeppelin.com/contracts/4.x/api/finance#PaymentSplitter
 
-// el settler toma el agreement desde agreement
-// TODO el settlement podria tener split conf por ejemplo
-// TODO
-
-// SPDX-License-Identifier: MIT
+// SPDX-License-Identifier: BUSL-1.1
 // NatSpec format convention - https://docs.soliditylang.org/en/v0.5.10/natspec-format.html
 pragma solidity 0.8.26;
 

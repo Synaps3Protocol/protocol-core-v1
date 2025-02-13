@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MIT
+// SPDX-License-Identifier: BUSL-1.1
 pragma solidity 0.8.26;
 import { DeployBase } from "script/deployment/00_Deploy_Base.s.sol";
 import { DistributorReferendum } from "contracts/syndication/DistributorReferendum.sol";

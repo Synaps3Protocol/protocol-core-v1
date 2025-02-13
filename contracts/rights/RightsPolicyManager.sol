@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MIT
+// SPDX-License-Identifier: BUSL-1.1
 // NatSpec format convention - https://docs.soliditylang.org/en/v0.5.10/natspec-format.html
 pragma solidity 0.8.26;
 
@@ -105,7 +105,6 @@ contract RightsPolicyManager is Initializable, UUPSUpgradeable, AccessControlled
         //slither-disable-next-line missing-zero-check
         (bool success, bytes memory result) = policy.call(callData);
         if (!success) revert EnforcementFailed("Error during policy enforcement call");
-
         // expected returned attestation as agreement confirmation
         uint256[] memory attestationIds = abi.decode(result, (uint256[]));
         _registerBatchPolicies(proof, policy, attestationIds, agreement.parties);
@@ -161,7 +160,10 @@ contract RightsPolicyManager is Initializable, UUPSUpgradeable, AccessControlled
         //   the first `j` elements from `filtered`.
         // - This prevents returning an array with trailing `address(0)` values, ensuring data integrity
         //   and reducing unnecessary gas costs when the array is processed elsewhere.
-        return filtered.slice(j);
+        assembly {
+            mstore(filtered, j)
+        }
+        return filtered;
     }
 
     /// @notice Retrieves the list of policies associated with a specific account and content ID.

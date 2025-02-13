@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MIT
+// SPDX-License-Identifier: BUSL-1.1
 // NatSpec format convention - https://docs.soliditylang.org/en/v0.5.10/natspec-format.html
 pragma solidity 0.8.26;
 
@@ -59,6 +59,17 @@ contract RightsPolicyAuthorizer is
     /// @dev Error thrown when revoking an authorization fails.
     error RevocationFailed(address holder, address policy);
 
+    /// @dev Modifier that restricts access to only audited and valid policies.
+    ///      Ensures that the provided policy address has passed verification and auditing before authorization and initialization.
+    ///      If the policy is invalid or not audited, the transaction will revert.
+    /// @param policy The address of the policy contract to verify.
+    /// @notice This modifier is used to enforce that only approved policies can be initialized and authorized.
+    modifier onlyAuditedPolicies(address policy) {
+        // Only valid and audited policies are allowed to be authorized and initialized.
+        if (!_isValidPolicy(policy)) revert InvalidNotAuditedPolicy(policy);
+        _;
+    }
+
     /// @custom:oz-upgrades-unsafe-allow constructor
     constructor(address policyAudit) {
         /// https://forum.openzeppelin.com/t/uupsupgradeable-vulnerability-post-mortem/15680
@@ -77,7 +88,7 @@ contract RightsPolicyAuthorizer is
     /// @notice Initializes and authorizes a policy contract for content held by the holder.
     /// @param policy The address of the policy contract to be initialized and authorized.
     /// @param data The data to initialize policy.
-    function authorizePolicy(address policy, bytes calldata data) external {
+    function authorizePolicy(address policy, bytes calldata data) external onlyAuditedPolicies(policy) {
         _initializePolicy(policy, data);
         _authorizedPolicies[msg.sender].add(policy);
         emit RightsGranted(policy, msg.sender, data);
@@ -133,7 +144,10 @@ contract RightsPolicyAuthorizer is
         //   the first `j` elements from `filtered`.
         // - This prevents returning an array with trailing `address(0)` values, ensuring data integrity
         //   and reducing unnecessary gas costs when the array is processed elsewhere.
-        return filtered.slice(j);
+        assembly {
+            mstore(filtered, j)
+        }
+        return filtered;
     }
 
     /// @dev Authorizes the upgrade of the contract.
@@ -153,8 +167,6 @@ contract RightsPolicyAuthorizer is
     /// @param policy The address of the policy contract.
     /// @param data The data to initialize the policy.
     function _initializePolicy(address policy, bytes calldata data) private {
-        // only valid and audit polices are allowed to be authorized and initialized..
-        if (!_isValidPolicy(policy)) revert InvalidNotAuditedPolicy(policy);
         // type safe low level call to policy, call policy initialization with provided data..
         (bool success, ) = policy.call(abi.encodeCall(IPolicy.setup, (msg.sender, data)));
         if (!success) revert InvalidPolicyInitialization("Error during policy initialization call");
