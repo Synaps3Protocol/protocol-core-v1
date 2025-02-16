@@ -217,20 +217,19 @@ contract RightsPolicyManager is Initializable, UUPSUpgradeable, AccessControlled
     ///      Emits a `Registered` event for each account-policy registration.
     /// @param proof A cryptographic proof that verifies the authenticity of the agreement.
     /// @param attestationIds A list of unique identifiers for attestations confirming each registration.
-    /// @param policyAddress The address of the policy contract defining access conditions.
+    /// @param policy The address of the policy contract defining access conditions.
     /// @param parties The list of addresses that will be granted access through the policy.
     function _registerBatchPolicies(
         uint256 proof,
-        address policyAddress,
+        address policy,
         uint256[] memory attestationIds,
         address[] memory parties
     ) private {
         uint256 partiesLen = parties.length;
         // safe unchecked increment, limited to partiesLen
         for (uint256 i = 0; i < partiesLen; i = i.uncheckedInc()) {
-            uint256 attestationId = attestationIds[i];
-            _registerPolicy(parties[i], policyAddress);
-            emit Registered(parties[i], proof, attestationId, policyAddress);
+            _registerPolicy(parties[i], policy); // associate policy with account
+            emit Registered(parties[i], proof, attestationIds[i], policy);
         }
     }
 
