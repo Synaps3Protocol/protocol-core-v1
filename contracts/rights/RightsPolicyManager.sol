@@ -208,7 +208,7 @@ contract RightsPolicyManager is Initializable, UUPSUpgradeable, AccessControlled
     function _verifyPolicyAccess(address account, address policy, bytes memory criteria) private view returns (bool) {
         bytes memory callData = abi.encodeCall(IPolicy.isAccessAllowed, (account, criteria));
         (bool success, bytes memory result) = policy.staticcall(callData);
-        if (!success) return false; // Silent failure
+        if (!success) return false; // silent failure
         return abi.decode(result, (bool));
     }
 

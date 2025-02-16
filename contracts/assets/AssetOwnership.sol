@@ -130,10 +130,9 @@ contract AssetOwnership is
     /// @dev This action is irreversible and restricted to governance control.
     /// @param assetId The unique identifier of the asset to be revoked.
     function revoke(uint256 assetId) external restricted {
-        address owner = ownerOf(assetId);
         _burn(assetId);
         _disableAsset(assetId);
-        emit RevokedAsset(owner, assetId);
+        emit RevokedAsset(ownerOf(assetId), assetId);
     }
 
     /// @notice Transfers an asset to a new owner.

@@ -69,8 +69,7 @@ contract AssetSafe is Initializable, UUPSUpgradeable, AccessControlledUpgradeabl
     /// @param cipherType The cipher type used (e.g., LIT, RSA, EC).
     /// @return The encrypted content stored in bytes format.
     function getContent(uint256 assetId, T.Cipher cipherType) external view returns (bytes memory) {
-        bytes32 key = _computeComposedKey(assetId, cipherType);
-        return _secured[key];
+        return _secured[_computeComposedKey(assetId, cipherType)];
     }
 
     /// @notice Stores encrypted content with a specific cipher type.
@@ -79,9 +78,8 @@ contract AssetSafe is Initializable, UUPSUpgradeable, AccessControlledUpgradeabl
     /// @param cipherType The cipher type used for securing the content.
     /// @param data The encrypted content, represented as a byte array.
     function setContent(uint256 assetId, T.Cipher cipherType, bytes memory data) external onlyHolder(assetId) {
-        bytes32 key = _computeComposedKey(assetId, cipherType);
-        _secured[key] = data; // store the encrypted content.
         _schemes[assetId] = cipherType; // associate the asset with the cipher type.
+        _secured[_computeComposedKey(assetId, cipherType)] = data; // store the encrypted content.
         emit ContentStored(assetId, msg.sender, cipherType);
     }
 
