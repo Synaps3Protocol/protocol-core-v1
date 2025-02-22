@@ -58,6 +58,7 @@ abstract contract AllowanceOperatorUpgradeable is Initializable, LedgerUpgradeab
         uint256 amount,
         address currency
     ) public virtual onlyValidOperation(to, amount) returns (uint256) {
+        if (msg.sender == to) revert InvalidOperationParameters();
         _sumApprovedAmount(msg.sender, to, amount, currency);
         emit FundsApproved(msg.sender, to, amount, currency);
         return amount;

@@ -113,6 +113,10 @@ contract RightsAssetCustodian is Initializable, UUPSUpgradeable, AccessControlle
     /// @param distributor The address of the distributor who will receive custodial rights.
     function grantCustody(address distributor) external onlyAvailableRedundancy onlyActiveDistributor(distributor) {
         // add custodian to the storage && if already exists the grant will revoke
+        // TODO rolling window to keep a list of all the distributors eg: 10 +
+        // TODO using the maxAvailable we could limit the number of balanced custodians eg: 5
+        // to allow add more redundancy like "backup" but under max control to handle balanced
+        // window=[max=[0...5]...10]... later [max=[0...6]...10] <- expanded max to 6
         bool addedCustodian = _custodiansByHolder[msg.sender].add(distributor);
         if (!addedCustodian) revert GrantCustodyFailed(distributor, msg.sender);
         _incrementCustody(distributor); // +1 under custody

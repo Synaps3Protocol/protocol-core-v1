@@ -90,7 +90,9 @@ abstract contract BalanceOperatorUpgradeable is
         uint256 amount,
         address currency
     ) public virtual onlyValidOperation(recipient, amount) returns (uint256) {
+        if (msg.sender == recipient) revert InvalidOperationParameters();
         if (getLedgerBalance(msg.sender, currency) < amount) revert NoFundsToTransfer();
+
         _subLedgerEntry(msg.sender, amount, currency);
         _sumLedgerEntry(recipient, amount, currency);
         emit FundsTransferred(recipient, msg.sender, amount, currency);

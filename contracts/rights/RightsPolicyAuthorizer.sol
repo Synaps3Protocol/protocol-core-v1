@@ -60,7 +60,7 @@ contract RightsPolicyAuthorizer is
     error RevocationFailed(address holder, address policy);
 
     /// @dev Modifier that restricts access to only audited and valid policies.
-    ///      Ensures that the provided policy address has passed verification 
+    ///      Ensures that the provided policy address has passed verification
     ///      and auditing before authorization and initialization.
     ///      If the policy is invalid or not audited, the transaction will revert.
     /// @param policy The address of the policy contract to verify.
