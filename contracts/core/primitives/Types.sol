@@ -32,7 +32,7 @@ library T {
     /// @notice This struct captures the total amount involved, net amount after deductions, distribution fees,
     /// and the relevant addresses involved in the agreement.
     struct Agreement {
-        address broker; // the authorized account to manage the agreement.
+        address arbiter; // the designated escrow agent enforcing the agreement.
         address currency; // the currency used in transaction
         address initiator; // the initiator of the transaction
         uint256 total; // the transaction total amount

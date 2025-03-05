@@ -15,13 +15,13 @@ interface IAgreementManager {
     /// @notice Creates and stores a new agreement.
     /// @param amount The total amount committed.
     /// @param currency The currency used for the agreement.
-    /// @param broker The authorized account to manage the agreement.
+    /// @param arbiter The designated escrow agent enforcing the agreement.
     /// @param parties The parties in the agreement.
     /// @param payload Additional data for execution.
     function createAgreement(
         uint256 amount,
         address currency,
-        address broker,
+        address arbiter,
         address[] calldata parties,
         bytes calldata payload
     ) external returns (uint256);
@@ -29,13 +29,13 @@ interface IAgreementManager {
     /// @notice Previews an agreement by calculating fees and returning the agreement terms without committing them.
     /// @param amount The total amount committed.
     /// @param currency The currency used for the agreement.
-    /// @param broker The authorized account to manage the agreement.
+    /// @param arbiter The designated escrow agent enforcing the agreement.
     /// @param parties The parties in the agreement.
     /// @param payload Additional data for execution.
     function previewAgreement(
         uint256 amount,
         address currency,
-        address broker,
+        address arbiter,
         address[] calldata parties,
         bytes calldata payload
     ) external view returns (T.Agreement memory);

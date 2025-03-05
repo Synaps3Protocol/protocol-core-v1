@@ -8,6 +8,8 @@ import { OwnableUpgradeable } from "@openzeppelin/contracts-upgradeable/access/O
 import { IDistributor } from "@synaps3/core/interfaces/syndication/IDistributor.sol";
 import { FinancialOps } from "@synaps3/core/libraries/FinancialOps.sol";
 
+// TODO impl ERC1271 to validate manager based signatures 
+
 /// @title DistributorImpl
 /// @notice Handles the logic for managing content distributors in a decentralized environment.
 /// @dev

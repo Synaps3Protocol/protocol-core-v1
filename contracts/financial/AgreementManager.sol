@@ -14,8 +14,10 @@ import { FinancialOps } from "@synaps3/core/libraries/FinancialOps.sol";
 import { FeesOps } from "@synaps3/core/libraries/FeesOps.sol";
 import { T } from "@synaps3/core/primitives/Types.sol";
 
+// TODO Trustless escrow system - modular escrow framework
+
 /// @title AgreementManager
-/// @notice Manages the lifecycle of agreements, including creation, retrieval, and fee calculation.
+/// @notice Manages the lifecycle (trustless escrow system) of agreements, including creation, retrieval, and fee calculation.
 /// @dev This contract ensures that agreements are immutable upon creation, enforcing fair and transparent terms.
 ///      It integrates with `LedgerVault` for fund management and `Tollgate` for fee validation.
 contract AgreementManager is Initializable, UUPSUpgradeable, AccessControlledUpgradeable, IAgreementManager {
@@ -87,19 +89,19 @@ contract AgreementManager is Initializable, UUPSUpgradeable, AccessControlledUpg
     /// @notice Creates and stores a new agreement.
     /// @param amount The total amount committed.
     /// @param currency The currency used for the agreement.
-    /// @param broker The authorized address to manage the agreement.
+    /// @param arbiter The designated escrow agent enforcing the agreement.
     /// @param parties The parties in the agreement.
     /// @param payload Additional data for execution.
     function createAgreement(
         uint256 amount,
         address currency,
-        address broker,
+        address arbiter,
         address[] calldata parties,
         bytes calldata payload
-    ) external onlySupportedCurrency(broker, currency) returns (uint256) {
+    ) external onlySupportedCurrency(arbiter, currency) returns (uint256) {
         // IMPORTANT: The process of distributing funds to accounts should be handled within the settlement logic.
         uint256 confirmed = LEDGER_VAULT.lock(msg.sender, amount, currency);
-        T.Agreement memory agreement = previewAgreement(confirmed, currency, broker, parties, payload);
+        T.Agreement memory agreement = previewAgreement(confirmed, currency, arbiter, parties, payload);
         // only the initiator can operate with this agreement proof, or transfer the proof to the other party..
         // each agreement is unique and immutable, ensuring that it cannot be modified or reconstructed.
         uint256 proof = _createAndStoreProof(agreement);
@@ -116,16 +118,16 @@ contract AgreementManager is Initializable, UUPSUpgradeable, AccessControlledUpg
     /// @notice Previews an agreement by calculating fees and returning the agreement terms without committing them.
     /// @param amount The total amount committed.
     /// @param currency The currency used for the agreement.
-    /// @param broker The authorized account to manage the agreement.
+    /// @param arbiter The designated escrow agent enforcing the agreement.
     /// @param parties The parties in the agreement.
     /// @param payload Additional data for execution.
     function previewAgreement(
         uint256 amount,
         address currency,
-        address broker,
+        address arbiter,
         address[] calldata parties,
         bytes calldata payload
-    ) public view onlySupportedCurrency(broker, currency) returns (T.Agreement memory) {
+    ) public view onlySupportedCurrency(arbiter, currency) returns (T.Agreement memory) {
         if (parties.length == 0) {
             revert NoPartiesInAgreement();
         }
@@ -145,12 +147,12 @@ contract AgreementManager is Initializable, UUPSUpgradeable, AccessControlledUpg
         // By locking in fees during agreement creation, the protocol avoids scenarios
         // where fee structures change (favorably or unfavorably) after creation,
         // which could lead to abuse or exploitation.
-        uint256 deductions = _calcFees(amount, broker, currency);
+        uint256 deductions = _calcFees(amount, arbiter, currency);
         // This design ensures fairness and transparency by preventing any future
         // adjustments to fees or protocol conditions from affecting the terms of this agreement.
         return
             T.Agreement({
-                broker: broker, // the authorized account to manage the agreement
+                arbiter: arbiter, // the authorized account to enforce the agreement
                 currency: currency, // the currency used in transaction
                 initiator: msg.sender, // the tx initiator
                 total: amount, // the transaction amount
@@ -174,15 +176,15 @@ contract AgreementManager is Initializable, UUPSUpgradeable, AccessControlledUpg
         return proof;
     }
 
-    /// @notice Calculates the fee based on the provided total amount, broker, and currency.
-    /// @dev Reverts if the currency is not supported by the Tollgate or if no fee scheme is defined for the broker.
+    /// @notice Calculates the fee based on the provided total amount, agent, and currency.
+    /// @dev Reverts if the currency is not supported by the Tollgate or if no fee scheme is defined for the agent.
     /// @param total The total amount from which the fee will be calculated.
-    /// @param broker The address or context (e.g., agreement or service) for which the fee applies.
+    /// @param target The address or context (e.g., agreement or service) for which the fee applies.
     /// @param currency The address of the currency for which the fee is being calculated.
     /// @return The calculated fee amount based on the applicable fee scheme.
-    function _calcFees(uint256 total, address broker, address currency) private view returns (uint256) {
+    function _calcFees(uint256 total, address target, address currency) private view returns (uint256) {
         // !IMPORTANT if fees manager does not support the currency, will revert..
-        (uint256 fees, T.Scheme scheme) = TOLLGATE.getFees(broker, currency);
+        (uint256 fees, T.Scheme scheme) = TOLLGATE.getFees(target, currency);
         if (scheme == T.Scheme.BPS) return total.perOf(fees); // bps calc
         if (scheme == T.Scheme.NOMINAL) return total.perOf(fees.calcBps()); // nominal to bps
         if (total < fees) revert FlatFeeExceedsTotal(total, fees); // if flat fee

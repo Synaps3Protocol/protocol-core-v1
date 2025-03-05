@@ -88,7 +88,7 @@ contract RightsAssetCustodian is Initializable, UUPSUpgradeable, AccessControlle
         // we can use this attribute to control de "stress" in the network
         // eg: if the network is growing we can adjust this attribute to allow more
         // redundancy and more backend distributors..
-        _maxDistributionRedundancy = 3;
+        _maxDistributionRedundancy = 3; // redundancy factor (RF)
     }
 
     /// @notice Updates the maximum allowed number of distributors per holder.

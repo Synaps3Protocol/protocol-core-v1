@@ -19,7 +19,7 @@ import { FeesOps } from "@synaps3/core/libraries/FeesOps.sol";
 import { T } from "@synaps3/core/primitives/Types.sol";
 
 /// @title AgreementSettler
-/// @notice Manages the finalization of agreements, handling fund distribution and settlement.
+/// @notice Manages the finalization of agreements (trustless escrow system), handling fund distribution and settlement.
 /// @dev This contract ensures fair settlements, enforces penalties for agreement cancellations,
 ///      and collects protocol fees. It interacts with the Treasury, LedgerVault, and AgreementManager
 ///      to properly allocate locked funds upon agreement resolution.
@@ -53,14 +53,14 @@ contract AgreementSettler is
     /// @dev Holds a the list of closed/settled proof for accounts.
     mapping(uint256 => bool) private _settledProofs;
 
-    /// @notice Emitted when an agreement is settled by the designated broker or authorized account.
-    /// @param broker The account that facilitated the agreement settlement.
+    /// @notice Emitted when an agreement is settled by the designated agent or authorized account.
+    /// @param arbiter The designated escrow agent enforcing the agreement settlement.
     /// @param counterparty The address that received the settlement funds.
     /// @param proof The unique identifier (hash or proof) of the settled agreement.
     /// @param collectedFees The amount of fees collected from the settlement process.
-    event AgreementSettled(address indexed broker, address indexed counterparty, uint256 proof, uint256 collectedFees);
+    event AgreementSettled(address indexed arbiter, address indexed counterparty, uint256 proof, uint256 collectedFees);
 
-    /// @notice Emitted when an agreement is canceled by the broker or another authorized account.
+    /// @notice Emitted when an agreement is canceled by the authorized account.
     /// @param initiator The account that initiated the cancellation.
     /// @param proof The unique identifier (hash or proof) of the canceled agreement.
     /// @param collectedFees The amount of fees collected (if any) upon cancellation.
@@ -73,7 +73,7 @@ contract AgreementSettler is
     error SettlementFailed(uint256 extracted, uint256 expectedFees);
 
     /// @notice Error thrown when the caller is not authorized to settle the agreement.
-    error UnauthorizedBroker();
+    error UnauthorizedEscrowAgent();
 
     /// @notice Error thrown when the initiator is not authorized to quit the agreement.
     error UnauthorizedInitiator();
@@ -160,7 +160,7 @@ contract AgreementSettler is
     ) public onlyValidAgreement(proof) returns (T.Agreement memory) {
         // retrieve the agreement to storage to inactivate it and return it
         T.Agreement memory agreement = AGREEMENT_MANAGER.getAgreement(proof);
-        if (agreement.broker != msg.sender) revert UnauthorizedBroker();
+        if (agreement.arbiter != msg.sender) revert UnauthorizedEscrowAgent();
 
         uint256 total = agreement.total; // protocol
         uint256 fees = agreement.fees; // protocol
