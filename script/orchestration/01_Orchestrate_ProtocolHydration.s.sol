@@ -25,7 +25,7 @@ contract OrchestrateProtocolHydration is Script {
         address agreementManager = vm.envAddress("AGREEMENT_MANAGER");
         address agreementSettler = vm.envAddress("AGREEMENT_SETTLER");
         address rightPolicyManager = vm.envAddress("RIGHT_POLICY_MANAGER");
-        address custodianReferendum = vm.envAddress("DISTRIBUTION_REFERENDUM");
+        address custodianReferendum = vm.envAddress("CUSTODIAN_REFERENDUM");
         address ledgerVault = vm.envAddress("LEDGER_VAULT");
 
         vm.startBroadcast(admin);
@@ -63,7 +63,7 @@ contract OrchestrateProtocolHydration is Script {
 
         // 2 set mmc as the initial currency and fees
         uint256 agrFee = vm.envUint("AGREEMENT_FEES"); // 5% 500 bps
-        uint256 synFees = vm.envUint("SYNDICATION_FEES"); // 100 MMC flat fee
+        uint256 synFees = vm.envUint("CUSTODY_FEES"); // 100 MMC flat fee
         address currency = vm.envAddress("MMC");
 
         ITollgate tollgate = ITollgate(tollgateAddress);

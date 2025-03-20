@@ -12,11 +12,11 @@ contract DeployCustodianFactory is DeployBase {
         CustodianImpl imp = new CustodianImpl(); // implementation
         bytes memory creationCode = type(CustodianFactory).creationCode;
         bytes memory initCode = abi.encodePacked(creationCode, abi.encode(address(imp)));
-        address factory = deploy(initCode, "SALT_DISTRIBUTION_FACTORY");
+        address factory = deploy(initCode, "SALT_CUSTODIAN_FACTORY");
         vm.stopBroadcast();
 
-        _checkExpectedAddress(factory, "SALT_DISTRIBUTION_FACTORY");
-        _logAddress("DISTRIBUTION_FACTORY", factory);
+        _checkExpectedAddress(factory, "SALT_CUSTODIAN_FACTORY");
+        _logAddress("CUSTODIAN_FACTORY", factory);
         return factory;
     }
 }

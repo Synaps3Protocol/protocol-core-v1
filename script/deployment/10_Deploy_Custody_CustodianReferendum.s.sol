@@ -14,11 +14,11 @@ contract DeployCustodianReferendum is DeployBase {
         address accessManager = computeCreate3Address("SALT_ACCESS_MANAGER");
         address impl = address(new CustodianReferendum(treasury, tollgate, vault));
         bytes memory init = abi.encodeCall(CustodianReferendum.initialize, (accessManager));
-        address referendum = deployUUPS(impl, init, "SALT_DISTRIBUTION_REFERENDUM");
+        address referendum = deployUUPS(impl, init, "SALT_CUSTODIAN_REFERENDUM");
         vm.stopBroadcast();
 
-        _checkExpectedAddress(referendum, "SALT_DISTRIBUTION_REFERENDUM");
-        _logAddress("DISTRIBUTION_REFERENDUM", referendum);
+        _checkExpectedAddress(referendum, "SALT_CUSTODIAN_REFERENDUM");
+        _logAddress("CUSTODIAN_REFERENDUM", referendum);
         return referendum;
     }
 }
