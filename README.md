@@ -16,11 +16,11 @@ The architecture is structured into distinct layers, starting from interaction a
 - **Distribution Network**: Ensures the secure distribution of assets to authorized parties.
 
 ### Level 3: Rights and Policies
-- **Rights**: Manages access, custody, and usage of assets, ensuring they align with validated distributors and governance rules.
+- **Rights**: Manages access, custody, and usage of assets, ensuring they align with validated custodians and governance rules.
 - **Policies**: Defines the terms, conditions, and operational frameworks governing assets and their distribution.
  
 ### Level 2: Assets and Distribution Management
-- **Syndication**: Oversees the network of distributors, validating and authorizing them as custodians of assets.
+- **Custody**: Oversees the network of custodians, validating and authorizing them as custodians of assets.
 - **Assets**: Manages the registration and validation of resources entering the system, ensuring compliance with governance policies.
 - **Finance**: Handles agreements, settlements, and economic interactions.
 

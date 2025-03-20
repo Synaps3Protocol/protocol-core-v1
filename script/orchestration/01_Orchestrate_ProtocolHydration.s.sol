@@ -9,7 +9,7 @@ import { T } from "contracts/core/primitives/Types.sol";
 
 import { getGovPermissions as TollgateGovPermissions } from "script/permissions/Permissions_Tollgate.sol";
 import { getGovPermissions as TreasuryGovPermissions } from "script/permissions/Permissions_Treasury.sol";
-import { getGovPermissions as DistributorReferendumGovPermissions } from "script/permissions/Permissions_DistributorReferendum.sol";
+import { getGovPermissions as CustodianReferendumGovPermissions } from "script/permissions/Permissions_CustodianReferendum.sol";
 import { getGovPermissions as AssetReferendumGovPermissions } from "script/permissions/Permissions_AssetReferendum.sol";
 import { getModPermissions as PolicyAuditorModPermissions } from "script/permissions/Permissions_PolicyAuditor.sol";
 import { getOpsPermissions as LedgerVaultOpsPermissions } from "script/permissions/Permissions_LedgerVault.sol";
@@ -25,7 +25,7 @@ contract OrchestrateProtocolHydration is Script {
         address agreementManager = vm.envAddress("AGREEMENT_MANAGER");
         address agreementSettler = vm.envAddress("AGREEMENT_SETTLER");
         address rightPolicyManager = vm.envAddress("RIGHT_POLICY_MANAGER");
-        address distributorReferendum = vm.envAddress("DISTRIBUTION_REFERENDUM");
+        address custodianReferendum = vm.envAddress("CUSTODIAN_REFERENDUM");
         address ledgerVault = vm.envAddress("LEDGER_VAULT");
 
         vm.startBroadcast(admin);
@@ -42,12 +42,12 @@ contract OrchestrateProtocolHydration is Script {
         bytes4[] memory tollgateAllowed = TollgateGovPermissions();
         bytes4[] memory treasuryAllowed = TreasuryGovPermissions();
         bytes4[] memory assetReferendumAllowed = AssetReferendumGovPermissions();
-        bytes4[] memory distributorReferendumAllowed = DistributorReferendumGovPermissions();
+        bytes4[] memory custodianReferendumAllowed = CustodianReferendumGovPermissions();
 
         authority.setTargetFunctionRole(tollgateAddress, tollgateAllowed, C.GOV_ROLE);
         authority.setTargetFunctionRole(treasuryAddress, treasuryAllowed, C.GOV_ROLE);
         authority.setTargetFunctionRole(assetReferendum, assetReferendumAllowed, C.GOV_ROLE);
-        authority.setTargetFunctionRole(distributorReferendum, distributorReferendumAllowed, C.GOV_ROLE);
+        authority.setTargetFunctionRole(custodianReferendum, custodianReferendumAllowed, C.GOV_ROLE);
 
         // assign moderation permissions
         authority.grantRole(C.MOD_ROLE, adminAddress, 0);
@@ -57,22 +57,22 @@ contract OrchestrateProtocolHydration is Script {
         // assign operations permissions
         authority.grantRole(C.OPS_ROLE, agreementManager, 0);
         authority.grantRole(C.OPS_ROLE, agreementSettler, 0);
-        authority.grantRole(C.OPS_ROLE, distributorReferendum, 0);
+        authority.grantRole(C.OPS_ROLE, custodianReferendum, 0);
         bytes4[] memory vaultAllowed = LedgerVaultOpsPermissions();
         authority.setTargetFunctionRole(ledgerVault, vaultAllowed, C.OPS_ROLE);
 
         // 2 set mmc as the initial currency and fees
         uint256 agrFee = vm.envUint("AGREEMENT_FEES"); // 5% 500 bps
-        uint256 synFees = vm.envUint("SYNDICATION_FEES"); // 100 MMC flat fee
+        uint256 synFees = vm.envUint("CUSTODY_FEES"); // 100 MMC flat fee
         address currency = vm.envAddress("MMC");
 
         ITollgate tollgate = ITollgate(tollgateAddress);
         // assign bps scheme to right policy manager + fees + mmc
         tollgate.setFees(T.Scheme.BPS, rightPolicyManager, agrFee, currency);
-        tollgate.setFees(T.Scheme.FLAT, distributorReferendum, synFees, currency);
+        tollgate.setFees(T.Scheme.FLAT, custodianReferendum, synFees, currency);
 
         (uint256 feeA, ) = tollgate.getFees(rightPolicyManager, currency);
-        (uint256 feeB, ) = tollgate.getFees(distributorReferendum, currency);
+        (uint256 feeB, ) = tollgate.getFees(custodianReferendum, currency);
 
         require(feeA == agrFee);
         require(feeB == synFees);

@@ -5,23 +5,23 @@ pragma solidity 0.8.26;
 import { Initializable } from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import { ERC165Upgradeable } from "@openzeppelin/contracts-upgradeable/utils/introspection/ERC165Upgradeable.sol";
 import { OwnableUpgradeable } from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
-import { IDistributor } from "@synaps3/core/interfaces/syndication/IDistributor.sol";
+import { ICustodian } from "@synaps3/core/interfaces/custody/ICustodian.sol";
 import { FinancialOps } from "@synaps3/core/libraries/FinancialOps.sol";
 
-// TODO impl ERC1271 to validate manager based signatures 
+// TODO impl ERC1271 to validate manager based signatures
 
-/// @title DistributorImpl
-/// @notice Handles the logic for managing content distributors in a decentralized environment.
+/// @title CustodianImpl
+/// @notice Handles the logic for managing content custodian in a decentralized environment.
 /// @dev
-/// - The `DistributorImpl` contract serves as an implementation for an `UpgradeableBeacon`.
+/// - The `CustodianImpl` contract serves as an implementation for an `UpgradeableBeacon`.
 /// - Calls to this contract are made through a `BeaconProxy`, allowing upgrades at the beacon level.
 /// - This contract itself is NOT upgradeable directly; its updates are managed by the beacon.
 /// - It inherits from upgradeable contracts **ONLY** to maintain compatibility with their storage layout (ERC-7201).
 /// - This approach ensures that future improvement to the implementation do not break the beacon's storage layout.
-contract DistributorImpl is Initializable, ERC165Upgradeable, OwnableUpgradeable, IDistributor {
+contract CustodianImpl is Initializable, ERC165Upgradeable, OwnableUpgradeable, ICustodian {
     using FinancialOps for address;
 
-    /// @notice The distributor endpoint.
+    /// @notice The custodian endpoint.
     string private endpoint;
 
     /// @notice Event emitted when the distribution endpoint is updated.
@@ -32,9 +32,9 @@ contract DistributorImpl is Initializable, ERC165Upgradeable, OwnableUpgradeable
     /// @notice Error thrown when an invalid (empty) endpoint is provided.
     error InvalidEndpoint();
 
-    /// @notice Initializes the Distributor contract with the specified endpoint and owner.
+    /// @notice Initializes the Custodian contract with the specified endpoint and owner.
     /// @param endpoint_ The distribution endpoint URL.
-    /// @param owner_ The address of the owner who will manage the distributor.
+    /// @param owner_ The address of the owner who will manage the custodian.
     /// @dev Ensures that the provided endpoint is valid and initializes ERC165 and Ownable contracts.
     function initialize(string calldata endpoint_, address owner_) external initializer {
         if (bytes(endpoint_).length == 0) revert InvalidEndpoint();
@@ -46,10 +46,10 @@ contract DistributorImpl is Initializable, ERC165Upgradeable, OwnableUpgradeable
     /// @notice Checks if the contract supports a specific interface based on its ID.
     /// @param interfaceId The ID of the interface to check.
     function supportsInterface(bytes4 interfaceId) public view virtual override returns (bool) {
-        return interfaceId == type(IDistributor).interfaceId || super.supportsInterface(interfaceId);
+        return interfaceId == type(ICustodian).interfaceId || super.supportsInterface(interfaceId);
     }
 
-    /// @notice Retrieves the manager (owner) of the distributor contract.
+    /// @notice Retrieves the manager (owner) of the custodian contract.
     function getManager() external view returns (address) {
         return owner();
     }

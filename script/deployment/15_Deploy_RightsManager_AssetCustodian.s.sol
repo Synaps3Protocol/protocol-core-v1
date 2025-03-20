@@ -9,8 +9,8 @@ contract DeployRightsAssetCustodian is DeployBase {
 
         vm.startBroadcast(getAdminPK());
         address accessManager = computeCreate3Address("SALT_ACCESS_MANAGER");
-        address distributionReferendum = computeCreate3Address("SALT_DISTRIBUTION_REFERENDUM");
-        address impl = address(new RightsAssetCustodian(distributionReferendum));
+        address custodianReferendum = computeCreate3Address("SALT_CUSTODIAN_REFERENDUM");
+        address impl = address(new RightsAssetCustodian(custodianReferendum));
         bytes memory init = abi.encodeCall(RightsAssetCustodian.initialize, (accessManager));
         address custodian = deployUUPS(impl, init, "SALT_RIGHT_ASSET_CUSTODIAN");
         vm.stopBroadcast();

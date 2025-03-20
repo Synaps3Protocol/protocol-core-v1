@@ -6,17 +6,17 @@ import { IERC20 } from "@openzeppelin/contracts/interfaces/IERC20.sol";
 import { ITreasury } from "contracts/core/interfaces/economics/ITreasury.sol";
 import { ITollgate } from "contracts/core/interfaces/economics/ITollgate.sol";
 import { ILedgerVault } from "contracts/core/interfaces/financial/ILedgerVault.sol";
-import { IDistributorVerifiable } from "contracts/core/interfaces/syndication/IDistributorVerifiable.sol";
-import { IDistributorExpirable } from "contracts/core/interfaces/syndication/IDistributorExpirable.sol";
-import { IDistributorRegistrable } from "contracts/core/interfaces/syndication/IDistributorRegistrable.sol";
-import { IDistributorFactory } from "contracts/core/interfaces/syndication/IDistributorFactory.sol";
+import { ICustodianVerifiable } from "contracts/core/interfaces/custody/ICustodianVerifiable.sol";
+import { ICustodianExpirable } from "contracts/core/interfaces/custody/ICustodianExpirable.sol";
+import { ICustodianRegistrable } from "contracts/core/interfaces/custody/ICustodianRegistrable.sol";
+import { ICustodianFactory } from "contracts/core/interfaces/custody/ICustodianFactory.sol";
 
 import { BaseTest } from "test/BaseTest.t.sol";
-import { DistributorReferendum } from "contracts/syndication/DistributorReferendum.sol";
+import { CustodianReferendum } from "contracts/custody/CustodianReferendum.sol";
 import { T } from "contracts/core/primitives/Types.sol";
 
-contract DistributorReferendumTest is BaseTest {
-    address distributor;
+contract CustodianReferendumTest is BaseTest {
+    address custodian;
     address distFactory;
     address referendum;
     address tollgate;
@@ -25,15 +25,15 @@ contract DistributorReferendumTest is BaseTest {
     function setUp() public initialize {
         token = deployToken();
         tollgate = deployTollgate();
-        referendum = deployDistributorReferendum();
-        distFactory = deployDistributorFactory();
-        distributor = deployDistributor("contentrider.com");
+        referendum = deployCustodianReferendum();
+        distFactory = deployCustodianFactory();
+        custodian = deployCustodian("contentrider.com");
     }
 
-    function deployDistributor(string memory endpoint) public returns (address) {
+    function deployCustodian(string memory endpoint) public returns (address) {
         vm.prank(admin);
-        IDistributorFactory distributorFactory = IDistributorFactory(distFactory);
-        return distributorFactory.create(endpoint);
+        ICustodianFactory custodianFactory = ICustodianFactory(distFactory);
+        return custodianFactory.create(endpoint);
     }
 
     /// ----------------------------------------------------------------
@@ -41,34 +41,34 @@ contract DistributorReferendumTest is BaseTest {
     function test_Init_ExpirationPeriod() public view {
         // test initialized treasury address
         uint256 expected = 180 days;
-        uint256 period = IDistributorExpirable(referendum).getExpirationPeriod();
+        uint256 period = ICustodianExpirable(referendum).getExpirationPeriod();
         assertEq(period, expected);
     }
 
     function test_SetExpirationPeriod_ValidExpiration() public {
         uint256 expireIn = 3600; // seconds
         vm.prank(governor);
-        IDistributorExpirable(referendum).setExpirationPeriod(expireIn);
-        assertEq(IDistributorExpirable(referendum).getExpirationPeriod(), expireIn);
+        ICustodianExpirable(referendum).setExpirationPeriod(expireIn);
+        assertEq(ICustodianExpirable(referendum).getExpirationPeriod(), expireIn);
     }
 
     function test_SetExpirationPeriod_EmitPeriodSet() public {
         uint256 expireIn = 3600; // seconds
         vm.prank(governor);
         vm.expectEmit(true, false, false, true, address(referendum));
-        emit DistributorReferendum.PeriodSet(expireIn);
-        IDistributorExpirable(referendum).setExpirationPeriod(expireIn);
+        emit CustodianReferendum.PeriodSet(expireIn);
+        ICustodianExpirable(referendum).setExpirationPeriod(expireIn);
     }
 
     function test_SetExpirationPeriod_RevertWhen_Unauthorized() public {
         vm.expectRevert();
-        IDistributorExpirable(referendum).setExpirationPeriod(10);
+        ICustodianExpirable(referendum).setExpirationPeriod(10);
     }
 
     function test_Register_RegisteredEventEmitted() public {
         uint256 expectedFees = 100 * 1e18;
         _setFeesAsGovernor(expectedFees); // free enrollment: test purpose
-        // after register a distributor a Registered event is expected
+        // after register a custodian a Registered event is expected
         vm.warp(1641070803);
         vm.startPrank(admin);
         // approve fees payment: admin default account
@@ -76,8 +76,8 @@ contract DistributorReferendumTest is BaseTest {
         ILedgerVault(ledger).deposit(admin, expectedFees, token);
 
         vm.expectEmit(true, false, false, true, address(referendum));
-        emit DistributorReferendum.Registered(distributor, expectedFees);
-        IDistributorRegistrable(referendum).register(distributor, token);
+        emit CustodianReferendum.Registered(custodian, expectedFees);
+        ICustodianRegistrable(referendum).register(custodian, token);
         vm.stopPrank();
     }
 
@@ -86,7 +86,7 @@ contract DistributorReferendumTest is BaseTest {
         // 1-set enrollment fees.
         _setFeesAsGovernor(expectedFees);
         // 2-deploy and register contract
-        _registerDistributorWithApproval(distributor, expectedFees);
+        _registerCustodianWithApproval(custodian, expectedFees);
         // zero after disburse all the balance
         assertEq(IERC20(token).balanceOf(referendum), expectedFees);
     }
@@ -96,91 +96,91 @@ contract DistributorReferendumTest is BaseTest {
         _setFeesAsGovernor(expectedFees);
         // expected revert if not valid allowance
         vm.expectRevert(abi.encodeWithSignature("NoFundsToLock()"));
-        IDistributorRegistrable(referendum).register(distributor, token);
+        ICustodianRegistrable(referendum).register(custodian, token);
     }
 
     function test_Register_SetValidEnrollmentTime() public {
-        IDistributorRegistrable registrable = IDistributorRegistrable(referendum);
-        IDistributorExpirable expirable = IDistributorExpirable(referendum);
+        ICustodianRegistrable registrable = ICustodianRegistrable(referendum);
+        ICustodianExpirable expirable = ICustodianExpirable(referendum);
 
         _setFeesAsGovernor(1 * 1e18);
         uint256 expectedExpiration = expirable.getExpirationPeriod();
         uint256 currentTime = 1727976358;
         vm.warp(currentTime); // set block.time to current time
 
-        // register the distributor expecting the right enrollment time..
-        _registerDistributorWithApproval(distributor, 1 * 1e18);
+        // register the custodian expecting the right enrollment time..
+        _registerCustodianWithApproval(custodian, 1 * 1e18);
         uint256 expected = currentTime + expectedExpiration;
-        uint256 got = registrable.getEnrollmentDeadline(distributor);
+        uint256 got = registrable.getEnrollmentDeadline(custodian);
         assertEq(got, expected);
     }
 
     function test_Register_SetWaitingState() public {
         _setFeesAsGovernor(1 * 1e18);
-        // register the distributor expecting the right status.
-        _registerDistributorWithApproval(distributor, 1 * 1e18);
-        assertTrue(IDistributorVerifiable(referendum).isWaiting(distributor));
+        // register the custodian expecting the right status.
+        _registerCustodianWithApproval(custodian, 1 * 1e18);
+        assertTrue(ICustodianVerifiable(referendum).isWaiting(custodian));
     }
 
-    function test_Register_RevertIf_InvalidDistributor() public {
-        // register the distributor expecting the right status.
-        vm.expectRevert(abi.encodeWithSignature("InvalidDistributorContract(address)", address(0)));
-        IDistributorRegistrable(referendum).register(address(0), token);
+    function test_Register_RevertIf_InvalidCustodian() public {
+        // register the custodian expecting the right status.
+        vm.expectRevert(abi.encodeWithSignature("InvalidCustodianContract(address)", address(0)));
+        ICustodianRegistrable(referendum).register(address(0), token);
     }
 
     function test_Approve_ApprovedEventEmitted() public {
         _setFeesAsGovernor(1 * 1e18);
-        _registerDistributorWithApproval(distributor, 1 * 1e18);
+        _registerCustodianWithApproval(custodian, 1 * 1e18);
 
         vm.prank(governor); // as governor.
         vm.warp(1641070802);
-        // after register a distributor a Registered event is expected
+        // after register a custodian a Registered event is expected
         vm.expectEmit(true, false, false, true, address(referendum));
-        emit DistributorReferendum.Approved(distributor);
-        IDistributorRegistrable(referendum).approve(distributor);
+        emit CustodianReferendum.Approved(custodian);
+        ICustodianRegistrable(referendum).approve(custodian);
     }
 
     function test_Approve_SetActiveState() public {
-        _registerAndApproveDistributor(distributor);
-        assertTrue(IDistributorVerifiable(referendum).isActive(distributor));
+        _registerAndApproveCustodian(custodian);
+        assertTrue(ICustodianVerifiable(referendum).isActive(custodian));
     }
 
     function test_Approve_IncrementEnrollmentCount() public {
-        address distributor2 = deployDistributor("test2.com");
-        address distributor3 = deployDistributor("test3.com");
+        address custodian2 = deployCustodian("test2.com");
+        address custodian3 = deployCustodian("test3.com");
 
-        _registerAndApproveDistributor(distributor);
-        _registerAndApproveDistributor(distributor2); // still governor prank
-        _registerAndApproveDistributor(distributor3); // still governor prank
+        _registerAndApproveCustodian(custodian);
+        _registerAndApproveCustodian(custodian2); // still governor prank
+        _registerAndApproveCustodian(custodian3); // still governor prank
 
         // valid approvals, increments the total of enrollments
-        assertEq(IDistributorRegistrable(referendum).getEnrollmentCount(), 3);
+        assertEq(ICustodianRegistrable(referendum).getEnrollmentCount(), 3);
     }
 
     function test_Revoke_RevokedEventEmitted() public {
-        _registerAndApproveDistributor(distributor); // still governor prank
+        _registerAndApproveCustodian(custodian); // still governor prank
         vm.prank(governor);
         vm.warp(1641070801);
-        // after register a distributor a Registered event is expected
+        // after register a custodian a Registered event is expected
         vm.expectEmit(true, false, false, true, address(referendum));
-        emit DistributorReferendum.Revoked(distributor);
-        IDistributorRegistrable(referendum).revoke(distributor);
+        emit CustodianReferendum.Revoked(custodian);
+        ICustodianRegistrable(referendum).revoke(custodian);
     }
 
     function test_Revoke_DecrementEnrollmentCount() public {
-        _registerAndApproveDistributor(distributor); // still governor prank
+        _registerAndApproveCustodian(custodian); // still governor prank
         // valid approvals, increments the total of enrollments
         vm.prank(governor);
-        IDistributorRegistrable(referendum).revoke(distributor);
-        assertEq(IDistributorRegistrable(referendum).getEnrollmentCount(), 0);
+        ICustodianRegistrable(referendum).revoke(custodian);
+        assertEq(ICustodianRegistrable(referendum).getEnrollmentCount(), 0);
     }
 
     function test_Revoke_SetBlockedState() public {
-        _registerAndApproveDistributor(distributor); // still governor prank
-        // distributor get revoked by governance..
+        _registerAndApproveCustodian(custodian); // still governor prank
+        // custodian get revoked by governance..
         vm.prank(governor);
-        IDistributorRegistrable(referendum).revoke(distributor);
-        assertTrue(IDistributorVerifiable(referendum).isBlocked(distributor));
+        ICustodianRegistrable(referendum).revoke(custodian);
+        assertTrue(ICustodianVerifiable(referendum).isBlocked(custodian));
     }
 
     function _setFeesAsGovernor(uint256 fees) internal {
@@ -189,7 +189,7 @@ contract DistributorReferendumTest is BaseTest {
         vm.stopPrank();
     }
 
-    function _registerDistributorWithApproval(address d9r, uint256 approval) internal {
+    function _registerCustodianWithApproval(address d9r, uint256 approval) internal {
         // manager = contract deployer
         // only manager can pay enrollment..
         vm.startPrank(admin);
@@ -197,23 +197,23 @@ contract DistributorReferendumTest is BaseTest {
         IERC20(token).approve(ledger, approval);
         ILedgerVault(ledger).deposit(admin, approval, token);
         // operate over msg.sender ledger registered funds
-        IDistributorRegistrable(referendum).register(d9r, token);
+        ICustodianRegistrable(referendum).register(d9r, token);
         vm.stopPrank();
     }
 
-    function _registerDistributorWithGovernorAndApproval() internal {
+    function _registerCustodianWithGovernorAndApproval() internal {
         uint256 expectedFees = 100 * 1e18;
         _setFeesAsGovernor(expectedFees);
-        _registerDistributorWithApproval(distributor, expectedFees);
+        _registerCustodianWithApproval(custodian, expectedFees);
     }
 
-    function _registerAndApproveDistributor(address d9r) internal {
+    function _registerAndApproveCustodian(address d9r) internal {
         // intially the balance = 0
         _setFeesAsGovernor(1 * 1e18);
-        // register the distributor with fees = 100 MMC
-        _registerDistributorWithApproval(d9r, 1 * 1e18);
+        // register the custodian with fees = 100 MMC
+        _registerCustodianWithApproval(d9r, 1 * 1e18);
         vm.prank(governor); // as governor.
         // distribuitor approved only by governor..
-        IDistributorRegistrable(referendum).approve(d9r);
+        ICustodianRegistrable(referendum).approve(d9r);
     }
 }

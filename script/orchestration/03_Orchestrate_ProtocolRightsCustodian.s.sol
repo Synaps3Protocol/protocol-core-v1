@@ -8,13 +8,13 @@ contract OrchestrateRightsCustodian is Script {
     function run() external {
         uint256 admin = vm.envUint("PRIVATE_KEY");
         address rightsCustodian = vm.envAddress("RIGHT_ASSET_CUSTODIAN");
-        address distributor = vm.envAddress("DEFAULT_DISTRIBUTOR_ADDRESS");
+        address defaultCustodian = vm.envAddress("DEFAULT_CUSTODIAN_ADDRESS");
 
         vm.startBroadcast(admin);
-        // approve initial distributor
+        // approve initial custodian
         IRightsAssetCustodian custodian = IRightsAssetCustodian(rightsCustodian);
-        custodian.grantCustody(distributor); // assign my content custody to distributor
-        require(custodian.isCustodian(msg.sender, distributor) == true);
+        custodian.grantCustody(defaultCustodian); // assign my content custody to custodian
+        require(custodian.isCustodian(msg.sender, defaultCustodian) == true);
         vm.stopBroadcast();
     }
 }

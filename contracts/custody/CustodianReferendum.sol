@@ -13,30 +13,30 @@ import { QuorumUpgradeable } from "@synaps3/core/primitives/upgradeable/QuorumUp
 import { ITollgate } from "@synaps3/core/interfaces/economics/ITollgate.sol";
 import { ITreasury } from "@synaps3/core/interfaces/economics/ITreasury.sol";
 import { ILedgerVault } from "@synaps3/core/interfaces/financial/ILedgerVault.sol";
-import { IDistributor } from "@synaps3/core/interfaces/syndication/IDistributor.sol";
-import { IDistributorReferendum } from "@synaps3/core/interfaces/syndication/IDistributorReferendum.sol";
+import { ICustodian } from "@synaps3/core/interfaces/custody/ICustodian.sol";
+import { ICustodianReferendum } from "@synaps3/core/interfaces/custody/ICustodianReferendum.sol";
 import { FinancialOps } from "@synaps3/core/libraries/FinancialOps.sol";
 import { T } from "@synaps3/core/primitives/Types.sol";
 
-/// @title DistributorReferendum
-/// @notice Manages the registration, approval, and revocation of content distributors.
-/// @dev Implements `IDistributorReferendum` and ensures that only valid distributors can operate.
+/// @title CustodianReferendum
+/// @notice Manages the registration, approval, and revocation of content custodians.
+/// @dev Implements `ICustodianReferendum` and ensures that only valid custodians can operate.
 ///      This contract integrates with `LedgerVault` for financial management, `Tollgate` for fee validation,
 ///      and `Treasury` for protocol-wide economic operations.
-contract DistributorReferendum is
+contract CustodianReferendum is
     Initializable,
     UUPSUpgradeable,
     QuorumUpgradeable,
     AccessControlledUpgradeable,
     ReentrancyGuardTransientUpgradeable,
     FeesCollectorUpgradeable,
-    IDistributorReferendum
+    ICustodianReferendum
 {
     using FinancialOps for address;
     using ERC165Checker for address;
 
-    /// @dev Stores the interface ID for IDistributor, ensuring compatibility verification.
-    bytes4 private constant INTERFACE_ID_DISTRIBUTOR = type(IDistributor).interfaceId;
+    /// @dev Stores the interface ID for ICustodian, ensuring compatibility verification.
+    bytes4 private constant INTERFACE_ID_CUSTODIAN = type(ICustodian).interfaceId;
 
     ///Our immutables behave as constants after deployment
     //slither-disable-start naming-convention
@@ -48,43 +48,43 @@ contract DistributorReferendum is
     ILedgerVault public immutable LEDGER_VAULT;
     //slither-disable-end naming-convention
 
-    /// @dev Defines the expiration period for enrollment, determining how long a distributor remains active.
+    /// @dev Defines the expiration period for enrollment, determining how long a custodian remains active.
     uint256 private _expirationPeriod;
     /// @dev Tracks the number of active enrollments within the system.
     uint256 private _enrollmentsCount;
-    /// @dev Maps a distributor's address to their respective enrollment deadline timestamp.
+    /// @dev Maps a custodian's address to their respective enrollment deadline timestamp.
     mapping(address => uint256) private _enrollmentDeadline;
 
-    /// @notice Event emitted when a distributor is registered
-    /// @param distributor The address of the registered distributor
+    /// @notice Event emitted when a custodian is registered
+    /// @param custodian The address of the registered custodian
     /// @param paidFees The amount of fees that were paid upon registration
-    event Registered(address indexed distributor, uint256 paidFees);
+    event Registered(address indexed custodian, uint256 paidFees);
 
-    /// @notice Event emitted when a distributor is approved
-    /// @param distributor The address of the approved distributor
-    event Approved(address indexed distributor);
+    /// @notice Event emitted when a custodian is approved
+    /// @param custodian The address of the approved custodian
+    event Approved(address indexed custodian);
 
-    /// @notice Event emitted when a distributor is revoked
-    /// @param distributor The address of the revoked distributor
-    event Revoked(address indexed distributor);
+    /// @notice Event emitted when a custodian is revoked
+    /// @param custodian The address of the revoked custodian
+    event Revoked(address indexed custodian);
 
     /// @notice Emitted when a new period is set
     /// @param newPeriod The new period that is set, could be in seconds, blocks, or any other unit
     event PeriodSet(uint256 newPeriod);
 
-    /// @notice Error thrown when a distributor contract is invalid
-    /// @param invalid The address of the distributor contract that is invalid
-    error InvalidDistributorContract(address invalid);
+    /// @notice Error thrown when a custodian contract is invalid
+    /// @param invalid The address of the custodian contract that is invalid
+    error InvalidCustodianContract(address invalid);
 
     /// @notice Error thrown when an invalid fee scheme is provided for a referendum operation.
     /// @param message A descriptive message explaining the reason for the invalid fee scheme.
     error InvalidFeeSchemeProvided(string message);
 
-    /// @notice Modifier to ensure that the given distributor contract supports the IDistributor interface.
-    /// @param distributor The distributor contract address.
-    modifier onlyValidDistributor(address distributor) {
-        if (!distributor.supportsInterface(INTERFACE_ID_DISTRIBUTOR)) {
-            revert InvalidDistributorContract(distributor);
+    /// @notice Modifier to ensure that the given custodian contract supports the ICustodian interface.
+    /// @param custodian The custodian contract address.
+    modifier onlyValidCustodian(address custodian) {
+        if (!custodian.supportsInterface(INTERFACE_ID_CUSTODIAN)) {
+            revert InvalidCustodianContract(custodian);
         }
         _;
     }
@@ -115,10 +115,10 @@ contract DistributorReferendum is
         return _expirationPeriod;
     }
 
-    /// @notice Retrieves the enrollment deadline for a distributor.
-    /// @param distributor The address of the distributor.
-    function getEnrollmentDeadline(address distributor) external view returns (uint256) {
-        return _enrollmentDeadline[distributor];
+    /// @notice Retrieves the enrollment deadline for a custodian.
+    /// @param custodian The address of the custodian.
+    function getEnrollmentDeadline(address custodian) external view returns (uint256) {
+        return _enrollmentDeadline[custodian];
     }
 
     /// @notice Retrieves the total number of enrollments.
@@ -127,46 +127,46 @@ contract DistributorReferendum is
     }
 
     /// @notice Checks if the entity is active.
-    /// @dev This function verifies the active status of the distributor.
-    /// @param distributor The distributor's address to check.
-    function isActive(address distributor) external view onlyValidDistributor(distributor) returns (bool) {
+    /// @dev This function verifies the active status of the custodian.
+    /// @param custodian The custodian's address to check.
+    function isActive(address custodian) external view onlyValidCustodian(custodian) returns (bool) {
         // TODO a renovation mechanism is needed to update the enrollment time
-        /// It ensures that distributors remain engaged and do not become inactive for extended periods.
-        /// The enrollment deadline enforces a time-based mechanism where distributors must renew
-        /// their registration to maintain their active status. This prevents dormant distributors
+        /// It ensures that custodians remain engaged and do not become inactive for extended periods.
+        /// The enrollment deadline enforces a time-based mechanism where custodians must renew
+        /// their registration to maintain their active status. This prevents dormant custodians
         /// from continuing to benefit from the protocol without contributing.
 
-        // This mechanism helps to verify the availability of the distributor,
+        // This mechanism helps to verify the availability of the custodian,
         // forcing recurrent registrations and ensuring ongoing participation.
-        bool notExpiredDeadline = _enrollmentDeadline[distributor] > block.timestamp;
-        return _status(uint160(distributor)) == Status.Active && notExpiredDeadline;
+        bool notExpiredDeadline = _enrollmentDeadline[custodian] > block.timestamp;
+        return _status(uint160(custodian)) == Status.Active && notExpiredDeadline;
     }
 
     /// @notice Checks if the entity is waiting.
-    /// @dev This function verifies the waiting status of the distributor.
-    /// @param distributor The distributor's address to check.
-    function isWaiting(address distributor) external view onlyValidDistributor(distributor) returns (bool) {
-        return _status(uint160(distributor)) == Status.Waiting;
+    /// @dev This function verifies the waiting status of the custodian.
+    /// @param custodian The custodian's address to check.
+    function isWaiting(address custodian) external view onlyValidCustodian(custodian) returns (bool) {
+        return _status(uint160(custodian)) == Status.Waiting;
     }
 
     /// @notice Checks if the entity is blocked.
-    /// @dev This function verifies the blocked status of the distributor.
-    /// @param distributor The distributor's address to check.
-    function isBlocked(address distributor) external view onlyValidDistributor(distributor) returns (bool) {
-        return _status(uint160(distributor)) == Status.Blocked;
+    /// @dev This function verifies the blocked status of the custodian.
+    /// @param custodian The custodian's address to check.
+    function isBlocked(address custodian) external view onlyValidCustodian(custodian) returns (bool) {
+        return _status(uint160(custodian)) == Status.Blocked;
     }
 
-    /// @notice Registers a distributor by sending a payment to the contract.
-    /// @param distributor The address of the distributor to register.
+    /// @notice Registers a custodian by sending a payment to the contract.
+    /// @param custodian The address of the custodian to register.
     /// @param currency The currency used to pay enrollment.
-    function register(address distributor, address currency) external onlyValidDistributor(distributor) {
+    function register(address custodian, address currency) external onlyValidCustodian(custodian) {
         // !IMPORTANT:
         // Fees act as a mechanism to prevent abuse or spam by users
-        // when submitting distributors for approval. This discourages users from
+        // when submitting custodians for approval. This discourages users from
         // making frivolous or excessive registrations without genuine intent.
         //
         // Additionally, the fees establish a foundation of real interest and commitment
-        // from the distributor. This ensures that only those who see value in the protocol
+        // from the custodian. This ensures that only those who see value in the protocol
         // and are willing to contribute to its ecosystem will participate.
         //
         // The collected fees are used to support the protocol's operations, aligning
@@ -180,28 +180,28 @@ contract DistributorReferendum is
         uint256 locked = LEDGER_VAULT.lock(msg.sender, fees, currency); // lock funds
         uint256 claimed = LEDGER_VAULT.claim(msg.sender, locked, currency); // claim the funds on behalf
         uint256 confirmed = LEDGER_VAULT.withdraw(address(this), claimed, currency); // collect funds
-        // register distributor as pending approval
-        _register(uint160(distributor));
-        // set the distributor active enrollment period..
-        // after this time the distributor is considered inactive and cannot collect his profits...
-        _enrollmentDeadline[distributor] = block.timestamp + _expirationPeriod;
-        emit Registered(distributor, confirmed);
+        // register custodian as pending approval
+        _register(uint160(custodian));
+        // set the custodian active enrollment period..
+        // after this time the custodian is considered inactive and cannot collect his profits...
+        _enrollmentDeadline[custodian] = block.timestamp + _expirationPeriod;
+        emit Registered(custodian, confirmed);
     }
 
-    /// @notice Approves a distributor's registration.
-    /// @param distributor The address of the distributor to approve.
-    function approve(address distributor) external restricted onlyValidDistributor(distributor) {
+    /// @notice Approves a custodian's registration.
+    /// @param custodian The address of the custodian to approve.
+    function approve(address custodian) external restricted onlyValidCustodian(custodian) {
         _enrollmentsCount++;
-        _approve(uint160(distributor));
-        emit Approved(distributor);
+        _approve(uint160(custodian));
+        emit Approved(custodian);
     }
 
-    /// @notice Revokes the registration of a distributor.
-    /// @param distributor The address of the distributor to revoke.
-    function revoke(address distributor) external restricted onlyValidDistributor(distributor) {
+    /// @notice Revokes the registration of a custodian.
+    /// @param custodian The address of the custodian to revoke.
+    function revoke(address custodian) external restricted onlyValidCustodian(custodian) {
         _enrollmentsCount--;
-        _revoke(uint160(distributor));
-        emit Revoked(distributor);
+        _revoke(uint160(custodian));
+        emit Revoked(custodian);
     }
 
     /// @notice Sets a new expiration period for an enrollment or registration.

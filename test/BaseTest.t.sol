@@ -12,12 +12,12 @@ import { DeployTreasury } from "script/deployment/05_Deploy_Economics_Treasury.s
 import { DeployAssetReferendum } from "script/deployment/11_Deploy_Assets_AssetReferendum.s.sol";
 import { DeployAssetSafe } from "script/deployment/13_Deploy_Assets_AssetSafe.s.sol";
 import { DeployAssetOwnership } from "script/deployment/12_Deploy_Assets_AssetOwnership.s.sol";
-import { DeployDistributorFactory } from "script/deployment/09_Deploy_Syndication_DistributorFactory.s.sol";
-import { DeployDistributorReferendum } from "script/deployment/10_Deploy_Syndication_DistributorReferendum.s.sol";
+import { DeployCustodianFactory } from "script/deployment/09_Deploy_Custody_CustodianFactory.s.sol";
+import { DeployCustodianReferendum } from "script/deployment/10_Deploy_Custody_CustodianReferendum.s.sol";
 
 import { getGovPermissions as TollgateGovPermissions } from "script/permissions/Permissions_Tollgate.sol";
 import { getGovPermissions as TreasuryGovPermissions } from "script/permissions/Permissions_Treasury.sol";
-import { getGovPermissions as DistributorReferendumGovPermissions } from "script/permissions/Permissions_DistributorReferendum.sol";
+import { getGovPermissions as CustodianReferendumGovPermissions } from "script/permissions/Permissions_CustodianReferendum.sol";
 import { getGovPermissions as AssetReferendumGovPermissions } from "script/permissions/Permissions_AssetReferendum.sol";
 import { getOpsPermissions as LedgerVaultOpsPermissions } from "script/permissions/Permissions_LedgerVault.sol";
 
@@ -136,23 +136,23 @@ abstract contract BaseTest is Test {
     }
 
 
-    // 08_DeployDistributor
-    function deployDistributorFactory() public returns (address) {
-        DeployDistributorFactory distDeployer = new DeployDistributorFactory();
+    // 08_DeployCustodian
+    function deployCustodianFactory() public returns (address) {
+        DeployCustodianFactory distDeployer = new DeployCustodianFactory();
         return distDeployer.run();
     }
 
-    // 09_DeployDistributorReferendum
-    function deployDistributorReferendum() public returns (address) {
+    // 09_DeployCustodianReferendum
+    function deployCustodianReferendum() public returns (address) {
         // set default admin as deployer..
-        DeployDistributorReferendum distReferendumDeployer = new DeployDistributorReferendum();
-        bytes4[] memory distributorReferendumAllowed = DistributorReferendumGovPermissions();
-        address distributorReferendum = distReferendumDeployer.run();
-        // OP role granted to distributor referendum to operate on ledger
-        _assignOpRole(distributorReferendum);
-        // GOV permission set to distributor referendum functions
-        _setGovPermissions(distributorReferendum, distributorReferendumAllowed);
-        return distributorReferendum;
+        DeployCustodianReferendum distReferendumDeployer = new DeployCustodianReferendum();
+        bytes4[] memory custodianReferendumAllowed = CustodianReferendumGovPermissions();
+        address custodianReferendum = distReferendumDeployer.run();
+        // OP role granted to custodian referendum to operate on ledger
+        _assignOpRole(custodianReferendum);
+        // GOV permission set to custodian referendum functions
+        _setGovPermissions(custodianReferendum, custodianReferendumAllowed);
+        return custodianReferendum;
     }
 
     function _setGovPermissions(address target, bytes4[] memory allowed) public {
