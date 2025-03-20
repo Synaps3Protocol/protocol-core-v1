@@ -7,5 +7,5 @@ import { ICustodianRegistrable } from "@synaps3/core/interfaces/custody/ICustodi
 import { ICustodianVerifiable } from "@synaps3/core/interfaces/custody/ICustodianVerifiable.sol";
 
 /// @title ICustodianReferendum
-/// @notice Interface that defines the necessary operations for managing distributor registration.
+/// @notice Interface that defines the necessary operations for managing custodian registration.
 interface ICustodianReferendum is ICustodianRegistrable, ICustodianVerifiable, ICustodianExpirable {}

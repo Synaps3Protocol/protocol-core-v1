@@ -15,7 +15,7 @@ import { BaseTest } from "test/BaseTest.t.sol";
 import { CustodianReferendum } from "contracts/custody/CustodianReferendum.sol";
 import { T } from "contracts/core/primitives/Types.sol";
 
-contract DistributorReferendumTest is BaseTest {
+contract CustodianReferendumTest is BaseTest {
     address custodian;
     address distFactory;
     address referendum;
