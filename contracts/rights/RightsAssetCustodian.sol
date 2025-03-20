@@ -6,58 +6,58 @@ import { EnumerableSet } from "@openzeppelin/contracts/utils/structs/EnumerableS
 import { Initializable } from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import { UUPSUpgradeable } from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import { AccessControlledUpgradeable } from "@synaps3/core/primitives/upgradeable/AccessControlledUpgradeable.sol";
-import { IDistributorVerifiable } from "@synaps3/core/interfaces/syndication/IDistributorVerifiable.sol";
+import { ICustodianVerifiable } from "@synaps3/core/interfaces/custody/ICustodianVerifiable.sol";
 import { IRightsAssetCustodian } from "@synaps3/core/interfaces/rights/IRightsAssetCustodian.sol";
 
 import { C } from "@synaps3/core/primitives/Constants.sol";
 
 /// @title RightsAssetCustodian
-/// @notice Manages the assignment and verification of custodial distribution rights for content holders.
-/// @dev This contract ensures that only approved distributors can act as custodians for content holders.
-///      It enforces redundancy limits to balance network distribution and uses an approval mechanism
-///      to validate the activity status of distributors.
+/// @notice Manages the assignment and verification of custodian rights for content holders.
+/// @dev This contract ensures that only approved custodians can act as custodians for content holders.
+///      It enforces redundancy limits to balance custodian network and uses an approval mechanism
+///      to validate the activity status of custodians.
 contract RightsAssetCustodian is Initializable, UUPSUpgradeable, AccessControlledUpgradeable, IRightsAssetCustodian {
     using EnumerableSet for EnumerableSet.AddressSet;
 
     /// @custom:oz-upgrades-unsafe-allow state-variable-immutable
     /// Our immutables behave as constants after deployment
     //slither-disable-next-line naming-convention
-    IDistributorVerifiable public immutable DISTRIBUTOR_REFERENDUM;
+    ICustodianVerifiable public immutable CUSTODIAN_REFERENDUM;
 
-    /// @dev the max allowed amount of distributors per holder.
+    /// @dev the max allowed amount of custodians per holder.
     uint256 private _maxDistributionRedundancy;
-    /// @dev Mapping to store the custodial (distributor) address for each content rights holder.
+    /// @dev Mapping to store the custodiaN address for each content rights holder.
     mapping(address => EnumerableSet.AddressSet) private _custodiansByHolder;
-    /// @dev Mapping to store a registry of rights holders associated with each distributor.
+    /// @dev Mapping to store a registry of rights holders associated with each custodian.
     mapping(address => uint256) private _holdersUnderCustodian;
 
-    /// @notice Emitted when custodial distribution rights are granted to a distributor.
-    /// @param newCustody The address of the distributor granted custodial rights.
+    /// @notice Emitted when custodian rights are granted to a custodian.
+    /// @param newCustody The address of the custodian granted custodial rights.
     /// @param rightsHolder The address of the asset's rights holder.
     event CustodialGranted(address indexed newCustody, address indexed rightsHolder);
 
-    /// @notice Emitted when custodial distribution rights are granted to a distributor.
-    /// @param revokedCustody The address of the distributor granted custodial rights.
+    /// @notice Emitted when custodian rights are granted to a custodian.
+    /// @param revokedCustody The address of the custodian granted custodial rights.
     /// @param rightsHolder The address of the asset's rights holder.
     event CustodialRevoked(address indexed revokedCustody, address indexed rightsHolder);
 
     /// @dev Error that is thrown when a content hash is already registered.
-    error InvalidInactiveDistributor();
+    error InvalidInactiveCustodian();
 
-    /// @dev Error that is thrown when a new granted distributor exceed the max redundancy.
+    /// @dev Error that is thrown when a new granted custodian exceed the max redundancy.
     error MaxRedundancyAllowedReached();
 
-    /// @dev Error when failing to grant custody to a distributor.
-    error GrantCustodyFailed(address distributor, address holder);
+    /// @dev Error when failing to grant custody to a custodian.
+    error GrantCustodyFailed(address custodian, address holder);
 
-    /// @dev Error when failing to revoke custody from a distributor.
-    error RevokeCustodyFailed(address distributor, address holder);
+    /// @dev Error when failing to revoke custody from a custodian.
+    error RevokeCustodyFailed(address custodian, address holder);
 
-    /// @dev Modifier to check if the distributor is active and not blocked.
-    /// @param distributor The distributor address to check.
-    modifier onlyActiveDistributor(address distributor) {
-        if (!_isValidActiveDistributor(distributor)) {
-            revert InvalidInactiveDistributor();
+    /// @dev Modifier to check if the custodian is active and not blocked.
+    /// @param custodian The custodian address to check.
+    modifier onlyActiveCustodian(address custodian) {
+        if (!_isValidActiveCustodian(custodian)) {
+            revert InvalidInactiveCustodian();
         }
         _;
     }
@@ -72,68 +72,68 @@ contract RightsAssetCustodian is Initializable, UUPSUpgradeable, AccessControlle
     }
 
     /// @custom:oz-upgrades-unsafe-allow constructor
-    constructor(address distributorReferendum) {
+    constructor(address custodianReferendum) {
         /// https://forum.openzeppelin.com/t/uupsupgradeable-vulnerability-post-mortem/15680
         /// https://forum.openzeppelin.com/t/what-does-disableinitializers-function-mean/28730/5
         _disableInitializers();
-        // we need to verify the status of each distributor before allow custodian assignment.
-        DISTRIBUTOR_REFERENDUM = IDistributorVerifiable(distributorReferendum);
+        // we need to verify the status of each custodian before allow custodian assignment.
+        CUSTODIAN_REFERENDUM = ICustodianVerifiable(custodianReferendum);
     }
 
     /// @notice Initializes the proxy state.
     function initialize(address accessManager) public initializer {
         __UUPSUpgradeable_init();
         __AccessControlled_init(accessManager);
-        // the max amount of distributors per holder..
+        // the max amount of custodians per holder..
         // we can use this attribute to control de "stress" in the network
         // eg: if the network is growing we can adjust this attribute to allow more
-        // redundancy and more backend distributors..
+        // redundancy and more backend custodians..
         _maxDistributionRedundancy = 3; // redundancy factor (RF)
     }
 
-    /// @notice Updates the maximum allowed number of distributors per holder.
+    /// @notice Updates the maximum allowed number of custodians per holder.
     /// @dev This function allows to dynamically adjust the redundancy limit,
     ///      providing flexibility based on network conditions.
-    /// @param value The new maximum number of distributors allowed per holder.
+    /// @param value The new maximum number of custodians allowed per holder.
     function setMaxAllowedRedundancy(uint256 value) external restricted {
         _maxDistributionRedundancy = value;
     }
 
-    /// @notice Revokes custodial rights of a distributor for the caller's assets.
-    /// @param distributor The distributor to revoke custody from.
-    function revokeCustody(address distributor) external {
+    /// @notice Revokes custodial rights of a custodian for the caller's assets.
+    /// @param custodian The custodian to revoke custody from.
+    function revokeCustody(address custodian) external {
         // remove custody from the storage && if does not exist nor granted will revoke
-        bool removedCustodian = _custodiansByHolder[msg.sender].remove(distributor);
-        if (!removedCustodian) revert RevokeCustodyFailed(distributor, msg.sender);
-        _decrementCustody(distributor); // -1 under custody
-        emit CustodialRevoked(distributor, msg.sender);
+        bool removedCustodian = _custodiansByHolder[msg.sender].remove(custodian);
+        if (!removedCustodian) revert RevokeCustodyFailed(custodian, msg.sender);
+        _decrementCustody(custodian); // -1 under custody
+        emit CustodialRevoked(custodian, msg.sender);
     }
 
-    /// @notice Grants custodial rights over the asset held by a holder to a distributor.
-    /// @param distributor The address of the distributor who will receive custodial rights.
-    function grantCustody(address distributor) external onlyAvailableRedundancy onlyActiveDistributor(distributor) {
+    /// @notice Grants custodial rights over the asset held by a holder to a custodian.
+    /// @param custodian The address of the custodian who will receive custodial rights.
+    function grantCustody(address custodian) external onlyAvailableRedundancy onlyActiveCustodian(custodian) {
         // add custodian to the storage && if already exists the grant will revoke
-        // TODO rolling window to keep a list of all the distributors eg: 10 +
+        // TODO rolling window to keep a list of all the custodians eg: 10 +
         // TODO using the maxAvailable we could limit the number of balanced custodians eg: 5
         // to allow add more redundancy like "backup" but under max control to handle balanced
         // window=[max=[0...5]...10]... later [max=[0...6]...10] <- expanded max to 6
-        bool addedCustodian = _custodiansByHolder[msg.sender].add(distributor);
-        if (!addedCustodian) revert GrantCustodyFailed(distributor, msg.sender);
-        _incrementCustody(distributor); // +1 under custody
-        emit CustodialGranted(distributor, msg.sender);
+        bool addedCustodian = _custodiansByHolder[msg.sender].add(custodian);
+        if (!addedCustodian) revert GrantCustodyFailed(custodian, msg.sender);
+        _incrementCustody(custodian); // +1 under custody
+        emit CustodialGranted(custodian, msg.sender);
     }
 
-    /// @notice Checks if the given distributor is a custodian for the specified content holder
+    /// @notice Checks if the given custodian is a custodian for the specified content holder
     /// @param holder The address of the asset holder.
-    /// @param distributor The address of the distributor to check.
-    function isCustodian(address holder, address distributor) external view returns (bool) {
-        return _custodiansByHolder[holder].contains(distributor) && _isValidActiveDistributor(distributor);
+    /// @param custodian The address of the custodian to check.
+    function isCustodian(address holder, address custodian) external view returns (bool) {
+        return _custodiansByHolder[holder].contains(custodian) && _isValidActiveCustodian(custodian);
     }
 
-    /// @notice Retrieves the total number of holders in custody for a given distributor.
-    /// @param distributor The address of the distributor whose custodial content count is being requested.
-    function getCustodyCount(address distributor) external view returns (uint256) {
-        return _holdersUnderCustodian[distributor];
+    /// @notice Retrieves the total number of holders in custody for a given custodian.
+    /// @param custodian The address of the custodian whose custodial content count is being requested.
+    function getCustodyCount(address custodian) external view returns (uint256) {
+        return _holdersUnderCustodian[custodian];
     }
 
     /// @notice Selects a balanced custodian for a given content rights holder based on weighted randomness.
@@ -204,7 +204,7 @@ contract RightsAssetCustodian is Initializable, UUPSUpgradeable, AccessControlle
             // probability of being selected.
             acc += ((n - i) * C.BPS_MAX) / s;
             address candidate = _custodiansByHolder[holder].at(i);
-            if (acc >= random && _isValidActiveDistributor(candidate)) {
+            if (acc >= random && _isValidActiveCustodian(candidate)) {
                 chosen = candidate;
             }
 
@@ -227,24 +227,24 @@ contract RightsAssetCustodian is Initializable, UUPSUpgradeable, AccessControlle
     /// @param newImplementation The address of the new implementation contract.
     function _authorizeUpgrade(address newImplementation) internal override onlyAdmin {}
 
-    /// @notice Checks if the distributor is valid and currently active.
-    /// @param distributor The address of the distributor to validate.
-    /// @return A boolean indicating whether the distributor is valid and active.
-    function _isValidActiveDistributor(address distributor) private view returns (bool) {
-        return distributor != address(0) && DISTRIBUTOR_REFERENDUM.isActive(distributor);
+    /// @notice Checks if the custodian is valid and currently active.
+    /// @param custodian The address of the custodian to validate.
+    /// @return A boolean indicating whether the custodian is valid and active.
+    function _isValidActiveCustodian(address custodian) private view returns (bool) {
+        return custodian != address(0) && CUSTODIAN_REFERENDUM.isActive(custodian);
     }
 
-    /// @dev Increments the count of holders under a given distributor's custody.
-    /// @param distributor The address of the distributor whose custody count will be incremented.
-    function _incrementCustody(address distributor) private {
-        _holdersUnderCustodian[distributor] += 1;
+    /// @dev Increments the count of holders under a given custodian's custody.
+    /// @param custodian The address of the custodian whose custody count will be incremented.
+    function _incrementCustody(address custodian) private {
+        _holdersUnderCustodian[custodian] += 1;
     }
 
-    /// @dev Decrements the count of holders under a given distributor's custody.
-    /// @param distributor The address of the distributor whose custody count will be decremented.
-    function _decrementCustody(address distributor) private {
-        if (_holdersUnderCustodian[distributor] > 0) {
-            _holdersUnderCustodian[distributor] -= 1;
+    /// @dev Decrements the count of holders under a given custodian's custody.
+    /// @param custodian The address of the custodian whose custody count will be decremented.
+    function _decrementCustody(address custodian) private {
+        if (_holdersUnderCustodian[custodian] > 0) {
+            _holdersUnderCustodian[custodian] -= 1;
         }
     }
 }

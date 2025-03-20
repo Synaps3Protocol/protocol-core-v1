@@ -5,17 +5,19 @@ pragma solidity 0.8.26;
 import { IBalanceVerifiable } from "@synaps3/core/interfaces/base/IBalanceVerifiable.sol";
 import { IBalanceWithdrawable } from "@synaps3/core/interfaces/base/IBalanceWithdrawable.sol";
 
-interface IDistributor is IBalanceVerifiable, IBalanceWithdrawable {
-    /// @notice Set the endpoint of the distributor.
+/// @title ICustodian
+/// @notice Interface for custodian contracts responsible for managing content custody.
+interface ICustodian is IBalanceVerifiable, IBalanceWithdrawable {
+    /// @notice Set the endpoint of the custodian.
     /// @dev This function can only be called by the owner of the contract.
-    /// @param _endpoint The new distributor's endpoint.
+    /// @param _endpoint The new custodian's endpoint.
     function setEndpoint(string calldata _endpoint) external;
 
-    /// @notice Retrieves the endpoint of the distributor.
-    /// @dev This function allows users to view the current endpoint of the distributor.
+    /// @notice Retrieves the endpoint of the custodian.
+    /// @dev This function allows users to view the current endpoint of the custodian.
     function getEndpoint() external view returns (string memory);
 
-    /// @notice Retrieves the manager of the distributor.
-    /// @dev This function allows users to view the current manager of the distributor.
+    /// @notice Retrieves the manager of the custodian.
+    /// @dev This function allows users to view the current manager of the custodian.
     function getManager() external view returns (address);
 }
