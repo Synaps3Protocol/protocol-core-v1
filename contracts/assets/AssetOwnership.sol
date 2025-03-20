@@ -112,8 +112,11 @@ contract AssetOwnership is
     }
 
     // TODO: build getURI => from custodian /erc721-metadata
-    // TODO: Transfer Ownership Fee: Introducing a fee for transferring ownership discourages frequent or unnecessary transfers,
-    // adding an economic cost to any potential abuse of the system. Like bypassing content verification by governance using a verified account.
+    // TODO: Transfer Ownership Fee: Introducing a fee for transferring
+    // ownership discourages frequent or unnecessary transfers,
+    // adding an economic cost to any potential abuse of the system. Like bypassing content
+    //  verification by governance using a verified account.
+
     // TODO: approved content get an incentive: a cooling mechanism is needed eg:
     // log decay, max registered asset rate, etc
 

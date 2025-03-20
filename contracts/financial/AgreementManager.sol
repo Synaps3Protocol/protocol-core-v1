@@ -17,7 +17,7 @@ import { T } from "@synaps3/core/primitives/Types.sol";
 // TODO Trustless escrow system - modular escrow framework
 
 /// @title AgreementManager
-/// @notice Manages the lifecycle (trustless escrow system) of agreements, including creation, retrieval, and fee calculation.
+/// @notice Manages the lifecycle (trustless escrow system) of agreements, including creation and retrieval.
 /// @dev This contract ensures that agreements are immutable upon creation, enforcing fair and transparent terms.
 ///      It integrates with `LedgerVault` for fund management and `Tollgate` for fee validation.
 contract AgreementManager is Initializable, UUPSUpgradeable, AccessControlledUpgradeable, IAgreementManager {
