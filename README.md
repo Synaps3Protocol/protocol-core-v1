@@ -9,7 +9,7 @@ Welcome! 🎉 Synapse is redefining how creative IP distribution works. Whether 
 
 The architecture is structured into distinct layers, starting from interaction and execution at the top and progressing down to the foundational governance layer:
 
-![image](https://github.com/user-attachments/assets/60a58807-305c-453b-8469-77bd0b158c0b)
+![image](https://github.com/user-attachments/assets/bddcbddd-8598-43ec-ba86-fa626e02008b)
 
 ### Level 4: Operational Layer
 - **Apps**: Provides user-facing interfaces to interact with the system.
