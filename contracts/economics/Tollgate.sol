@@ -116,9 +116,9 @@ contract Tollgate is Initializable, UUPSUpgradeable, AccessControlledUpgradeable
         address currency
     ) external restricted onlyValidFeeRepresentation(scheme, fee) {
         // Compute a unique composed key based on the target, currency, and scheme.
-        // The composed key is used to uniquely identify a combination of these parameters
-        // in a flat storage mapping. This avoids the need for nested mappings, improving gas efficiency
-        // and simplifying data access.
+        // The composed key uniquely identifies a deterministic combination of these parameters
+        // in a flat storage mapping. This avoids nested mappings, improving gas efficiency
+        // and simplifying data access through deterministic association.
         // Example: If the target is the policy manager contract, the currency is MMC (ERC20 token),
         // and the scheme is NOMINAL, setting a fee of 10% means:
         // "In the policy manager contract, for MMC, using a nominal scheme, the fee is 10%."

@@ -9,6 +9,8 @@ import { ICustodian } from "@synaps3/core/interfaces/custody/ICustodian.sol";
 import { FinancialOps } from "@synaps3/core/libraries/FinancialOps.sol";
 
 // TODO impl ERC1271 to validate manager based signatures
+// TODO add stateful management to custodians contract, the custodian can
+// change his state to "maintenance mode" or "inactive" if its facing issues
 
 /// @title CustodianImpl
 /// @notice Handles the logic for managing content custodian in a decentralized environment.

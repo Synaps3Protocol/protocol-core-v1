@@ -136,6 +136,12 @@ contract CustodianReferendum is
         /// their registration to maintain their active status. This prevents dormant custodians
         /// from continuing to benefit from the protocol without contributing.
 
+        // TODO add stateful management to custodians contract, the custodian can
+        // change his state to "maintenance mode" or "inactive" if its facing issues
+        // in that way the custodian is omitted during load balancing.
+        // in this line we can check if the custodian contract is active custodian.isActive()
+        // this is important feature if the custodians want to avoid harm reputation
+
         // This mechanism helps to verify the availability of the custodian,
         // forcing recurrent registrations and ensuring ongoing participation.
         bool notExpiredDeadline = _enrollmentDeadline[custodian] > block.timestamp;
@@ -176,7 +182,7 @@ contract CustodianReferendum is
         if (scheme != T.Scheme.FLAT) revert InvalidFeeSchemeProvided("Expected a FLAT fee scheme.");
 
         // TODO: additional check if exists in factory to validate emission
-        // eg: distribution.getCreator MUST be equal to msg.sender
+        // eg: custodian.getCreator MUST be equal to msg.sender
         uint256 locked = LEDGER_VAULT.lock(msg.sender, fees, currency); // lock funds
         uint256 claimed = LEDGER_VAULT.claim(msg.sender, locked, currency); // claim the funds on behalf
         uint256 confirmed = LEDGER_VAULT.withdraw(address(this), claimed, currency); // collect funds

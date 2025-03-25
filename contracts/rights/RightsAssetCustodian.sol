@@ -119,7 +119,7 @@ contract RightsAssetCustodian is Initializable, UUPSUpgradeable, AccessControlle
         // window=[max=[0...5]...10]... later [max=[0...6]...10] <- expanded max to 6
         bool addedCustodian = _custodiansByHolder[msg.sender].add(custodian);
         if (!addedCustodian) revert GrantCustodyFailed(custodian, msg.sender);
-        _incrementCustody(custodian); // +1 under custody
+        _incrementCustody(custodian); // +1 under custody its analog to "demand"
         emit CustodialGranted(custodian, msg.sender);
     }
 
@@ -202,7 +202,7 @@ contract RightsAssetCustodian is Initializable, UUPSUpgradeable, AccessControlle
             // Example: First node = weight 3 * 10,000 / total weight (s)
             // This ensures nodes with higher weights (closer to the start) have a greater
             // probability of being selected.
-            acc += ((n - i) * C.BPS_MAX) / s;
+            acc += ((n - i) * C.BPS_MAX) / s; // TODO add "demand" as variable to calc weight
             address candidate = _custodiansByHolder[holder].at(i);
             if (acc >= random && _isValidActiveCustodian(candidate)) {
                 chosen = candidate;
