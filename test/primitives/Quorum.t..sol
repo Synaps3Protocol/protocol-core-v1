@@ -55,9 +55,9 @@ contract QuorumTest is Test, QuorumUpgradeable {
     }
 
     function test_Approve_RevertWhen_ApproveNotRegistered() public {
-        vm.expectRevert(NotWaitingApproval.selector);
         uint256 entry = 123456789;
         // active status
+        vm.expectRevert(NotWaitingApproval.selector);
         _approve(entry);
     }
 
