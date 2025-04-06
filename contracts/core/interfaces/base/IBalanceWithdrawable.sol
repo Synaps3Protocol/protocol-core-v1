@@ -10,7 +10,7 @@ interface IBalanceWithdrawable {
     /// @param origin The address sending the withdrawn funds.
     /// @param amount The amount of funds being withdrawn.
     /// @param currency The currency used for the withdrawal.
-    event FundsWithdrawn(address indexed recipient, address indexed origin, uint256 amount, address indexed currency);
+    event FundsWithdrawn(address indexed recipient, address indexed origin, uint256 amount, address currency);
 
     /// @notice Error emitted when there are insufficient funds for withdrawal.
     /// @dev Occurs if the caller attempts to withdraw more than their available balance.
