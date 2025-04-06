@@ -34,6 +34,7 @@ contract CustodianFactory is UpgradeableBeacon, ICustodianFactory {
     /// @notice Event emitted when a new custodian is created.
     /// @param custodianAddress Address of the newly created custodian.
     /// @param endpoint Endpoint associated with the new custodian.
+    /// @param endpointHash Endpoint bytes32 hash associate with the new custodian.
     event CustodianCreated(address indexed custodianAddress, string indexed endpoint, bytes32 endpointHash);
 
     /// @notice Error to be thrown when attempting to register an already registered custodian.
@@ -58,8 +59,7 @@ contract CustodianFactory is UpgradeableBeacon, ICustodianFactory {
     /// @param endpoint The endpoint associated with the new custodian.
     /// @return The address of the newly created custodian contract.
     function create(string calldata endpoint) external returns (address) {
-        // TODO additional validation needed to check endpoint schemes. eg: https, ip, etc
-        // TODO option two, penalize invalid endpoints, and revoked during referendum
+        // TODO penalize invalid endpoints, and revoked during referendum
         bytes32 endpointHash = _registerEndpoint(endpoint);
         address newContract = _deployCustodian(endpoint);
         _registerManager(newContract, msg.sender);

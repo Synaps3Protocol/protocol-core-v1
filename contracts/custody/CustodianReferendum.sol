@@ -181,7 +181,7 @@ contract CustodianReferendum is
         (uint256 fees, T.Scheme scheme) = TOLLGATE.getFees(address(this), currency);
         if (scheme != T.Scheme.FLAT) revert InvalidFeeSchemeProvided("Expected a FLAT fee scheme.");
 
-        // TODO: additional check if exists in factory to validate emission
+        /// TODO penalize invalid endpoints, and revoked during referendum
         // eg: custodian.getCreator MUST be equal to msg.sender
         uint256 locked = LEDGER_VAULT.lock(msg.sender, fees, currency); // lock funds
         uint256 claimed = LEDGER_VAULT.claim(msg.sender, locked, currency); // claim the funds on behalf

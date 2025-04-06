@@ -166,7 +166,6 @@ abstract contract PolicyBase is ERC165, IPolicy {
     ) internal returns (uint256[] memory) {
         bytes memory payload = abi.encode(agreement);
         bytes memory data = abi.encode(holder, agreement.initiator, address(this), agreement.parties, payload);
-        // register policy metrics in the holder context to track analytics
         emit AgreementCommitted(holder, agreement.parties.length, agreement.total, agreement.fees);
         return ATTESTATION_PROVIDER.attest(agreement.parties, expireAt, data);
     }

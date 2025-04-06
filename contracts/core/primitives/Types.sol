@@ -56,9 +56,9 @@ library T {
     ///      It includes fields for currency, amount, rate basis, calculation formula, and off-chain terms.
     struct Terms {
         uint256 amount; // The rate amount based on the rate basis, expressed in the smallest unit of the currency
-        address currency; // The currency in which the amount is denominated, e.g., MMC or USDC
+        address currency; // The currency in which the amount is denominated, e.g., MMC 
         TimeFrame timeFrame; // The time frame for the amount, using a standardized enum (e.g., HOURLY, DAILY)
-        string uri; // URI pointing to off-chain terms for additional details or extended documentation
+        string uri; // URI pointing to off-chain terms for additional details or extended documentation 
         // TODO we could extend the terms based on the real needs ..
     }
 
