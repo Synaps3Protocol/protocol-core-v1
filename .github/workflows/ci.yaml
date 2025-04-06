@@ -47,7 +47,7 @@ jobs:
       - name: Install Foundry
         uses: foundry-rs/foundry-toolchain@v1
         with:
-          version: nightly
+          version: stable
       
       - name: Collecting .env from dotenv-vault
         run: npx dotenv-vault@latest pull -m ${{ secrets.DOTENV_ME }} -y
