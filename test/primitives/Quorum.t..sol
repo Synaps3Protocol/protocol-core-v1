@@ -62,18 +62,18 @@ contract QuorumTest is Test, QuorumUpgradeable {
     }
 
     function test_Revoke_RevertWhen_BlockedNotActive() public {
-        vm.expectRevert(InvalidInactiveState.selector);
         uint256 entry = 12345677;
         // waiting status
         _register(entry);
         // blocked status
+        vm.expectRevert(InvalidInactiveState.selector);
         _revoke(entry);
     }
 
     function test_Quit_RevertWhen_QuitNotWaiting() public {
-        vm.expectRevert(NotWaitingApproval.selector);
         uint256 entry = 123456459;
         // blocked status
+        vm.expectRevert(NotWaitingApproval.selector);
         _quit(entry);
     }
 }
