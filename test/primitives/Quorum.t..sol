@@ -5,8 +5,8 @@ import "forge-std/Test.sol";
 import { QuorumUpgradeable } from "contracts/core/primitives/upgradeable/QuorumUpgradeable.sol";
 
 contract QuorumWrapper is QuorumUpgradeable {
-    function status(uint256 entry) external view returns (Status) {
-        return _status(entry);
+    function status(uint256 entry) external view returns (uint256) {
+        return uint256(_status(entry));
     }
 
     function revoke(uint256 entry) external {
@@ -38,17 +38,17 @@ contract QuorumTest is Test {
     }
 
     function test_DefaultStatus() public view {
-        assertEq(uint(quorum.status(1234536789)), 0);
+        assertEq(quorum.status(1234536789), 0);
     }
 
     function test_RegisterStatusFlow() public {
         uint256 entry = 1234567189;
         // initial pending status
-        assertEq(uint(quorum.status(entry)), 0);
+        assertEq(quorum.status(entry), 0);
 
         // register status
         quorum.register(entry);
-        assertEq(uint(quorum.status(entry)), 1);
+        assertEq(quorum.status(entry), 1);
     }
 
     function test_ActiveStatusFlow() public {
@@ -57,7 +57,7 @@ contract QuorumTest is Test {
         quorum.register(entry);
         // active status
         quorum.approve(entry);
-        assertEq(uint(quorum.status(entry)), 2);
+        assertEq(quorum.status(entry), 2);
     }
 
     function test_QuitStatusFlow() public {
@@ -66,18 +66,27 @@ contract QuorumTest is Test {
         quorum.register(entry);
         // pending status
         quorum.quit(entry);
-        assertEq(uint(quorum.status(entry)), 0);
+        assertEq(quorum.status(entry), 0);
     }
 
     function test_BlockedStatusFlow() public {
         uint256 entry = 123455589;
         // waiting status
         quorum.register(entry);
+        // blocked status happens before active
+        quorum.blocked(entry);
+        assertEq(quorum.status(entry), 3);
+    }
+
+    function test_RevokeStatusFlow() public {
+        uint256 entry = 123455589;
+        // waiting status
+        quorum.register(entry);
         // active status
         quorum.approve(entry);
-        // blocked status
+        // revoked status happens after approved
         quorum.revoke(entry);
-        assertEq(uint(quorum.status(entry)), 3);
+        assertEq(quorum.status(entry), 3);
     }
 
     function test_Approve_RevertWhen_ApproveNotRegistered() public {
@@ -85,6 +94,14 @@ contract QuorumTest is Test {
         // active status
         vm.expectRevert(QuorumUpgradeable.NotWaitingApproval.selector);
         quorum.approve(entry);
+    }
+
+    function test_Register_RevertWhen_WaitingApproval() public {
+        uint256 entry = 123456789;
+        // active status
+        quorum.register(entry);
+        vm.expectRevert(QuorumUpgradeable.NotPendingApproval.selector);
+        quorum.register(entry);
     }
 
     function test_Revoke_RevertWhen_BlockedNotActive() public {
@@ -99,6 +116,16 @@ contract QuorumTest is Test {
     function test_Quit_RevertWhen_QuitNotWaiting() public {
         uint256 entry = 123456459;
         // blocked status
+        vm.expectRevert(QuorumUpgradeable.NotWaitingApproval.selector);
+        quorum.quit(entry);
+    }
+
+    function test_Quit_RevertWhen_Blocked() public {
+        uint256 entry = 123456789;
+        // waiting status
+        quorum.register(entry);
+        quorum.blocked(entry);
+        // active status
         vm.expectRevert(QuorumUpgradeable.NotWaitingApproval.selector);
         quorum.quit(entry);
     }
