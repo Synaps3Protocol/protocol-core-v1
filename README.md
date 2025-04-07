@@ -9,7 +9,7 @@ Welcome! 🎉 Synapse is redefining how creative IP distribution works. Whether 
 
 The architecture is structured into distinct layers, starting from interaction and execution at the top and progressing down to the foundational governance layer:
 
-![image](https://github.com/user-attachments/assets/9a5b7bc3-70b1-47f4-a842-c478e805918a)
+![image](https://github.com/user-attachments/assets/2ccd0e89-ecc6-4a0a-adc2-da6697214342)
 
 ### Level 4: Operational Layer
 - **Apps**: Provides user-facing interfaces to interact with the system.
@@ -28,6 +28,8 @@ The architecture is structured into distinct layers, starting from interaction a
 - **Economics**: Ensures financial stability through treasury management, tokens, and tollgates.
 - **Governance**: Establishes the rules and strategic decisions for the entire protocol.
 - **Access Control**: Enforces governance rules by managing permissions and roles across all layers.
+- **Lifecycle**: Introduces programmable hooks, time-based triggers, and scheduled actions that enable composable and modular protocol behavior.
+
 
 ---
 
