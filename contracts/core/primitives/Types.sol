@@ -6,6 +6,14 @@ pragma solidity 0.8.26;
 /// @notice This library provides common type definitions for use in other contracts.
 /// @dev This library defines types and structures that can be imported and used in other contracts.
 library T {
+    /// @notice Enum to represent the status of an entity.
+    enum Status {
+        Pending, // 0: The entity is default pending approval
+        Waiting, // 1: The entity is waiting for approval
+        Active, // 2: The entity is active
+        Blocked // 3: The entity is blocked
+    }
+
     /// @title Scheme
     /// @notice Enum representing different fee calculation schemes in the protocol.
     /// Each scheme determines how fees are computed based on the operation's context.
@@ -56,9 +64,9 @@ library T {
     ///      It includes fields for currency, amount, rate basis, calculation formula, and off-chain terms.
     struct Terms {
         uint256 amount; // The rate amount based on the rate basis, expressed in the smallest unit of the currency
-        address currency; // The currency in which the amount is denominated, e.g., MMC 
+        address currency; // The currency in which the amount is denominated, e.g., MMC
         TimeFrame timeFrame; // The time frame for the amount, using a standardized enum (e.g., HOURLY, DAILY)
-        string uri; // URI pointing to off-chain terms for additional details or extended documentation 
+        string uri; // URI pointing to off-chain terms for additional details or extended documentation
         // TODO we could extend the terms based on the real needs ..
     }
 

@@ -9,6 +9,8 @@ import { ILedgerVault } from "contracts/core/interfaces/financial/ILedgerVault.s
 import { ICustodianVerifiable } from "contracts/core/interfaces/custody/ICustodianVerifiable.sol";
 import { ICustodianExpirable } from "contracts/core/interfaces/custody/ICustodianExpirable.sol";
 import { ICustodianRegistrable } from "contracts/core/interfaces/custody/ICustodianRegistrable.sol";
+import { ICustodianInspectable} from "contracts/core/interfaces/custody/ICustodianInspectable.sol";
+import { ICustodianRevokable } from "contracts/core/interfaces/custody/ICustodianRevokable.sol";
 import { ICustodianFactory } from "contracts/core/interfaces/custody/ICustodianFactory.sol";
 
 import { BaseTest } from "test/BaseTest.t.sol";
@@ -100,7 +102,7 @@ contract CustodianReferendumTest is BaseTest {
     }
 
     function test_Register_SetValidEnrollmentTime() public {
-        ICustodianRegistrable registrable = ICustodianRegistrable(referendum);
+        ICustodianInspectable inspectable = ICustodianInspectable(referendum);
         ICustodianExpirable expirable = ICustodianExpirable(referendum);
 
         _setFeesAsGovernor(1 * 1e18);
@@ -111,7 +113,7 @@ contract CustodianReferendumTest is BaseTest {
         // register the custodian expecting the right enrollment time..
         _registerCustodianWithApproval(custodian, 1 * 1e18);
         uint256 expected = currentTime + expectedExpiration;
-        uint256 got = registrable.getEnrollmentDeadline(custodian);
+        uint256 got = inspectable.getEnrollmentDeadline(custodian);
         assertEq(got, expected);
     }
 
@@ -154,7 +156,7 @@ contract CustodianReferendumTest is BaseTest {
         _registerAndApproveCustodian(custodian3); // still governor prank
 
         // valid approvals, increments the total of enrollments
-        assertEq(ICustodianRegistrable(referendum).getEnrollmentCount(), 3);
+        assertEq(ICustodianInspectable(referendum).getEnrollmentCount(), 3);
     }
 
     function test_Revoke_RevokedEventEmitted() public {
@@ -164,22 +166,22 @@ contract CustodianReferendumTest is BaseTest {
         // after register a custodian a Registered event is expected
         vm.expectEmit(true, false, false, true, address(referendum));
         emit CustodianReferendum.Revoked(custodian);
-        ICustodianRegistrable(referendum).revoke(custodian);
+        ICustodianRevokable(referendum).revoke(custodian);
     }
 
     function test_Revoke_DecrementEnrollmentCount() public {
         _registerAndApproveCustodian(custodian); // still governor prank
         // valid approvals, increments the total of enrollments
         vm.prank(governor);
-        ICustodianRegistrable(referendum).revoke(custodian);
-        assertEq(ICustodianRegistrable(referendum).getEnrollmentCount(), 0);
+        ICustodianRevokable(referendum).revoke(custodian);
+        assertEq(ICustodianInspectable(referendum).getEnrollmentCount(), 0);
     }
 
     function test_Revoke_SetBlockedState() public {
         _registerAndApproveCustodian(custodian); // still governor prank
         // custodian get revoked by governance..
         vm.prank(governor);
-        ICustodianRegistrable(referendum).revoke(custodian);
+        ICustodianRevokable(referendum).revoke(custodian);
         assertTrue(ICustodianVerifiable(referendum).isBlocked(custodian));
     }
 

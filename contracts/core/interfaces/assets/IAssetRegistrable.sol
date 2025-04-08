@@ -4,8 +4,7 @@ pragma solidity 0.8.26;
 
 /// @title IAssetRegistrable Interface
 /// @notice Defines the essential functions for managing asset registration and governance through a referendum process.
-/// @dev Implement this interface in a referendum contract to allow
-///      asset proposals, approvals, rejections, and revocations.
+/// @dev This interface mirrors the FSM behavior from `IQuorum`, but scoped to asset governance.
 interface IAssetRegistrable {
     /// @notice Submits a new asset proposition for a referendum.
     /// @dev This function should allow entities to propose an asset for approval.

@@ -7,8 +7,10 @@ import { Initializable } from "@openzeppelin/contracts-upgradeable/proxy/utils/I
 import { UUPSUpgradeable } from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import { AccessControlledUpgradeable } from "@synaps3/core/primitives/upgradeable/AccessControlledUpgradeable.sol";
 import { QuorumUpgradeable } from "@synaps3/core/primitives/upgradeable/QuorumUpgradeable.sol";
-import { IHook } from "@synaps3/core/interfaces/hooks/IHook.sol";
 import { IHookRegistry } from "@synaps3/core/interfaces/hooks/IHookRegistry.sol";
+import { IHook } from "@synaps3/core/interfaces/hooks/IHook.sol";
+import { T } from "@synaps3/core/primitives/Types.sol";
+
 
 // Hook interfaces can define logic for:
 // - Access control: e.g. only users holding certain tokens can access content.
@@ -107,7 +109,7 @@ contract HookRegistry is Initializable, UUPSUpgradeable, AccessControlledUpgrade
     /// @return True if the hook is registered and its status is active, false otherwise.
     function isActive(bytes4 interfaceId) external view returns (bool) {
         address hook = _hooks[interfaceId];
-        bool audited = _status(uint160(hook)) == Status.Active;
+        bool audited = _status(uint160(hook)) == T.Status.Active;
         return hook != address(0) && audited;
     }
 

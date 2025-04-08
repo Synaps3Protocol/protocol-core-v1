@@ -9,6 +9,7 @@ import { AccessControlledUpgradeable } from "@synaps3/core/primitives/upgradeabl
 import { QuorumUpgradeable } from "@synaps3/core/primitives/upgradeable/QuorumUpgradeable.sol";
 import { IPolicyAuditor } from "@synaps3/core/interfaces/policies/IPolicyAuditor.sol";
 import { IPolicy } from "@synaps3/core/interfaces/policies/IPolicy.sol";
+import { T } from "@synaps3/core/primitives/Types.sol";
 
 /// @title PolicyAudit
 /// @notice This contract audits content policies and ensures that only authorized entities can approve or revoke.
@@ -90,7 +91,7 @@ contract PolicyAudit is Initializable, UUPSUpgradeable, AccessControlledUpgradea
     /// @notice Checks if a specific policy contract has been audited.
     /// @param policy The address of the policy contract to verify.
     function isAudited(address policy) external view returns (bool) {
-        return _status(uint160(policy)) == Status.Active;
+        return _status(uint160(policy)) == T.Status.Active;
     }
 
     /// @dev Authorizes the upgrade of the contract.

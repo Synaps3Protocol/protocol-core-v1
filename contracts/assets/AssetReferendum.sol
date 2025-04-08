@@ -11,6 +11,7 @@ import { EnumerableSet } from "@openzeppelin/contracts/utils/structs/EnumerableS
 import { AccessControlledUpgradeable } from "@synaps3/core/primitives/upgradeable/AccessControlledUpgradeable.sol";
 import { QuorumUpgradeable } from "@synaps3/core/primitives/upgradeable/QuorumUpgradeable.sol";
 import { IAssetReferendum } from "@synaps3/core/interfaces/assets/IAssetReferendum.sol";
+import { T } from "@synaps3/core/primitives/Types.sol";
 import { C } from "@synaps3/core/primitives/Constants.sol";
 
 /// @title AssetReferendum
@@ -133,7 +134,7 @@ contract AssetReferendum is
     /// @notice Checks if the asset is active nor blocked.
     /// @param assetId The ID of the asset.
     function isActive(uint256 assetId) public view returns (bool) {
-        return _status(assetId) == Status.Active;
+        return _status(assetId) == T.Status.Active;
     }
 
     /// @notice Function that should revert when msg.sender is not authorized to upgrade the contract.

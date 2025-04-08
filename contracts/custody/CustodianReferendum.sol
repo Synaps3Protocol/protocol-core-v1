@@ -145,21 +145,21 @@ contract CustodianReferendum is
         // This mechanism helps to verify the availability of the custodian,
         // forcing recurrent registrations and ensuring ongoing participation.
         bool notExpiredDeadline = _enrollmentDeadline[custodian] > block.timestamp;
-        return _status(uint160(custodian)) == Status.Active && notExpiredDeadline;
+        return _status(uint160(custodian)) == T.Status.Active && notExpiredDeadline;
     }
 
     /// @notice Checks if the entity is waiting.
     /// @dev This function verifies the waiting status of the custodian.
     /// @param custodian The custodian's address to check.
     function isWaiting(address custodian) external view onlyValidCustodian(custodian) returns (bool) {
-        return _status(uint160(custodian)) == Status.Waiting;
+        return _status(uint160(custodian)) == T.Status.Waiting;
     }
 
     /// @notice Checks if the entity is blocked.
     /// @dev This function verifies the blocked status of the custodian.
     /// @param custodian The custodian's address to check.
     function isBlocked(address custodian) external view onlyValidCustodian(custodian) returns (bool) {
-        return _status(uint160(custodian)) == Status.Blocked;
+        return _status(uint160(custodian)) == T.Status.Blocked;
     }
 
     /// @notice Registers a custodian by sending a payment to the contract.
