@@ -202,8 +202,9 @@ contract RightsAssetCustodian is Initializable, UUPSUpgradeable, AccessControlle
             // Example: First node = weight 3 * 10,000 / total weight (s)
             // This ensures nodes with higher weights (closer to the start) have a greater
             // probability of being selected.
-            acc += ((n - i) * C.BPS_MAX) / s; // TODO add "demand" as variable to calc weight
             address candidate = _custodiansByHolder[holder].at(i);
+            // uint256 demand = _holdersUnderCustodian[candidate];
+            acc += ((n - i) * C.BPS_MAX) / s; // TODO add "demand" as variable to calc weight
             if (acc >= random && _isValidActiveCustodian(candidate)) {
                 chosen = candidate;
             }

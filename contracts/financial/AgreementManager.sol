@@ -14,7 +14,7 @@ import { FinancialOps } from "@synaps3/core/libraries/FinancialOps.sol";
 import { FeesOps } from "@synaps3/core/libraries/FeesOps.sol";
 import { T } from "@synaps3/core/primitives/Types.sol";
 
-// TODO Trustless escrow system - modular escrow framework
+// TODO Doc: Trustless escrow system - modular escrow framework - escrow mechanism (agreement <arbitrer> settlement)
 
 /// @title AgreementManager
 /// @notice Manages the lifecycle (trustless escrow system) of agreements, including creation and retrieval.

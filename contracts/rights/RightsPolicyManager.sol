@@ -89,7 +89,7 @@ contract RightsPolicyManager is Initializable, UUPSUpgradeable, AccessControlled
     /// @notice Finalizes the agreement by registering the agreed-upon policy, effectively closing the agreement.
     /// @dev This function verifies the policy's authorization, executes the agreement and registers the policy.
     /// @param proof The unique identifier of the agreement to be enforced.
-    /// @param holder The rights holder whose authorization is required for accessing the asset.
+    /// @param holder The rights holder whose authorization is required for accessing the assets.
     /// @param policy The address of the policy contract managing the agreement.
     function registerPolicy(
         uint256 proof,

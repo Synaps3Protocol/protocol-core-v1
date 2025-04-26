@@ -1,6 +1,6 @@
 {
   "name": "@synaps3/types",
-  "version": "1.10.10",
+  "version": "1.10.11",
   "description": "Essential interfaces and types for Synapse Protocol.",
   "homepage": "https://github.com/Synaps3Protocol/protocol-core-v1#readme",
   "license": "BUSL-1.1",

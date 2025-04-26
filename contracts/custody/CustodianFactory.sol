@@ -51,15 +51,11 @@ contract CustodianFactory is UpgradeableBeacon, ICustodianFactory {
         return _manager[custodian];
     }
 
-    // TODO: check domain existence eg. existingDomain('an.com')
-    // TODO: avoid domains spam/pollution/faking
-
     /// @notice Function to create a new custodian contract.
     /// @dev Ensures that the same endpoint is not registered twice.
     /// @param endpoint The endpoint associated with the new custodian.
     /// @return The address of the newly created custodian contract.
     function create(string calldata endpoint) external returns (address) {
-        // TODO penalize invalid endpoints, and revoked during referendum
         bytes32 endpointHash = _registerEndpoint(endpoint);
         address newContract = _deployCustodian(endpoint);
         _registerManager(newContract, msg.sender);
