@@ -60,7 +60,6 @@ contract OrchestrateProtocolHydration is Script {
         // assign operations permissions
         authority.grantRole(C.OPS_ROLE, agreementManager, 0);
         authority.grantRole(C.OPS_ROLE, agreementSettler, 0);
-        authority.grantRole(C.OPS_ROLE, custodianReferendum, 0);
         bytes4[] memory vaultAllowed = LedgerVaultOpsPermissions();
         authority.setTargetFunctionRole(ledgerVault, vaultAllowed, C.OPS_ROLE);
 

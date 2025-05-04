@@ -8,10 +8,9 @@ import { C } from "contracts/core/primitives/Constants.sol";
 contract DeployCustodianReferendum is DeployBase {
     function run() external returns (address) {
         vm.startBroadcast(getAdminPK());
-        address tollgate = computeCreate3Address("SALT_TOLLGATE");
         address agreementSettler = computeCreate3Address("SALT_AGREEMENT_SETTLER");
         address accessManager = computeCreate3Address("SALT_ACCESS_MANAGER");
-        address impl = address(new CustodianReferendum(tollgate, agreementSettler));
+        address impl = address(new CustodianReferendum(agreementSettler));
         bytes memory init = abi.encodeCall(CustodianReferendum.initialize, (accessManager));
         address referendum = deployUUPS(impl, init, "SALT_CUSTODIAN_REFERENDUM");
         vm.stopBroadcast();

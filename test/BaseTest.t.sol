@@ -135,6 +135,8 @@ abstract contract BaseTest is Test {
 
         DeployAgreementManager agreementManagerDeployer = new DeployAgreementManager();
         agreementManager = agreementManager == address(0) ? agreementManagerDeployer.run() : agreementManager;
+        // OP role granted to custodian referendum to operate on ledger
+        _assignOpRole(agreementManager);
     }
 
     function deployAgreementSettler() public {
@@ -144,6 +146,8 @@ abstract contract BaseTest is Test {
 
         DeployAgreementSettler agreementSettlerDeployer = new DeployAgreementSettler();
         agreementSettler = agreementSettler == address(0) ? agreementSettlerDeployer.run() : agreementSettler;
+         // OP role granted to custodian referendum to operate on ledger
+        _assignOpRole(agreementSettler);
     }
 
     // 05_DeployAssetReferendum
@@ -179,15 +183,12 @@ abstract contract BaseTest is Test {
 
     // 09_DeployCustodianReferendum
     function deployCustodianReferendum() public {
-        deployTollgate();
         deployAgreementSettler();
 
         // set default admin as deployer..
         DeployCustodianReferendum distReferendumDeployer = new DeployCustodianReferendum();
         bytes4[] memory custodianReferendumAllowed = CustodianReferendumGovPermissions();
         custodianReferendum = custodianReferendum == address(0) ? distReferendumDeployer.run() : custodianReferendum;
-        // OP role granted to custodian referendum to operate on ledger
-        _assignOpRole(custodianReferendum);
         // GOV permission set to custodian referendum functions
         _setGovPermissions(custodianReferendum, custodianReferendumAllowed);
     }

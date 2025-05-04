@@ -63,20 +63,24 @@ contract Tollgate is Initializable, UUPSUpgradeable, AccessControlledUpgradeable
     }
 
     /// @notice Allows execution if the scheme is accepted or if support cannot be determined.
-    /// @dev This modifier checks whether the `target` contract explicitly supports the scheme via `isSupported`.
-    /// If `isSupported` exists and returns `false`, the call is reverted with InvalidTargetContext.
-    /// If the call to `isSupported` fails (e.g., target does not implement the function or reverts), execution is allowed by default.
+    /// @dev This modifier checks whether the `target` contract explicitly supports the scheme via `isFeeSchemeSupported`.
+    /// If `isFeeSchemeSupported` exists and returns `false`, the call is reverted with InvalidTargetContext.
+    /// If the call to `v` fails (e.g., target does not implement the function or reverts), execution is allowed by default.
     /// This enables compatibility with contracts that do not implement scheme validation.
     /// @param scheme The scheme to validate.
     /// @param target The address of the contract expected to support the scheme.
-    modifier onlyIfFeeSchemeSupported(T.Scheme scheme, address target) {
-        try IFeeSchemeValidator(target).isFeeSchemeSupported(scheme) returns (bool ok) {
+    modifier onlySupportedScheme(T.Scheme scheme, address target) {
+        bytes memory callData = abi.encodeCall(IFeeSchemeValidator.isFeeSchemeSupported, (scheme));
+        (bool success, bytes memory result) = target.call(callData);
+        // if the call was successful, the target implements the method and returned a result.
+        // decode the result and validate the scheme acceptance.
+        if (success) {
+            bool ok = abi.decode(result, (bool));
             if (!ok) revert InvalidTargetContext(target);
-            _;
-        } catch {
-            // by default all schemes are allowed
-            _;
         }
+
+        // if call fails → by default all schemes are allowed
+        _;
     }
 
     /// @custom:oz-upgrades-unsafe-allow constructor
@@ -132,7 +136,7 @@ contract Tollgate is Initializable, UUPSUpgradeable, AccessControlledUpgradeable
         address target,
         uint256 fee,
         address currency
-    ) external onlyIfFeeSchemeSupported(scheme, target) onlyValidFeeRepresentation(scheme, fee) restricted {
+    ) external onlySupportedScheme(scheme, target) onlyValidFeeRepresentation(scheme, fee) restricted {
         // Compute a unique composed key based on the target, currency, and scheme.
         // The composed key uniquely identifies a deterministic combination of these parameters
         // in a flat storage mapping. This avoids nested mappings, improving gas efficiency

@@ -19,12 +19,10 @@ import { CustodianReferendum } from "contracts/custody/CustodianReferendum.sol";
 import { T } from "contracts/core/primitives/Types.sol";
 
 contract CustodianReferendumTest is BaseTest {
-    address custodian;
 
     function setUp() public initialize {
         deployCustodianReferendum();
         deployCustodianFactory();
-        custodian = deployCustodian("contentrider.com");
     }
 
     function deployCustodian(string memory endpoint) public returns (address) {
@@ -64,6 +62,7 @@ contract CustodianReferendumTest is BaseTest {
 
     function test_Register_RegisteredEventEmitted() public {
         uint256 expectedFees = 100 * 1e18;
+        address custodian = deployCustodian("contentrider.com");
         _setFeesAsGovernor(expectedFees); // free enrollment: test purpose
         // after register a custodian a Registered event is expected
         vm.warp(1641070803);
@@ -90,33 +89,20 @@ contract CustodianReferendumTest is BaseTest {
         vm.stopPrank();
     }
 
-    function test_Register_ValidFees() public {
-        uint256 expectedFees = 100 * 1e18; // 100 MMC
-        // 1-set enrollment fees.
-        _setFeesAsGovernor(expectedFees);
-        // 2-deploy and register contract
-        _registerCustodianWithApproval(custodian, expectedFees);
-        // zero after disburse all the balance
-        assertEq(IERC20(token).balanceOf(custodianReferendum), expectedFees);
-    }
 
     function test_Register_RevertIf_InvalidAgreement() public {
         uint256 expectedFees = 100 * 1e18; // 100 MMC
+        address custodian = deployCustodian("contentrider.com");
         _setFeesAsGovernor(expectedFees);
         // expected revert if not valid allowance
-        vm.expectRevert(abi.encodeWithSignature("NoFundsToLock()"));
+        vm.prank(user);
+        vm.expectRevert(abi.encodeWithSignature("UnauthorizedCustodianManager(address)", user));
         ICustodianRegistrable(custodianReferendum).register(0, custodian);
     }
 
-    function test_Register_RevertIf_InvalidFlatFee() public {
-        uint256 expectedFees = 100 * 1e18; // 100 MMC
-        _setFeesAsGovernor(expectedFees);
-        // expected revert if not valid allowance
-        vm.expectRevert(abi.encodeWithSignature("NoFundsToLock()"));
-        ICustodianRegistrable(custodianReferendum).register(0, custodian);
-    }
 
     function test_Register_SetValidEnrollmentTime() public {
+        address custodian = deployCustodian("contentrider.com");
         ICustodianInspectable inspectable = ICustodianInspectable(custodianReferendum);
         ICustodianExpirable expirable = ICustodianExpirable(custodianReferendum);
 
@@ -134,6 +120,7 @@ contract CustodianReferendumTest is BaseTest {
 
     function test_Register_SetWaitingState() public {
         _setFeesAsGovernor(1 * 1e18);
+        address custodian = deployCustodian("contentrider.com");
         // register the custodian expecting the right status.
         _registerCustodianWithApproval(custodian, 1 * 1e18);
         assertTrue(ICustodianVerifiable(custodianReferendum).isWaiting(custodian));
@@ -147,6 +134,7 @@ contract CustodianReferendumTest is BaseTest {
 
     function test_Approve_ApprovedEventEmitted() public {
         _setFeesAsGovernor(1 * 1e18);
+        address custodian = deployCustodian("contentrider.com");
         _registerCustodianWithApproval(custodian, 1 * 1e18);
 
         vm.prank(governor); // as governor.
@@ -158,11 +146,13 @@ contract CustodianReferendumTest is BaseTest {
     }
 
     function test_Approve_SetActiveState() public {
+        address custodian = deployCustodian("contentrider.com");
         _registerAndApproveCustodian(custodian);
         assertTrue(ICustodianVerifiable(custodianReferendum).isActive(custodian));
     }
 
     function test_Approve_IncrementEnrollmentCount() public {
+        address custodian = deployCustodian("contentrider.com");
         address custodian2 = deployCustodian("test2.com");
         address custodian3 = deployCustodian("test3.com");
 
@@ -175,6 +165,7 @@ contract CustodianReferendumTest is BaseTest {
     }
 
     function test_Revoke_RevokedEventEmitted() public {
+        address custodian = deployCustodian("contentrider.com");
         _registerAndApproveCustodian(custodian); // still governor prank
         vm.prank(governor);
         vm.warp(1641070801);
@@ -185,6 +176,7 @@ contract CustodianReferendumTest is BaseTest {
     }
 
     function test_Revoke_DecrementEnrollmentCount() public {
+        address custodian = deployCustodian("contentrider.com");
         _registerAndApproveCustodian(custodian); // still governor prank
         // valid approvals, increments the total of enrollments
         vm.prank(governor);
@@ -193,6 +185,7 @@ contract CustodianReferendumTest is BaseTest {
     }
 
     function test_Revoke_SetBlockedState() public {
+        address custodian = deployCustodian("contentrider.com");
         _registerAndApproveCustodian(custodian); // still governor prank
         // custodian get revoked by governance..
         vm.prank(governor);
@@ -232,6 +225,7 @@ contract CustodianReferendumTest is BaseTest {
 
     function _registerCustodianWithGovernorAndApproval() internal {
         uint256 expectedFees = 100 * 1e18;
+        address custodian = deployCustodian("contentrider.com");
         _setFeesAsGovernor(expectedFees);
         _registerCustodianWithApproval(custodian, expectedFees);
     }

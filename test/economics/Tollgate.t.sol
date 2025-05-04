@@ -6,15 +6,29 @@ import { Tollgate } from "contracts/economics/Tollgate.sol";
 import { ITollgate } from "contracts/core/interfaces/economics/ITollgate.sol";
 import { T } from "contracts/core/primitives/Types.sol";
 
-contract TollgateTest is BaseTest {
+contract TargetA {}
 
+contract TargetB {}
+contract TargetC {}
+
+contract TargetD {
+    /// @notice Checks if the given fee scheme is supported in this context.
+    /// @param scheme The fee scheme to validate.
+    /// @return True if the scheme is supported.
+    function isFeeSchemeSupported(T.Scheme scheme) external pure returns (bool) {
+        // support only FLAT scheme
+        return scheme == T.Scheme.FLAT;
+    }
+}
+
+contract TollgateTest is BaseTest {
     function setUp() public initialize {
         deployTollgate();
     }
 
     function test_SetFees_ValidFlatFees() public {
         uint256 expected = 1e18; // expected flat fees
-        address target = vm.addr(8);
+        address target = address(new TargetA());
         vm.prank(governor); // as governor set fees
         ITollgate(tollgate).setFees(T.Scheme.FLAT, target, expected, token);
 
@@ -25,7 +39,7 @@ contract TollgateTest is BaseTest {
 
     function test_SetFees_ValidBasePointAgreementFees() public {
         uint256 expected = 5 * 100; // 500 bps = 5% nominal expected base point
-        address target = vm.addr(8);
+        address target = address(new TargetA());
         vm.prank(governor); // as governor set fees
         ITollgate(tollgate).setFees(T.Scheme.BPS, target, expected, token);
 
@@ -36,7 +50,7 @@ contract TollgateTest is BaseTest {
 
     function test_SetFees_FeesSetEventEmitted() public {
         uint256 expected = 1e18; // expected flat fees
-        address target = vm.addr(8);
+        address target = address(new TargetA());
         vm.prank(governor); // as governor set fees
         vm.expectEmit(true, true, false, true, address(tollgate));
         emit Tollgate.FeesSet(target, token, T.Scheme.FLAT, expected);
@@ -45,7 +59,7 @@ contract TollgateTest is BaseTest {
 
     function test_SetFees_RevertWhen_InvalidBasePointFees() public {
         uint256 invalidFees = 10_001; // overflowed base points max = 10_000
-        address target = vm.addr(8);
+        address target = address(new TargetA());
         vm.prank(governor); // as governor set fees
         vm.expectRevert(abi.encodeWithSignature("InvalidBasisPointRange(uint256)", invalidFees));
         ITollgate(tollgate).setFees(T.Scheme.BPS, target, invalidFees, token);
@@ -53,19 +67,28 @@ contract TollgateTest is BaseTest {
 
     function test_SetFees_RevertWhen_InvalidNominalFees() public {
         uint256 invalidFees = 101; // overflowed base points max = 10_000
-        address target = vm.addr(8);
+        address target = address(new TargetA());
         vm.prank(governor); // as governor set fees
         vm.expectRevert(abi.encodeWithSignature("InvalidNominalRange(uint256)", invalidFees));
         ITollgate(tollgate).setFees(T.Scheme.NOMINAL, target, invalidFees, token);
+    }
+
+    function test_SetFees_RevertIf_NotSupportedSchemeByTarget() public {
+        vm.startPrank(governor);
+        // expected revert if not valid allowance
+        address notSupportedNominal = address(new TargetD());
+        vm.expectRevert(abi.encodeWithSignature("InvalidTargetContext(address)", notSupportedNominal));
+        ITollgate(tollgate).setFees(T.Scheme.NOMINAL, notSupportedNominal, 1, token);
+        vm.stopPrank();
     }
 
     function test_GetFees_ValidExpectedFees() public {
         uint256 expectedFlat = 1e18; // 1MMC expected flat fees
         uint256 expectedBps = 10 * 100; // = 10% expected bps
         uint256 expectedNominal = 50; // = 50% expected bps
-        address targetA = vm.addr(8);
-        address targetB = vm.addr(9);
-        address targetC = vm.addr(10);
+        address targetA = address(new TargetA());
+        address targetB = address(new TargetB());
+        address targetC = address(new TargetC());
 
         vm.startPrank(governor); // as governor set fees
         ITollgate(tollgate).setFees(T.Scheme.FLAT, targetA, expectedFlat, token);
