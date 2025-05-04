@@ -7,13 +7,15 @@ import { DeployCreate3Factory } from "script/deployment/01_Deploy_Base_Create3.s
 import { DeployAccessManager } from "script/deployment/02_Deploy_Access_AccessManager.s.sol";
 import { DeployTollgate } from "script/deployment/04_Deploy_Economics_Tollgate.s.sol";
 import { DeployToken } from "script/deployment/03_Deploy_Economics_Token.s.sol";
-import { DeployLedgerVault } from "script/deployment/06_Deploy_Financial_LedgerVault.s.sol";
 import { DeployTreasury } from "script/deployment/05_Deploy_Economics_Treasury.s.sol";
+import { DeployLedgerVault } from "script/deployment/06_Deploy_Financial_LedgerVault.s.sol";
 import { DeployAssetReferendum } from "script/deployment/11_Deploy_Assets_AssetReferendum.s.sol";
 import { DeployAssetSafe } from "script/deployment/13_Deploy_Assets_AssetSafe.s.sol";
 import { DeployAssetOwnership } from "script/deployment/12_Deploy_Assets_AssetOwnership.s.sol";
 import { DeployCustodianFactory } from "script/deployment/09_Deploy_Custody_CustodianFactory.s.sol";
 import { DeployCustodianReferendum } from "script/deployment/10_Deploy_Custody_CustodianReferendum.s.sol";
+import { DeployAgreementManager } from "script/deployment/07_Deploy_Financial_AgreementManager.s.sol";
+import { DeployAgreementSettler } from "script/deployment/08_Deploy_Financial_AgreementSettler.s.sol";
 
 import { getGovPermissions as TollgateGovPermissions } from "script/permissions/Permissions_Tollgate.sol";
 import { getGovPermissions as TreasuryGovPermissions } from "script/permissions/Permissions_Treasury.sol";
@@ -26,21 +28,39 @@ import { C } from "contracts/core/primitives/Constants.sol";
 
 import { console } from "forge-std/console.sol";
 
+// dependencies are declared explicitly in each deployment even if nested or repeated to ensure deployment clarity.
+// singleton pattern is used underneath to avoid multiple deployments and enforce global consistency.
+// each call ensures the dependency is initialized only once and shared across consumers.
 abstract contract BaseTest is Test {
     address admin;
     address user;
     address governor;
     address accessManager;
+
+    address agreementManager;
+    address agreementSettler;
+
+    address assetSafe;
+    address assetReferendum;
+    address assetOwnership;
+
+    address custodianReferendum;
+    address custodianFactory;
+
+    address tollgate;
+    address treasury;
     address ledger;
+    address token;
 
     modifier initialize() {
         // setup the admin to operate in tests..
         user = vm.addr(2);
         governor = vm.addr(1);
         admin = vm.addr(vm.envUint("PRIVATE_KEY"));
+
         deployCreate3Factory();
         deployAccessManager();
-        deployLedgerVault();
+
         _;
     }
 
@@ -51,14 +71,22 @@ abstract contract BaseTest is Test {
         address factory = create3.run();
         // we need access to create3 factory globally
         string memory factoryAddress = Strings.toHexString(factory);
+        console.logString(factoryAddress);
         vm.setEnv("CREATE3_FACTORY", factoryAddress);
+    }
+
+    // 03_DeployToken
+    function deployToken() public {
+        // set default admin as deployer..
+        DeployToken mmcDeployer = new DeployToken();
+        token = token == address(0) ? mmcDeployer.run() : token;
     }
 
     // 01_DeployAccessManager
     function deployAccessManager() public {
         // set default admin as deployer..
         DeployAccessManager accessManagerDeployer = new DeployAccessManager();
-        accessManager = accessManagerDeployer.run();
+        accessManager = accessManager == address(0) ? accessManagerDeployer.run() : accessManager;
 
         vm.prank(admin);
         // add to governor the gov role
@@ -67,14 +95,15 @@ abstract contract BaseTest is Test {
     }
 
     // 02_DeployTollgate
-    function deployTollgate() public returns (address) {
+    function deployTollgate() public {
         // set default admin as deployer..
+        deployToken();
+
         DeployTollgate tollgateDeployer = new DeployTollgate();
         bytes4[] memory tollgateAllowed = TollgateGovPermissions();
-        address tollgate = tollgateDeployer.run();
+        tollgate = tollgate == address(0) ? tollgateDeployer.run() : tollgate;
         // add permission to gov role to set fees
         _setGovPermissions(tollgate, tollgateAllowed);
-        return tollgate;
     }
 
     // 02_DeployTollgate
@@ -82,7 +111,7 @@ abstract contract BaseTest is Test {
         // set default admin as deployer..
         DeployLedgerVault ledgerDeployer = new DeployLedgerVault();
         bytes4[] memory ledgerAllowed = LedgerVaultOpsPermissions();
-        ledger = ledgerDeployer.run();
+        ledger = ledger == address(0) ? ledgerDeployer.run() : ledger;
 
         vm.prank(admin);
         // op role needed to call functions in ledger contract
@@ -91,68 +120,76 @@ abstract contract BaseTest is Test {
         return ledger;
     }
 
-    // 03_DeployToken
-    function deployToken() public returns (address) {
-        // set default admin as deployer..
-        DeployToken mmcDeployer = new DeployToken();
-        address token = mmcDeployer.run();
-        return token;
-    }
-
     // 04_DeployTreasury
-    function deployTreasury() public returns (address) {
+    function deployTreasury() public {
         // set default admin as deployer..
         DeployTreasury treasuryDeployer = new DeployTreasury();
         bytes4[] memory treasuryAllowed = TreasuryGovPermissions();
-        address treasury = treasuryDeployer.run();
+        treasury = treasury == address(0) ? treasuryDeployer.run() : treasury;
         _setGovPermissions(treasury, treasuryAllowed);
-        return treasury;
+    }
+
+    function deployAgreementManager() public {
+        deployTollgate();
+        deployLedgerVault();
+
+        DeployAgreementManager agreementManagerDeployer = new DeployAgreementManager();
+        agreementManager = agreementManager == address(0) ? agreementManagerDeployer.run() : agreementManager;
+    }
+
+    function deployAgreementSettler() public {
+        deployTreasury();
+        deployLedgerVault();
+        deployAgreementManager();
+
+        DeployAgreementSettler agreementSettlerDeployer = new DeployAgreementSettler();
+        agreementSettler = agreementSettler == address(0) ? agreementSettlerDeployer.run() : agreementSettler;
     }
 
     // 05_DeployAssetReferendum
-    function deployAssetReferendum() public returns (address) {
+    function deployAssetReferendum() public {
         // set default admin as deployer..
         DeployAssetReferendum assetReferendumDeployer = new DeployAssetReferendum();
         bytes4[] memory referendumAllowed = AssetReferendumGovPermissions();
-        address assetReferendum = assetReferendumDeployer.run();
+        assetReferendum = assetReferendum == address(0) ? assetReferendumDeployer.run() : assetReferendum;
         _setGovPermissions(assetReferendum, referendumAllowed);
-        return assetReferendum;
     }
 
-    function deployAssetOwnership() public returns (address) {
+    function deployAssetOwnership() public {
+        deployAssetReferendum();
         // set default admin as deployer..
         DeployAssetOwnership assetOwnershipDeployer = new DeployAssetOwnership();
-        address assetReferendum = assetOwnershipDeployer.run();
-        return assetReferendum;
+        assetOwnership = assetOwnership == address(0) ? assetOwnershipDeployer.run() : assetOwnership;
     }
 
-    function deployAssetSafe() public returns (address) {
-        // set default admin as deployer..
+    function deployAssetSafe() public {
+        deployAssetOwnership();
+
         DeployAssetSafe assetVaultDeployer = new DeployAssetSafe();
         bytes4[] memory referendumAllowed = AssetReferendumGovPermissions();
-        address assetReferendum = assetVaultDeployer.run();
-        _setGovPermissions(assetReferendum, referendumAllowed);
-        return assetReferendum;
+        assetSafe = assetSafe == address(0) ? assetVaultDeployer.run() : assetSafe;
+        _setGovPermissions(assetSafe, referendumAllowed);
     }
 
-
     // 08_DeployCustodian
-    function deployCustodianFactory() public returns (address) {
+    function deployCustodianFactory() public {
         DeployCustodianFactory distDeployer = new DeployCustodianFactory();
-        return distDeployer.run();
+        custodianFactory = custodianFactory == address(0) ? distDeployer.run() : custodianFactory;
     }
 
     // 09_DeployCustodianReferendum
-    function deployCustodianReferendum() public returns (address) {
+    function deployCustodianReferendum() public {
+        deployTollgate();
+        deployAgreementSettler();
+
         // set default admin as deployer..
         DeployCustodianReferendum distReferendumDeployer = new DeployCustodianReferendum();
         bytes4[] memory custodianReferendumAllowed = CustodianReferendumGovPermissions();
-        address custodianReferendum = distReferendumDeployer.run();
+        custodianReferendum = custodianReferendum == address(0) ? distReferendumDeployer.run() : custodianReferendum;
         // OP role granted to custodian referendum to operate on ledger
         _assignOpRole(custodianReferendum);
         // GOV permission set to custodian referendum functions
         _setGovPermissions(custodianReferendum, custodianReferendumAllowed);
-        return custodianReferendum;
     }
 
     function _setGovPermissions(address target, bytes4[] memory allowed) public {

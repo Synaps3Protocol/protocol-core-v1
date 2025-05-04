@@ -6,6 +6,7 @@ import { Initializable } from "@openzeppelin/contracts-upgradeable/proxy/utils/I
 import { EnumerableSet } from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 import { UUPSUpgradeable } from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import { AccessControlledUpgradeable } from "@synaps3/core/primitives/upgradeable/AccessControlledUpgradeable.sol";
+import { IFeeSchemeValidator } from "@synaps3/core/interfaces/economics/IFeeSchemeValidator.sol";
 import { ITollgate } from "@synaps3/core/interfaces/economics/ITollgate.sol";
 
 import { T } from "@synaps3/core/primitives/Types.sol";
@@ -61,6 +62,23 @@ contract Tollgate is Initializable, UUPSUpgradeable, AccessControlledUpgradeable
         _;
     }
 
+    /// @notice Allows execution if the scheme is accepted or if support cannot be determined.
+    /// @dev This modifier checks whether the `target` contract explicitly supports the scheme via `isSupported`.
+    /// If `isSupported` exists and returns `false`, the call is reverted with InvalidTargetContext.
+    /// If the call to `isSupported` fails (e.g., target does not implement the function or reverts), execution is allowed by default.
+    /// This enables compatibility with contracts that do not implement scheme validation.
+    /// @param scheme The scheme to validate.
+    /// @param target The address of the contract expected to support the scheme.
+    modifier onlyIfFeeSchemeSupported(T.Scheme scheme, address target) {
+        try IFeeSchemeValidator(target).isFeeSchemeSupported(scheme) returns (bool ok) {
+            if (!ok) revert InvalidTargetContext(target);
+            _;
+        } catch {
+            // by default all schemes are allowed
+            _;
+        }
+    }
+
     /// @custom:oz-upgrades-unsafe-allow constructor
     constructor() {
         _disableInitializers();
@@ -114,7 +132,7 @@ contract Tollgate is Initializable, UUPSUpgradeable, AccessControlledUpgradeable
         address target,
         uint256 fee,
         address currency
-    ) external restricted onlyValidFeeRepresentation(scheme, fee) {
+    ) external onlyIfFeeSchemeSupported(scheme, target) onlyValidFeeRepresentation(scheme, fee) restricted {
         // Compute a unique composed key based on the target, currency, and scheme.
         // The composed key uniquely identifies a deterministic combination of these parameters
         // in a flat storage mapping. This avoids nested mappings, improving gas efficiency

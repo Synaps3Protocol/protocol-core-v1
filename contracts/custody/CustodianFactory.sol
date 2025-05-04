@@ -51,6 +51,8 @@ contract CustodianFactory is UpgradeableBeacon, ICustodianFactory {
         return _manager[custodian];
     }
 
+    // TODO: isRegistered(endpoint)
+
     /// @notice Function to create a new custodian contract.
     /// @dev Ensures that the same endpoint is not registered twice.
     /// @param endpoint The endpoint associated with the new custodian.

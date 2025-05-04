@@ -31,9 +31,39 @@ contract AccessManager is Initializable, UUPSUpgradeable, AccessManagerUpgradeab
         //     return (true, getRoleAdmin(roleId), 0); // => (true, 0, 0)
         // }
 
+        // Strategic roles for governance classification within the protocol:
+        //
+        // Community Governance Role:
+        // - GOV_ROLE: Represents decentralized community governance. Decisions are made through collective voting mechanisms (e.g., token-weighted, quadratic).
+        //
+        // Group/Sub-DAO Based Roles:
+        // - ADMIN_ROLE: Managed by a smart account or sub-DAO. Handles protocol upgrades, pause mechanisms, and operational role assignments.
+        // - MOD_ROLE: Managed by a smart account or sub-DAO. Approves policy submissions and moderates hook operations.
+        // - REF_ROLE: Managed by a smart account or sub-DAO. Participates in governance referenda for content curation and distributor selection.
+        //
+        // Individual/Contract Based Roles:
+        // - OPS_ROLE: Internal operational role assigned to protocol-trusted contracts for direct module interactions. No human involvement.
+        // - VER_ROLE: Individual role assigned to trusted creators, enabling content uploads without conventional verification.
+
+        /*
+            GOV_ROLE (Community Governance)
+            │
+            ├── ADMIN_ROLE (Smart Account / Sub-DAO)
+            │   │
+            │   ├── MOD_ROLE (Smart Account / Sub-DAO)
+            │   │
+            │   └── OPS_ROLE (Internal Contract Role)
+            │
+            ├── REF_ROLE (Smart Account / Sub-DAO)
+            │
+            ├── VER_ROLE (Individual Trusted Creator)
+        */
+
+        _setRoleAdmin(C.VER_ROLE, C.GOV_ROLE);
+        _setRoleAdmin(C.REF_ROLE, C.GOV_ROLE);
         _setRoleAdmin(C.MOD_ROLE, C.ADMIN_ROLE);
         _setRoleAdmin(C.OPS_ROLE, C.ADMIN_ROLE);
-        _setRoleAdmin(C.VER_ROLE, C.GOV_ROLE);
+
     }
 
     // TODO pause protocol based on permission and roles

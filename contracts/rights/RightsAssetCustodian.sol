@@ -117,6 +117,7 @@ contract RightsAssetCustodian is Initializable, UUPSUpgradeable, AccessControlle
         // TODO using the maxAvailable we could limit the number of balanced custodians eg: 5
         // to allow add more redundancy like "backup" but under max control to handle balanced
         // window=[max=[0...5]...10]... later [max=[0...6]...10] <- expanded max to 6
+        // TODO grant custody fee to avoid manipulation of the network or abuse -> the more custodian = more fees
         bool addedCustodian = _custodiansByHolder[msg.sender].add(custodian);
         if (!addedCustodian) revert GrantCustodyFailed(custodian, msg.sender);
         _incrementCustody(custodian); // +1 under custody its analog to "demand"

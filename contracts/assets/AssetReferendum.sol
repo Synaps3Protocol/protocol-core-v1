@@ -3,8 +3,6 @@
 pragma solidity 0.8.26;
 
 import { UUPSUpgradeable } from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
-import { EIP712Upgradeable } from "@openzeppelin/contracts-upgradeable/utils/cryptography/EIP712Upgradeable.sol";
-import { NoncesUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/NoncesUpgradeable.sol";
 import { Initializable } from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import { EnumerableSet } from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 
@@ -21,8 +19,6 @@ contract AssetReferendum is
     Initializable,
     UUPSUpgradeable,
     AccessControlledUpgradeable,
-    NoncesUpgradeable,
-    EIP712Upgradeable,
     QuorumUpgradeable,
     IAssetReferendum
 {
@@ -67,7 +63,6 @@ contract AssetReferendum is
     function initialize(address accessManager) public initializer {
         __Quorum_init();
         __UUPSUpgradeable_init();
-        __EIP712_init("Referendum", "1");
         __AccessControlled_init(accessManager);
     }
 

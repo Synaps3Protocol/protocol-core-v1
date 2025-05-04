@@ -11,18 +11,16 @@ import { ICustodianFactory } from "contracts/core/interfaces/custody/ICustodianF
 import { BaseTest } from "test/BaseTest.t.sol";
 
 contract CustodianImplTest is BaseTest {
-    address token;
-    address distFactory;
 
     function setUp() public initialize {
-        token = deployToken();
-        distFactory = deployCustodianFactory();
+        deployToken();
+        deployCustodianFactory();
     }
 
     function deployCustodian(string memory endpoint) public returns(address) {
         vm.prank(admin);
-        ICustodianFactory custodianFactory = ICustodianFactory(distFactory);
-        return custodianFactory.create(endpoint);
+        ICustodianFactory factory = ICustodianFactory(custodianFactory);
+        return factory.create(endpoint);
     }
 
     function test_Create_ValidCustodian() public {

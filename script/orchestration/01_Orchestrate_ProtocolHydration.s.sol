@@ -13,6 +13,7 @@ import { getGovPermissions as CustodianReferendumGovPermissions } from "script/p
 import { getGovPermissions as AssetReferendumGovPermissions } from "script/permissions/Permissions_AssetReferendum.sol";
 import { getModPermissions as PolicyAuditorModPermissions } from "script/permissions/Permissions_PolicyAuditor.sol";
 import { getOpsPermissions as LedgerVaultOpsPermissions } from "script/permissions/Permissions_LedgerVault.sol";
+import { getModPermissions as HooksModPermissions } from "script/permissions/Permissions_HookRegistry.sol";
 
 contract OrchestrateProtocolHydration is Script {
     function run() external {
@@ -51,8 +52,10 @@ contract OrchestrateProtocolHydration is Script {
 
         // assign moderation permissions
         authority.grantRole(C.MOD_ROLE, adminAddress, 0);
+        bytes4[] memory hookModAllowed = HooksModPermissions();
         bytes4[] memory auditorAllowed = PolicyAuditorModPermissions();
         authority.setTargetFunctionRole(auditorAddress, auditorAllowed, C.MOD_ROLE);
+        // authority.setTargetFunctionRole(auditorAddress, hookModAllowed, C.MOD_ROLE);
 
         // assign operations permissions
         authority.grantRole(C.OPS_ROLE, agreementManager, 0);

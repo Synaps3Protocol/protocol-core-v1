@@ -6,14 +6,12 @@ import { ERC165Checker } from "@openzeppelin/contracts/utils/introspection/ERC16
 import { UUPSUpgradeable } from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import { Initializable } from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 // solhint-disable-next-line max-line-length
-import { ReentrancyGuardTransientUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardTransientUpgradeable.sol";
 import { AccessControlledUpgradeable } from "@synaps3/core/primitives/upgradeable/AccessControlledUpgradeable.sol";
-import { FeesCollectorUpgradeable } from "@synaps3/core/primitives/upgradeable/FeesCollectorUpgradeable.sol";
 import { QuorumUpgradeable } from "@synaps3/core/primitives/upgradeable/QuorumUpgradeable.sol";
 import { ITollgate } from "@synaps3/core/interfaces/economics/ITollgate.sol";
-import { ITreasury } from "@synaps3/core/interfaces/economics/ITreasury.sol";
-import { ILedgerVault } from "@synaps3/core/interfaces/financial/ILedgerVault.sol";
 import { ICustodian } from "@synaps3/core/interfaces/custody/ICustodian.sol";
+import { IAgreementSettler } from "@synaps3/core/interfaces/financial/IAgreementSettler.sol";
+import { IFeeSchemeValidator } from "@synaps3/core/interfaces/economics/IFeeSchemeValidator.sol";
 import { ICustodianReferendum } from "@synaps3/core/interfaces/custody/ICustodianReferendum.sol";
 import { FinancialOps } from "@synaps3/core/libraries/FinancialOps.sol";
 import { T } from "@synaps3/core/primitives/Types.sol";
@@ -28,9 +26,8 @@ contract CustodianReferendum is
     UUPSUpgradeable,
     QuorumUpgradeable,
     AccessControlledUpgradeable,
-    ReentrancyGuardTransientUpgradeable,
-    FeesCollectorUpgradeable,
-    ICustodianReferendum
+    ICustodianReferendum,
+    IFeeSchemeValidator
 {
     using FinancialOps for address;
     using ERC165Checker for address;
@@ -38,14 +35,11 @@ contract CustodianReferendum is
     /// @dev Stores the interface ID for ICustodian, ensuring compatibility verification.
     bytes4 private constant INTERFACE_ID_CUSTODIAN = type(ICustodian).interfaceId;
 
-    ///Our immutables behave as constants after deployment
-    //slither-disable-start naming-convention
+    ///Our immutables behave as constants after deployment //slither-disable-start naming-convention
     /// @custom:oz-upgrades-unsafe-allow state-variable-immutable
     ITollgate public immutable TOLLGATE;
     /// @custom:oz-upgrades-unsafe-allow state-variable-immutable
-    ITreasury public immutable TREASURY;
-    /// @custom:oz-upgrades-unsafe-allow state-variable-immutable
-    ILedgerVault public immutable LEDGER_VAULT;
+    IAgreementSettler public immutable AGREEMENT_SETTLER;
     //slither-disable-end naming-convention
 
     /// @dev Defines the expiration period for enrollment, determining how long a custodian remains active.
@@ -76,9 +70,9 @@ contract CustodianReferendum is
     /// @param invalid The address of the custodian contract that is invalid
     error InvalidCustodianContract(address invalid);
 
-    /// @notice Error thrown when an invalid fee scheme is provided for a referendum operation.
-    /// @param message A descriptive message explaining the reason for the invalid fee scheme.
-    error InvalidFeeSchemeProvided(string message);
+    /// @notice Error thrown when an invalid param is provided for a referendum registration.
+    /// @param message A descriptive message explaining the reason for the invalid.
+    error InvalidRegisterParams(string message);
 
     /// @notice Modifier to ensure that the given custodian contract supports the ICustodian interface.
     /// @param custodian The custodian contract address.
@@ -90,24 +84,29 @@ contract CustodianReferendum is
     }
 
     /// @custom:oz-upgrades-unsafe-allow constructor
-    constructor(address treasury, address tollgate, address ledgerVault) {
+    constructor(address tollgate, address agreementSettler) {
         /// https://forum.openzeppelin.com/t/what-does-disableinitializers-function-mean/28730/5
         /// https://forum.openzeppelin.com/t/uupsupgradeable-vulnerability-post-mortem/15680
         _disableInitializers();
-        TREASURY = ITreasury(treasury);
+        AGREEMENT_SETTLER = IAgreementSettler(agreementSettler);
         TOLLGATE = ITollgate(tollgate);
-        LEDGER_VAULT = ILedgerVault(ledgerVault);
     }
 
     /// @notice Initializes the proxy state.
     function initialize(address accessManager) public initializer {
         __Quorum_init();
         __UUPSUpgradeable_init();
-        __ReentrancyGuardTransient_init();
         __AccessControlled_init(accessManager);
-        __FeesCollector_init(address(TREASURY));
         // 6 months initially..
         _expirationPeriod = 180 days;
+    }
+
+    /// @notice Checks if the given fee scheme is supported in this context.
+    /// @param scheme The fee scheme to validate.
+    /// @return True if the scheme is supported.
+    function isFeeSchemeSupported(T.Scheme scheme) external pure returns (bool) {
+        // support only FLAT scheme
+        return scheme == T.Scheme.FLAT;
     }
 
     /// @notice Retrieves the current expiration period for enrollments or registrations.
@@ -163,9 +162,10 @@ contract CustodianReferendum is
     }
 
     /// @notice Registers a custodian by sending a payment to the contract.
+    /// @param proof The unique identifier of the agreement to be enforced.
     /// @param custodian The address of the custodian to register.
-    /// @param currency The currency used to pay enrollment.
-    function register(address custodian, address currency) external onlyValidCustodian(custodian) {
+    function register(uint256 proof, address custodian) external onlyValidCustodian(custodian) {
+        /// TODO penalize invalid endpoints, and revoked during referendum
         // !IMPORTANT:
         // Fees act as a mechanism to prevent abuse or spam by users
         // when submitting custodians for approval. This discourages users from
@@ -178,18 +178,15 @@ contract CustodianReferendum is
         // The collected fees are used to support the protocol's operations, aligning
         // individual actions with the broader sustainability of the network.
         // !IMPORTANT If tollgate does not support the currency, will revert..
-        (uint256 fees, T.Scheme scheme) = TOLLGATE.getFees(address(this), currency);
-        if (scheme != T.Scheme.FLAT) revert InvalidFeeSchemeProvided("Expected a FLAT fee scheme.");
-        /// TODO penalize invalid endpoints, and revoked during referendum
-        uint256 locked = LEDGER_VAULT.lock(msg.sender, fees, currency); // lock funds
-        uint256 claimed = LEDGER_VAULT.claim(msg.sender, locked, currency); // claim the funds on behalf
-        uint256 confirmed = LEDGER_VAULT.withdraw(address(this), claimed, currency); // collect funds
+        T.Agreement memory agreement = AGREEMENT_SETTLER.settleAgreement(proof, msg.sender);
+        if (custodian != agreement.parties[0]) revert InvalidRegisterParams("Custodian is not part of the agreement.");
+
         // register custodian as pending approval
         _register(uint160(custodian));
         // set the custodian active enrollment period..
         // after this time the custodian is considered inactive and cannot collect his profits...
         _enrollmentDeadline[custodian] = block.timestamp + _expirationPeriod;
-        emit Registered(custodian, confirmed);
+        emit Registered(custodian, agreement.fees);
     }
 
     /// @notice Approves a custodian's registration.

@@ -7,13 +7,9 @@ import { ITollgate } from "contracts/core/interfaces/economics/ITollgate.sol";
 import { T } from "contracts/core/primitives/Types.sol";
 
 contract TollgateTest is BaseTest {
-    address tollgate;
-    address token;
 
     function setUp() public initialize {
-        // setup the access manager to use during tests..
-        token = deployToken();
-        tollgate = deployTollgate();
+        deployTollgate();
     }
 
     function test_SetFees_ValidFlatFees() public {

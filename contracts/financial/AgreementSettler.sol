@@ -7,7 +7,6 @@ import { Initializable } from "@openzeppelin/contracts-upgradeable/proxy/utils/I
 import { UUPSUpgradeable } from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import { AccessControlledUpgradeable } from "@synaps3/core/primitives/upgradeable/AccessControlledUpgradeable.sol";
 // solhint-disable-next-line max-line-length
-import { ReentrancyGuardTransientUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardTransientUpgradeable.sol";
 import { FeesCollectorUpgradeable } from "@synaps3/core/primitives/upgradeable/FeesCollectorUpgradeable.sol";
 
 import { ILedgerVault } from "@synaps3/core/interfaces/financial/ILedgerVault.sol";
@@ -27,7 +26,6 @@ contract AgreementSettler is
     Initializable,
     UUPSUpgradeable,
     AccessControlledUpgradeable,
-    ReentrancyGuardTransientUpgradeable,
     FeesCollectorUpgradeable,
     IAgreementSettler
 {
@@ -101,7 +99,6 @@ contract AgreementSettler is
         __UUPSUpgradeable_init();
         __AccessControlled_init(accessManager);
         __FeesCollector_init(address(TREASURY));
-        __ReentrancyGuardTransient_init();
     }
 
     // TODO add hook management for royalties and earning splits
@@ -118,7 +115,7 @@ contract AgreementSettler is
 
     /// @notice Allows the initiator to quit the agreement and receive the committed funds.
     /// @param proof The unique identifier of the agreement.
-    function quitAgreement(uint256 proof) external onlyValidAgreement(proof) nonReentrant returns (T.Agreement memory) {
+    function quitAgreement(uint256 proof) external onlyValidAgreement(proof) returns (T.Agreement memory) {
         T.Agreement memory agreement = AGREEMENT_MANAGER.getAgreement(proof);
         if (agreement.initiator != msg.sender) revert UnauthorizedInitiator();
 
@@ -142,10 +139,11 @@ contract AgreementSettler is
 
         _setProofAsSettled(proof);
         // slither-disable-start unused-return
-        // part of the agreement locked amount is released to the account
+
         LEDGER_VAULT.claim(initiator, fees, currency);
-        LEDGER_VAULT.release(initiator, available, currency);
         LEDGER_VAULT.withdraw(address(this), fees, currency);
+        // part of the agreement locked amount is released to the account
+        if (available > 0) LEDGER_VAULT.release(initiator, available, currency);
         // slither-disable-end unused-return
         emit AgreementCancelled(initiator, proof, fees);
         return agreement;
@@ -167,18 +165,17 @@ contract AgreementSettler is
         uint256 available = total - fees; // holder earnings
         address initiator = agreement.initiator;
         address currency = agreement.currency;
+
         // TODO: Implement a time window to enforce the validity period for agreement settlement.
         // Once the window expires, the agreement should be marked as invalid or revert,
         // then quit is only way to close the agreement.
         _setProofAsSettled(proof);
 
-        // slither-disable-start unused-return
         // move the funds to settler and transfer the available to counterparty
         LEDGER_VAULT.claim(initiator, total, currency);
-        LEDGER_VAULT.transfer(counterparty, available, currency);
         LEDGER_VAULT.withdraw(address(this), fees, currency);
-        // slither-disable-end unused-return
-
+        // could exists cases where available become zero when fees are flat
+        if (available > 0) LEDGER_VAULT.transfer(counterparty, available, currency);
         emit AgreementSettled(msg.sender, counterparty, proof, fees);
         return agreement;
     }
