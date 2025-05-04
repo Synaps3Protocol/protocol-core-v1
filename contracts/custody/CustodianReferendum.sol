@@ -35,9 +35,6 @@ contract CustodianReferendum is
     /// @dev Stores the interface ID for ICustodian, ensuring compatibility verification.
     bytes4 private constant INTERFACE_ID_CUSTODIAN = type(ICustodian).interfaceId;
 
-    ///Our immutables behave as constants after deployment //slither-disable-start naming-convention
-    /// @custom:oz-upgrades-unsafe-allow state-variable-immutable
-    ITollgate public immutable TOLLGATE;
     /// @custom:oz-upgrades-unsafe-allow state-variable-immutable
     IAgreementSettler public immutable AGREEMENT_SETTLER;
     //slither-disable-end naming-convention
@@ -70,9 +67,13 @@ contract CustodianReferendum is
     /// @param invalid The address of the custodian contract that is invalid
     error InvalidCustodianContract(address invalid);
 
-    /// @notice Error thrown when an invalid param is provided for a referendum registration.
-    /// @param message A descriptive message explaining the reason for the invalid.
-    error InvalidRegisterParams(string message);
+    /// @notice Error thrown when the caller is not authorized as the custodian's manager.
+    /// @param caller The address attempting the action without being the manager.
+    error UnauthorizedCustodianManager(address caller);
+
+    /// @notice Error thrown when the custodian does not match the agreement's registered party.
+    /// @param custodian The custodian provided for the operation.
+    error CustodianAgreementMismatch(address custodian);
 
     /// @notice Modifier to ensure that the given custodian contract supports the ICustodian interface.
     /// @param custodian The custodian contract address.
@@ -83,13 +84,22 @@ contract CustodianReferendum is
         _;
     }
 
+    /// @notice Modifier to ensure that only the custodian's manager can perform the operation.
+    /// @param custodian The address of the custodian contract whose manager must authorize this operation.
+    modifier onlyCustodianManager(address custodian) {
+        address manager = ICustodian(custodian).getManager();
+        if (msg.sender != manager) {
+            revert UnauthorizedCustodianManager(msg.sender);
+        }
+        _;
+    }
+
     /// @custom:oz-upgrades-unsafe-allow constructor
-    constructor(address tollgate, address agreementSettler) {
+    constructor(address agreementSettler) {
         /// https://forum.openzeppelin.com/t/what-does-disableinitializers-function-mean/28730/5
         /// https://forum.openzeppelin.com/t/uupsupgradeable-vulnerability-post-mortem/15680
         _disableInitializers();
         AGREEMENT_SETTLER = IAgreementSettler(agreementSettler);
-        TOLLGATE = ITollgate(tollgate);
     }
 
     /// @notice Initializes the proxy state.
@@ -164,7 +174,10 @@ contract CustodianReferendum is
     /// @notice Registers a custodian by sending a payment to the contract.
     /// @param proof The unique identifier of the agreement to be enforced.
     /// @param custodian The address of the custodian to register.
-    function register(uint256 proof, address custodian) external onlyValidCustodian(custodian) {
+    function register(
+        uint256 proof,
+        address custodian
+    ) external onlyValidCustodian(custodian) onlyCustodianManager(custodian) {
         /// TODO penalize invalid endpoints, and revoked during referendum
         // !IMPORTANT:
         // Fees act as a mechanism to prevent abuse or spam by users
@@ -179,7 +192,9 @@ contract CustodianReferendum is
         // individual actions with the broader sustainability of the network.
         // !IMPORTANT If tollgate does not support the currency, will revert..
         T.Agreement memory agreement = AGREEMENT_SETTLER.settleAgreement(proof, msg.sender);
-        if (custodian != agreement.parties[0]) revert InvalidRegisterParams("Custodian is not part of the agreement.");
+        if (agreement.parties[0] != custodian) {
+            revert CustodianAgreementMismatch(custodian);
+        }
 
         // register custodian as pending approval
         _register(uint160(custodian));

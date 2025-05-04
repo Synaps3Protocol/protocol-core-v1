@@ -15,5 +15,4 @@ interface ICustodianRegistrable {
     /// @notice Approves the data associated with the given identifier.
     /// @param custodian The address of the custodian to approve.
     function approve(address custodian) external;
-
 }

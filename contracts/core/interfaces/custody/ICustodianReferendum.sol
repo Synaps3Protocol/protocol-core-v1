@@ -16,6 +16,4 @@ interface ICustodianReferendum is
     ICustodianExpirable,
     ICustodianInspectable,
     ICustodianRevokable
-{
-
-}
+{}

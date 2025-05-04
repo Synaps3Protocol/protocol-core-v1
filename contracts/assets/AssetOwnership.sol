@@ -112,7 +112,7 @@ contract AssetOwnership is
     }
 
     // TODO: build getURI => from custodian /erc721-metadata
-    // TODO: Update asset info control version restricted/approved by governance 
+    // TODO: Update asset info control version restricted/approved by governance
     // TODO: Transfer Ownership Fee: Introducing a fee for transferring
     // ownership discourages frequent or unnecessary transfers,
     // adding an economic cost to any potential abuse of the system. Like bypassing content

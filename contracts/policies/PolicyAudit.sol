@@ -35,7 +35,7 @@ contract PolicyAudit is Initializable, UUPSUpgradeable, AccessControlledUpgradea
     /// @param auditor The address of the auditor that revoked the audit.
     event PolicyRevoked(address indexed policy, address auditor);
 
-        /// @dev Error thrown when the policy contract does not implement the IPolicy interface.
+    /// @dev Error thrown when the policy contract does not implement the IPolicy interface.
     error InvalidPolicyContract(address);
 
     /// @dev Modifier to check that a policy contract implements the IPolicy interface.

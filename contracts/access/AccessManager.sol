@@ -63,7 +63,6 @@ contract AccessManager is Initializable, UUPSUpgradeable, AccessManagerUpgradeab
         _setRoleAdmin(C.REF_ROLE, C.GOV_ROLE);
         _setRoleAdmin(C.MOD_ROLE, C.ADMIN_ROLE);
         _setRoleAdmin(C.OPS_ROLE, C.ADMIN_ROLE);
-
     }
 
     // TODO pause protocol based on permission and roles

@@ -9,8 +9,4 @@ import { IQuorumInspectable } from "@synaps3/core/interfaces/base/IQuorumInspect
 /// @notice Aggregates the full lifecycle of an FSM-driven entity registration system.
 /// @dev Combines registration, approval, rejection, revocation, and status inspection.
 ///      Intended for systems that use `QuorumUpgradeable` as FSM logic layer.
-interface IQuorum is
-    IQuorumRegistrable,
-    IQuorumRevokable,
-    IQuorumInspectable
-{}
+interface IQuorum is IQuorumRegistrable, IQuorumRevokable, IQuorumInspectable {}
