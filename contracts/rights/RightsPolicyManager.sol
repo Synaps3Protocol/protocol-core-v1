@@ -42,7 +42,7 @@ contract RightsPolicyManager is Initializable, UUPSUpgradeable, AccessControlled
     /// @param proof A unique identifier for the agreement between holder and account.
     /// @param attestationId A unique identifier for the attestation that confirms the registration.
     /// @param policy The address of the registered policy governing the access rights.
-    event Registered(address indexed account, uint256 proof, uint256 attestationId, address policy);
+    event Registered(address indexed account, uint256 indexed proof, uint256 attestationId, address policy);
 
     /// @dev Error thrown when a policy registration fails.
     /// @param account The address of the account for which the policy registration failed.
@@ -89,7 +89,7 @@ contract RightsPolicyManager is Initializable, UUPSUpgradeable, AccessControlled
     /// @notice Finalizes the agreement by registering the agreed-upon policy, effectively closing the agreement.
     /// @dev This function verifies the policy's authorization, executes the agreement and registers the policy.
     /// @param proof The unique identifier of the agreement to be enforced.
-    /// @param holder The rights holder whose authorization is required for accessing the asset.
+    /// @param holder The rights holder whose authorization is required for accessing the assets.
     /// @param policy The address of the policy contract managing the agreement.
     function registerPolicy(
         uint256 proof,

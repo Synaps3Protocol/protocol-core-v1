@@ -9,7 +9,7 @@ contract DeployToken is DeployBase {
         uint256 privateKey = getAdminPK();
         address publicKey = vm.addr(privateKey);
 
-        vm.startBroadcast(getAdminPK());
+        vm.startBroadcast(privateKey);
         bytes memory creationCode = type(MMC).creationCode;
         // add constructor args as 1,000,000,000 MMC initial supply
         bytes memory initCode = abi.encodePacked(creationCode, abi.encode(publicKey, 1_000_000_000));

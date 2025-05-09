@@ -7,15 +7,17 @@ import { ILedgerVault } from "contracts/core/interfaces/financial/ILedgerVault.s
 import { ICustodian } from "contracts/core/interfaces/custody/ICustodian.sol";
 import { ICustodianFactory } from "contracts/core/interfaces/custody/ICustodianFactory.sol";
 import { ICustodianReferendum } from "contracts/core/interfaces/custody/ICustodianReferendum.sol";
+import { IAgreementManager } from "contracts/core/interfaces/financial/IAgreementManager.sol";
 
 contract OrchestrateProtocolCustodianNetwork is DeployBase {
     function run() external {
         uint256 admin = getAdminPK();
         address mmc = vm.envAddress("MMC");
-        uint256 synFees = vm.envUint("CUSTODY_FEES"); // 100 MMC flat fee
+        uint256 fees = vm.envUint("CUSTODY_FEES"); // 100 MMC flat fee
         address vault = computeCreate3Address("SALT_LEDGER_VAULT");
         address custodianFactory = vm.envAddress("CUSTODIAN_FACTORY");
         address custodianReferendum = vm.envAddress("CUSTODIAN_REFERENDUM");
+        address agreementManager = vm.envAddress("AGREEMENT_MANAGER");
 
         vm.startBroadcast(admin);
         // approve initial custodian
@@ -29,10 +31,23 @@ contract OrchestrateProtocolCustodianNetwork is DeployBase {
         require(got == expected);
 
         // deposit funds to register custodian
-        IERC20(mmc).approve(vault, synFees);
-        ILedgerVault(vault).deposit(vm.addr(admin), synFees, mmc);
+        IERC20(mmc).approve(vault, fees);
+        ILedgerVault(vault).deposit(vm.addr(admin), fees, mmc);
+        ILedgerVault(vault).approve(address(referendum), fees, mmc);
 
-        referendum.register(address(custodian), mmc);
+        address custody = address(custodian);
+        address[] memory parties = new address[](1);
+        parties[0] = custody;
+
+        uint256 proof = IAgreementManager(agreementManager).createAgreement(
+            fees,
+            mmc,
+            address(referendum),
+            parties,
+            ""
+        );
+
+        referendum.register(proof, address(custodian));
         referendum.approve(address(custodian));
         vm.stopBroadcast();
 

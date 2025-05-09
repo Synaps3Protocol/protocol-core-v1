@@ -16,6 +16,7 @@ library C {
     uint64 internal constant MOD_ROLE = 2; // moderator role
     uint64 internal constant VER_ROLE = 3; // account verified role
     uint64 internal constant OPS_ROLE = 4; // operations roles
+    uint64 internal constant REF_ROLE = 5; // referendum roles
 
     bytes32 internal constant REFERENDUM_SUBMIT_TYPEHASH =
         keccak256("Submission(uint256 assetId, address initiator, uint256 nonce)");

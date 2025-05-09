@@ -3,12 +3,13 @@
 pragma solidity 0.8.26;
 
 import { ERC165Checker } from "@openzeppelin/contracts/utils/introspection/ERC165Checker.sol";
-import { UUPSUpgradeable } from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import { Initializable } from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
+import { UUPSUpgradeable } from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import { AccessControlledUpgradeable } from "@synaps3/core/primitives/upgradeable/AccessControlledUpgradeable.sol";
 import { QuorumUpgradeable } from "@synaps3/core/primitives/upgradeable/QuorumUpgradeable.sol";
 import { IPolicyAuditor } from "@synaps3/core/interfaces/policies/IPolicyAuditor.sol";
 import { IPolicy } from "@synaps3/core/interfaces/policies/IPolicy.sol";
+import { T } from "@synaps3/core/primitives/Types.sol";
 
 /// @title PolicyAudit
 /// @notice This contract audits content policies and ensures that only authorized entities can approve or revoke.
@@ -18,9 +19,6 @@ contract PolicyAudit is Initializable, UUPSUpgradeable, AccessControlledUpgradea
     using ERC165Checker for address;
     /// @dev The interface ID for IPolicy, used to verify that a policy contract implements the correct interface.
     bytes4 private constant INTERFACE_POLICY = type(IPolicy).interfaceId;
-
-    /// @dev Error thrown when the policy contract does not implement the IPolicy interface.
-    error InvalidPolicyContract(address);
 
     /// @notice Event emitted when a policy is submitted for audit.
     /// @param policy The address of the policy that has been submitted.
@@ -36,6 +34,9 @@ contract PolicyAudit is Initializable, UUPSUpgradeable, AccessControlledUpgradea
     /// @param policy The address of the policy whose audit has been revoked.
     /// @param auditor The address of the auditor that revoked the audit.
     event PolicyRevoked(address indexed policy, address auditor);
+
+    /// @dev Error thrown when the policy contract does not implement the IPolicy interface.
+    error InvalidPolicyContract(address);
 
     /// @dev Modifier to check that a policy contract implements the IPolicy interface.
     /// @param policy The address of the license policy contract.
@@ -90,7 +91,7 @@ contract PolicyAudit is Initializable, UUPSUpgradeable, AccessControlledUpgradea
     /// @notice Checks if a specific policy contract has been audited.
     /// @param policy The address of the policy contract to verify.
     function isAudited(address policy) external view returns (bool) {
-        return _status(uint160(policy)) == Status.Active;
+        return _status(uint160(policy)) == T.Status.Active;
     }
 
     /// @dev Authorizes the upgrade of the contract.

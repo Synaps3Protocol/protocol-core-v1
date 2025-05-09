@@ -3,14 +3,13 @@
 pragma solidity 0.8.26;
 
 import { UUPSUpgradeable } from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
-import { EIP712Upgradeable } from "@openzeppelin/contracts-upgradeable/utils/cryptography/EIP712Upgradeable.sol";
-import { NoncesUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/NoncesUpgradeable.sol";
 import { Initializable } from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import { EnumerableSet } from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 
 import { AccessControlledUpgradeable } from "@synaps3/core/primitives/upgradeable/AccessControlledUpgradeable.sol";
 import { QuorumUpgradeable } from "@synaps3/core/primitives/upgradeable/QuorumUpgradeable.sol";
 import { IAssetReferendum } from "@synaps3/core/interfaces/assets/IAssetReferendum.sol";
+import { T } from "@synaps3/core/primitives/Types.sol";
 import { C } from "@synaps3/core/primitives/Constants.sol";
 
 /// @title AssetReferendum
@@ -20,8 +19,6 @@ contract AssetReferendum is
     Initializable,
     UUPSUpgradeable,
     AccessControlledUpgradeable,
-    NoncesUpgradeable,
-    EIP712Upgradeable,
     QuorumUpgradeable,
     IAssetReferendum
 {
@@ -34,19 +31,19 @@ contract AssetReferendum is
     /// @dev Event emitted when a content is submitted for referendum.
     /// @param assetId The ID of the asset that has been submitted.
     /// @param initiator The address of the initiator who submitted the asset.
-    event Submitted(address indexed initiator, uint256 assetId);
+    event Submitted(address indexed initiator, uint256 indexed assetId);
 
     /// @dev Event emitted when a content is approved.
     /// @param assetId The ID of the asset that has been approved.
-    event Approved(uint256 assetId);
+    event Approved(uint256 indexed assetId);
 
     /// @dev Event emitted when a content is revoked.
     /// @param assetId The ID of the asset that has been revoked.
-    event Revoked(uint256 assetId);
+    event Revoked(uint256 indexed assetId);
 
     /// @dev Event emitted when a content is rejected.
     /// @param assetId The ID of the asset that has been rejected.
-    event Rejected(uint256 assetId);
+    event Rejected(uint256 indexed assetId);
 
     /// @dev Error thrown when asset submission fails.
     /// @param initiator The address of the user who attempted to submit the asset.
@@ -66,7 +63,6 @@ contract AssetReferendum is
     function initialize(address accessManager) public initializer {
         __Quorum_init();
         __UUPSUpgradeable_init();
-        __EIP712_init("Referendum", "1");
         __AccessControlled_init(accessManager);
     }
 
@@ -133,7 +129,7 @@ contract AssetReferendum is
     /// @notice Checks if the asset is active nor blocked.
     /// @param assetId The ID of the asset.
     function isActive(uint256 assetId) public view returns (bool) {
-        return _status(assetId) == Status.Active;
+        return _status(assetId) == T.Status.Active;
     }
 
     /// @notice Function that should revert when msg.sender is not authorized to upgrade the contract.

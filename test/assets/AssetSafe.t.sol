@@ -14,15 +14,12 @@ import { T } from "contracts/core/primitives/Types.sol";
 import { C } from "contracts/core/primitives/Constants.sol";
 
 contract AssetSafeTest is BaseTest {
-    address safe;
-    address ownership;
-    address referendum;
+
 
     function setUp() public initialize {
         // setup the access manager to use during tests..
-        safe = deployAssetSafe();
-        ownership = deployAssetOwnership();
-        referendum = deployAssetReferendum();
+        deployAssetSafe();
+        
     }
 
     function test_SetContent_ValidOwner() public {
@@ -31,7 +28,7 @@ contract AssetSafeTest is BaseTest {
         _registerAndApproveAsset(user, assetId);
 
         vm.prank(user);
-        IAssetSafe assetSafe = IAssetSafe(safe);
+        IAssetSafe assetSafe = IAssetSafe(assetSafe);
         assetSafe.setContent(assetId, T.Cipher.LIT, "");
         assertEq(assetSafe.getContent(assetId, T.Cipher.LIT), "");
     }
@@ -43,7 +40,7 @@ contract AssetSafeTest is BaseTest {
 
         vm.prank(user);
         vm.expectRevert(abi.encodeWithSignature("InvalidAssetRightsHolder()"));
-        IAssetSafe assetSafe = IAssetSafe(safe);
+        IAssetSafe assetSafe = IAssetSafe(assetSafe);
         assetSafe.setContent(assetId, T.Cipher.LIT, "");
     }
 
@@ -52,9 +49,9 @@ contract AssetSafeTest is BaseTest {
         _registerAndApproveAsset(user, assetId);
 
         vm.prank(user);
-        vm.expectEmit(true, true, false, true, address(safe));
+        vm.expectEmit(true, true, false, true, address(assetSafe));
         emit AssetSafe.ContentStored(assetId, user, T.Cipher.LIT);
-        IAssetSafe assetSafe = IAssetSafe(safe);
+        IAssetSafe assetSafe = IAssetSafe(assetSafe);
         assetSafe.setContent(assetId, T.Cipher.LIT, "");
     }
 
@@ -64,7 +61,7 @@ contract AssetSafeTest is BaseTest {
         _registerAndApproveAsset(user, assetId);
 
         vm.prank(user);
-        IAssetSafe assetSafe = IAssetSafe(safe);
+        IAssetSafe assetSafe = IAssetSafe(assetSafe);
         assetSafe.setContent(assetId, T.Cipher.LIT, "");
 
         T.Cipher safeType = assetSafe.getType(assetId);
@@ -88,7 +85,7 @@ contract AssetSafeTest is BaseTest {
         bytes memory data = abi.encode(b64);
 
         vm.prank(user);
-        IAssetSafe assetSafe = IAssetSafe(safe);
+        IAssetSafe assetSafe = IAssetSafe(assetSafe);
         assetSafe.setContent(assetId, T.Cipher.LIT, data);
 
         vm.prank(admin);
@@ -99,11 +96,11 @@ contract AssetSafeTest is BaseTest {
 
     function _registerAndApproveAsset(address to, uint256 assetId) private {
         vm.prank(to);
-        IAssetRegistrable(referendum).submit(assetId);
+        IAssetRegistrable(assetReferendum).submit(assetId);
         vm.prank(governor);
-        IAssetRegistrable(referendum).approve(assetId);
+        IAssetRegistrable(assetReferendum).approve(assetId);
 
         vm.prank(to);
-        IAssetOwnership(ownership).register(to, assetId);
+        IAssetOwnership(assetOwnership).register(to, assetId);
     }
 }
