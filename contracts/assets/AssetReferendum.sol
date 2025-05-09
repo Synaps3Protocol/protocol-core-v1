@@ -31,19 +31,19 @@ contract AssetReferendum is
     /// @dev Event emitted when a content is submitted for referendum.
     /// @param assetId The ID of the asset that has been submitted.
     /// @param initiator The address of the initiator who submitted the asset.
-    event Submitted(address indexed initiator, uint256 assetId);
+    event Submitted(address indexed initiator, uint256 indexed assetId);
 
     /// @dev Event emitted when a content is approved.
     /// @param assetId The ID of the asset that has been approved.
-    event Approved(uint256 assetId);
+    event Approved(uint256 indexed assetId);
 
     /// @dev Event emitted when a content is revoked.
     /// @param assetId The ID of the asset that has been revoked.
-    event Revoked(uint256 assetId);
+    event Revoked(uint256 indexed assetId);
 
     /// @dev Event emitted when a content is rejected.
     /// @param assetId The ID of the asset that has been rejected.
-    event Rejected(uint256 assetId);
+    event Rejected(uint256 indexed assetId);
 
     /// @dev Error thrown when asset submission fails.
     /// @param initiator The address of the user who attempted to submit the asset.

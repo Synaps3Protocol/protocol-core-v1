@@ -56,13 +56,18 @@ contract AgreementSettler is
     /// @param counterparty The address that received the settlement funds.
     /// @param proof The unique identifier (hash or proof) of the settled agreement.
     /// @param collectedFees The amount of fees collected from the settlement process.
-    event AgreementSettled(address indexed arbiter, address indexed counterparty, uint256 proof, uint256 collectedFees);
+    event AgreementSettled(
+        address indexed arbiter,
+        address indexed counterparty,
+        uint256 indexed proof,
+        uint256 collectedFees
+    );
 
     /// @notice Emitted when an agreement is canceled by the authorized account.
     /// @param initiator The account that initiated the cancellation.
     /// @param proof The unique identifier (hash or proof) of the canceled agreement.
     /// @param collectedFees The amount of fees collected (if any) upon cancellation.
-    event AgreementCancelled(address indexed initiator, uint256 proof, uint256 collectedFees);
+    event AgreementCancelled(address indexed initiator, uint256 indexed proof, uint256 collectedFees);
 
     /// @notice Error thrown when the agreement proof has already been settled.
     error AgreementAlreadySettled();

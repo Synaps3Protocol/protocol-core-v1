@@ -11,7 +11,6 @@ import { IHookRegistry } from "@synaps3/core/interfaces/hooks/IHookRegistry.sol"
 import { IHook } from "@synaps3/core/interfaces/hooks/IHook.sol";
 import { T } from "@synaps3/core/primitives/Types.sol";
 
-
 // Hook interfaces can define logic for:
 // - Access control: e.g. only users holding certain tokens can access content.
 // - Time-based rules: e.g. access available for a limited period.
@@ -75,6 +74,7 @@ contract HookRegistry is Initializable, UUPSUpgradeable, AccessControlledUpgrade
     /// @param hook The address of the hook contract to register.
     /// @param interfaceId The interface ID that this hook implements.
     /// This allows different kinds of hook logic to be categorized and retrieved by interface ID.
+    // TODO: restricted to MOD_ROLE
     function submit(address hook, bytes4 interfaceId) external onlyValidHook(hook) restricted {
         _register(uint160(hook));
         _hooks[interfaceId] = hook;
@@ -100,7 +100,7 @@ contract HookRegistry is Initializable, UUPSUpgradeable, AccessControlledUpgrade
     /// @notice Returns the registered hook address for a given interface ID.
     /// @param interfaceId The interface ID used to look up the registered hook.
     /// @return The address of the hook associated with the given interface ID.
-    function lookup(bytes4 interfaceId) external returns (address) {
+    function lookup(bytes4 interfaceId) external view returns (address) {
         return _hooks[interfaceId];
     }
 

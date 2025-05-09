@@ -20,7 +20,7 @@ contract AssetReferendumTest is BaseTest {
     function test_Submit_SubmittedEventEmitted() public {
         vm.warp(1641070800);
         vm.prank(user);
-        vm.expectEmit(true, false, false, true, address(assetReferendum));
+        vm.expectEmit(true, true, false, true, address(assetReferendum));
         emit AssetReferendum.Submitted(user, 1);
         IAssetRegistrable(assetReferendum).submit(1);
     }
@@ -36,7 +36,7 @@ contract AssetReferendumTest is BaseTest {
         _submitContentAsUser(assetId);
         vm.warp(1641070805);
         vm.startPrank(governor); // approve by governance..
-        vm.expectEmit(false, false, false, true, address(assetReferendum));
+        vm.expectEmit(true, false, false, true, address(assetReferendum));
         emit AssetReferendum.Approved(assetId);
         IAssetRegistrable(assetReferendum).approve(assetId);
         vm.stopPrank();
@@ -57,7 +57,7 @@ contract AssetReferendumTest is BaseTest {
         _submitContentAsUser(assetId);
         vm.warp(1641070805);
         vm.prank(governor); // approve by governance..
-        vm.expectEmit(false, false, false, true, address(assetReferendum));
+        vm.expectEmit(true, false, false, true, address(assetReferendum));
         emit AssetReferendum.Rejected(assetId);
         IAssetRegistrable(assetReferendum).reject(assetId);
     }
@@ -81,7 +81,7 @@ contract AssetReferendumTest is BaseTest {
         // then a revoke should ve done
         IAssetRegistrable(assetReferendum).approve(assetId);
 
-        vm.expectEmit(false, false, false, true, address(assetReferendum));
+        vm.expectEmit(true, false, false, true, address(assetReferendum));
         emit AssetReferendum.Revoked(assetId);
         IAssetRegistrable(assetReferendum).revoke(assetId);
         vm.stopPrank(); // reject by governance..

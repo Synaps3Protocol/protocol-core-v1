@@ -38,12 +38,12 @@ contract AssetOwnership is
     /// @dev Emitted when a new asset is registered on the platform.
     /// @param owner The address of the creator or owner of the registered asset.
     /// @param assetId The unique identifier for the registered asset.
-    event RegisteredAsset(address indexed owner, uint256 assetId);
+    event RegisteredAsset(address indexed owner, uint256 indexed assetId);
 
     /// @dev Emitted when an asset is revoked and removed from the platform.
     /// @param owner The address of the owner of the revoked asset.
     /// @param assetId The unique identifier for the revoked asset.
-    event RevokedAsset(address indexed owner, uint256 assetId);
+    event RevokedAsset(address indexed owner, uint256 indexed assetId);
 
     /// @dev Emitted when an asset is transferred from one owner to another.
     /// @param from The address of the current owner of the asset.

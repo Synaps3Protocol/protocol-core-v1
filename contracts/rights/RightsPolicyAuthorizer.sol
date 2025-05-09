@@ -88,7 +88,7 @@ contract RightsPolicyAuthorizer is
 
     /// @notice Initializes and authorizes a policy contract for content held by the holder.
     /// @param policy The address of the policy contract to be initialized and authorized.
-    /// @param data The data to initialize policy.
+    /// @param data The data to initialize policy. e.g., prices, timeframes..
     function authorizePolicy(address policy, bytes calldata data) external onlyAuditedPolicies(policy) {
         _initializePolicy(policy, data);
         _authorizedPolicies[msg.sender].add(policy);

@@ -46,7 +46,7 @@ contract AgreementManager is Initializable, UUPSUpgradeable, AccessControlledUpg
     /// @param proof A unique identifier (hash or proof) representing the created agreement.
     /// @param amount The monetary amount specified in the agreement.
     /// @param currency The address of the token used as currency in the agreement.
-    event AgreementCreated(address indexed initiator, uint256 proof, uint256 amount, address currency);
+    event AgreementCreated(address indexed initiator, uint256 indexed proof, uint256 amount, address currency);
 
     /// @notice Error thrown when a flat fee exceeds the total amount.
     error FlatFeeExceedsTotal(uint256 total, uint256 fee);
