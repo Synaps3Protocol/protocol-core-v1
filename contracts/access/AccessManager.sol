@@ -34,16 +34,22 @@ contract AccessManager is Initializable, UUPSUpgradeable, AccessManagerUpgradeab
         // Strategic roles for governance classification within the protocol:
         //
         // Community Governance Role:
-        // - GOV_ROLE: Represents decentralized community governance. Decisions are made through collective voting mechanisms (e.g., token-weighted, quadratic).
+        // - GOV_ROLE: Represents decentralized community governance.
+        // Decisions are made through collective voting mechanisms (e.g., token-weighted, quadratic).
         //
         // Group/Sub-DAO Based Roles:
-        // - ADMIN_ROLE: Managed by a smart account or sub-DAO. Handles protocol upgrades, pause mechanisms, and operational role assignments.
-        // - MOD_ROLE: Managed by a smart account or sub-DAO. Approves policy submissions and moderates hook operations.
-        // - REF_ROLE: Managed by a smart account or sub-DAO. Participates in governance referenda for content curation and distributor selection.
+        // - ADMIN_ROLE: Managed by a smart account or sub-DAO.
+        // Handles protocol upgrades, pause mechanisms, and operational role assignments.
+        // - MOD_ROLE: Managed by a smart account or sub-DAO.
+        // Approves policy submissions and moderates hook operations.
+        // - REF_ROLE: Managed by a smart account or sub-DAO.
+        // Participates in governance referenda for content curation and distributor selection.
         //
         // Individual/Contract Based Roles:
-        // - OPS_ROLE: Internal operational role assigned to protocol-trusted contracts for direct module interactions. No human involvement.
-        // - VER_ROLE: Individual role assigned to trusted creators, enabling content uploads without conventional verification.
+        // - OPS_ROLE: Internal operational role assigned to protocol-trusted contracts
+        // for direct module interactions. No human involvement.
+        // - VER_ROLE: Individual role assigned to trusted creators, enabling
+        // content uploads without conventional verification.
 
         /*
             GOV_ROLE (Community Governance)

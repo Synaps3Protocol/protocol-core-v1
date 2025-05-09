@@ -63,9 +63,9 @@ contract Tollgate is Initializable, UUPSUpgradeable, AccessControlledUpgradeable
     }
 
     /// @notice Allows execution if the scheme is accepted or if support cannot be determined.
-    /// @dev This modifier checks whether the `target` contract explicitly supports the scheme via `isFeeSchemeSupported`.
+    /// @dev This modifier checks whether the `target` contract explicitly supports the scheme.
     /// If `isFeeSchemeSupported` exists and returns `false`, the call is reverted with InvalidTargetContext.
-    /// If the call to `v` fails (e.g., target does not implement the function or reverts), execution is allowed by default.
+    /// If the call to `v` fails (e.g., target does not implement the function or reverts) allowed by default.
     /// This enables compatibility with contracts that do not implement scheme validation.
     /// @param scheme The scheme to validate.
     /// @param target The address of the contract expected to support the scheme.

@@ -147,16 +147,13 @@ contract RightsAssetCustodian is Initializable, UUPSUpgradeable, AccessControlle
     ///      like how a load balancer directs more traffic to servers with greater capacity.
     /// @param holder The address of the asset rights holder whose custodian is to be selected.
     function getBalancedCustodian(address holder) external view returns (address chosen) {
+        address[] memory custodians = getCustodians(holder);
+        if (custodians.length == 0) return chosen; // TODO fallback custodian
         // Adjust 'n' to comply with the maximum distribution redundancy:
         // This ensures that no more redundancy than allowed is used,
         // even if more custodians are available.
-        address[] memory custodians = getCustodians(holder);
-        uint256 n = custodians.length;
-        if (n == 0) return chosen;
-
-        n = _maxCustodianRedundancy < n ? _maxCustodianRedundancy : n;
+        uint256 n = _maxCustodianRedundancy < custodians.length ? _maxCustodianRedundancy : custodians.length;
         (uint256[] memory weights, uint256 totalWeight) = _calcWeights(custodians, n);
-
         /// IMPORTANT: The randomness used here is not cryptographically secure,
         /// but sufficient for this non-critical operation. The random number is generated
         /// using the block hash and the holder's address, and is used to determine which custodian is selected.

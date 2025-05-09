@@ -19,7 +19,6 @@ import { FinancialOps } from "@synaps3/core/libraries/FinancialOps.sol";
 /// - Calls to this contract are made through a `BeaconProxy`, allowing upgrades at the beacon level.
 /// - This contract itself is NOT upgradeable directly; its updates are managed by the beacon.
 /// - It inherits from upgradeable contracts **ONLY** to maintain compatibility with their storage layout (ERC-7201).
-/// - This approach ensures that future improvement to the implementation do not break the beacon proxy's storage layout.
 contract CustodianImpl is Initializable, ERC165Upgradeable, OwnableUpgradeable, ICustodian {
     using FinancialOps for address;
 

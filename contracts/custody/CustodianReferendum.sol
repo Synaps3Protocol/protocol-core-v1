@@ -8,7 +8,6 @@ import { Initializable } from "@openzeppelin/contracts-upgradeable/proxy/utils/I
 // solhint-disable-next-line max-line-length
 import { AccessControlledUpgradeable } from "@synaps3/core/primitives/upgradeable/AccessControlledUpgradeable.sol";
 import { QuorumUpgradeable } from "@synaps3/core/primitives/upgradeable/QuorumUpgradeable.sol";
-import { ITollgate } from "@synaps3/core/interfaces/economics/ITollgate.sol";
 import { ICustodian } from "@synaps3/core/interfaces/custody/ICustodian.sol";
 import { IAgreementSettler } from "@synaps3/core/interfaces/financial/IAgreementSettler.sol";
 import { IFeeSchemeValidator } from "@synaps3/core/interfaces/economics/IFeeSchemeValidator.sol";

@@ -19,7 +19,6 @@ import { CustodianReferendum } from "contracts/custody/CustodianReferendum.sol";
 import { T } from "contracts/core/primitives/Types.sol";
 
 contract CustodianReferendumTest is BaseTest {
-
     function setUp() public initialize {
         deployCustodianReferendum();
         deployCustodianFactory();
@@ -68,27 +67,15 @@ contract CustodianReferendumTest is BaseTest {
         vm.warp(1641070803);
         vm.startPrank(admin);
         // approve fees payment: admin default account
-        IERC20(token).approve(ledger, expectedFees);
-        ILedgerVault(ledger).deposit(admin, expectedFees, token);
-        ILedgerVault(ledger).approve(address(agreementManager), expectedFees, token);
-
         address[] memory parties = new address[](1);
         parties[0] = custodian;
-
-        uint256 proof = IAgreementManager(agreementManager).createAgreement(
-            expectedFees,
-            token,
-            address(custodianReferendum),
-            parties,
-            ""
-        );
+        uint256 proof = _createAgreement(expectedFees, parties);
 
         vm.expectEmit(true, false, false, true, address(custodianReferendum));
         emit CustodianReferendum.Registered(custodian, expectedFees);
         ICustodianRegistrable(custodianReferendum).register(proof, custodian);
         vm.stopPrank();
     }
-
 
     function test_Register_RevertIf_InvalidAgreement() public {
         uint256 expectedFees = 100 * 1e18; // 100 MMC
@@ -99,7 +86,6 @@ contract CustodianReferendumTest is BaseTest {
         vm.expectRevert(abi.encodeWithSignature("UnauthorizedCustodianManager(address)", user));
         ICustodianRegistrable(custodianReferendum).register(0, custodian);
     }
-
 
     function test_Register_SetValidEnrollmentTime() public {
         address custodian = deployCustodian("contentrider.com");
@@ -204,33 +190,38 @@ contract CustodianReferendumTest is BaseTest {
         // only manager can pay enrollment..
         vm.startPrank(admin);
         // approve approval to ledger to deposit funds
-        IERC20(token).approve(ledger, approval);
-        ILedgerVault(ledger).deposit(admin, approval, token);
-        ILedgerVault(ledger).approve(address(agreementManager), approval, token);
-
         address[] memory parties = new address[](1);
         parties[0] = d9r;
 
-        uint256 proof = IAgreementManager(agreementManager).createAgreement(
-            approval,
-            token,
-            address(custodianReferendum),
-            parties,
-            ""
-        );
+        uint256 proof = _createAgreement(approval, parties);
         // operate over msg.sender ledger registered funds
         ICustodianRegistrable(custodianReferendum).register(proof, d9r);
         vm.stopPrank();
     }
 
-    function _registerCustodianWithGovernorAndApproval() internal {
+    function _createAgreement(uint256 amount, address[] memory parties) private returns (uint256) {
+        IERC20(token).approve(ledger, amount);
+        ILedgerVault(ledger).deposit(admin, amount, token);
+
+        uint256 proof = IAgreementManager(agreementManager).createAgreement(
+            amount,
+            token,
+            address(custodianReferendum),
+            parties,
+            ""
+        );
+
+        return proof;
+    }
+
+    function _registerCustodianWithGovernorAndApproval() private {
         uint256 expectedFees = 100 * 1e18;
         address custodian = deployCustodian("contentrider.com");
         _setFeesAsGovernor(expectedFees);
         _registerCustodianWithApproval(custodian, expectedFees);
     }
 
-    function _registerAndApproveCustodian(address d9r) internal {
+    function _registerAndApproveCustodian(address d9r) private {
         // intially the balance = 0
         _setFeesAsGovernor(1 * 1e18);
         // register the custodian with fees = 100 MMC
