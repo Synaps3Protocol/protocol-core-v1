@@ -183,6 +183,7 @@ abstract contract BaseTest is Test {
 
     // 09_DeployCustodianReferendum
     function deployCustodianReferendum() public {
+        deployCustodianFactory();
         deployAgreementSettler();
 
         // set default admin as deployer..

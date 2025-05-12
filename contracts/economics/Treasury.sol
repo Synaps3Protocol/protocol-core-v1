@@ -73,7 +73,7 @@ contract Treasury is
     ///      Only the governor can execute this function, ensuring controlled fee collection.
     /// @param collector The address of an authorized fee collector.
     /// @param currency The address of the ERC20 token for which fees are being collected.
-    function collectFees(address collector, address currency) external restricted {
+    function collectFees(address collector, address currency) external restricted nonReentrant {
         IFeesCollector feesCollector = IFeesCollector(collector);
         uint256 collected = feesCollector.disburse(currency);
         _sumLedgerEntry(address(this), collected, currency);

@@ -7,6 +7,8 @@ import { Initializable } from "@openzeppelin/contracts-upgradeable/proxy/utils/I
 import { UUPSUpgradeable } from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import { AccessControlledUpgradeable } from "@synaps3/core/primitives/upgradeable/AccessControlledUpgradeable.sol";
 // solhint-disable-next-line max-line-length
+import { ReentrancyGuardTransientUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardTransientUpgradeable.sol";
+// solhint-disable-next-line max-line-length
 import { FeesCollectorUpgradeable } from "@synaps3/core/primitives/upgradeable/FeesCollectorUpgradeable.sol";
 
 import { ILedgerVault } from "@synaps3/core/interfaces/financial/ILedgerVault.sol";
@@ -27,6 +29,7 @@ contract AgreementSettler is
     UUPSUpgradeable,
     AccessControlledUpgradeable,
     FeesCollectorUpgradeable,
+    ReentrancyGuardTransientUpgradeable,
     IAgreementSettler
 {
     using FeesOps for uint256;
@@ -83,7 +86,7 @@ contract AgreementSettler is
 
     /// @notice Ensures the agreement associated with the provided `proof` is valid and active.
     modifier onlyValidAgreement(uint256 proof) {
-        if (_settledProofs[proof]) {
+        if (_settledProofs[proof] == true) {
             revert AgreementAlreadySettled();
         }
         _;
@@ -102,6 +105,7 @@ contract AgreementSettler is
     /// Initialize the proxy state.
     function initialize(address accessManager) public initializer {
         __UUPSUpgradeable_init();
+        __ReentrancyGuardTransient_init();
         __AccessControlled_init(accessManager);
         __FeesCollector_init(address(TREASURY));
     }
@@ -120,7 +124,7 @@ contract AgreementSettler is
 
     /// @notice Allows the initiator to quit the agreement and receive the committed funds.
     /// @param proof The unique identifier of the agreement.
-    function quitAgreement(uint256 proof) external onlyValidAgreement(proof) returns (T.Agreement memory) {
+    function quitAgreement(uint256 proof) external onlyValidAgreement(proof) nonReentrant returns (T.Agreement memory) {
         T.Agreement memory agreement = AGREEMENT_MANAGER.getAgreement(proof);
         if (agreement.initiator != msg.sender) revert UnauthorizedInitiator();
 
@@ -134,7 +138,6 @@ contract AgreementSettler is
         // (as defined in `previewAgreement`).This design disincentives manipulation,
         // ensuring that no changes can occur later to unfairly benefit or harm the initiator or other parties involved.
 
-        //
         // Penalty fees retained here also help maintain the protocol's economic balance
         // and ensure that the system operates sustainably over time.
         uint256 fees = agreement.fees; // keep fees as penalty
@@ -160,7 +163,7 @@ contract AgreementSettler is
     function settleAgreement(
         uint256 proof,
         address counterparty
-    ) public onlyValidAgreement(proof) returns (T.Agreement memory) {
+    ) public onlyValidAgreement(proof) nonReentrant returns (T.Agreement memory) {
         // retrieve the agreement to storage to inactivate it and return it
         T.Agreement memory agreement = AGREEMENT_MANAGER.getAgreement(proof);
         if (agreement.arbiter != msg.sender) revert UnauthorizedEscrowAgent();

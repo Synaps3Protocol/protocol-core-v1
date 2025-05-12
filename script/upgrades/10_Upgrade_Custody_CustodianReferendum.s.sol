@@ -9,7 +9,8 @@ contract UpgradeCustodianReferendum is UpgradeBase {
     function run() external returns (address) {
         vm.startBroadcast(getAdminPK());
         address agreementSettler = vm.envAddress("AGREEMENT_SETTLER");
-        address impl = address(new CustodianReferendum(agreementSettler));
+        address custodianFactory = vm.envAddress("CUSTODIAN_FACTORY");
+        address impl = address(new CustodianReferendum(agreementSettler, custodianFactory));
         address referendumProxy = vm.envAddress("CUSTODIAN_REFERENDUM");
         // address accessManager = vm.envAddress("ACCESS_MANAGER");
         //!IMPORTANT: This is not a safe upgrade, take any caution or 2-check needed before run this method

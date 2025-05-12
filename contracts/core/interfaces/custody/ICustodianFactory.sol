@@ -15,4 +15,9 @@ interface ICustodianFactory {
     /// @param custodian The address of the custodian contract.
     /// @return The address of the entity that created the custodian.
     function getCreator(address custodian) external view returns (address);
+
+    /// @notice Checks whether a given custodian contract has been registered.
+    /// @param custodian The address of the custodian contract to check.
+    /// @return True if the custodian is registered; false otherwise.
+    function isRegistered(address custodian) external view returns (bool);
 }

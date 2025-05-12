@@ -51,7 +51,13 @@ contract CustodianFactory is UpgradeableBeacon, ICustodianFactory {
         return _manager[custodian];
     }
 
-    // TODO: isRegistered(endpoint)
+    /// @notice Checks whether a given custodian contract has been registered.
+    /// @dev A custodian is considered registered if its address is mapped to a creator in the `_manager` mapping.
+    /// @param custodian The address of the custodian contract to check.
+    /// @return True if the custodian is registered; false otherwise.
+    function isRegistered(address custodian) external view returns (bool) {
+        return _manager[custodian] != address(0);
+    }
 
     /// @notice Function to create a new custodian contract.
     /// @dev Ensures that the same endpoint is not registered twice.

@@ -83,6 +83,8 @@ contract CustodianImpl is Initializable, ERC165Upgradeable, OwnableUpgradeable, 
         return amount;
     }
 
+    // TODO allow deposits to stake balance
+    
     /// @notice Retrieves the contract's balance for a given currency.
     /// @param currency The token address to check the balance of (use `address(0)` for native currency).
     /// @dev This function is restricted to the contract owner.

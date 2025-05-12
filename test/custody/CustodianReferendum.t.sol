@@ -16,6 +16,7 @@ import { ICustodianFactory } from "contracts/core/interfaces/custody/ICustodianF
 
 import { BaseTest } from "test/BaseTest.t.sol";
 import { CustodianReferendum } from "contracts/custody/CustodianReferendum.sol";
+import { CustodianImpl } from "contracts/custody/CustodianImpl.sol";
 import { T } from "contracts/core/primitives/Types.sol";
 
 contract CustodianReferendumTest is BaseTest {
@@ -83,7 +84,7 @@ contract CustodianReferendumTest is BaseTest {
         _setFeesAsGovernor(expectedFees);
         // expected revert if not valid allowance
         vm.prank(user);
-        vm.expectRevert(abi.encodeWithSignature("UnauthorizedCustodianManager(address)", user));
+        vm.expectRevert(abi.encodeWithSignature("UnauthorizedEscrowAgent()"));
         ICustodianRegistrable(custodianReferendum).register(0, custodian);
     }
 
@@ -113,9 +114,12 @@ contract CustodianReferendumTest is BaseTest {
     }
 
     function test_Register_RevertIf_InvalidCustodian() public {
-        // register the custodian expecting the right status.
-        vm.expectRevert(abi.encodeWithSignature("InvalidCustodianContract(address)", address(0)));
-        ICustodianRegistrable(custodianReferendum).register(0, address(0));
+        vm.prank(user);
+        address custodian = address(new CustodianImpl());
+
+        vm.prank(admin); //
+        vm.expectRevert(abi.encodeWithSignature("UnregisteredCustodian(address)", admin));
+        ICustodianRegistrable(custodianReferendum).register(0, custodian);
     }
 
     function test_Approve_ApprovedEventEmitted() public {
