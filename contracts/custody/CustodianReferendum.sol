@@ -7,7 +7,6 @@ import { Initializable } from "@openzeppelin/contracts-upgradeable/proxy/utils/I
 // solhint-disable-next-line max-line-length
 import { AccessControlledUpgradeable } from "@synaps3/core/primitives/upgradeable/AccessControlledUpgradeable.sol";
 import { QuorumUpgradeable } from "@synaps3/core/primitives/upgradeable/QuorumUpgradeable.sol";
-import { ICustodian } from "@synaps3/core/interfaces/custody/ICustodian.sol";
 import { IAgreementSettler } from "@synaps3/core/interfaces/financial/IAgreementSettler.sol";
 import { IFeeSchemeValidator } from "@synaps3/core/interfaces/economics/IFeeSchemeValidator.sol";
 import { ICustodianReferendum } from "@synaps3/core/interfaces/custody/ICustodianReferendum.sol";
@@ -67,7 +66,7 @@ contract CustodianReferendum is
     /// @param custodian The custodian provided for the operation.s
     error CustodianAgreementMismatch(address custodian);
 
-    /// @notice Modifier to ensure the custodian was deployed through the trusted factory and is registered in the system.
+    /// @notice Modifier to ensure the custodian was deployed through the trusted factory.
     /// @param custodian The address of the custodian contract to verify.
     modifier onlyValidCustodian(address custodian) {
         // ensure the custodian was deployed through the trusted factory and is known to the protocol
