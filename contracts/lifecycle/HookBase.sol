@@ -2,7 +2,7 @@
 // NatSpec format convention - https://docs.soliditylang.org/en/v0.5.10/natspec-format.html
 pragma solidity 0.8.26;
 
-import { IHook } from "contracts/core/interfaces/lifecycle/IHook.sol";
+import { IHook } from "@synaps3/core/interfaces/lifecycle/IHook.sol";
 
 // pre - validate
 // during - execute

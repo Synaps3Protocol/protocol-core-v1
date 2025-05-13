@@ -123,6 +123,7 @@ contract RightsAssetCustodian is Initializable, UUPSUpgradeable, AccessControlle
         bool addedCustodian = _custodiansByHolder[msg.sender].add(custodian);
         if (!addedCustodian) revert GrantCustodyFailed(custodian, msg.sender);
 
+        // TODO assoc weight here
         uint256 demand = _incrementCustody(custodian); // +1 under custody its analog to "demand"
         emit CustodialGranted(custodian, msg.sender, demand);
     }
@@ -164,6 +165,16 @@ contract RightsAssetCustodian is Initializable, UUPSUpgradeable, AccessControlle
 
         uint256 i = 0;
         uint256 acc = 0;
+
+        // TODO el orden de seleccion reemplazarlo por pondersaciones dadas directamente por el creador
+        // inicialmente se dan en base al orden, pero pueden ser sobreescritas, si quisiera de esta manera
+        // dar preferencia a algun custodio, de lo contrario la demanda establece dinamicamente el balance
+
+        // factors:
+        // p = priority (given by creator)
+        // d = demand (merit)
+        // b = balance in custodian contract (economic)
+        // formula p * (d + 1) * (log2(b + 1) + 1)
 
         while (i < n) {
             // In a categorical probability distribution, nodes with higher weights have a greater chance
@@ -272,6 +283,8 @@ contract RightsAssetCustodian is Initializable, UUPSUpgradeable, AccessControlle
             // assign higher weight to earlier positions (creator priority), but adjust for demand.
             uint256 d = _holdersUnderCustodian[custodians[i]];
             // EffectiveWeight_i = (n - i) * (Demand_i + 1)
+            // TODO weights[custodian[i]] <- por defecto es 1 hasta que no se establezca port el creador
+            // w = 1 * d+1 * log2(balance + 1) + 1
             uint256 w = (window - i) * (d + 1);
 
             // safe

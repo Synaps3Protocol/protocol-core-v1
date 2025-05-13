@@ -5,11 +5,11 @@ pragma solidity 0.8.26;
 import { ERC165Checker } from "@openzeppelin/contracts/utils/introspection/ERC165Checker.sol";
 import { Initializable } from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import { UUPSUpgradeable } from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
-import { AccessControlledUpgradeable } from "contracts/core/primitives/upgradeable/AccessControlledUpgradeable.sol";
-import { QuorumUpgradeable } from "contracts/core/primitives/upgradeable/QuorumUpgradeable.sol";
-import { IHookRegistry } from "contracts/core/interfaces/lifecycle/IHookRegistry.sol";
-import { IHook } from "contracts/core/interfaces/lifecycle/IHook.sol";
-import { T } from "contracts/core/primitives/Types.sol";
+import { AccessControlledUpgradeable } from "@synaps3/core/primitives/upgradeable/AccessControlledUpgradeable.sol";
+import { QuorumUpgradeable } from "@synaps3/core/primitives/upgradeable/QuorumUpgradeable.sol";
+import { IHookRegistry } from "@synaps3/core/interfaces/lifecycle/IHookRegistry.sol";
+import { IHook } from "@synaps3/core/interfaces/lifecycle/IHook.sol";
+import { T } from "@synaps3/core/primitives/Types.sol";
 
 // Hook interfaces can define logic for:
 // - Access control: e.g. only users holding certain tokens can access content.
