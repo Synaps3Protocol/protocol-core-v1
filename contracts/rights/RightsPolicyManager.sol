@@ -6,10 +6,13 @@ import { Initializable } from "@openzeppelin/contracts-upgradeable/proxy/utils/I
 import { UUPSUpgradeable } from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import { EnumerableSet } from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 import { AccessControlledUpgradeable } from "@synaps3/core/primitives/upgradeable/AccessControlledUpgradeable.sol";
+// solhint-disable-next-line max-line-length
+import { ReentrancyGuardTransientUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardTransientUpgradeable.sol";
 
 import { IPolicy } from "@synaps3/core/interfaces/policies/IPolicy.sol";
 import { IAgreementSettler } from "@synaps3/core/interfaces/financial/IAgreementSettler.sol";
 import { IRightsPolicyManager } from "@synaps3/core/interfaces/rights/IRightsPolicyManager.sol";
+
 // solhint-disable-next-line max-line-length
 import { IRightsPolicyAuthorizerVerifiable } from "@synaps3/core/interfaces/rights/IRightsPolicyAuthorizerVerifiable.sol";
 import { LoopOps } from "@synaps3/core/libraries/LoopOps.sol";
@@ -21,7 +24,13 @@ import { T } from "@synaps3/core/primitives/Types.sol";
 /// @dev This contract ensures that policies are properly authorized before being enforced.
 ///      It interacts with the `RightsPolicyAuthorizer` to verify delegation and `AgreementSettler`
 ///      to manage agreements.
-contract RightsPolicyManager is Initializable, UUPSUpgradeable, AccessControlledUpgradeable, IRightsPolicyManager {
+contract RightsPolicyManager is
+    Initializable,
+    UUPSUpgradeable,
+    AccessControlledUpgradeable,
+    ReentrancyGuardTransientUpgradeable,
+    IRightsPolicyManager
+{
     using EnumerableSet for EnumerableSet.AddressSet;
     using ArrayOps for address[];
     using LoopOps for uint256;
@@ -42,7 +51,7 @@ contract RightsPolicyManager is Initializable, UUPSUpgradeable, AccessControlled
     /// @param proof A unique identifier for the agreement between holder and account.
     /// @param attestationId A unique identifier for the attestation that confirms the registration.
     /// @param policy The address of the registered policy governing the access rights.
-    event Registered(address indexed account, uint256 proof, uint256 attestationId, address policy);
+    event Registered(address indexed account, uint256 indexed proof, uint256 attestationId, address policy);
 
     /// @dev Error thrown when a policy registration fails.
     /// @param account The address of the account for which the policy registration failed.
@@ -83,19 +92,20 @@ contract RightsPolicyManager is Initializable, UUPSUpgradeable, AccessControlled
     /// @notice Initializes the proxy state.
     function initialize(address accessManager) public initializer {
         __UUPSUpgradeable_init();
+        __ReentrancyGuardTransient_init();
         __AccessControlled_init(accessManager);
     }
 
     /// @notice Finalizes the agreement by registering the agreed-upon policy, effectively closing the agreement.
     /// @dev This function verifies the policy's authorization, executes the agreement and registers the policy.
     /// @param proof The unique identifier of the agreement to be enforced.
-    /// @param holder The rights holder whose authorization is required for accessing the asset.
+    /// @param holder The rights holder whose authorization is required for accessing the assets.
     /// @param policy The address of the policy contract managing the agreement.
     function registerPolicy(
         uint256 proof,
         address holder,
         address policy
-    ) external onlyAuthorizedPolicy(holder, policy) returns (uint256[] memory) {
+    ) external onlyAuthorizedPolicy(holder, policy) nonReentrant returns (uint256[] memory) {
         // 1- retrieves the agreement and marks it as settled..
         T.Agreement memory agreement = AGREEMENT_SETTLER.settleAgreement(proof, holder);
         bytes memory callData = abi.encodeCall(IPolicy.enforce, (holder, agreement));

@@ -15,11 +15,10 @@ contract BalanceOperatorWrapper is BalanceOperatorUpgradeable {}
 
 contract BalanceOperatorTest is BaseTest {
     address op;
-    address token;
 
     function setUp() public initialize {
+        deployToken();
         op = address(new BalanceOperatorWrapper());
-        token = deployToken();
     }
 
     function test_Deposit_ValidDeposit() public {

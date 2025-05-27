@@ -24,7 +24,7 @@ interface IPolicy {
 
     /// @notice Executes the agreement between the asset holder and the account based on the policy's rules.
     /// @dev Rights Policies Manager contract should be the only one allowed to call this method.
-    /// @param holder The rights holder whose authorization is required for accessing the asset.
+    /// @param holder The rights holder whose authorization is required for accessing the assets.
     /// @param agreement An object containing the terms agreed upon between the asset holder and the user.
     function enforce(address holder, T.Agreement calldata agreement) external returns (uint256[] memory);
 

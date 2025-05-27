@@ -14,7 +14,7 @@ import { FinancialOps } from "@synaps3/core/libraries/FinancialOps.sol";
 import { FeesOps } from "@synaps3/core/libraries/FeesOps.sol";
 import { T } from "@synaps3/core/primitives/Types.sol";
 
-// TODO Trustless escrow system - modular escrow framework
+// TODO Doc: Trustless escrow system - modular escrow framework - escrow mechanism (agreement <arbitrer> settlement)
 
 /// @title AgreementManager
 /// @notice Manages the lifecycle (trustless escrow system) of agreements, including creation and retrieval.
@@ -46,7 +46,7 @@ contract AgreementManager is Initializable, UUPSUpgradeable, AccessControlledUpg
     /// @param proof A unique identifier (hash or proof) representing the created agreement.
     /// @param amount The monetary amount specified in the agreement.
     /// @param currency The address of the token used as currency in the agreement.
-    event AgreementCreated(address indexed initiator, uint256 proof, uint256 amount, address currency);
+    event AgreementCreated(address indexed initiator, uint256 indexed proof, uint256 amount, address currency);
 
     /// @notice Error thrown when a flat fee exceeds the total amount.
     error FlatFeeExceedsTotal(uint256 total, uint256 fee);
@@ -132,8 +132,9 @@ contract AgreementManager is Initializable, UUPSUpgradeable, AccessControlledUpg
             revert NoPartiesInAgreement();
         }
 
-        // TODO Even if we are covered by gas fees, a good way to avoid abuse is penalize parties after N length
-        // eg. The max parties allowed is 5, any extra parties are charged with a extra * fee
+        // TODO Even if we are covered by gas fees, during execution a good way to avoid abuse
+        // is penalize parties after N length eg. The max parties allowed is 5, any extra
+        // parties are charged with a extra * fee. Denial of Service risk
 
         // IMPORTANT:
         // Agreements transport value and represent a defined commitment between parties.

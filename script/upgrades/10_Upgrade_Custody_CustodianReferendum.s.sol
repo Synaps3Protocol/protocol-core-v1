@@ -8,10 +8,9 @@ import { C } from "contracts/core/primitives/Constants.sol";
 contract UpgradeCustodianReferendum is UpgradeBase {
     function run() external returns (address) {
         vm.startBroadcast(getAdminPK());
-        address treasuryAddress = vm.envAddress("TREASURY");
-        address tollgateAddress = vm.envAddress("TOLLGATE");
-        address ledgerVault = vm.envAddress("LEDGER_VAULT");
-        address impl = address(new CustodianReferendum(treasuryAddress, tollgateAddress, ledgerVault));
+        address agreementSettler = vm.envAddress("AGREEMENT_SETTLER");
+        address custodianFactory = vm.envAddress("CUSTODIAN_FACTORY");
+        address impl = address(new CustodianReferendum(agreementSettler, custodianFactory));
         address referendumProxy = vm.envAddress("CUSTODIAN_REFERENDUM");
         // address accessManager = vm.envAddress("ACCESS_MANAGER");
         //!IMPORTANT: This is not a safe upgrade, take any caution or 2-check needed before run this method

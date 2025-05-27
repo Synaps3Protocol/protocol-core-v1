@@ -12,25 +12,23 @@ import { T } from "contracts/core/primitives/Types.sol";
 import { C } from "contracts/core/primitives/Constants.sol";
 
 contract AssetReferendumTest is BaseTest {
-    address referendum;
-
     function setUp() public initialize {
         // setup the access manager to use during tests..
-        referendum = deployAssetReferendum();
+        deployAssetReferendum();
     }
 
     function test_Submit_SubmittedEventEmitted() public {
         vm.warp(1641070800);
         vm.prank(user);
-        vm.expectEmit(true, false, false, true, address(referendum));
+        vm.expectEmit(true, true, false, true, address(assetReferendum));
         emit AssetReferendum.Submitted(user, 1);
-        IAssetRegistrable(referendum).submit(1);
+        IAssetRegistrable(assetReferendum).submit(1);
     }
 
     function test_Submit_SubmittedValidStates() public {
         _submitContentAsUser(1);
-        assertFalse(IAssetVerifiable(referendum).isActive(1));
-        assertFalse(IAssetVerifiable(referendum).isApproved(user, 1));
+        assertFalse(IAssetVerifiable(assetReferendum).isActive(1));
+        assertFalse(IAssetVerifiable(assetReferendum).isApproved(user, 1));
     }
 
     function test_Approve_ApprovedEventEmitted() public {
@@ -38,9 +36,9 @@ contract AssetReferendumTest is BaseTest {
         _submitContentAsUser(assetId);
         vm.warp(1641070805);
         vm.startPrank(governor); // approve by governance..
-        vm.expectEmit(false, false, false, true, address(referendum));
+        vm.expectEmit(true, false, false, true, address(assetReferendum));
         emit AssetReferendum.Approved(assetId);
-        IAssetRegistrable(referendum).approve(assetId);
+        IAssetRegistrable(assetReferendum).approve(assetId);
         vm.stopPrank();
     }
 
@@ -49,9 +47,9 @@ contract AssetReferendumTest is BaseTest {
         _submitContentAsUser(assetId);
 
         vm.prank(governor); // approve by governance..
-        IAssetRegistrable(referendum).approve(assetId);
-        assertTrue(IAssetVerifiable(referendum).isActive(assetId));
-        assertTrue(IAssetVerifiable(referendum).isApproved(user, assetId));
+        IAssetRegistrable(assetReferendum).approve(assetId);
+        assertTrue(IAssetVerifiable(assetReferendum).isActive(assetId));
+        assertTrue(IAssetVerifiable(assetReferendum).isApproved(user, assetId));
     }
 
     function test_Reject_RejectedEventEmitted() public {
@@ -59,9 +57,9 @@ contract AssetReferendumTest is BaseTest {
         _submitContentAsUser(assetId);
         vm.warp(1641070805);
         vm.prank(governor); // approve by governance..
-        vm.expectEmit(false, false, false, true, address(referendum));
+        vm.expectEmit(true, false, false, true, address(assetReferendum));
         emit AssetReferendum.Rejected(assetId);
-        IAssetRegistrable(referendum).reject(assetId);
+        IAssetRegistrable(assetReferendum).reject(assetId);
     }
 
     function test_Reject_RejectedValidStates() public {
@@ -69,9 +67,9 @@ contract AssetReferendumTest is BaseTest {
         _submitContentAsUser(assetId);
 
         vm.prank(governor); // approve by governance..
-        IAssetRegistrable(referendum).reject(assetId);
-        assertFalse(IAssetVerifiable(referendum).isActive(assetId));
-        assertFalse(IAssetVerifiable(referendum).isApproved(user, assetId));
+        IAssetRegistrable(assetReferendum).reject(assetId);
+        assertFalse(IAssetVerifiable(assetReferendum).isActive(assetId));
+        assertFalse(IAssetVerifiable(assetReferendum).isApproved(user, assetId));
     }
 
     function test_Revoked_RevokedEventEmitted() public {
@@ -81,11 +79,11 @@ contract AssetReferendumTest is BaseTest {
         vm.startPrank(governor); // approve by governance..
         // first an approval should ve done
         // then a revoke should ve done
-        IAssetRegistrable(referendum).approve(assetId);
+        IAssetRegistrable(assetReferendum).approve(assetId);
 
-        vm.expectEmit(false, false, false, true, address(referendum));
+        vm.expectEmit(true, false, false, true, address(assetReferendum));
         emit AssetReferendum.Revoked(assetId);
-        IAssetRegistrable(referendum).revoke(assetId);
+        IAssetRegistrable(assetReferendum).revoke(assetId);
         vm.stopPrank(); // reject by governance..
     }
 
@@ -93,21 +91,21 @@ contract AssetReferendumTest is BaseTest {
         uint256 assetId = 1;
         _submitAndApproveContent(assetId);
         vm.prank(governor); // approve by governance..
-        IAssetRegistrable(referendum).revoke(assetId);
-        assertFalse(IAssetVerifiable(referendum).isActive(assetId));
-        assertFalse(IAssetVerifiable(referendum).isApproved(user, assetId));
+        IAssetRegistrable(assetReferendum).revoke(assetId);
+        assertFalse(IAssetVerifiable(assetReferendum).isActive(assetId));
+        assertFalse(IAssetVerifiable(assetReferendum).isApproved(user, assetId));
     }
 
     function _submitAndApproveContent(uint256 assetId) internal {
         _submitContentAsUser(assetId);
         vm.warp(1641070805);
         vm.startPrank(governor); // approve by governance..
-        IAssetRegistrable(referendum).approve(assetId);
+        IAssetRegistrable(assetReferendum).approve(assetId);
         vm.stopPrank(); // approve by governance..
     }
 
     function _submitContentAsUser(uint256 assetId) internal {
         vm.prank(user); // the default user submitting content..
-        IAssetRegistrable(referendum).submit(assetId);
+        IAssetRegistrable(assetReferendum).submit(assetId);
     }
 }

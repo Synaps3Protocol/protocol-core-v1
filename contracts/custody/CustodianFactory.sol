@@ -34,6 +34,7 @@ contract CustodianFactory is UpgradeableBeacon, ICustodianFactory {
     /// @notice Event emitted when a new custodian is created.
     /// @param custodianAddress Address of the newly created custodian.
     /// @param endpoint Endpoint associated with the new custodian.
+    /// @param endpointHash Endpoint bytes32 hash associate with the new custodian.
     event CustodianCreated(address indexed custodianAddress, string indexed endpoint, bytes32 endpointHash);
 
     /// @notice Error to be thrown when attempting to register an already registered custodian.
@@ -50,16 +51,19 @@ contract CustodianFactory is UpgradeableBeacon, ICustodianFactory {
         return _manager[custodian];
     }
 
-    // TODO: check domain existence eg. existingDomain('an.com')
-    // TODO: avoid domains spam/pollution/faking
+    /// @notice Checks whether a given custodian contract has been registered.
+    /// @dev A custodian is considered registered if its address is mapped to a creator in the `_manager` mapping.
+    /// @param custodian The address of the custodian contract to check.
+    /// @return True if the custodian is registered; false otherwise.
+    function isRegistered(address custodian) external view returns (bool) {
+        return _manager[custodian] != address(0);
+    }
 
     /// @notice Function to create a new custodian contract.
     /// @dev Ensures that the same endpoint is not registered twice.
     /// @param endpoint The endpoint associated with the new custodian.
     /// @return The address of the newly created custodian contract.
     function create(string calldata endpoint) external returns (address) {
-        // TODO additional validation needed to check endpoint schemes. eg: https, ip, etc
-        // TODO option two, penalize invalid endpoints, and revoked during referendum
         bytes32 endpointHash = _registerEndpoint(endpoint);
         address newContract = _deployCustodian(endpoint);
         _registerManager(newContract, msg.sender);

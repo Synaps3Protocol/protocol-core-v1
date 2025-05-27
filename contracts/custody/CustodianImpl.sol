@@ -19,12 +19,11 @@ import { FinancialOps } from "@synaps3/core/libraries/FinancialOps.sol";
 /// - Calls to this contract are made through a `BeaconProxy`, allowing upgrades at the beacon level.
 /// - This contract itself is NOT upgradeable directly; its updates are managed by the beacon.
 /// - It inherits from upgradeable contracts **ONLY** to maintain compatibility with their storage layout (ERC-7201).
-/// - This approach ensures that future improvement to the implementation do not break the beacon's storage layout.
 contract CustodianImpl is Initializable, ERC165Upgradeable, OwnableUpgradeable, ICustodian {
     using FinancialOps for address;
 
     /// @notice The custodian endpoint.
-    string private endpoint;
+    string private _endpoint;
 
     /// @notice Event emitted when the distribution endpoint is updated.
     /// @param oldEndpoint The previous endpoint before the update.
@@ -35,14 +34,14 @@ contract CustodianImpl is Initializable, ERC165Upgradeable, OwnableUpgradeable, 
     error InvalidEndpoint();
 
     /// @notice Initializes the Custodian contract with the specified endpoint and owner.
-    /// @param endpoint_ The distribution endpoint URL.
-    /// @param owner_ The address of the owner who will manage the custodian.
+    /// @param endpoint The distribution endpoint URL.
+    /// @param owner The address of the owner who will manage the custodian.
     /// @dev Ensures that the provided endpoint is valid and initializes ERC165 and Ownable contracts.
-    function initialize(string calldata endpoint_, address owner_) external initializer {
-        if (bytes(endpoint_).length == 0) revert InvalidEndpoint();
+    function initialize(string calldata endpoint, address owner) external initializer {
+        if (bytes(endpoint).length == 0) revert InvalidEndpoint();
         __ERC165_init();
-        __Ownable_init(owner_);
-        endpoint = endpoint_;
+        __Ownable_init(owner);
+        _endpoint = endpoint;
     }
 
     /// @notice Checks if the contract supports a specific interface based on its ID.
@@ -58,7 +57,7 @@ contract CustodianImpl is Initializable, ERC165Upgradeable, OwnableUpgradeable, 
 
     /// @notice Returns the current distribution endpoint URL.
     function getEndpoint() external view returns (string memory) {
-        return endpoint;
+        return _endpoint;
     }
 
     /// @notice Updates the distribution endpoint URL.
@@ -66,8 +65,8 @@ contract CustodianImpl is Initializable, ERC165Upgradeable, OwnableUpgradeable, 
     /// @dev Reverts if the provided endpoint is an empty string. Emits an {EndpointUpdated} event.
     function setEndpoint(string calldata endpoint_) external onlyOwner {
         if (bytes(endpoint_).length == 0) revert InvalidEndpoint();
-        string memory oldEndpoint = endpoint;
-        endpoint = endpoint_;
+        string memory oldEndpoint = _endpoint;
+        _endpoint = endpoint_;
         emit EndpointUpdated(oldEndpoint, endpoint_);
     }
 
@@ -83,6 +82,8 @@ contract CustodianImpl is Initializable, ERC165Upgradeable, OwnableUpgradeable, 
         emit FundsWithdrawn(recipient, msg.sender, amount, currency);
         return amount;
     }
+
+    // TODO allow deposits to stake balance
 
     /// @notice Retrieves the contract's balance for a given currency.
     /// @param currency The token address to check the balance of (use `address(0)` for native currency).

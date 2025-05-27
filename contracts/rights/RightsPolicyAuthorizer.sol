@@ -6,6 +6,8 @@ import { Initializable } from "@openzeppelin/contracts-upgradeable/proxy/utils/I
 import { EnumerableSet } from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 import { UUPSUpgradeable } from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import { AccessControlledUpgradeable } from "@synaps3/core/primitives/upgradeable/AccessControlledUpgradeable.sol";
+// solhint-disable-next-line max-line-length
+import { ReentrancyGuardTransientUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardTransientUpgradeable.sol";
 import { IRightsPolicyAuthorizer } from "@synaps3/core/interfaces/rights/IRightsPolicyAuthorizer.sol";
 import { IPolicyAuditorVerifiable } from "@synaps3/core/interfaces/policies/IPolicyAuditorVerifiable.sol";
 import { IPolicy } from "@synaps3/core/interfaces/policies/IPolicy.sol";
@@ -20,6 +22,7 @@ contract RightsPolicyAuthorizer is
     Initializable,
     UUPSUpgradeable,
     AccessControlledUpgradeable,
+    ReentrancyGuardTransientUpgradeable,
     IRightsPolicyAuthorizer
 {
     using LoopOps for uint256;
@@ -83,14 +86,17 @@ contract RightsPolicyAuthorizer is
     /// @notice Initializes the proxy state.
     function initialize(address accessManager) public initializer {
         __UUPSUpgradeable_init();
+        __ReentrancyGuardTransient_init();
         __AccessControlled_init(accessManager);
     }
 
     /// @notice Initializes and authorizes a policy contract for content held by the holder.
     /// @param policy The address of the policy contract to be initialized and authorized.
-    /// @param data The data to initialize policy.
-    function authorizePolicy(address policy, bytes calldata data) external onlyAuditedPolicies(policy) {
-        _initializePolicy(policy, data);
+    /// @param data The data to initialize policy. e.g., prices, timeframes..
+    function authorizePolicy(address policy, bytes calldata data) external onlyAuditedPolicies(policy) nonReentrant {
+        // type safe low level call to policy, call policy initialization with provided data..
+        (bool success, ) = policy.call(abi.encodeCall(IPolicy.setup, (msg.sender, data)));
+        if (!success) revert InvalidPolicyInitialization("Error during policy initialization call");
         _authorizedPolicies[msg.sender].add(policy);
         emit RightsGranted(policy, msg.sender, data);
     }
@@ -162,14 +168,5 @@ contract RightsPolicyAuthorizer is
     /// @param policy The address of the policy contract to verify.
     function _isValidPolicy(address policy) private view returns (bool) {
         return (policy != address(0) && POLICY_AUDIT.isAudited(policy));
-    }
-
-    /// @dev Initializes a policy by calling its `initialize` function.
-    /// @param policy The address of the policy contract.
-    /// @param data The data to initialize the policy.
-    function _initializePolicy(address policy, bytes calldata data) private {
-        // type safe low level call to policy, call policy initialization with provided data..
-        (bool success, ) = policy.call(abi.encodeCall(IPolicy.setup, (msg.sender, data)));
-        if (!success) revert InvalidPolicyInitialization("Error during policy initialization call");
     }
 }

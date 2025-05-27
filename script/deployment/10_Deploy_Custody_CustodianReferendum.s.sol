@@ -8,11 +8,10 @@ import { C } from "contracts/core/primitives/Constants.sol";
 contract DeployCustodianReferendum is DeployBase {
     function run() external returns (address) {
         vm.startBroadcast(getAdminPK());
-        address treasury = computeCreate3Address("SALT_TREASURY");
-        address tollgate = computeCreate3Address("SALT_TOLLGATE");
-        address vault = computeCreate3Address("SALT_LEDGER_VAULT");
+        address agreementSettler = computeCreate3Address("SALT_AGREEMENT_SETTLER");
+        address custodianFactory = computeCreate3Address("SALT_CUSTODIAN_FACTORY");
         address accessManager = computeCreate3Address("SALT_ACCESS_MANAGER");
-        address impl = address(new CustodianReferendum(treasury, tollgate, vault));
+        address impl = address(new CustodianReferendum(agreementSettler, custodianFactory));
         bytes memory init = abi.encodeCall(CustodianReferendum.initialize, (accessManager));
         address referendum = deployUUPS(impl, init, "SALT_CUSTODIAN_REFERENDUM");
         vm.stopBroadcast();

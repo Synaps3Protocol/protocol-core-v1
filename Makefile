@@ -54,7 +54,7 @@ force-compile:
 
 .PHONY: test ## run tests
 test:
-	@CI=true && forge test --show-progress --gas-report -vvv  --fail-fast 
+	@export CI=true && forge test --show-progress --gas-report -vvvv 
 
 .PHONY: coverage ## run tests coverage report
 coverage:

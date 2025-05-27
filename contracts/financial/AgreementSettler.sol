@@ -8,6 +8,7 @@ import { UUPSUpgradeable } from "@openzeppelin/contracts-upgradeable/proxy/utils
 import { AccessControlledUpgradeable } from "@synaps3/core/primitives/upgradeable/AccessControlledUpgradeable.sol";
 // solhint-disable-next-line max-line-length
 import { ReentrancyGuardTransientUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardTransientUpgradeable.sol";
+// solhint-disable-next-line max-line-length
 import { FeesCollectorUpgradeable } from "@synaps3/core/primitives/upgradeable/FeesCollectorUpgradeable.sol";
 
 import { ILedgerVault } from "@synaps3/core/interfaces/financial/ILedgerVault.sol";
@@ -27,8 +28,8 @@ contract AgreementSettler is
     Initializable,
     UUPSUpgradeable,
     AccessControlledUpgradeable,
-    ReentrancyGuardTransientUpgradeable,
     FeesCollectorUpgradeable,
+    ReentrancyGuardTransientUpgradeable,
     IAgreementSettler
 {
     using FeesOps for uint256;
@@ -58,13 +59,18 @@ contract AgreementSettler is
     /// @param counterparty The address that received the settlement funds.
     /// @param proof The unique identifier (hash or proof) of the settled agreement.
     /// @param collectedFees The amount of fees collected from the settlement process.
-    event AgreementSettled(address indexed arbiter, address indexed counterparty, uint256 proof, uint256 collectedFees);
+    event AgreementSettled(
+        address indexed arbiter,
+        address indexed counterparty,
+        uint256 indexed proof,
+        uint256 collectedFees
+    );
 
     /// @notice Emitted when an agreement is canceled by the authorized account.
     /// @param initiator The account that initiated the cancellation.
     /// @param proof The unique identifier (hash or proof) of the canceled agreement.
     /// @param collectedFees The amount of fees collected (if any) upon cancellation.
-    event AgreementCancelled(address indexed initiator, uint256 proof, uint256 collectedFees);
+    event AgreementCancelled(address indexed initiator, uint256 indexed proof, uint256 collectedFees);
 
     /// @notice Error thrown when the agreement proof has already been settled.
     error AgreementAlreadySettled();
@@ -80,7 +86,7 @@ contract AgreementSettler is
 
     /// @notice Ensures the agreement associated with the provided `proof` is valid and active.
     modifier onlyValidAgreement(uint256 proof) {
-        if (_settledProofs[proof]) {
+        if (_settledProofs[proof] == true) {
             revert AgreementAlreadySettled();
         }
         _;
@@ -99,9 +105,9 @@ contract AgreementSettler is
     /// Initialize the proxy state.
     function initialize(address accessManager) public initializer {
         __UUPSUpgradeable_init();
+        __ReentrancyGuardTransient_init();
         __AccessControlled_init(accessManager);
         __FeesCollector_init(address(TREASURY));
-        __ReentrancyGuardTransient_init();
     }
 
     // TODO add hook management for royalties and earning splits
@@ -132,7 +138,6 @@ contract AgreementSettler is
         // (as defined in `previewAgreement`).This design disincentives manipulation,
         // ensuring that no changes can occur later to unfairly benefit or harm the initiator or other parties involved.
 
-        //
         // Penalty fees retained here also help maintain the protocol's economic balance
         // and ensure that the system operates sustainably over time.
         uint256 fees = agreement.fees; // keep fees as penalty
@@ -142,10 +147,11 @@ contract AgreementSettler is
 
         _setProofAsSettled(proof);
         // slither-disable-start unused-return
-        // part of the agreement locked amount is released to the account
+
         LEDGER_VAULT.claim(initiator, fees, currency);
-        LEDGER_VAULT.release(initiator, available, currency);
         LEDGER_VAULT.withdraw(address(this), fees, currency);
+        // part of the agreement locked amount is released to the account
+        if (available > 0) LEDGER_VAULT.release(initiator, available, currency);
         // slither-disable-end unused-return
         emit AgreementCancelled(initiator, proof, fees);
         return agreement;
@@ -157,7 +163,7 @@ contract AgreementSettler is
     function settleAgreement(
         uint256 proof,
         address counterparty
-    ) public onlyValidAgreement(proof) returns (T.Agreement memory) {
+    ) public onlyValidAgreement(proof) nonReentrant returns (T.Agreement memory) {
         // retrieve the agreement to storage to inactivate it and return it
         T.Agreement memory agreement = AGREEMENT_MANAGER.getAgreement(proof);
         if (agreement.arbiter != msg.sender) revert UnauthorizedEscrowAgent();
@@ -167,18 +173,17 @@ contract AgreementSettler is
         uint256 available = total - fees; // holder earnings
         address initiator = agreement.initiator;
         address currency = agreement.currency;
+
         // TODO: Implement a time window to enforce the validity period for agreement settlement.
         // Once the window expires, the agreement should be marked as invalid or revert,
         // then quit is only way to close the agreement.
         _setProofAsSettled(proof);
 
-        // slither-disable-start unused-return
         // move the funds to settler and transfer the available to counterparty
         LEDGER_VAULT.claim(initiator, total, currency);
-        LEDGER_VAULT.transfer(counterparty, available, currency);
         LEDGER_VAULT.withdraw(address(this), fees, currency);
-        // slither-disable-end unused-return
-
+        // could exists cases where available become zero when fees are flat
+        if (available > 0) LEDGER_VAULT.transfer(counterparty, available, currency);
         emit AgreementSettled(msg.sender, counterparty, proof, fees);
         return agreement;
     }

@@ -25,8 +25,6 @@ abstract contract PolicyBase is ERC165, IPolicy {
     /// @custom:oz-upgrades-unsafe-allow state-variable-immutable
     IAssetOwnership public immutable ASSET_OWNERSHIP;
 
-    /// @dev Policy state
-    bool private _active;
     /// @dev Registry to store the relation between (context & account) key => attestation
     mapping(bytes32 => uint256) private _attestations;
     /// @dev Reserved storage slots to avoid conflicts with child storage if upgradeability is required
@@ -86,29 +84,6 @@ abstract contract PolicyBase is ERC165, IPolicy {
         _;
     }
 
-    /// @notice Marks the contract as initialized and allows further execution.
-    /// @dev This modifier sets the `initialized` state to `true` when invoked.
-    ///      Use this in functions that require a one-time setup phase.
-    ///      Once executed, the contract is considered initialized.
-    /// @custom:modifiers setup
-    modifier activate() {
-        _active = false;
-        _;
-        _active = true;
-    }
-
-    /// @notice Ensures that the contract has been properly initialized before execution.
-    /// @dev This modifier checks if the `initialized` flag is set to `true`.
-    ///      If the contract is not initialized, it reverts with an `InvalidPolicyInitialization` error.
-    ///      Use this to restrict access to functions that depend on the contract's initial setup.
-    /// @custom:modifiers withValidSetup
-    modifier active() {
-        if (!_active) {
-            revert InvalidPolicyInitialization();
-        }
-        _;
-    }
-
     constructor(
         address rightsPolicyManager,
         address rightsAuthorizer,
@@ -119,11 +94,6 @@ abstract contract PolicyBase is ERC165, IPolicy {
         RIGHTS_POLICY_MANAGER = IRightsPolicyManagerVerifiable(rightsPolicyManager);
         ATTESTATION_PROVIDER = IAttestationProvider(providerAddress);
         ASSET_OWNERSHIP = IAssetOwnership(assetOwnership);
-    }
-
-    /// @notice Checks if the policy has been initialized.
-    function isActive() external view returns (bool) {
-        return _active;
     }
 
     /// @notice Retrieves the address of the attestation provider.
@@ -166,7 +136,6 @@ abstract contract PolicyBase is ERC165, IPolicy {
     ) internal returns (uint256[] memory) {
         bytes memory payload = abi.encode(agreement);
         bytes memory data = abi.encode(holder, agreement.initiator, address(this), agreement.parties, payload);
-        // register policy metrics in the holder context to track analytics
         emit AgreementCommitted(holder, agreement.parties.length, agreement.total, agreement.fees);
         return ATTESTATION_PROVIDER.attest(agreement.parties, expireAt, data);
     }
