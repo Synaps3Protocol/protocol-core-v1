@@ -11,10 +11,6 @@ The architecture is structured into distinct layers, starting from interaction a
 
 ![image](https://github.com/user-attachments/assets/32b06a9d-186c-4d2f-b8bf-760cf3068de4)
 
-### Level 4: Operational Layer
-- **Apps**: Provides user-facing interfaces to interact with the system.
-- **Custodian Network**: Ensures the secure distribution of assets to authorized parties.
-
 ### Level 3: Rights and Policies
 - **Rights**: Manages access, custody, and usage of assets, ensuring they align with validated custodians and governance rules.
 - **Policies**: Defines the terms, conditions, and operational frameworks governing assets and their distribution.
