@@ -26,6 +26,7 @@ library FeesOps {
     /// @param bps The basis points to use for the calculation.
     function perOf(uint256 amount, uint256 bps) internal pure returns (uint256) {
         // 10 * (5*100) / 10_000
+        // move the decimal to integer part, multiply, then divide to compensate
         // solhint-disable-next-line gas-custom-errors
         require(bps <= C.BPS_MAX, "BPS cannot be greater than 10_000");
         return (amount * bps) / C.BPS_MAX;

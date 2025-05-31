@@ -61,7 +61,7 @@ contract Treasury is
         address pool,
         uint256 amount,
         address currency
-    ) public override(BalanceOperatorUpgradeable, IBalanceDepositor) restricted returns (uint256) {
+    ) public override(BalanceOperatorUpgradeable) restricted returns (uint256) {
         // restricted deposit to avoid invalid operations
         // only allowed accounts can interact with this method
         return super.deposit(pool, amount, currency);

@@ -16,13 +16,4 @@ interface IAssetRegistrable {
     /// @param assetId The unique identifier of the asset to be approved.
     function approve(uint256 assetId) external;
 
-    /// @notice Rejects an asset proposition in the referendum.
-    /// @dev If rejected, the asset cannot be used in the system unless resubmitted.
-    /// @param assetId The unique identifier of the asset to be rejected.
-    function reject(uint256 assetId) external;
-
-    /// @notice Revokes a previously approved asset.
-    /// @dev This function allows the system to remove approval from an asset, disabling its functionality.
-    /// @param assetId The unique identifier of the asset to be revoked.
-    function revoke(uint256 assetId) external;
 }
