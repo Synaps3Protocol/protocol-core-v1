@@ -2,12 +2,9 @@
 // NatSpec format convention - https://docs.soliditylang.org/en/v0.5.10/natspec-format.html
 pragma solidity 0.8.26;
 
-import { IBalanceVerifiable } from "@synaps3/core/interfaces/base/IBalanceVerifiable.sol";
-import { IBalanceWithdrawable } from "@synaps3/core/interfaces/base/IBalanceWithdrawable.sol";
-
 /// @title ICustodian
 /// @notice Interface for custodian contracts responsible for managing content custody.
-interface ICustodian is IBalanceVerifiable, IBalanceWithdrawable {
+interface ICustodian {
     /// @notice Set the endpoint of the custodian.
     /// @dev This function can only be called by the owner of the contract.
     /// @param _endpoint The new custodian's endpoint.

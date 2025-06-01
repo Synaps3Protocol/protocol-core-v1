@@ -52,7 +52,7 @@ contract OrchestrateProtocolHydration is Script {
 
         // assign moderation permissions
         authority.grantRole(C.MOD_ROLE, adminAddress, 0);
-        bytes4[] memory hookModAllowed = HooksModPermissions();
+        // bytes4[] memory hookModAllowed = HooksModPermissions();
         bytes4[] memory auditorAllowed = PolicyAuditorModPermissions();
         authority.setTargetFunctionRole(auditorAddress, auditorAllowed, C.MOD_ROLE);
         // authority.setTargetFunctionRole(auditorAddress, hookModAllowed, C.MOD_ROLE);

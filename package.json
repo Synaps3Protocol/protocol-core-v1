@@ -6,7 +6,8 @@
     "dotenv": "^16.4.5",
     "prettier-plugin-solidity": "^1.4.1",
     "solhint": "^5.0.4",
-    "solhint-plugin-prettier": "^0.1.0"
+    "solhint-plugin-prettier": "^0.1.0",
+    "solidity-code-metrics": "^0.0.28"
   },
   "peerDependencies": {
     "@ethereum-attestation-service/eas-contracts": "^1.7.1",
