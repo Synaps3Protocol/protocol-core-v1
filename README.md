@@ -9,15 +9,15 @@ Welcome! 🎉 Synapse is redefining how creative IP distribution works. Whether 
 
 The architecture is structured into distinct layers, starting from interaction and execution at the top and progressing down to the foundational governance layer:
 
-![image](https://github.com/user-attachments/assets/32b06a9d-186c-4d2f-b8bf-760cf3068de4)
+![image](https://github.com/user-attachments/assets/bd53dda9-ce74-4a18-925d-18ee0e58efd2)
 
-### Level 3: Rights and Policies
+### Level 3: Rights Management
 - **Rights**: Manages access, custody, and usage of assets, ensuring they align with validated custodians and governance rules.
-- **Policies**: Defines the terms, conditions, and operational frameworks governing assets and their distribution.
  
-### Level 2: Assets and Distribution Management
+### Level 2: Assets, Policies, Finance and Custody Management
 - **Custody**: Oversees the network of custodians, validating and authorizing them as custodians of assets.
 - **Assets**: Manages the registration and validation of resources entering the system, ensuring compliance with governance policies.
+- **Policies**: Defines the terms, conditions, and operational frameworks governing assets and their distribution.
 - **Finance**: Handles agreements, settlements, and economic interactions.
 
 ### Level 1: Foundational Governance
