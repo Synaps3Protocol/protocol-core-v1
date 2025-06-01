@@ -7,27 +7,32 @@ Welcome! 🎉 Synapse is redefining how creative IP distribution works. Whether 
 
 ## System Overview
 
-The architecture is structured into distinct layers, starting from interaction and execution at the top and progressing down to the foundational governance layer:
+The protocol is composed of three hierarchical layers, each with a clear domain of responsibility—from foundational governance to operational logic and enforcement.:
 
 ![image](https://github.com/user-attachments/assets/bd53dda9-ce74-4a18-925d-18ee0e58efd2)
 
-### Level 3: Rights Management
-- **Rights**: Manages access, custody, and usage of assets, ensuring they align with validated custodians and governance rules.
- 
-### Level 2: Assets, Policies, Finance and Custody Management
-- **Custody**: Oversees the network of custodians, validating and authorizing them as custodians of assets.
-- **Assets**: Manages the registration and validation of resources entering the system, ensuring compliance with governance policies.
-- **Policies**: Defines the terms, conditions, and operational frameworks governing assets and their distribution.
-- **Finance**: Handles agreements, settlements, and economic interactions.
 
-### Level 1: Foundational Governance
-- **Economics**: Ensures financial stability through treasury management, tokens, and tollgates.
-- **Governance**: Establishes the rules and strategic decisions for the entire protocol.
-- **Access Control**: Enforces governance rules by managing permissions and roles across all layers.
-- **Lifecycle**: Introduces programmable hooks, time-based triggers, and scheduled actions that enable composable and modular protocol behavior.
+### Level 3 — Rights Management
+Responsible for enforcing the permitted usage of registered assets. Ensures that access and custody align with validated custodians and protocol-defined policies.
 
+- **Rights**: Governs access permissions, usage conditions, and custody validation for each asset instance.
 
----
+### Level 2 — Operational Layer: Asset, Custody, Policy & Finance
+Manages the lifecycle and structure of content and its distribution logic across the network.
+
+- **Assets**: Handles the registration, canonicalization, and verification of content entering the system.
+- **Custody**: Manages custodian nodes, including their validation, assignment, and operational state.
+- **Policies**: Defines the programmable terms, usage rights, and distribution logic governing assets.
+- **Finance**: Oversees revenue sharing, payouts, agreements, and settlements.
+
+### Level 1 — Foundational Governance
+Anchored by protocol governance, this layer provides economic coordination, lifecycle management, and permissioning for all protocol actors.
+
+- **Governance**: Maintains strategic decisions, upgrade paths, and protocol-wide parameters.
+- **Economics**: Administers the token model, treasury, and economic tollgates for access and incentives.
+- **Access Control**: Enforces role-based permissions, membership rules, and delegated authorities.
+- **Lifecycle**: Introduces programmable hooks, temporal constraints, and modular behaviors through scheduled actions and state transitions.
+
 
 ## Join the Fun
 Found a bug? Got a cool idea? Open a pull request or start a discussion on GitHub. We’d love to build this together!
