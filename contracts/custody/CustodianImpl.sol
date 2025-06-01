@@ -6,6 +6,8 @@ import { Initializable } from "@openzeppelin/contracts-upgradeable/proxy/utils/I
 import { ERC165Upgradeable } from "@openzeppelin/contracts-upgradeable/utils/introspection/ERC165Upgradeable.sol";
 import { OwnableUpgradeable } from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import { ICustodian } from "@synaps3/core/interfaces/custody/ICustodian.sol";
+import { IBalanceVerifiable } from "@synaps3/core/interfaces/base/IBalanceVerifiable.sol";
+import { IBalanceWithdrawable } from "@synaps3/core/interfaces/base/IBalanceWithdrawable.sol";
 import { FinancialOps } from "@synaps3/core/libraries/FinancialOps.sol";
 
 // TODO impl ERC1271 to validate manager based signatures
@@ -19,7 +21,14 @@ import { FinancialOps } from "@synaps3/core/libraries/FinancialOps.sol";
 /// - Calls to this contract are made through a `BeaconProxy`, allowing upgrades at the beacon level.
 /// - This contract itself is NOT upgradeable directly; its updates are managed by the beacon.
 /// - It inherits from upgradeable contracts **ONLY** to maintain compatibility with their storage layout (ERC-7201).
-contract CustodianImpl is Initializable, ERC165Upgradeable, OwnableUpgradeable, ICustodian {
+contract CustodianImpl is
+    Initializable,
+    ERC165Upgradeable,
+    OwnableUpgradeable,
+    ICustodian,
+    IBalanceVerifiable,
+    IBalanceWithdrawable
+{
     using FinancialOps for address;
 
     /// @notice The custodian endpoint.
