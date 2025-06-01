@@ -4,6 +4,7 @@ pragma solidity 0.8.26;
 import "forge-std/Test.sol";
 import { IAccessControl } from "@openzeppelin/contracts/access/IAccessControl.sol";
 import { IAssetRegistrable } from "contracts/core/interfaces/assets/IAssetRegistrable.sol";
+import { IAssetRevokable } from "contracts/core/interfaces/assets/IAssetRevokable.sol";
 import { IAssetVerifiable } from "contracts/core/interfaces/assets/IAssetVerifiable.sol";
 import { AssetReferendum } from "contracts/assets/AssetReferendum.sol";
 
@@ -59,7 +60,7 @@ contract AssetReferendumTest is BaseTest {
         vm.prank(governor); // approve by governance..
         vm.expectEmit(true, false, false, true, address(assetReferendum));
         emit AssetReferendum.Rejected(assetId);
-        IAssetRegistrable(assetReferendum).reject(assetId);
+        IAssetRevokable(assetReferendum).reject(assetId);
     }
 
     function test_Reject_RejectedValidStates() public {
@@ -67,7 +68,7 @@ contract AssetReferendumTest is BaseTest {
         _submitContentAsUser(assetId);
 
         vm.prank(governor); // approve by governance..
-        IAssetRegistrable(assetReferendum).reject(assetId);
+        IAssetRevokable(assetReferendum).reject(assetId);
         assertFalse(IAssetVerifiable(assetReferendum).isActive(assetId));
         assertFalse(IAssetVerifiable(assetReferendum).isApproved(user, assetId));
     }
@@ -83,7 +84,7 @@ contract AssetReferendumTest is BaseTest {
 
         vm.expectEmit(true, false, false, true, address(assetReferendum));
         emit AssetReferendum.Revoked(assetId);
-        IAssetRegistrable(assetReferendum).revoke(assetId);
+        IAssetRevokable(assetReferendum).revoke(assetId);
         vm.stopPrank(); // reject by governance..
     }
 
@@ -91,7 +92,7 @@ contract AssetReferendumTest is BaseTest {
         uint256 assetId = 1;
         _submitAndApproveContent(assetId);
         vm.prank(governor); // approve by governance..
-        IAssetRegistrable(assetReferendum).revoke(assetId);
+        IAssetRevokable(assetReferendum).revoke(assetId);
         assertFalse(IAssetVerifiable(assetReferendum).isActive(assetId));
         assertFalse(IAssetVerifiable(assetReferendum).isApproved(user, assetId));
     }
