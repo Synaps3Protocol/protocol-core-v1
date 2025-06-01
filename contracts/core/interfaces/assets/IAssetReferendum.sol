@@ -10,6 +10,4 @@ import { IAssetRevokable } from "@synaps3/core/interfaces/assets/IAssetRevokable
 /// @notice Unified interface for managing content registration and verifications within a referendum-based system.
 /// @dev This interface extends both IAssetRegistrable and IAssetVerifiable to provide a single entry point for
 ///      handling asset registration and verification processes.
-interface IAssetReferendum is IAssetRegistrable, IAssetVerifiable, IAssetRevokable {
-
-}
+interface IAssetReferendum is IAssetRegistrable, IAssetVerifiable, IAssetRevokable {}

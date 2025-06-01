@@ -9,7 +9,6 @@ import { BalanceOperatorUpgradeable } from "@synaps3/core/primitives/upgradeable
 
 import { ITreasury } from "@synaps3/core/interfaces/economics/ITreasury.sol";
 import { IFeesCollector } from "@synaps3/core/interfaces/economics/IFeesCollector.sol";
-import { IBalanceDepositor } from "@synaps3/core/interfaces/base/IBalanceDepositor.sol";
 import { FinancialOps } from "@synaps3/core/libraries/FinancialOps.sol";
 import { LoopOps } from "@synaps3/core/libraries/LoopOps.sol";
 

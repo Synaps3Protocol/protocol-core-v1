@@ -185,7 +185,8 @@ contract RightsAssetCustodian is Initializable, UUPSUpgradeable, AccessControlle
         (uint256[] memory weights, uint256 totalWeight) = _calcWeights(custodians, holder, currency, n);
         /// IMPORTANT: The randomness used here is not cryptographically secure,
         /// but sufficient for this non-critical operation. The random number is generated
-        /// using the block hash, currency and the holder's address, and is used to determine which custodian is selected.
+        /// using the block hash, currency and the holder's address,
+        //  and is used to determine which custodian is selected.
         // slither-disable-next-line weak-prng
         bytes32 blockHash = blockhash(block.number - 1);
         uint256 randomSeed = uint256(keccak256(abi.encodePacked(blockHash, holder, currency)));
@@ -225,9 +226,6 @@ contract RightsAssetCustodian is Initializable, UUPSUpgradeable, AccessControlle
     // function fallbackCustodian(){}
 
     /// @notice Retrieves the addresses of the active custodians assigned to a specific content holder.
-    /// @dev Please consider use the getBalancedCustodian, its the safe and recommended way to retrieve the available custodian
-    ///      use this function only if you need to validate the list of custodians, or any other manual
-    ///      mechanism to select the custodian to deliver content.
     /// @param holder The address of the asset holder whose custodians are being retrieved.
     function _getCustodians(address holder) private view returns (address[] memory) {
         address[] memory custodians = _custodians[holder].values();

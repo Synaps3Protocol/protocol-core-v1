@@ -15,5 +15,4 @@ interface IAssetRegistrable {
     /// @dev Once approved, the asset is considered verified and usable within the system.
     /// @param assetId The unique identifier of the asset to be approved.
     function approve(uint256 assetId) external;
-
 }
