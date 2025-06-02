@@ -9,7 +9,7 @@ Welcome! 🎉 Synapse is redefining how creative IP distribution works. Whether 
 
 The protocol is composed of three hierarchical layers, each with a clear domain of responsibility, from foundational governance to operational logic and enforcement.:
 
-![image](https://github.com/user-attachments/assets/bd53dda9-ce74-4a18-925d-18ee0e58efd2)
+![image](https://github.com/user-attachments/assets/a1b2ead5-c1ff-48df-b48b-ff5d46762ac1)
 
 
 ### Level 3 — Rights Management
