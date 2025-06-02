@@ -7,7 +7,7 @@ Welcome! 🎉 Synapse is redefining how creative IP distribution works. Whether 
 
 ## System Overview
 
-The protocol is composed of three hierarchical layers, each with a clear domain of responsibility—from foundational governance to operational logic and enforcement.:
+The protocol is composed of three hierarchical layers, each with a clear domain of responsibility, from foundational governance to operational logic and enforcement.:
 
 ![image](https://github.com/user-attachments/assets/bd53dda9-ce74-4a18-925d-18ee0e58efd2)
 
