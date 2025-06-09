@@ -61,7 +61,7 @@ contract RightAssetCustodianTest is CustodianShared {
         address custodian2 = deployCustodian("weare1.com");
         address custodian3 = deployCustodian("weare2.com");
         address custodian4 = deployCustodian("weare3.com");
-         _registerAndApproveCustodian(custodian2);
+        _registerAndApproveCustodian(custodian2);
         _registerAndApproveCustodian(custodian3);
 
         vm.startPrank(user);
@@ -77,7 +77,7 @@ contract RightAssetCustodianTest is CustodianShared {
         vm.stopPrank();
     }
 
-     function test_GrantCustody_RevertIf_InactiveNorRegisteredCustodian() public {
+    function test_GrantCustody_RevertIf_InactiveNorRegisteredCustodian() public {
         // MAX default = 3
         address custodian2 = deployCustodian("weare1.com");
         // second expected failing attempt
@@ -85,4 +85,23 @@ contract RightAssetCustodianTest is CustodianShared {
         vm.expectRevert(abi.encodeWithSignature("InvalidInactiveCustodian()"));
         IRightsAssetCustodianRegistrable(rightAssetCustodian).grantCustody(custodian2);
     }
+
+    function test_GetBalancedCustodian_ValidCustodian() public {
+        // // MAX default = 3
+        // address custodian2 = deployCustodian("weare1.com");
+        // address custodian3 = deployCustodian("weare2.com");
+        // _registerAndApproveCustodian(custodian2);
+        // _registerAndApproveCustodian(custodian3);
+
+        // vm.startPrank(user);
+        // // registered first time
+        // IRightsAssetCustodianRegistrable(rightAssetCustodian).grantCustody(custodian);
+        // IRightsAssetCustodianRegistrable(rightAssetCustodian).grantCustody(custodian2);
+        // IRightsAssetCustodianRegistrable(rightAssetCustodian).grantCustody(custodian3);
+        // vm.stopPrank();
+
+        // IRightsAssetCustodianRegistrable(rightAssetCustodian).grantCustody(custodian);
+    }
+
+    // TODO revoke
 }
