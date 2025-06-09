@@ -3,43 +3,51 @@
 [![COV](https://raw.githubusercontent.com/Synaps3Protocol/protocol-core-v1/main/.github/workflows/cov-badge.svg)](https://github.com/Synaps3Protocol/protocol-core-v1/actions/workflows/ci.yaml)
 
 # Synapse Protocol
-Welcome! 🎉 Synapse is redefining how creative IP distribution works. Whether it's films, music, or games, we ensure creators stay in control of their work while earning fairly. With the power of blockchain, Synapse eliminates middlemen and automates licensing, payments, and content delivery through smart contracts. This lets creators focus on their craft, knowing their content is distributed safely and transparently.
+A decentralized infrastructure for governing digital content through verifiable licensing, programmable distribution, and automated monetization. Designed for creators across film, music, gaming, and education, the protocol ensures sovereign control and fair economic participation, without relying on centralized platforms.
+By replacing discretionary decisions with deterministic smart contract execution, it guarantees secure content access, transparent rights enforcement, and trustless revenue flows.
+
 
 ## System Overview
 
+<<<<<<< HEAD
 The protocol is composed of three hierarchical layers, each with a clear domain of responsibility, from foundational governance to operational logic and enforcement:
+=======
+The architecture is composed of three modular layers, each with distinct responsibilities:
+>>>>>>> origin/main
 
 ![image](https://github.com/user-attachments/assets/a1b2ead5-c1ff-48df-b48b-ff5d46762ac1)
 
-
 ### Level 3 — Rights Management
-Responsible for enforcing the permitted usage of registered assets. Ensures that access and custody align with validated custodians and protocol-defined policies.
+Executes deterministic policy enforcement in real time, ensuring strict compliance with approved access and usage conditions.
 
+<<<<<<< HEAD
 - **Rights**: A module that manages policies authorization, defines usage conditions, and validates content custody. It ensures that only authorized entities can access or manage content, while enforcing predefined rules for usage and custody validation.
+=======
+- **Rights:** Enforces access and custody conditions at runtime by resolving permissions and validating compliance against approved policies.
+>>>>>>> origin/main
 
-### Level 2 — Operational Layer: Asset, Custody, Policy & Finance
-Manages the lifecycle and structure of content and its distribution logic across the network.
+### Level 2 — Operational Layer: Assets, Policies, Custody & Finance
+Coordinates asset lifecycle, programmable policies, decentralized custody, and financial execution under governance-defined logic.
 
-- **Assets**: Handles the registration, canonicalization, and verification of content entering the system.
-- **Custody**: Manages custodian nodes, including their validation, assignment, and operational state.
-- **Policies**: Defines the programmable terms, usage rights, and distribution logic governing assets.
-- **Finance**: Oversees revenue sharing, payouts, agreements, and settlements.
+- **Assets:** Registers and validates content ownership and structure, anchoring assets to creators and associated policies.  
+- **Custody:** Manages registration, validation, and assignment of custodians, ensuring policy-compliant content delivery.  
+- **Finance:** Executes agreements, settlements, and payouts under policy-bound logic and integrated vault management.  
+- **Policies:** Defines, audits, and governs licensing, access, and monetization rules through reusable programmable templates.  
 
 ### Level 1 — Foundational Governance
-Anchored by protocol governance, this layer provides economic coordination, lifecycle management, and permissioning for all protocol actors.
+Establishes protocol-wide rules for economic coordination, systemic permissioning, and controlled evolution.
 
-- **Governance**: Maintains strategic decisions, upgrade paths, and protocol-wide parameters.
-- **Economics**: Administers the token model, treasury, and economic tollgates for access and incentives.
-- **Access Control**: Enforces role-based permissions, membership rules, and delegated authorities.
-- **Lifecycle**: Introduces programmable hooks, temporal constraints, and modular behaviors through scheduled actions and state transitions.
+- **Economics:** Manages the token model, treasury, and tollgate mechanisms to align incentives and access with protocol sustainability.  
+- **Governance:** Coordinates protocol upgrades, policy approvals, and system evolution via proposals, voting, and execution.  
+- **Access Control:** Defines and enforces role-based permissions and authorization rules across all protocol components.  
+- **Lifecycle:** Enables modular extensibility through hooks and scheduled transitions governed by formal approval.  
 
+## Contributing
+Have feedback, ideas, or found a bug?  
+Start a discussion or open a pull request — contributions are welcome and encouraged.
 
-## Join the Fun
-Found a bug? Got a cool idea? Open a pull request or start a discussion on GitHub. We’d love to build this together!
-
-## Development
-
-Some available capabilities for dev support:
+## Developer Quickstart
+Use the following commands to test, compile, and audit the protocol:
 
 * **Run Tests**: `make test`  
 * **Compile Contracts**: `make compile`  
@@ -55,5 +63,4 @@ Note: Run `make help` to see additional capabilities.
 ## References
 
 - Code Maturity: https://github.com/crytic/building-secure-contracts/blob/master/development-guidelines/code_maturity.md
-
 - Style Guide: https://docs.soliditylang.org/en/latest/style-guide.html
