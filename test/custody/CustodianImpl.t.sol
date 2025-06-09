@@ -11,13 +11,12 @@ import { ICustodianFactory } from "contracts/core/interfaces/custody/ICustodianF
 import { BaseTest } from "test/BaseTest.t.sol";
 
 contract CustodianImplTest is BaseTest {
-
     function setUp() public initialize {
         deployToken();
         deployCustodianFactory();
     }
 
-    function deployCustodian(string memory endpoint) public returns(address) {
+    function deployCustodian(string memory endpoint) public returns (address) {
         vm.prank(admin);
         ICustodianFactory factory = ICustodianFactory(custodianFactory);
         return factory.create(endpoint);
@@ -25,17 +24,18 @@ contract CustodianImplTest is BaseTest {
 
     function test_Create_ValidCustodian() public {
         address custodian = deployCustodian("test.com");
-        assertEq(IERC165(custodian).supportsInterface(type(ICustodian).interfaceId), true);
+        bool supportedInterface = IERC165(custodian).supportsInterface(type(ICustodian).interfaceId);
+        assertEq(supportedInterface, true, "Custodian should support ICustodian interface");
     }
 
     function test_GetOwner_ExpectedDeployer() public {
         address custodian = deployCustodian("test2.com");
-        assertEq(ICustodian(custodian).getManager(), admin);
+        assertEq(ICustodian(custodian).getManager(), admin, "Expected owner should be the deployer");
     }
 
     function test_GetEndpoint_ExpectedEndpoint() public {
         address custodian = deployCustodian("test3.com");
-        assertEq(ICustodian(custodian).getEndpoint(), "test3.com");
+        assertEq(ICustodian(custodian).getEndpoint(), "test3.com", "Expected endpoint should match");
     }
 
     function test_SetEndpoint_ValidEndpoint() public {
@@ -44,7 +44,8 @@ contract CustodianImplTest is BaseTest {
         // changed to a dns domain
         vm.prank(admin); // only owner can do this
         ICustodian(custodian).setEndpoint("mynew.com");
-        assertEq(ICustodian(custodian).getEndpoint(), "mynew.com");
+        string memory endpoint = ICustodian(custodian).getEndpoint();
+        assertEq(endpoint, "mynew.com", "Expected endpoint should be updated");
     }
 
     function test_SetEndpoint_RevertWhen_InvalidOwner() public {
@@ -63,7 +64,8 @@ contract CustodianImplTest is BaseTest {
         // here the expected is that rewards system do it.
         vm.startPrank(admin); // only owner can get balance by default deployer
         IERC20(token).transfer(custodian, expected);
-        assertEq(IBalanceVerifiable(custodian).getBalance(token), expected);
+        uint256 currentBalance = IBalanceVerifiable(custodian).getBalance(token);
+        assertEq(currentBalance, expected, "Expected balance should match");
         vm.stopPrank();
     }
 
@@ -77,8 +79,9 @@ contract CustodianImplTest is BaseTest {
         // only owner can withdraw funds by default deployer
         IBalanceWithdrawable(custodian).withdraw(user, expected, token);
         vm.stopPrank();
-
-        assertEq(IERC20(token).balanceOf(user), expected);
+        
+        uint256 userBalance = IERC20(token).balanceOf(user);
+        assertEq(userBalance, expected, "User should receive the withdrawn funds");
     }
 
     function test_Withdraw_EmitFundsWithdrawn() public {

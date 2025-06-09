@@ -41,9 +41,9 @@ contract Tollgate is Initializable, UUPSUpgradeable, AccessControlledUpgradeable
     /// @param currency The address of the unsupported currency.
     error UnsupportedCurrency(address target, address currency);
 
-    /// @notice Error for invalid target contexts.
+    /// @notice Error for invalid target scheme.
     /// @param target The address of the invalid target context.
-    error InvalidTargetContext(address target);
+    error InvalidTargetScheme(address target);
 
     /// @notice Error for invalid basis point fees.
     /// @param bps The provided basis point value.
@@ -64,19 +64,24 @@ contract Tollgate is Initializable, UUPSUpgradeable, AccessControlledUpgradeable
 
     /// @notice Allows execution if the scheme is accepted or if support cannot be determined.
     /// @dev This modifier checks whether the `target` contract explicitly supports the scheme.
-    /// If `isFeeSchemeSupported` exists and returns `false`, the call is reverted with InvalidTargetContext.
+    /// If `isFeeSchemeSupported` exists and returns `false`, the call is reverted with InvalidTargetScheme.
     /// If the call to `v` fails (e.g., target does not implement the function or reverts) allowed by default.
     /// This enables compatibility with contracts that do not implement scheme validation.
     /// @param scheme The scheme to validate.
     /// @param target The address of the contract expected to support the scheme.
     modifier onlySupportedScheme(T.Scheme scheme, address target) {
+        // if target is zero address, revert with InvalidTargetScheme error
+        if (target == address(0) || target.code.length == 0) {
+            revert InvalidTargetScheme(target);
+        }
+
         bytes memory callData = abi.encodeCall(IFeeSchemeValidator.isFeeSchemeSupported, (scheme));
         (bool success, bytes memory result) = target.call(callData);
         // if the call was successful, the target implements the method and returned a result.
         // decode the result and validate the scheme acceptance.
         if (success) {
             bool ok = abi.decode(result, (bool));
-            if (!ok) revert InvalidTargetContext(target);
+            if (!ok) revert InvalidTargetScheme(target);
         }
 
         // if call fails → by default all schemes are allowed
@@ -144,7 +149,7 @@ contract Tollgate is Initializable, UUPSUpgradeable, AccessControlledUpgradeable
         // Example: If the target is the policy manager contract, the currency is MMC (ERC20 token),
         // and the scheme is NOMINAL, setting a fee of 10% means:
         // "In the policy manager contract, for MMC, using a nominal scheme, the fee is 10%."
-        if (target == address(0)) revert InvalidTargetContext(target);
+        if (target == address(0)) revert InvalidTargetScheme(target);
         bytes32 composedKey = _computeComposedKey(target, currency, scheme);
 
         _targetScheme[target] = scheme; // eg: rights manager => FLAT

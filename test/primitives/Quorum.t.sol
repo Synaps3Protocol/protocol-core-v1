@@ -43,19 +43,19 @@ contract QuorumTest is Test {
 
     function test_DefaultStatus() public view {
         T.Status status = IQuorumInspectable(quorum).status(1234536789);
-        assertTrue(status == T.Status.Pending);
+        assertTrue(status == T.Status.Pending, "Default status should be Pending");
     }
 
     function test_RegisterStatusFlow() public {
         uint256 entry = 1234567189;
         // initial pending status
         T.Status prevStatus = IQuorumInspectable(quorum).status(entry);
-        assertTrue(prevStatus == T.Status.Pending);
+        assertTrue(prevStatus == T.Status.Pending, "Initial status should be Pending");
 
         // register status
         IQuorumRegistrable(quorum).register(entry);
         T.Status newStatus = IQuorumInspectable(quorum).status(entry);
-        assertTrue(newStatus == T.Status.Waiting);
+        assertTrue(newStatus == T.Status.Waiting, "Expected Waiting status after registration");
     }
 
     function test_ActiveStatusFlow() public {
@@ -64,7 +64,7 @@ contract QuorumTest is Test {
         IQuorumRegistrable(quorum).register(entry);
         IQuorumRegistrable(quorum).approve(entry);
         T.Status newStatus = IQuorumInspectable(quorum).status(entry);
-        assertTrue(newStatus == T.Status.Active);
+        assertTrue(newStatus == T.Status.Active, "Expected Active status after approval");
     }
 
     function test_QuitStatusFlow() public {
@@ -73,7 +73,7 @@ contract QuorumTest is Test {
         IQuorumRegistrable(quorum).register(entry);
         IQuorumRegistrable(quorum).quit(entry);
         T.Status newStatus = IQuorumInspectable(quorum).status(entry);
-        assertTrue(newStatus == T.Status.Pending);
+        assertTrue(newStatus == T.Status.Pending, "Expected Pending status after quitting");
     }
 
     function test_BlockedStatusFlow() public {
@@ -83,7 +83,7 @@ contract QuorumTest is Test {
         // blocked status happens before active
         IQuorumRegistrable(quorum).reject(entry);
         T.Status newStatus = IQuorumInspectable(quorum).status(entry);
-        assertTrue(newStatus == T.Status.Blocked);
+        assertTrue(newStatus == T.Status.Blocked, "Expected Blocked status after rejection");
     }
 
     function test_RevokeStatusFlow() public {
@@ -94,7 +94,7 @@ contract QuorumTest is Test {
         // revoked status happens after approved
         IQuorumRevokable(quorum).revoke(entry);
         T.Status newStatus = IQuorumInspectable(quorum).status(entry);
-        assertTrue(newStatus == T.Status.Blocked);
+        assertTrue(newStatus == T.Status.Blocked, "Expected Blocked status after revocation");
     }
 
     function test_Approve_RevertWhen_ApproveNotRegistered() public {

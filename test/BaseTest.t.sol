@@ -16,6 +16,7 @@ import { DeployCustodianFactory } from "script/deployment/09_Deploy_Custody_Cust
 import { DeployCustodianReferendum } from "script/deployment/10_Deploy_Custody_CustodianReferendum.s.sol";
 import { DeployAgreementManager } from "script/deployment/07_Deploy_Financial_AgreementManager.s.sol";
 import { DeployAgreementSettler } from "script/deployment/08_Deploy_Financial_AgreementSettler.s.sol";
+import { DeployRightsAssetCustodian } from "script/deployment/15_Deploy_RightsManager_AssetCustodian.s.sol";
 
 import { getGovPermissions as TollgateGovPermissions } from "script/permissions/Permissions_Tollgate.sol";
 import { getGovPermissions as TreasuryGovPermissions } from "script/permissions/Permissions_Treasury.sol";
@@ -46,6 +47,8 @@ abstract contract BaseTest is Test {
 
     address custodianReferendum;
     address custodianFactory;
+
+    address rightAssetCustodian;
 
     address tollgate;
     address treasury;
@@ -146,7 +149,7 @@ abstract contract BaseTest is Test {
 
         DeployAgreementSettler agreementSettlerDeployer = new DeployAgreementSettler();
         agreementSettler = agreementSettler == address(0) ? agreementSettlerDeployer.run() : agreementSettler;
-         // OP role granted to custodian referendum to operate on ledger
+        // OP role granted to custodian referendum to operate on ledger
         _assignOpRole(agreementSettler);
     }
 
@@ -181,7 +184,6 @@ abstract contract BaseTest is Test {
         custodianFactory = custodianFactory == address(0) ? distDeployer.run() : custodianFactory;
     }
 
-    // 09_DeployCustodianReferendum
     function deployCustodianReferendum() public {
         deployCustodianFactory();
         deployAgreementSettler();
@@ -192,6 +194,14 @@ abstract contract BaseTest is Test {
         custodianReferendum = custodianReferendum == address(0) ? distReferendumDeployer.run() : custodianReferendum;
         // GOV permission set to custodian referendum functions
         _setGovPermissions(custodianReferendum, custodianReferendumAllowed);
+    }
+
+
+    function deployRightsAssetCustodian() public {
+        deployCustodianReferendum();
+        // set default admin as deployer..
+        DeployRightsAssetCustodian rightAssetCustodianDeployer = new DeployRightsAssetCustodian();
+        rightAssetCustodian = rightAssetCustodian == address(0) ? rightAssetCustodianDeployer.run() : rightAssetCustodian;
     }
 
     function _setGovPermissions(address target, bytes4[] memory allowed) public {

@@ -10,6 +10,7 @@ import { ERC20Votes } from "@openzeppelin/contracts/token/ERC20/extensions/ERC20
 
 // https://eips.ethereum.org/EIPS/eip-2612 - permit
 // https://eips.ethereum.org/EIPS/eip-1363 - payable
+// TODO upgradeable feature + DAO
 
 /// @title Multimedia Coin (MMC)
 /// @notice ERC20 token with governance and permit functionality.
@@ -22,7 +23,9 @@ contract MMC is ERC20, ERC20Permit, ERC20Votes {
         _mint(initialHolder, totalSupply * (10 ** 18));
     }
 
-    // TODO allowed restricted burn by treasury
+    function burn(uint256 amount) public virtual {
+        _burn(msg.sender, amount);
+    }
 
     /// @inheritdoc IERC20Permit
     function nonces(address owner) public view override(ERC20Permit, Nonces) returns (uint256) {

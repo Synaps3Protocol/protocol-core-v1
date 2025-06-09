@@ -64,18 +64,18 @@ contract RollingOpsTest is Test {
     }
 
     function test_Window_ReturnDefaultWindowSize() public view {
-        assertEq(rolling.getWindow(), 3);
+        assertEq(rolling.getWindow(), 3, "Default window size should be 3");
     }
 
     function test_Configure_SetValidWindowSize() public {
         rolling.configureWindow(5);
-        assertEq(rolling.getWindow(), 5);
+        assertEq(rolling.getWindow(), 5, "Expected window size should be 5");
     }
 
     function test_Configure_MaximumWindowSize() public {
         uint256 maxWindow = type(uint256).max;
         rolling.configureWindow(maxWindow);
-        assertEq(rolling.getWindow(), maxWindow);
+        assertEq(rolling.getWindow(), maxWindow, "Expected window size should be max uint256");
     }
 
     function test_RevertIf_SetZeroWindowSize() public {
@@ -98,7 +98,7 @@ contract RollingOpsTest is Test {
         expected[1] = addr2;
         expected[2] = addr3;
 
-        assertEq(got, expected);
+        assertEq(got, expected, "Expected addresses should match");
     }
 
     function test_Add_RollingOldestElement() public {
@@ -122,7 +122,7 @@ contract RollingOpsTest is Test {
         expected[1] = addr3;
         expected[2] = addr4;
 
-        assertEq(got, expected);
+        assertEq(got, expected, "Expected addresses should match after rolling");
     }
 
     function test_Add_SizeOne() public {
@@ -131,10 +131,10 @@ contract RollingOpsTest is Test {
         address addr2 = vm.addr(2);
 
         rolling.add(addr1);
-        assertEq(rolling.getAt(0), addr1);
+        assertEq(rolling.getAt(0), addr1, "First address should be addr1");
 
         rolling.add(addr2);
-        assertEq(rolling.getAt(0), addr2);
+        assertEq(rolling.getAt(0), addr2, "Last address should be addr2 after rolling");
     }
 
     function test_Add_MultipleRollovers() public {
@@ -165,7 +165,7 @@ contract RollingOpsTest is Test {
         expected[3] = addr6;
         expected[4] = addr7;
 
-        assertEq(got, expected);
+        assertEq(got, expected, "Expected addresses should match after multiple rollovers");
     }
 
     function test_Exists_ReturnTrueIfExists() public {
@@ -185,12 +185,12 @@ contract RollingOpsTest is Test {
         rolling.add(addr6);
 
         // rolled out should return false
-        assertFalse(rolling.exists(addr1));
-        assertFalse(rolling.exists(addr2));
-        assertFalse(rolling.exists(addr3));
-        assertTrue(rolling.exists(addr4));
-        assertTrue(rolling.exists(addr5));
-        assertTrue(rolling.exists(addr6));
+        assertFalse(rolling.exists(addr1), "Address should not exist after rolling out");
+        assertFalse(rolling.exists(addr2), "Address should not exist after rolling out");
+        assertFalse(rolling.exists(addr3), "Address should not exist after rolling out");
+        assertTrue(rolling.exists(addr4), "Address should not exist after rolling out");
+        assertTrue(rolling.exists(addr5), "Address should not exist after rolling out");
+        assertTrue(rolling.exists(addr6), "Address should not exist after rolling out");
     }
 
     function test_Length_ReturnValidLen() public {
@@ -199,7 +199,7 @@ contract RollingOpsTest is Test {
 
         rolling.add(addr1);
         rolling.add(addr2);
-        assertEq(rolling.getLength(), 2);
+        assertEq(rolling.getLength(), 2, "Expected length should be 2");
 
         address addr3 = vm.addr(3);
         address addr4 = vm.addr(4);
@@ -209,7 +209,7 @@ contract RollingOpsTest is Test {
         rolling.add(addr5);
         // do not grow; default window is 3
         // must keep the same window size
-        assertEq(rolling.getLength(), 3);
+        assertEq(rolling.getLength(), 3, "Expected length should be 3 after rolling");
     }
 
     function test_At_ReturnCorrespondingValue() public {
@@ -219,8 +219,8 @@ contract RollingOpsTest is Test {
         rolling.add(addr1);
         rolling.add(addr2);
 
-        assertEq(rolling.getAt(0), addr1);
-        assertEq(rolling.getAt(1), addr2);
+        assertEq(rolling.getAt(0), addr1, "First address should be addr1");
+        assertEq(rolling.getAt(1), addr2, "Second address should be addr2");
     }
 
     function test_At_ReturnLastElement() public {
@@ -232,7 +232,7 @@ contract RollingOpsTest is Test {
         rolling.add(addr2);
         rolling.add(addr3);
 
-        assertEq(rolling.getAt(2), addr3);
+        assertEq(rolling.getAt(2), addr3, "Last address should be addr3");
     }
 
     function test_At_RevertIf_InvalidIndex() public {

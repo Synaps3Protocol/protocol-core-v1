@@ -48,6 +48,12 @@ contract RightsAssetCustodian is Initializable, UUPSUpgradeable, AccessControlle
     /// @param demand The total number of holders currently assigned to the custodian (under custody).
     event CustodialRevoked(address indexed revokedCustody, address indexed rightsHolder, uint256 demand);
 
+    /// @notice Emitted when a priority is set or updated for a custodian by a rights holder.
+    /// @param holder The address of the rights holder.
+    /// @param custodian The address of the custodian whose priority was updated.
+    /// @param priority The new priority value set by the holder.
+    event PrioritySet(address indexed holder, address indexed custodian, uint256 priority);
+
     /// @dev Error that is thrown when a content hash is already registered.
     error InvalidInactiveCustodian();
 
@@ -59,6 +65,10 @@ contract RightsAssetCustodian is Initializable, UUPSUpgradeable, AccessControlle
 
     /// @dev Error when failing to revoke custody from a custodian.
     error RevokeCustodyFailed(address custodian, address holder);
+
+    /// @dev Error thrown when an invalid priority value is provided.
+    /// @param priority The invalid priority value provided.
+    error InvalidPriority(uint256 priority);
 
     /// @dev Modifier to check if the custodian is active and not blocked.
     /// @param custodian The custodian address to check.
@@ -158,7 +168,7 @@ contract RightsAssetCustodian is Initializable, UUPSUpgradeable, AccessControlle
     /// @notice Checks if the given custodian is a custodian for the specified content holder
     /// @param holder The address of the asset holder.
     /// @param custodian The address of the custodian to check.
-    function isCustodian(address holder, address custodian) external view returns (bool) {
+    function isCustodian(address custodian, address holder) external view returns (bool) {
         return _custodians[holder].contains(custodian) && _isValidActiveCustodian(custodian);
     }
 
@@ -288,8 +298,9 @@ contract RightsAssetCustodian is Initializable, UUPSUpgradeable, AccessControlle
     /// @param holder The address of the rights holder.
     /// @param priority The priority value (minimum 1).
     function _setPriority(address custodian, address holder, uint256 priority) private {
-        bytes32 relation = _computeComposedKey(holder, custodian);
-        _priority[relation] = priority > 0 ? priority : 1; // default 1
+        if (priority == 0) revert InvalidPriority(priority);
+        _priority[_computeComposedKey(holder, custodian)] = priority;
+        emit PrioritySet(msg.sender, custodian, priority);
     }
 
     /// @dev Computes the weight of a custodian using the formula:

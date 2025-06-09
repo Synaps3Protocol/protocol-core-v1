@@ -84,7 +84,7 @@ contract HookRegistry is Initializable, UUPSUpgradeable, AccessControlledUpgrade
     /// @notice Approves a registered hook contract.
     /// @param hook The address of the hook to be approved.
     /// Emits a HookApproved event upon success.
-    function approve(address hook) external onlyValidHook(hook) restricted {
+    function approve(address hook) external restricted {
         _approve(uint160(hook));
         emit HookApproved(hook, msg.sender);
     }
@@ -92,7 +92,7 @@ contract HookRegistry is Initializable, UUPSUpgradeable, AccessControlledUpgrade
     /// @notice Revokes a previously approved hook contract.
     /// @param hook The address of the hook to revoke.
     /// Emits a HookRevoked event upon success.
-    function reject(address hook) external onlyValidHook(hook) restricted {
+    function reject(address hook) external restricted {
         _revoke(uint160(hook));
         emit HookRevoked(hook, msg.sender);
     }
