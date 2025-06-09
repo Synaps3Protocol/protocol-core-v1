@@ -28,8 +28,8 @@ contract AssetReferendumTest is BaseTest {
 
     function test_Submit_SubmittedValidStates() public {
         _submitContentAsUser(1);
-        assertFalse(IAssetVerifiable(assetReferendum).isActive(1));
-        assertFalse(IAssetVerifiable(assetReferendum).isApproved(user, 1));
+        assertFalse(IAssetVerifiable(assetReferendum).isActive(1), "Asset should not be active yet");
+        assertFalse(IAssetVerifiable(assetReferendum).isApproved(user, 1), "Asset should not be approved yet");
     }
 
     function test_Approve_ApprovedEventEmitted() public {
@@ -49,8 +49,8 @@ contract AssetReferendumTest is BaseTest {
 
         vm.prank(governor); // approve by governance..
         IAssetRegistrable(assetReferendum).approve(assetId);
-        assertTrue(IAssetVerifiable(assetReferendum).isActive(assetId));
-        assertTrue(IAssetVerifiable(assetReferendum).isApproved(user, assetId));
+        assertTrue(IAssetVerifiable(assetReferendum).isActive(assetId), "Asset should be active");
+        assertTrue(IAssetVerifiable(assetReferendum).isApproved(user, assetId), "Asset should be approved");
     }
 
     function test_Reject_RejectedEventEmitted() public {
@@ -69,8 +69,8 @@ contract AssetReferendumTest is BaseTest {
 
         vm.prank(governor); // approve by governance..
         IAssetRevokable(assetReferendum).reject(assetId);
-        assertFalse(IAssetVerifiable(assetReferendum).isActive(assetId));
-        assertFalse(IAssetVerifiable(assetReferendum).isApproved(user, assetId));
+        assertFalse(IAssetVerifiable(assetReferendum).isActive(assetId), "Asset should not be active");
+        assertFalse(IAssetVerifiable(assetReferendum).isApproved(user, assetId), "Asset should not be approved");
     }
 
     function test_Revoked_RevokedEventEmitted() public {
@@ -93,8 +93,8 @@ contract AssetReferendumTest is BaseTest {
         _submitAndApproveContent(assetId);
         vm.prank(governor); // approve by governance..
         IAssetRevokable(assetReferendum).revoke(assetId);
-        assertFalse(IAssetVerifiable(assetReferendum).isActive(assetId));
-        assertFalse(IAssetVerifiable(assetReferendum).isApproved(user, assetId));
+        assertFalse(IAssetVerifiable(assetReferendum).isActive(assetId), "Asset should not be active");
+        assertFalse(IAssetVerifiable(assetReferendum).isApproved(user, assetId), "Asset should not be approved");
     }
 
     function _submitAndApproveContent(uint256 assetId) internal {

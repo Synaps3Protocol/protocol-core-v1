@@ -33,9 +33,9 @@ contract BalanceOperatorTest is BaseTest {
         uint256 contractBalance = IBalanceVerifiable(op).getBalance(token);
         vm.stopPrank();
 
-        assertEq(confirmed, balance);
-        assertEq(contractBalance, confirmed);
-        assertEq(afterBalance, prevBalance - confirmed);
+        assertEq(confirmed, balance, "Confirmed amount should match ledger balance");
+        assertEq(contractBalance, confirmed, "Contract balance should match confirmed amount");
+        assertEq(afterBalance, prevBalance - confirmed, "Admin balance should decrease by confirmed amount");
     }
 
     function test_Deposit_FundsDepositedEventEmitted() public {
@@ -70,7 +70,7 @@ contract BalanceOperatorTest is BaseTest {
         uint256 amount = 100 * 1e18;
         vm.startPrank(admin);
         uint256 prevBalance = IERC20(token).balanceOf(admin);
-        uint256 deposited =_validDeposit(admin, amount);
+        uint256 deposited = _validDeposit(admin, amount);
         uint256 afterBalance = IERC20(token).balanceOf(admin);
 
         uint256 confirmed = IBalanceWithdrawable(op).withdraw(admin, deposited, token);
@@ -78,10 +78,10 @@ contract BalanceOperatorTest is BaseTest {
         uint256 contractBalance = IBalanceVerifiable(op).getBalance(token);
         vm.stopPrank();
 
-        assertEq(confirmed, deposited);
-        assertEq(prevBalance, afterBalance + confirmed);
-        assertEq(contractBalance, 0);
-        assertEq(balance, 0);
+        assertEq(confirmed, deposited, "Confirmed amount should match deposited amount");
+        assertEq(prevBalance, afterBalance + confirmed, "Admin balance should increase by confirmed amount");
+        assertEq(contractBalance, 0, "Contract balance should be zero after withdrawal");
+        assertEq(balance, 0, "Ledger balance should be zero after withdrawal");
     }
 
     function test_Withdraw_FundsWithdrawnEventEmitted() public {
@@ -129,9 +129,9 @@ contract BalanceOperatorTest is BaseTest {
         uint256 balanceAdmin = verifier.getLedgerBalance(admin, token);
         uint256 balanceUser = verifier.getLedgerBalance(user, token);
 
-        assertEq(contractBalance, amount); // the contract still holds the tokens
-        assertEq(balanceAdmin, expectedAfter); // expected 50 MMC
-        assertEq(balanceUser, confirmed);
+        assertEq(contractBalance, amount, "Contract balance should match initial deposit");
+        assertEq(balanceAdmin, expectedAfter, "Admin balance should be half after transfer");
+        assertEq(balanceUser, confirmed, "User balance should match transferred amount");
     }
 
     function test_Transfer_FundsTransferredEventEmitted() public {

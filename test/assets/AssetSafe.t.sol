@@ -30,7 +30,7 @@ contract AssetSafeTest is BaseTest {
         vm.prank(user);
         IAssetSafe assetSafe = IAssetSafe(assetSafe);
         assetSafe.setContent(assetId, T.Cipher.LIT, "");
-        assertEq(assetSafe.getContent(assetId, T.Cipher.LIT), "");
+        assertEq(assetSafe.getContent(assetId, T.Cipher.LIT), "", "Content should be set to empty string");
     }
 
     function test_SetContent_RevertIf_InvalidOwner() public {
@@ -65,7 +65,7 @@ contract AssetSafeTest is BaseTest {
         assetSafe.setContent(assetId, T.Cipher.LIT, "");
 
         T.Cipher safeType = assetSafe.getType(assetId);
-        assertEq(uint256(safeType), uint256(T.Cipher.LIT));
+        assertEq(uint256(safeType), uint256(T.Cipher.LIT), "Safe type should be LIT");
     }
 
     function test_GetContent_ValidStoredData() public {
@@ -91,7 +91,7 @@ contract AssetSafeTest is BaseTest {
         vm.prank(admin);
         bytes memory got = assetSafe.getContent(assetId, T.Cipher.LIT);
         string memory expected = abi.decode(got, (string));
-        assertEq(keccak256(abi.encodePacked(expected)), keccak256(abi.encodePacked(b64)));
+        assertEq(keccak256(abi.encodePacked(expected)), keccak256(abi.encodePacked(b64)), "Content should match the expected data");
     }
 
     function _registerAndApproveAsset(address to, uint256 assetId) private {

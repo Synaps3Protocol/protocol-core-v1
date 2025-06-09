@@ -9,6 +9,7 @@ import { T } from "contracts/core/primitives/Types.sol";
 contract TargetA {}
 
 contract TargetB {}
+
 contract TargetC {}
 
 contract TargetD {
@@ -24,6 +25,7 @@ contract TargetD {
 contract TollgateTest is BaseTest {
     function setUp() public initialize {
         deployTollgate();
+        deployCustodianReferendum();
     }
 
     function test_SetFees_ValidFlatFees() public {
@@ -33,8 +35,8 @@ contract TollgateTest is BaseTest {
         ITollgate(tollgate).setFees(T.Scheme.FLAT, target, expected, token);
 
         (uint256 fee, T.Scheme scheme) = ITollgate(tollgate).getFees(target, token);
-        assertEq(uint256(scheme), 1);
-        assertEq(fee, expected);
+        assertEq(uint256(scheme), 1, "Expected scheme should be FLAT");
+        assertEq(fee, expected, "Expected fee should match");
     }
 
     function test_SetFees_ValidBasePointAgreementFees() public {
@@ -44,8 +46,8 @@ contract TollgateTest is BaseTest {
         ITollgate(tollgate).setFees(T.Scheme.BPS, target, expected, token);
 
         (uint256 fee, T.Scheme scheme) = ITollgate(tollgate).getFees(target, token);
-        assertEq(uint256(scheme), 3);
-        assertEq(fee, expected);
+        assertEq(uint256(scheme), 3, "Expected scheme should be BPS");
+        assertEq(fee, expected, "Expected fee should match");
     }
 
     function test_SetFees_FeesSetEventEmitted() public {
@@ -77,7 +79,7 @@ contract TollgateTest is BaseTest {
         vm.startPrank(governor);
         // expected revert if not valid allowance
         address notSupportedNominal = address(new TargetD());
-        vm.expectRevert(abi.encodeWithSignature("InvalidTargetContext(address)", notSupportedNominal));
+        vm.expectRevert(abi.encodeWithSignature("InvalidTargetScheme(address)", notSupportedNominal));
         ITollgate(tollgate).setFees(T.Scheme.NOMINAL, notSupportedNominal, 1, token);
         vm.stopPrank();
     }
@@ -100,35 +102,34 @@ contract TollgateTest is BaseTest {
         (uint256 feeB, T.Scheme b) = ITollgate(tollgate).getFees(targetB, token);
         (uint256 feeC, T.Scheme c) = ITollgate(tollgate).getFees(targetC, token);
 
-        assertEq(feeA, expectedFlat);
-        assertEq(uint256(a), 1);
-        assertEq(feeB, expectedNominal);
-        assertEq(uint256(b), 2);
-        assertEq(feeC, expectedBps);
-        assertEq(uint256(c), 3);
+        assertEq(feeA, expectedFlat, "Expected flat fee should match");
+        assertEq(uint256(a), 1, "Expected scheme should be FLAT");
+        assertEq(feeB, expectedNominal, "Expected nominal fee should match");
+        assertEq(uint256(b), 2, "Expected scheme should be NOMINAL");
+        assertEq(feeC, expectedBps, "Expected bps fee should match");
+        assertEq(uint256(c), 3, "Expected scheme should be BPS");
     }
 
-    // function test_GetFees_RevertWhen_NotSupportedCurrency() public {
-    //     address invalidTokenAddress = vm.addr(3);
-    //     address target = vm.addr(8);
-    //     vm.expectRevert(abi.encodeWithSignature("InvalidUnsupportedCurrency(address)", invalidTokenAddress));
-    //     ITollgate(tollgate).getFees(T.Scheme.FLAT, target, invalidTokenAddress);
-    // }
+    function test_GetFees_RevertWhen_NotSupportedScheme() public {
+        address invalidTokenAddress = vm.addr(3);
+        address target = vm.addr(8);
+        vm.expectRevert(abi.encodeWithSignature("UnsupportedCurrency(address,address)", target, invalidTokenAddress));
+        ITollgate(tollgate).getFees(target, invalidTokenAddress);
+    }
 
-    // function test_SupportedCurrencies_ReturnExpectedCurrencies() public {
-    //     address target = vm.addr(8);
-    //     vm.startPrank(governor); // as governor set fees
-    //     // duplicate the registration to check if the token is duplicated
-    //     ITollgate(tollgate).setFees(T.Scheme.FLAT, target, 1, token);
-    //     ITollgate(tollgate).setFees(T.Scheme.FLAT, target, 1, token);
-    //     vm.stopPrank();
+    function test_SupportedCurrencies_ReturnExpectedCurrencies() public {
+        address target = custodianReferendum;
+        vm.startPrank(governor); // as governor set fees
+        // duplicate the registration to check if the token is duplicated
+        ITollgate(tollgate).setFees(T.Scheme.FLAT, target, 1, token);
+        ITollgate(tollgate).setFees(T.Scheme.FLAT, target, 1, token);
+        vm.stopPrank();
 
-    //     vm.prank(user); // user querying fees..
-    //     address[] memory got = ITollgate(tollgate).supportedCurrencies(target);
-    //     address[] memory expected = new address[](1);
-    //     expected[0] = token;
+        address[] memory got = ITollgate(tollgate).supportedCurrencies(target);
+        address[] memory expected = new address[](1);
+        expected[0] = token;
 
-    //     // only one expected since the set avoid dupes..
-    //     assertEq(got, expected);
-    // }
+        // only one expected since the set avoid dupes..
+        assertEq(got, expected, "Expected supported currencies should match");
+    }
 }

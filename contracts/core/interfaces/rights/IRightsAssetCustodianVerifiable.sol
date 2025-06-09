@@ -8,10 +8,10 @@ pragma solidity 0.8.26;
 interface IRightsAssetCustodianVerifiable {
     /// @notice Checks whether a custodian is currently assigned to a holder.
     /// @dev Returns true only if the custodian is active and listed for the specified holder.
-    /// @param holder The address of the asset rights holder.
     /// @param custodian The address of the custodian to verify.
+    /// @param holder The address of the asset rights holder.
     /// @return True if `custodian` is valid and assigned to `holder`, false otherwise.
-    function isCustodian(address holder, address custodian) external view returns (bool);
+    function isCustodian(address custodian, address holder) external view returns (bool);
 
     /// @notice Returns a custodian selected by a probabilistic balancing algorithm.
     /// @dev The selection is based on priority, demand and economic weight (balance).
@@ -28,9 +28,9 @@ interface IRightsAssetCustodianVerifiable {
 
     /// @notice Calculates the weighted score of a custodian for a specific holder and currency.
     /// @dev Used to externally query the score that influences custodian selection.
-    /// @param holder The address of the rights holder.
     /// @param custodian The address of the custodian.
+    /// @param holder The address of the rights holder.
     /// @param currency The token used to evaluate economic backing.
     /// @return The computed weight used in the balancing algorithm.
-    function calcWeight(address holder, address custodian, address currency) external view returns (uint256);
+    function calcWeight(address custodian, address holder, address currency) external view returns (uint256);
 }

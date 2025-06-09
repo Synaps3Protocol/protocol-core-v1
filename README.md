@@ -7,7 +7,7 @@ Welcome! 🎉 Synapse is redefining how creative IP distribution works. Whether 
 
 ## System Overview
 
-The protocol is composed of three hierarchical layers, each with a clear domain of responsibility, from foundational governance to operational logic and enforcement.:
+The protocol is composed of three hierarchical layers, each with a clear domain of responsibility, from foundational governance to operational logic and enforcement:
 
 ![image](https://github.com/user-attachments/assets/a1b2ead5-c1ff-48df-b48b-ff5d46762ac1)
 
@@ -15,7 +15,7 @@ The protocol is composed of three hierarchical layers, each with a clear domain 
 ### Level 3 — Rights Management
 Responsible for enforcing the permitted usage of registered assets. Ensures that access and custody align with validated custodians and protocol-defined policies.
 
-- **Rights**: Governs access permissions, usage conditions, and custody validation for each asset instance.
+- **Rights**: A module that manages policies authorization, defines usage conditions, and validates content custody. It ensures that only authorized entities can access or manage content, while enforcing predefined rules for usage and custody validation.
 
 ### Level 2 — Operational Layer: Asset, Custody, Policy & Finance
 Manages the lifecycle and structure of content and its distribution logic across the network.
