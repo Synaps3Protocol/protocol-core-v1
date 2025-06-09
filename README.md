@@ -9,22 +9,14 @@ By replacing discretionary decisions with deterministic smart contract execution
 
 ## System Overview
 
-<<<<<<< HEAD
-The protocol is composed of three hierarchical layers, each with a clear domain of responsibility, from foundational governance to operational logic and enforcement:
-=======
 The architecture is composed of three modular layers, each with distinct responsibilities:
->>>>>>> origin/main
 
 ![image](https://github.com/user-attachments/assets/a1b2ead5-c1ff-48df-b48b-ff5d46762ac1)
 
 ### Level 3 — Rights Management
 Executes deterministic policy enforcement in real time, ensuring strict compliance with approved access and usage conditions.
 
-<<<<<<< HEAD
-- **Rights**: A module that manages policies authorization, defines usage conditions, and validates content custody. It ensures that only authorized entities can access or manage content, while enforcing predefined rules for usage and custody validation.
-=======
 - **Rights:** Enforces access and custody conditions at runtime by resolving permissions and validating compliance against approved policies.
->>>>>>> origin/main
 
 ### Level 2 — Operational Layer: Assets, Policies, Custody & Finance
 Coordinates asset lifecycle, programmable policies, decentralized custody, and financial execution under governance-defined logic.
