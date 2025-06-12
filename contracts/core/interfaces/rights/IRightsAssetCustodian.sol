@@ -14,6 +14,4 @@ interface IRightsAssetCustodian is
     IRightsAssetCustodianManager,
     IRightsAssetCustodianRegistrable,
     IRightsAssetCustodianVerifiable
-{
-
-}
+{}

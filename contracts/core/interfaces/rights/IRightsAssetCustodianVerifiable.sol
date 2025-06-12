@@ -25,7 +25,7 @@ interface IRightsAssetCustodianVerifiable {
     /// @param custodian The custodian address to query.
     /// @return The number of holders currently assigned to the custodian.
     function getCustodyCount(address custodian) external view returns (uint256);
-    
+
     /// @notice Calculates the weighted score of a custodian for a specific holder and currency.
     /// @dev Used to externally query the score that influences custodian selection.
     /// @param custodian The address of the custodian.
