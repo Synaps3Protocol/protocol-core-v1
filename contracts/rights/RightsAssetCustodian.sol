@@ -117,6 +117,11 @@ contract RightsAssetCustodian is Initializable, UUPSUpgradeable, AccessControlle
         _maxRedundancy = value;
     }
 
+    /// @notice Returns the maximum allowed number of custodians per holder.
+    function getMaxAllowedRedundancy() external view returns (uint256) {
+        return _maxRedundancy;
+    }
+
     /// @notice Revokes custodial rights of a custodian for the caller's assets.
     /// @param custodian The custodian to revoke custody from.
     function revokeCustody(address custodian) external {

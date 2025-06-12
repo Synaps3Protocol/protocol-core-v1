@@ -37,12 +37,12 @@ contract AccessManager is Initializable, UUPSUpgradeable, AccessManagerUpgradeab
         // - GOV_ROLE: Represents decentralized community governance.
         // Decisions are made through collective voting mechanisms (e.g., token-weighted, quadratic).
         //
-        // Group/Sub-DAO Based Roles:
-        // - ADMIN_ROLE: Managed by a smart account or sub-DAO.
+        // Group/Council Based Roles:
+        // - ADMIN_ROLE: Managed by a smart account or council.
         // Handles protocol upgrades, pause mechanisms, and operational role assignments.
-        // - MOD_ROLE: Managed by a smart account or sub-DAO.
+        // - MOD_ROLE: Managed by a smart account or council.
         // Approves policy submissions and moderates hook operations.
-        // - REF_ROLE: Managed by a smart account or sub-DAO.
+        // - REF_ROLE: Managed by a smart account or council.
         // Participates in governance referenda for content curation and distributor selection.
         //
         // Individual/Contract Based Roles:
@@ -52,15 +52,15 @@ contract AccessManager is Initializable, UUPSUpgradeable, AccessManagerUpgradeab
         // content uploads without conventional verification.
 
         /*
-            GOV_ROLE (Community Governance)
+            GOV_ROLE (Community Governance) 
             │
-            ├── ADMIN_ROLE (Smart Account / Sub-DAO)
+            ├── ADMIN_ROLE (Smart Account / Council) 
             │   │
-            │   ├── MOD_ROLE (Smart Account / Sub-DAO)
+            │   ├── MOD_ROLE (Smart Account / Council) 
             │   │
-            │   └── OPS_ROLE (Internal Contract Role)
+            │   └── OPS_ROLE (Internal Contract Role)  
             │
-            ├── REF_ROLE (Smart Account / Sub-DAO)
+            ├── REF_ROLE (Smart Account / Council)
             │
             ├── VER_ROLE (Individual Trusted Creator)
         */

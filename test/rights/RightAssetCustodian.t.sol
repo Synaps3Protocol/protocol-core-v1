@@ -5,6 +5,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.26;
 
+import { IRightsAssetCustodianManager } from "contracts/core/interfaces/rights/IRightsAssetCustodianManager.sol";
 import { IRightsAssetCustodianVerifiable } from "contracts/core/interfaces/rights/IRightsAssetCustodianVerifiable.sol";
 import { IRightsAssetCustodianRegistrable } from "contracts/core/interfaces/rights/IRightsAssetCustodianRegistrable.sol";
 import { ICustodianVerifiable } from "contracts/core/interfaces/custody/ICustodianVerifiable.sol";
@@ -22,6 +23,23 @@ contract RightAssetCustodianTest is CustodianShared {
         custodian = deployCustodian("weare.com");
         _registerAndApproveCustodian(custodian);
         deployRightsAssetCustodian();
+    }
+
+    function test_SetMaxAllowedRedundancy_ValidValue() public {
+        vm.startPrank(admin);
+        uint256 newMaxRedundancy = 5;
+        IRightsAssetCustodianManager(rightAssetCustodian).setMaxAllowedRedundancy(newMaxRedundancy);
+        uint256 maxRedundancy = IRightsAssetCustodianManager(rightAssetCustodian).getMaxAllowedRedundancy();
+        assertEq(maxRedundancy, newMaxRedundancy, "Max allowed redundancy should be updated");
+        vm.stopPrank();
+    }
+
+    function test_SetMaxAllowedRedundancy_RevertIf_NotAuthorized() public {
+        vm.startPrank(user);
+        uint256 newMaxRedundancy = 5;
+        vm.expectRevert(abi.encodeWithSignature("AccessManagedUnauthorized(address)", user));
+        IRightsAssetCustodianManager(rightAssetCustodian).setMaxAllowedRedundancy(newMaxRedundancy);
+        vm.stopPrank();
     }
 
     function test_GrantCustody_ValidCustodian() public {
