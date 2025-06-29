@@ -3,9 +3,7 @@
 [![COV](https://raw.githubusercontent.com/Synaps3Protocol/protocol-core-v1/main/.github/workflows/cov-badge.svg)](https://github.com/Synaps3Protocol/protocol-core-v1/actions/workflows/ci.yaml)
 
 # Synapse Protocol
-A decentralized infrastructure for governing digital content through verifiable licensing, programmable distribution, and automated monetization. Designed for creators across film, music, gaming, and education, the protocol ensures sovereign control and fair economic participation, without relying on centralized platforms.
-By replacing discretionary decisions with deterministic smart contract execution, it guarantees secure content access, transparent rights enforcement, and trustless revenue flows.
-
+A decentralized infrastructure for governing digital content through verifiable licensing, programmable distribution, and automated monetization. Designed for creators across film, music, photography, books, gaming, and all forms of digital creative expression, the protocol ensures sovereign control and fair economic participation without relying on centralized platforms. By replacing discretionary decisions with deterministic smart contract execution, it guarantees secure content access, transparent rights enforcement, and trustless revenue flows.
 
 ## System Overview
 
