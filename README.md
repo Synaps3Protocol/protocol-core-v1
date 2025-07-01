@@ -20,7 +20,7 @@ Executes deterministic policy enforcement in real time, ensuring strict complian
 Coordinates asset lifecycle, programmable policies, decentralized custody, and financial execution under governance-defined logic.
 
 - **Assets:** Registers and validates content ownership and structure, anchoring assets to creators and associated policies.  
-- **Custody:** Manages registration, validation, and assignment of custodians, ensuring policy-compliant content delivery.  
+- **Custody:** Manages registration and validation of custodians, ensuring policy-compliant content delivery.  
 - **Finance:** Executes agreements, settlements, and payouts under policy-bound logic and integrated vault management.  
 - **Policies:** Defines, audits, and governs licensing, access, and monetization rules through reusable programmable templates.  
 
