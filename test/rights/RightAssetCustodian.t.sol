@@ -97,9 +97,9 @@ contract RightAssetCustodianTest is CustodianShared {
 
     function test_RevokeCustody_ValidRegisteredCustodian() public {
         vm.prank(user);
-        IRightsAssetCustodianRegistrable(rightAssetCustodian).grantCustody(custodian);
+        IRightsAssetCustodianRegistrable(rightAssetCustodian).revokeCustody(custodian);
         bool isCustodian = IRightsAssetCustodianVerifiable(rightAssetCustodian).isCustodian(custodian, user);
-        assertTrue(isCustodian, "Custodian should be registered");
+        assertFalse(isCustodian, "Custodian should be revoked");
     }
 
     function test_RevokeCustody_EmitCustodialRevoked() public {
