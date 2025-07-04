@@ -264,7 +264,7 @@ contract RightsAssetCustodian is Initializable, UUPSUpgradeable, AccessControlle
         uint256 p = _getPriority(custodian, holder);
         uint256 d = _getDemand(custodian);
         // https://docs.openzeppelin.com/contracts/5.x/api/utils#Math-log2-uint256-
-        // Return the log in base 2 of a positive value rounded towards zero. 
+        // Return the log in base 2 of a positive value rounded towards zero.
         // log2 reduces the impact of large balances
         // wi = pi · (di + 1) · (log2(bi) + 1)
         return p * (d + 1) * (b.log2() + 1);

@@ -11,6 +11,4 @@ interface IRightsAssetCustodianVerifiable {
     /// @param holder The address of the asset rights holder.
     /// @return True if `custodian` is valid and assigned to `holder`, false otherwise.
     function isCustodian(address custodian, address holder) external view returns (bool);
-
-
 }

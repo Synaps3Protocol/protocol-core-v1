@@ -8,7 +8,7 @@ import { AccessControlledUpgradeable } from "@synaps3/core/primitives/upgradeabl
 import { BalanceOperatorUpgradeable } from "@synaps3/core/primitives/upgradeable/BalanceOperatorUpgradeable.sol";
 
 import { ITreasury } from "@synaps3/core/interfaces/economics/ITreasury.sol";
-import { IFeesCollector } from "@synaps3/core/interfaces/economics/IFeesCollector.sol";
+// import { IFeesCollector } from "@synaps3/core/interfaces/economics/IFeesCollector.sol";
 import { FinancialOps } from "@synaps3/core/libraries/FinancialOps.sol";
 import { LoopOps } from "@synaps3/core/libraries/LoopOps.sol";
 
@@ -73,6 +73,7 @@ contract Treasury is
     /// @param collector The address of an authorized fee collector.
     /// @param currency The address of the ERC20 token for which fees are being collected.
     function collectFees(address collector, address currency) external restricted nonReentrant {
+        // TODO update adding amount param on disburse call
         // IFeesCollector feesCollector = IFeesCollector(collector);
         // uint256 collected = feesCollector.disburse(currency);
         // _sumLedgerEntry(address(this), collected, currency);

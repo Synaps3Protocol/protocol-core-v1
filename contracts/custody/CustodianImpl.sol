@@ -64,7 +64,6 @@ contract CustodianImpl is
         return owner();
     }
 
-    
     /// TODO add method to return encoded multi-address. getAddress()
     /// @notice Returns the current distribution endpoint URL.
     function getEndpoint() external view returns (string memory) {

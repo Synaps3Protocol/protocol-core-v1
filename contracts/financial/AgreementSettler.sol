@@ -107,7 +107,7 @@ contract AgreementSettler is
     }
 
     /// @notice Disburses funds from the contract to the treasury.
-    /// @dev This function can only be called by the treasury. 
+    /// @dev This function can only be called by the treasury.
     ///      It transfers to the treasury the balance of the specified currency.
     /// @param amount The amount of tokens to disburse.
     /// @param currency The address of the token to disburse tokens.
@@ -120,7 +120,6 @@ contract AgreementSettler is
         emit FeesDisbursed(treasuryAddress, amount, currency);
         return amount;
     }
-
 
     // TODO add hook management for royalties and earning splits
     // TODOpotential improvement to scaling custom actions in protocol using hooks
