@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: BUSL-1.1
 // NatSpec format convention - https://docs.soliditylang.org/en/v0.5.10/natspec-format.html
 pragma solidity 0.8.26;
-
 import { Math } from "@openzeppelin/contracts/utils/math/Math.sol";
 import { EnumerableSet } from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 import { Initializable } from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
@@ -49,10 +48,10 @@ contract RightsAssetCustodian is Initializable, UUPSUpgradeable, AccessControlle
     event CustodialRevoked(address indexed revokedCustody, address indexed rightsHolder, uint256 demand);
 
     /// @notice Emitted when a priority is set or updated for a custodian by a rights holder.
-    /// @param holder The address of the rights holder.
     /// @param custodian The address of the custodian whose priority was updated.
+    /// @param holder The address of the rights holder.
     /// @param priority The new priority value set by the holder.
-    event PrioritySet(address indexed holder, address indexed custodian, uint256 priority);
+    event PrioritySet(address indexed custodian, address indexed holder, uint256 priority);
 
     /// @dev Error that is thrown when a content hash is already registered.
     error InvalidInactiveCustodian();
@@ -128,9 +127,7 @@ contract RightsAssetCustodian is Initializable, UUPSUpgradeable, AccessControlle
         // remove custody from the storage && if does not exist nor granted will revoke
         bool removedCustodian = _custodians[msg.sender].remove(custodian);
         if (!removedCustodian) revert RevokeCustodyFailed(custodian, msg.sender);
-
-        _setPriority(msg.sender, custodian, 0); // reset
-        uint256 demand = _decrementCustody(custodian); // -1 under custody
+        uint256 demand = _decrementDemand(custodian); // -1 under custody
         emit CustodialRevoked(custodian, msg.sender, demand);
     }
 
@@ -148,9 +145,35 @@ contract RightsAssetCustodian is Initializable, UUPSUpgradeable, AccessControlle
         if (!addedCustodian) revert GrantCustodyFailed(custodian, msg.sender);
 
         // TODO a "sybil attack" can create fake reputation around a custodian, charge fees here?..
-        _setPriority(msg.sender, custodian, 1); // default: 1
-        uint256 demand = _incrementCustody(custodian); // +1 demand
+        _setPriority(custodian, msg.sender, 1); // default: 1
+        uint256 demand = _incrementDemand(custodian); // +1 demand
         emit CustodialGranted(custodian, msg.sender, demand);
+    }
+
+    /// @notice Sets a custom priority score for a specific custodian.
+    /// @param custodian The target custodian.
+    /// @param priority A user-defined priority factor, must be >= 1.
+    function setPriority(address custodian, uint256 priority) external {
+        _setPriority(custodian, msg.sender, priority);
+    }
+
+    /// @notice Retrieves the priority level associated with a specific custodian and holder.
+    /// @dev This function is intended to be used to determine the priority of a custodian
+    ///      in relation to a specific holder within the rights asset management system.
+    /// @param custodian The address of the custodian whose priority is being queried.
+    /// @param holder The address of the holder associated with the custodian.
+    /// @return The priority level as a uint256 value.
+    function getPriority(address custodian, address holder) external view returns (uint256) {
+        return _getPriority(custodian, holder);
+    }
+
+    /// @notice Retrieves the demand value associated with a specific custodian.
+    /// @dev This function acts as a public interface to fetch the demand value stored for a given custodian address.
+    /// It internally calls the `_getDemand` function to retrieve the value.
+    /// @param custodian The Ethereum address of the custodian whose demand value is being queried.
+    /// @return demand The demand value associated with the specified custodian, returned as a uint256.
+    function getDemand(address custodian) external view returns (uint256) {
+        return _getDemand(custodian);
     }
 
     /// @notice Returns the weight calculation for a custodian based on holder-defined priority, demand, and balance.
@@ -159,15 +182,8 @@ contract RightsAssetCustodian is Initializable, UUPSUpgradeable, AccessControlle
     /// @param holder The address of the rights holder.
     /// @param currency The token used for economic evaluation.
     /// @return The calculated weight for this custodian-holder-currency combination.
-    function calcWeight(address custodian, address holder, address currency) external view returns (uint256) {
+    function getWeight(address custodian, address holder, address currency) external view returns (uint256) {
         return _calcWeight(custodian, holder, currency);
-    }
-
-    /// @notice Sets a custom priority score for a specific custodian.
-    /// @param custodian The target custodian.
-    /// @param priority A user-defined priority factor, must be >= 1.
-    function setPriority(address custodian, uint256 priority) external {
-        _setPriority(msg.sender, custodian, priority);
     }
 
     /// @notice Checks if the given custodian is a custodian for the specified content holder
@@ -177,19 +193,13 @@ contract RightsAssetCustodian is Initializable, UUPSUpgradeable, AccessControlle
         return _custodians[holder].contains(custodian) && _isValidActiveCustodian(custodian);
     }
 
-    /// @notice Retrieves the total number of holders in custody for a given custodian.
-    /// @param custodian The address of the custodian whose custodial content count is being requested.
-    function getCustodyCount(address custodian) external view returns (uint256) {
-        return _demand[custodian];
-    }
-
     /// @notice Selects a custodian for the given holder using weighted randomness.
     /// @dev Balancing is based on priority, demand, and economic backing (balance).
     ///      Not cryptographically secure randomness; avoid for critical paths.
     /// @param holder Address of the rights holder.
     /// @param currency Token used for economic weight evaluation.
     /// @return chosen The address of the selected custodian.
-    function getBalancedCustodian(address holder, address currency) external view returns (address chosen) {
+    function getCustodian(address holder, address currency) external view returns (address chosen) {
         address[] memory custodians = _getCustodians(holder);
         if (custodians.length == 0) return chosen; // TODO fallback custodian
 
@@ -198,14 +208,7 @@ contract RightsAssetCustodian is Initializable, UUPSUpgradeable, AccessControlle
         // even if more custodians are available.
         uint256 n = _maxRedundancy < custodians.length ? _maxRedundancy : custodians.length;
         (uint256[] memory weights, uint256 totalWeight) = _calcWeights(custodians, holder, currency, n);
-        /// IMPORTANT: The randomness used here is not cryptographically secure,
-        /// but sufficient for this non-critical operation. The random number is generated
-        /// using the block hash, currency and the holder's address,
-        //  and is used to determine which custodian is selected.
-        // slither-disable-next-line weak-prng
-        bytes32 blockHash = blockhash(block.number - 1);
-        uint256 randomSeed = uint256(keccak256(abi.encodePacked(blockHash, holder, currency)));
-        uint256 random = randomSeed % totalWeight;
+        uint256 random = _calcRandomness(holder, currency, totalWeight);
 
         uint256 i = 0;
         uint256 acc = 0;
@@ -236,9 +239,60 @@ contract RightsAssetCustodian is Initializable, UUPSUpgradeable, AccessControlle
         }
     }
 
+    /// @dev Authorizes the upgrade of the contract.
+    /// @notice Only the owner can authorize the upgrade.
+    /// @param newImplementation The address of the new implementation contract.
+    function _authorizeUpgrade(address newImplementation) internal override onlyAdmin {}
+
+    // TODO setFallback by governance
     // TODO in case of need a custodian during a unexpected failure and the custodian doesnt set the maintance mode
     // we can use this method to get an "emergency" custodian fallback
     // function fallbackCustodian(){}
+
+    /// @dev Computes the weight of a custodian using the formula:
+    ///      p · (d + 1) · (log2(b) + 1)
+    ///      where:
+    ///        - p: priority set by holder
+    ///        - d: current demand (number of holders)
+    ///        - b: custodian's balance in given currency
+    /// @param custodian Address of the custodian to evaluate.
+    /// @param holder The holder requesting balance.
+    /// @param currency The currency used to query economic strength.
+    /// @return Effective weight of the custodian.
+    function _calcWeight(address custodian, address holder, address currency) private view returns (uint256) {
+        uint256 b = IBalanceVerifiable(custodian).getBalance(currency);
+        uint256 p = _getPriority(custodian, holder);
+        uint256 d = _getDemand(custodian);
+        // https://docs.openzeppelin.com/contracts/5.x/api/utils#Math-log2-uint256-
+        // Return the log in base 2 of a positive value rounded towards zero. 
+        // log2 reduces the impact of large balances
+        // wi = pi · (di + 1) · (log2(bi) + 1)
+        return p * (d + 1) * (b.log2() + 1);
+    }
+
+    /// @dev Calculates weights for each custodian in a selection window using priority, demand, and balance.
+    /// @param custodians List of candidate custodians.
+    /// @param holder The address of the asset holder.
+    /// @param currency Currency used to evaluate balances.
+    /// @param window The maximum number of custodians to consider.
+    /// @return weights Array of calculated weights.
+    /// @return totalWeight Sum of all weights, used for probabilistic selection.
+    function _calcWeights(
+        address[] memory custodians,
+        address holder,
+        address currency,
+        uint256 window
+    ) private view returns (uint256[] memory weights, uint256 totalWeight) {
+        weights = new uint256[](window);
+        for (uint256 i = 0; i < window; i = i.uncheckedInc()) {
+            uint256 w = _calcWeight(custodians[i], holder, currency);
+            // safe limited to window
+            unchecked {
+                totalWeight += w;
+                weights[i] = w;
+            }
+        }
+    }
 
     /// @notice Retrieves the addresses of the active custodians assigned to a specific content holder.
     /// @param holder The address of the asset holder whose custodians are being retrieved.
@@ -248,10 +302,9 @@ contract RightsAssetCustodian is Initializable, UUPSUpgradeable, AccessControlle
         uint256 custodiansLen = custodians.length;
         uint256 j = 0;
 
-        for (uint256 i; i < custodiansLen; i = i.uncheckedInc()) {
+        for (uint256 i = 0; i < custodiansLen; i = i.uncheckedInc()) {
             if (!_isValidActiveCustodian(custodians[i])) continue;
             filtered[j] = custodians[i];
-
             // safe unchecked
             // limited to i increment = max custodian len
             j = j.uncheckedInc();
@@ -273,15 +326,10 @@ contract RightsAssetCustodian is Initializable, UUPSUpgradeable, AccessControlle
         return filtered;
     }
 
-    /// @dev Authorizes the upgrade of the contract.
-    /// @notice Only the owner can authorize the upgrade.
-    /// @param newImplementation The address of the new implementation contract.
-    function _authorizeUpgrade(address newImplementation) internal override onlyAdmin {}
-
     /// @dev Increases the count of holders served by the custodian.
     /// @param custodian The custodian to increment.
     /// @return The new demand value for this custodian.
-    function _incrementCustody(address custodian) private returns (uint256) {
+    function _incrementDemand(address custodian) private returns (uint256) {
         _demand[custodian] += 1;
         return _demand[custodian];
     }
@@ -289,11 +337,18 @@ contract RightsAssetCustodian is Initializable, UUPSUpgradeable, AccessControlle
     /// @dev Decreases the count of holders served by the custodian.
     /// @param custodian The custodian to decrement.
     /// @return The new demand value after the update.
-    function _decrementCustody(address custodian) private returns (uint256) {
+    function _decrementDemand(address custodian) private returns (uint256) {
         if (_demand[custodian] > 0) {
             _demand[custodian] -= 1;
         }
 
+        return _demand[custodian];
+    }
+
+    /// @notice Retrieves the demand associated with a specific custodian.
+    /// @param custodian The address of the custodian whose demand is being queried.
+    /// @return The demand value as a uint256.
+    function _getDemand(address custodian) private view returns (uint256) {
         return _demand[custodian];
     }
 
@@ -304,51 +359,37 @@ contract RightsAssetCustodian is Initializable, UUPSUpgradeable, AccessControlle
     /// @param priority The priority value (minimum 1).
     function _setPriority(address custodian, address holder, uint256 priority) private {
         if (priority == 0) revert InvalidPriority(priority);
-        _priority[_computeComposedKey(holder, custodian)] = priority;
-        emit PrioritySet(msg.sender, custodian, priority);
+        _priority[_computeComposedKey(custodian, holder)] = priority;
+        emit PrioritySet(custodian, holder, priority);
     }
 
-    /// @dev Computes the weight of a custodian using the formula:
-    ///      p · (d + 1) · (log2(b) + 1)
-    ///      where:
-    ///        - p: priority set by holder
-    ///        - d: current demand (number of holders)
-    ///        - b: custodian's balance in given currency
-    /// @param custodian Address of the custodian to evaluate.
-    /// @param holder The holder requesting balance.
-    /// @param currency The currency used to query economic strength.
-    /// @return Effective weight of the custodian.
-    function _calcWeight(address custodian, address holder, address currency) private view returns (uint256) {
-        uint256 b = IBalanceVerifiable(custodian).getBalance(currency);
-        uint256 p = _priority[_computeComposedKey(holder, custodian)];
-        uint256 d = _demand[custodian];
-        // wi = pi · (di + 1) · (log2(bi) + 1)
-        return p * (d + 1) * (b.log2() + 1);
+    /// @dev Retrieves the priority value associated with a specific custodian and holder.
+    /// The priority is determined using a composed key generated from the custodian and holder addresses.
+    /// This function is private and intended for internal use within the contract.
+    /// @param custodian The address of the custodian.
+    /// @param holder The address of the holder.
+    /// @return The priority value associated with the custodian and holder.
+    function _getPriority(address custodian, address holder) private view returns (uint256) {
+        return _priority[_computeComposedKey(custodian, holder)];
     }
 
-    /// @dev Calculates weights for each custodian in a selection window using priority, demand, and balance.
-    /// @param custodians List of candidate custodians.
-    /// @param currency Currency used to evaluate balances.
-    /// @param holder The address of the asset holder.
-    /// @param window The maximum number of custodians to consider.
-    /// @return weights Array of calculated weights.
-    /// @return totalWeight Sum of all weights, used for probabilistic selection.
-    function _calcWeights(
-        address[] memory custodians,
-        address currency,
-        address holder,
-        uint256 window
-    ) private view returns (uint256[] memory weights, uint256 totalWeight) {
-        weights = new uint256[](window);
-
-        for (uint256 i = 0; i < window; i = i.uncheckedInc()) {
-            uint256 w = _calcWeight(custodians[i], holder, currency);
-            // safe limited to window
-            unchecked {
-                totalWeight += w;
-                weights[i] = w;
-            }
-        }
+    /// @dev Calculates a pseudo-random value based on the block hash, holder address, currency address,
+    /// and a total weight. The randomness is derived using keccak256 hashing and modulo operation.
+    /// Note: This method is not suitable for secure randomness as it relies on blockhash, which can be influenced.
+    ///
+    /// @param holder The address of the holder involved in the calculation.
+    /// @param currency The address of the currency involved in the calculation.
+    /// @param totalWeight The total weight used to scale the randomness.
+    /// @return A pseudo-random value within the range [0, totalWeight).
+    function _calcRandomness(address holder, address currency, uint256 totalWeight) private view returns (uint256) {
+        /// IMPORTANT: The randomness used here is not cryptographically secure,
+        /// but sufficient for this non-critical operation. The random number is generated
+        /// using the block hash, currency and the holder's address,
+        //  and is used to determine which custodian is selected.
+        // slither-disable-next-line weak-prng
+        bytes32 blockHash = blockhash(block.number - 1);
+        uint256 randomSeed = uint256(keccak256(abi.encodePacked(blockHash, holder, currency)));
+        return randomSeed % totalWeight;
     }
 
     /// @notice Checks if the custodian is valid and currently active.
@@ -359,10 +400,10 @@ contract RightsAssetCustodian is Initializable, UUPSUpgradeable, AccessControlle
     }
 
     /// @dev Computes a unique key for the (holder, custodian) pair to index priority mappings.
-    /// @param holder The address of the rights holder.
     /// @param custodian The address of the custodian.
+    /// @param holder The address of the rights holder.
     /// @return A bytes32 hash uniquely representing the (holder, custodian) relationship.
-    function _computeComposedKey(address holder, address custodian) private pure returns (bytes32) {
-        return keccak256(abi.encodePacked(holder, custodian));
+    function _computeComposedKey(address custodian, address holder) private pure returns (bytes32) {
+        return keccak256(abi.encodePacked(custodian, holder));
     }
 }

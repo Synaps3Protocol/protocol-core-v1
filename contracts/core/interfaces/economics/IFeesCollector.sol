@@ -7,6 +7,7 @@ pragma solidity 0.8.26;
 /// @dev This interface defines the mechanism for transferring collected fees to the treasury.
 interface IFeesCollector {
     /// @notice Disburses funds from the contract to the treasury.
-    /// @param currency The address of the ERC20 token to disburse tokens.
-    function disburse(address currency) external returns (uint256);
+    /// @param amount The amount of tokens to disburse.
+    /// @param currency The address of the token to disburse tokens.
+    function disburse(uint256 amount, address currency) external returns (uint256);
 }

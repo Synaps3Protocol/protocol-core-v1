@@ -64,6 +64,8 @@ contract CustodianImpl is
         return owner();
     }
 
+    
+    /// TODO add method to return encoded multi-address. getAddress()
     /// @notice Returns the current distribution endpoint URL.
     function getEndpoint() external view returns (string memory) {
         return _endpoint;
@@ -75,7 +77,7 @@ contract CustodianImpl is
     function setEndpoint(string calldata endpoint_) external onlyOwner {
         if (bytes(endpoint_).length == 0) revert InvalidEndpoint();
         string memory oldEndpoint = _endpoint;
-        _endpoint = endpoint_;
+        _endpoint = endpoint_; // update the endpoint!
         emit EndpointUpdated(oldEndpoint, endpoint_);
     }
 
@@ -97,7 +99,7 @@ contract CustodianImpl is
     /// @notice Retrieves the contract's balance for a given currency.
     /// @param currency The token address to check the balance of (use `address(0)` for native currency).
     /// @dev This function is restricted to the contract owner.
-    function getBalance(address currency) public view onlyOwner returns (uint256) {
+    function getBalance(address currency) public view returns (uint256) {
         return address(this).balanceOf(currency);
     }
 }

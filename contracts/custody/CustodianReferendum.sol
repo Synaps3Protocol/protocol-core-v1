@@ -170,7 +170,6 @@ contract CustodianReferendum is
         //
         // The collected fees are used to support the protocol's operations, aligning
         // individual actions with the broader sustainability of the network.
-        // !IMPORTANT If tollgate does not support the currency, will revert..
         T.Agreement memory agreement = AGREEMENT_SETTLER.settleAgreement(proof, msg.sender);
         if (agreement.parties[0] != custodian) {
             revert CustodianAgreementMismatch(custodian);

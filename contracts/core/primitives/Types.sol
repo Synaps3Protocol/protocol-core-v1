@@ -45,7 +45,7 @@ library T {
         address initiator; // the initiator of the transaction
         uint256 total; // the transaction total amount
         uint256 fees; // the agreement protocol fees
-        address[] parties; // the accounts related to agreement
+        address[] parties; // the accounts or beneficiaries bounded to the agreement
         bytes payload; // any additional data needed during agreement execution
     }
 

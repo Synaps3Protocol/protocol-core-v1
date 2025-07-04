@@ -73,10 +73,10 @@ contract Treasury is
     /// @param collector The address of an authorized fee collector.
     /// @param currency The address of the ERC20 token for which fees are being collected.
     function collectFees(address collector, address currency) external restricted nonReentrant {
-        IFeesCollector feesCollector = IFeesCollector(collector);
-        uint256 collected = feesCollector.disburse(currency);
-        _sumLedgerEntry(address(this), collected, currency);
-        emit FeesCollected(collector, collected, currency);
+        // IFeesCollector feesCollector = IFeesCollector(collector);
+        // uint256 collected = feesCollector.disburse(currency);
+        // _sumLedgerEntry(address(this), collected, currency);
+        // emit FeesCollected(collector, collected, currency);
     }
 
     /// @notice Function that should revert when msg.sender is not authorized to upgrade the contract.

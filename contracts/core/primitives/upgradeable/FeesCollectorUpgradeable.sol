@@ -44,20 +44,6 @@ abstract contract FeesCollectorUpgradeable is Initializable, IFeesCollector {
         _;
     }
 
-    /// @notice Disburses all collected funds of a specified currency from the contract to the treasury. (visitor)
-    /// @dev This function can only be called by the treasury. It transfers the full balance of the specified currency.
-    /// @param currency The address of the ERC20 token to disburse.
-    function disburse(address currency) external virtual onlyTreasury returns (uint256) {
-        // Transfer all funds of the specified currency to the treasury.
-        address treasuryAddress = getTreasuryAddress();
-        uint256 amount = address(this).balanceOf(currency);
-        if (amount == 0) return 0; // error trying transfer zero amount..
-        // safe direct transfer to treasury address..
-        treasuryAddress.transfer(amount, currency);
-        emit FeesDisbursed(treasuryAddress, amount, currency);
-        return amount;
-    }
-
     /// @notice Returns the current address of the treasury.
     /// @return The address of the treasury.
     function getTreasuryAddress() public view returns (address) {

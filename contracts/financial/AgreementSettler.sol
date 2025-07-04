@@ -106,6 +106,22 @@ contract AgreementSettler is
         __FeesCollector_init(address(TREASURY));
     }
 
+    /// @notice Disburses funds from the contract to the treasury.
+    /// @dev This function can only be called by the treasury. 
+    ///      It transfers to the treasury the balance of the specified currency.
+    /// @param amount The amount of tokens to disburse.
+    /// @param currency The address of the token to disburse tokens.
+    function disburse(uint256 amount, address currency) external virtual onlyTreasury returns (uint256) {
+        // Transfer all funds of the specified currency to the treasury.
+        address treasuryAddress = getTreasuryAddress();
+        if (amount == 0) return 0; // error trying transfer zero amount..
+        // safe direct transfer to treasury address..
+        LEDGER_VAULT.withdraw(treasuryAddress, amount, currency);
+        emit FeesDisbursed(treasuryAddress, amount, currency);
+        return amount;
+    }
+
+
     // TODO add hook management for royalties and earning splits
     // TODOpotential improvement to scaling custom actions in protocol using hooks
     // eg: access handling for gating content. etc..
@@ -143,9 +159,7 @@ contract AgreementSettler is
 
         _setProofAsSettled(proof);
         // slither-disable-start unused-return
-
         LEDGER_VAULT.claim(initiator, fees, currency);
-        LEDGER_VAULT.withdraw(address(this), fees, currency);
         // part of the agreement locked amount is released to the account
         if (available > 0) LEDGER_VAULT.release(initiator, available, currency);
         // slither-disable-end unused-return
@@ -177,7 +191,6 @@ contract AgreementSettler is
 
         // move the funds to settler and transfer the available to counterparty
         LEDGER_VAULT.claim(initiator, total, currency);
-        LEDGER_VAULT.withdraw(address(this), fees, currency);
         // could exists cases where available become zero when fees are flat
         if (available > 0) LEDGER_VAULT.transfer(counterparty, available, currency);
         emit AgreementSettled(msg.sender, counterparty, proof, fees);
