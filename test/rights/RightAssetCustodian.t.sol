@@ -66,7 +66,7 @@ contract RightAssetCustodianTest is CustodianShared {
         // registered first time
         IRightsAssetCustodianRegistrable(rightAssetCustodian).grantCustody(custodian);
         uint256 demand = IRightsAssetCustodianManager(rightAssetCustodian).getDemand(custodian);
-        assertEq(demand, 1);
+        assertEq(demand, 1, "Demand should be 1 after granting custody");
 
         // second expected failing attempt
         vm.expectRevert(abi.encodeWithSignature("GrantCustodyFailed(address,address)", custodian, user));
@@ -117,7 +117,7 @@ contract RightAssetCustodianTest is CustodianShared {
         vm.startPrank(user);
         // registered first time
         uint256 demand = IRightsAssetCustodianManager(rightAssetCustodian).getDemand(custodian);
-        assertEq(demand, 0);
+        assertEq(demand, 0, "Demand should be 0 before granting custody");
 
         // second expected failing attempt
         vm.expectRevert(abi.encodeWithSignature("RevokeCustodyFailed(address,address)", custodian, user));
