@@ -8,18 +8,20 @@ Synapse Protocol is a modular, chain-agnostic infrastructure designed for sovere
 ## Architecture Overview
 
 Synapse is built on a **three-layer modular architecture**, ensuring scalability, verifiability, and extensibility:
-![image](https://github.com/user-attachments/assets/a1b2ead5-c1ff-48df-b48b-ff5d46762ac1)
+
+<img width="3264" height="1058" alt="image" src="https://github.com/user-attachments/assets/7d9ecbae-3b8b-4909-bc3f-568741c55fb7" />
+
 | Layer | Responsibilities |
 | --- | --- |
-| **Layer 3 — Rights Management** | Real-time, policy-bound enforcement of rights and content access. |
-| **Layer 2 — Operational Coordination** | Asset registration, policy governance, custody assignment, and programmable finance. |
-| **Layer 1 — Foundational Governance** | Tokenomics, protocol governance, role-based access control, and lifecycle management. |
+| **Rights Management** | Real-time, policy-bound enforcement of rights and content access. |
+| **Operational Coordination** | Asset registration, policy governance, custody assignment, and programmable finance. |
+| **Foundational Governance** | Tokenomics, protocol governance, role-based access control, and lifecycle management. |
 
 ## Contributing
 We welcome feedback, feature requests, and contributions:
 - Start a [discussion](https://github.com/Synaps3Protocol/protocol-core-v1/discussions)
-- Report issues via [GitHub Issues](https://github.com/Synaps3Protocol/protocol-core-v1/issues)
 - Submit a [Pull Request](https://github.com/Synaps3Protocol/protocol-core-v1/pulls)
+- Report issues via [GitHub Issues](https://github.com/Synaps3Protocol/protocol-core-v1/issues)
   
 ## Developer Quickstart
 Use the following commands to test, compile, and audit the protocol:
