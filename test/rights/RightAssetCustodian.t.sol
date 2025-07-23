@@ -87,7 +87,7 @@ contract RightAssetCustodianTest is CustodianShared {
         IRightsAssetCustodianRegistrable(rightAssetCustodian).grantCustody(custodian);
         IRightsAssetCustodianRegistrable(rightAssetCustodian).grantCustody(custodian2);
         IRightsAssetCustodianRegistrable(rightAssetCustodian).grantCustody(custodian3);
-        // 3 is reached, he validation is effective after this line
+        // 3 is reached, the validation is effective after this line
 
         // second expected failing attempt
         vm.expectRevert(abi.encodeWithSignature("MaxRedundancyAllowedReached()"));

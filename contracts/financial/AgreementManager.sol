@@ -184,7 +184,7 @@ contract AgreementManager is Initializable, UUPSUpgradeable, AccessControlledUpg
     /// @param currency The address of the currency for which the fee is being calculated.
     /// @return The calculated fee amount based on the applicable fee scheme.
     function _calcFees(uint256 total, address target, address currency) private view returns (uint256) {
-        // !IMPORTANT if fees manager does not support the currency, will revert..
+        // !IMPORTANT if fees manager does not support the currency or the target, will revert..
         (uint256 fees, T.Scheme scheme) = TOLLGATE.getFees(target, currency);
         if (scheme == T.Scheme.BPS) return total.perOf(fees); // bps calc
         if (scheme == T.Scheme.NOMINAL) return total.perOf(fees.calcBps()); // nominal to bps

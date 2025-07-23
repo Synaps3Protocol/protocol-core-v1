@@ -170,6 +170,11 @@ contract CustodianReferendum is
         //
         // The collected fees are used to support the protocol's operations, aligning
         // individual actions with the broader sustainability of the network.
+
+        // IMPORTANT:
+        // The expected fees are locked in the agreement, based on the custodians fees defined by the tollgate.
+        // If the fee amount is insufficient, the transaction will revert during agreement creation.
+        // Only valid agreements can be settled; the validity is guaranteed by the proof.
         T.Agreement memory agreement = AGREEMENT_SETTLER.settleAgreement(proof, msg.sender);
         if (agreement.parties[0] != custodian) {
             revert CustodianAgreementMismatch(custodian);
