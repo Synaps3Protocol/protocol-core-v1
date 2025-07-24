@@ -9,7 +9,8 @@ Synapse Protocol is a modular, chain-agnostic infrastructure designed for sovere
 
 Synapse is built on a **three-layer modular architecture**, ensuring scalability, verifiability, and extensibility:
 
-<img width="3264" height="1058" alt="image" src="https://github.com/user-attachments/assets/7d9ecbae-3b8b-4909-bc3f-568741c55fb7" />
+<img width="3264" height="1656" alt="image" src="https://github.com/user-attachments/assets/3adee2bc-272b-4dc8-872c-371471026c64" />
+
 
 | Layer | Responsibilities |
 | --- | --- |
