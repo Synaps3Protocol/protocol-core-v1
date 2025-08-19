@@ -75,6 +75,7 @@ contract RightsPolicyManager is
     /// @param holder The address of the rights holder who must have authorized the policy.
     /// @param policy The address of the policy contract attempting to access the rights.
     modifier onlyAuthorizedPolicy(address holder, address policy) {
+        require(policy != address(0), "Policy address cannot be zero");
         bool isPolicyAuthorizedByHolder = RIGHTS_AUTHORIZER.isPolicyAuthorized(policy, holder);
         if (!isPolicyAuthorizedByHolder) revert RightsNotDelegated(policy, holder);
         _;
@@ -192,6 +193,7 @@ contract RightsPolicyManager is
     /// @param account The address of the user whose compliance is being evaluated.
     /// @param policy The address of the policy contract to check compliance against.
     /// @param criteria Encoded data containing the parameters required to verify access.
+    /// @return `true` if the policy is registered and active for the account, otherwise `false`.
     function isActivePolicy(address account, address policy, bytes memory criteria) public view returns (bool) {
         if (!isRegisteredPolicy(account, policy)) return false;
         return _verifyPolicyAccess(account, policy, criteria);

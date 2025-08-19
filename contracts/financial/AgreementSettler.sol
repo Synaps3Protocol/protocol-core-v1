@@ -166,13 +166,33 @@ contract AgreementSettler is
         return agreement;
     }
 
+    // modifier hookExec(address counterParty) {
+    //     // get registered exec hooks for this contract
+    //     // IHook hook = HOOKS.get(address(this), arbitrer, IExecHook) <- internal handling of any logic needed
+    //     // to get the valid hook
+
+    //     // if (hook) {
+    //     //     // execute the hook logic, eg: royalties, splits, etc..
+    //     //     // any error in the hook should revert the whole tx
+    //     //     hook.prev(abi.encode(msg.sender, counterParty, proof));
+    //     // }
+    //     _;
+    //     // if (hook) {
+    //     //     LEDGER_VAULT.approve(address(hook), available, currency);
+    //     //     // execute the hook logic, eg: royalties, splits, etc..
+    //     //     // any error in the hook should revert the whole tx
+    //     //     hook.post(abi.encode(msg.sender, counterParty, proof));
+    //     // }
+
+    // }
+
     /// @notice Settles an agreement by marking it inactive and transferring funds to the counterparty.
     /// @param proof The unique identifier of the agreement.
     /// @param counterparty The address that will receive the funds upon settlement.
     function settleAgreement(
         uint256 proof,
         address counterparty
-    ) public onlyValidAgreement(proof) returns (T.Agreement memory) {
+    ) public onlyValidAgreement(proof) /**hookExec(counterParty) */ returns (T.Agreement memory) {
         // retrieve the agreement to storage to inactivate it and return it
         T.Agreement memory agreement = AGREEMENT_MANAGER.getAgreement(proof);
         if (agreement.arbiter != msg.sender) revert UnauthorizedEscrowAgent();
