@@ -42,8 +42,10 @@ contract AccessManager is Initializable, UUPSUpgradeable, AccessManagerUpgradeab
         // Handles protocol upgrades, pause mechanisms, and operational role assignments.
         // - MOD_ROLE: Managed by a smart account or council.
         // Approves policy submissions and moderates hook operations.
-        // - REF_ROLE: Managed by a smart account or council.
-        // Participates in governance referenda for content curation and distributor selection.
+        // - VAL_ROLE: Managed by a smart account or council.
+        // Participates in governance referenda for content curation/validation.
+        // - NOD_ROLE: Managed by a smart account or council.
+        // Participates in governance referenda for nodes validation.
         //
         // Individual/Contract Based Roles:
         // - OPS_ROLE: Internal operational role assigned to protocol-trusted contracts
@@ -60,13 +62,16 @@ contract AccessManager is Initializable, UUPSUpgradeable, AccessManagerUpgradeab
             │   │
             │   └── OPS_ROLE (Internal Contract Role)  
             │
-            ├── REF_ROLE (Smart Account / Council)
+            ├── VAL_ROLE (Smart Account / Council)
+            │
+            ├── NOD_ROLE (Smart Account / Council)
             │
             ├── VER_ROLE (Individual Trusted Creator)
         */
 
         _setRoleAdmin(C.VER_ROLE, C.GOV_ROLE);
-        _setRoleAdmin(C.REF_ROLE, C.GOV_ROLE);
+        _setRoleAdmin(C.VAL_ROLE, C.GOV_ROLE);
+        _setRoleAdmin(C.NOD_ROLE, C.GOV_ROLE);
         _setRoleAdmin(C.MOD_ROLE, C.ADMIN_ROLE);
         _setRoleAdmin(C.OPS_ROLE, C.ADMIN_ROLE);
     }
