@@ -17,7 +17,6 @@ contract OrchestrateProtocolCustodianNetwork is DeployBase {
         address vault = computeCreate3Address("SALT_LEDGER_VAULT");
         address custodianFactory = vm.envAddress("CUSTODIAN_FACTORY");
         address custodianReferendum = vm.envAddress("CUSTODIAN_REFERENDUM");
-        address agreementManager = vm.envAddress("AGREEMENT_MANAGER");
 
         vm.startBroadcast(admin);
         // approve initial custodian
@@ -35,19 +34,7 @@ contract OrchestrateProtocolCustodianNetwork is DeployBase {
         ILedgerVault(vault).deposit(vm.addr(admin), fees, mmc);
         ILedgerVault(vault).approve(address(referendum), fees, mmc);
 
-        address custody = address(custodian);
-        address[] memory parties = new address[](1);
-        parties[0] = custody;
-
-        uint256 proof = IAgreementManager(agreementManager).createAgreement(
-            fees,
-            mmc,
-            address(referendum),
-            parties,
-            ""
-        );
-
-        referendum.register(proof, address(custodian));
+        referendum.register(address(custodian));
         referendum.approve(address(custodian));
         vm.stopBroadcast();
 

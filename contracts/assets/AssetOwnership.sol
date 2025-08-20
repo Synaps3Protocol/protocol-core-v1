@@ -143,7 +143,7 @@ contract AssetOwnership is
     /// @notice Transfers an asset to a new owner.
     /// @param to The address of the new owner.
     /// @param assetId The unique identifier of the asset being transferred.
-    function transfer(address to, uint256 assetId) external {
+    function transfer(address to, uint256 assetId) external onlyOwner(assetId) {
         _transfer(msg.sender, to, assetId);
         emit TransferredAsset(msg.sender, to, assetId);
     }

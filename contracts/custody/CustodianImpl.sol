@@ -48,6 +48,7 @@ contract CustodianImpl is
     /// @dev Ensures that the provided endpoint is valid and initializes ERC165 and Ownable contracts.
     function initialize(string calldata endpoint, address owner) external initializer {
         if (bytes(endpoint).length == 0) revert InvalidEndpoint();
+        
         __ERC165_init();
         __Ownable_init(owner);
         _endpoint = endpoint;

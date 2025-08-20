@@ -36,6 +36,8 @@ abstract contract BaseTest is Test {
     address admin;
     address user;
     address governor;
+    address contentCouncil;
+    address nodesCouncil;
     address accessManager;
 
     address agreementManager;
@@ -59,6 +61,8 @@ abstract contract BaseTest is Test {
         // setup the admin to operate in tests..
         user = vm.addr(2);
         governor = vm.addr(1);
+        contentCouncil = vm.addr(2);
+        nodesCouncil = vm.addr(2);
         admin = vm.addr(vm.envUint("PRIVATE_KEY"));
 
         deployCreate3Factory();
@@ -95,6 +99,12 @@ abstract contract BaseTest is Test {
         // add to governor the gov role
         IAccessManager authority = IAccessManager(accessManager);
         authority.grantRole(C.GOV_ROLE, governor, 0);
+        
+        vm.startPrank(governor);
+        // add to councils the corresponding role
+        authority.grantRole(C.CONTENT_COUNCIL_ROLE, contentCouncil, 0);
+        authority.grantRole(C.NODE_VALIDATOR_ROLE, nodesCouncil, 0);
+        vm.stopPrank();
     }
 
     // 02_DeployTollgate
@@ -159,7 +169,7 @@ abstract contract BaseTest is Test {
         DeployAssetReferendum assetReferendumDeployer = new DeployAssetReferendum();
         bytes4[] memory referendumAllowed = AssetReferendumGovPermissions();
         assetReferendum = assetReferendum == address(0) ? assetReferendumDeployer.run() : assetReferendum;
-        _setGovPermissions(assetReferendum, referendumAllowed);
+        _setContentCouncilPermissions(assetReferendum, referendumAllowed);
     }
 
     function deployAssetOwnership() public {
@@ -171,11 +181,8 @@ abstract contract BaseTest is Test {
 
     function deployAssetSafe() public {
         deployAssetOwnership();
-
         DeployAssetSafe assetVaultDeployer = new DeployAssetSafe();
-        bytes4[] memory referendumAllowed = AssetReferendumGovPermissions();
         assetSafe = assetSafe == address(0) ? assetVaultDeployer.run() : assetSafe;
-        _setGovPermissions(assetSafe, referendumAllowed);
     }
 
     // 08_DeployCustodian
@@ -193,7 +200,7 @@ abstract contract BaseTest is Test {
         bytes4[] memory custodianReferendumAllowed = CustodianReferendumGovPermissions();
         custodianReferendum = custodianReferendum == address(0) ? distReferendumDeployer.run() : custodianReferendum;
         // GOV permission set to custodian referendum functions
-        _setGovPermissions(custodianReferendum, custodianReferendumAllowed);
+        _setNodesCouncilPermissions(custodianReferendum, custodianReferendumAllowed);
     }
 
 
@@ -202,6 +209,22 @@ abstract contract BaseTest is Test {
         // set default admin as deployer..
         DeployRightsAssetCustodian rightAssetCustodianDeployer = new DeployRightsAssetCustodian();
         rightAssetCustodian = rightAssetCustodian == address(0) ? rightAssetCustodianDeployer.run() : rightAssetCustodian;
+    }
+
+     function _setContentCouncilPermissions(address target, bytes4[] memory allowed) public {
+        vm.startPrank(admin);
+        IAccessManager authority = IAccessManager(accessManager);
+        // assign permissions to VAL_ROLE for allowed functions to call in target
+        authority.setTargetFunctionRole(target, allowed, C.CONTENT_COUNCIL_ROLE);
+        vm.stopPrank();
+    }
+
+    function _setNodesCouncilPermissions(address target, bytes4[] memory allowed) public {
+        vm.startPrank(admin);
+        IAccessManager authority = IAccessManager(accessManager);
+        // assign permissions to VAL_ROLE for allowed functions to call in target
+        authority.setTargetFunctionRole(target, allowed, C.NODE_VALIDATOR_ROLE);
+        vm.stopPrank();
     }
 
     function _setGovPermissions(address target, bytes4[] memory allowed) public {

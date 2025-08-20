@@ -23,7 +23,7 @@ contract RightAssetCustodianTest is CustodianShared {
 
     function setUp() public override {
         super.setUp();
-        custodian = deployCustodian("weare.com");
+        custodian = _deployCustodian("weare.com", user);
         _registerAndApproveCustodian(custodian);
         deployRightsAssetCustodian();
         deployToken();
@@ -75,23 +75,22 @@ contract RightAssetCustodianTest is CustodianShared {
     }
 
     function test_GrantCustody_RevertIf_ExceedAvailableRedundancy() public {
-        // MAX default = 3
-        address custodian2 = deployCustodian("weare1.com");
-        address custodian3 = deployCustodian("weare2.com");
-        address custodian4 = deployCustodian("weare3.com");
-        _registerAndApproveCustodian(custodian2);
-        _registerAndApproveCustodian(custodian3);
+        IRightsAssetCustodianRegistrable rightCustody = IRightsAssetCustodianRegistrable(rightAssetCustodian);
 
-        vm.startPrank(user);
-        // registered first time
-        IRightsAssetCustodianRegistrable(rightAssetCustodian).grantCustody(custodian);
-        IRightsAssetCustodianRegistrable(rightAssetCustodian).grantCustody(custodian2);
-        IRightsAssetCustodianRegistrable(rightAssetCustodian).grantCustody(custodian3);
-        // 3 is reached, the validation is effective after this line
+        for (uint256 i = 0; i < 3; i++) {
+            // MAX default = 3
+            address custodianN = _deployCustodian(string.concat("weare", vm.toString(i), ".com"), user);
+            _registerAndApproveCustodian(custodianN);
+
+            vm.prank(user);
+            // registered first time
+            rightCustody.grantCustody(custodianN);
+        }
 
         // second expected failing attempt
+        vm.prank(user);
         vm.expectRevert(abi.encodeWithSignature("MaxRedundancyAllowedReached()"));
-        IRightsAssetCustodianRegistrable(rightAssetCustodian).grantCustody(custodian4);
+        rightCustody.grantCustody(custodian);
         vm.stopPrank();
     }
 
@@ -100,7 +99,7 @@ contract RightAssetCustodianTest is CustodianShared {
         IRightsAssetCustodianRegistrable(rightAssetCustodian).grantCustody(custodian);
         IRightsAssetCustodianRegistrable(rightAssetCustodian).revokeCustody(custodian);
         vm.stopPrank();
-        
+
         bool isCustodian = IRightsAssetCustodianVerifiable(rightAssetCustodian).isCustodian(custodian, user);
         assertFalse(isCustodian, "Custodian should be revoked");
     }
@@ -131,7 +130,7 @@ contract RightAssetCustodianTest is CustodianShared {
     function test_SetPriority_EmitPrioritySet() public {
         // second expected failing attempt
         uint256 designedPriority = 2;
-        address custodian2 = deployCustodian("weare1.com");
+        address custodian2 = _deployCustodian("weare1.com", user);
 
         vm.startPrank(user);
         vm.expectEmit(true, true, false, true, address(rightAssetCustodian));
@@ -143,7 +142,7 @@ contract RightAssetCustodianTest is CustodianShared {
     function test_SetPriority_ValidPriority() public {
         // second expected failing attempt
         uint256 designedPriority = 2;
-        address custodian2 = deployCustodian("weare1.com");
+        address custodian2 = _deployCustodian("weare1.com", user);
 
         vm.prank(user);
         IRightsAssetCustodianManager(rightAssetCustodian).setPriority(custodian2, designedPriority);
@@ -153,7 +152,7 @@ contract RightAssetCustodianTest is CustodianShared {
 
     function test_SetPriority_RevertIf_ValidPriority() public {
         // second expected failing attempt
-        address custodian2 = deployCustodian("weare1.com");
+        address custodian2 = _deployCustodian("weare1.com", user);
         vm.expectRevert(abi.encodeWithSignature("InvalidPriority(uint256)", 0));
         IRightsAssetCustodianManager(rightAssetCustodian).setPriority(custodian2, 0);
     }
@@ -204,8 +203,8 @@ contract RightAssetCustodianTest is CustodianShared {
     }
 
     function test_GetCustodian_ValidGrantedCustodian() public {
-        address custodian2 = deployCustodian("weare1.com");
-        address custodian3 = deployCustodian("weare2.com");
+        address custodian2 = _deployCustodian("weare1.com", user);
+        address custodian3 = _deployCustodian("weare2.com", user);
 
         address user1 = vm.addr(4);
         IRightsAssetCustodianManager rightAssetCustodianMgr = IRightsAssetCustodianManager(rightAssetCustodian);
@@ -219,11 +218,12 @@ contract RightAssetCustodianTest is CustodianShared {
         // higher demand for 'custodian'
         vm.prank(user1);
         rightAssetCustodianReg.grantCustody(custodian);
+
         vm.startPrank(user);
         // assign custodians to user
-        IRightsAssetCustodianRegistrable(rightAssetCustodian).grantCustody(custodian);
-        IRightsAssetCustodianRegistrable(rightAssetCustodian).grantCustody(custodian2);
-        IRightsAssetCustodianRegistrable(rightAssetCustodian).grantCustody(custodian3);
+        rightAssetCustodianReg.grantCustody(custodian);
+        rightAssetCustodianReg.grantCustody(custodian2);
+        rightAssetCustodianReg.grantCustody(custodian3);
         vm.stopPrank();
 
         // 1- sum the weights
@@ -270,7 +270,7 @@ contract RightAssetCustodianTest is CustodianShared {
 
     function test_IsCustodian_ReturnFalseIfRevokedNorExist() public {
         // MAX default = 3
-        address custodian2 = deployCustodian("weare1.com");
+        address custodian2 = _deployCustodian("weare1.com", user);
         IRightsAssetCustodianVerifiable rightAssetCustodianVer = IRightsAssetCustodianVerifiable(rightAssetCustodian);
         IRightsAssetCustodianRegistrable rightAssetCustodianReg = IRightsAssetCustodianRegistrable(rightAssetCustodian);
 
@@ -299,11 +299,9 @@ contract RightAssetCustodianTest is CustodianShared {
         bool isCustodian = rightAssetCustodianVer.isCustodian(custodian, user);
         assertTrue(isCustodian, "Custodian should be registered");
 
-        vm.prank(governor);
+        vm.prank(nodesCouncil);
         ICustodianRevokable(custodianReferendum).revoke(custodian);
         bool isRevokedCustodian = rightAssetCustodianVer.isCustodian(custodian, user);
         assertFalse(isRevokedCustodian, "Custodian should not be registered after revocation by governance");
     }
-
-    // TODO assign demand + transfer balance and check calc of weight
 }

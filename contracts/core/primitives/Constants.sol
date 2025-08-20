@@ -16,8 +16,9 @@ library C {
     uint64 internal constant MOD_ROLE = 2; // moderator role
     uint64 internal constant VER_ROLE = 3; // account verified role
     uint64 internal constant OPS_ROLE = 4; // operations roles
-    uint64 internal constant VAL_ROLE = 5; // content validation/curation roles
-    uint64 internal constant NOD_ROLE = 6; // nodes validations roles
+
+    uint64 internal constant CONTENT_COUNCIL_ROLE = 5; // content validation/curation roles
+    uint64 internal constant NODE_VALIDATOR_ROLE = 6; // nodes validations roles
 
     bytes32 internal constant REFERENDUM_SUBMIT_TYPEHASH =
         keccak256("Submission(uint256 assetId, address initiator, uint256 nonce)");

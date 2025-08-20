@@ -65,20 +65,14 @@ contract OrchestrateProtocolHydration is Script {
 
         // 2 set mmc as the initial currency and fees
         uint256 agrFee = vm.envUint("AGREEMENT_FEES"); // 5% 500 bps
-        uint256 synFees = vm.envUint("CUSTODY_FEES"); // 100 MMC flat fee
         address currency = vm.envAddress("MMC");
 
         ITollgate tollgate = ITollgate(tollgateAddress);
         // assign bps scheme to right policy manager + fees + mmc
         tollgate.setFees(T.Scheme.BPS, rightPolicyManager, agrFee, currency);
-        tollgate.setFees(T.Scheme.FLAT, custodianReferendum, synFees, currency);
 
         (uint256 feeA, ) = tollgate.getFees(rightPolicyManager, currency);
-        (uint256 feeB, ) = tollgate.getFees(custodianReferendum, currency);
-
         require(feeA == agrFee);
-        require(feeB == synFees);
-
         vm.stopBroadcast();
     }
 }

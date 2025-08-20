@@ -97,7 +97,8 @@ contract AssetSafeTest is BaseTest {
     function _registerAndApproveAsset(address to, uint256 assetId) private {
         vm.prank(to);
         IAssetRegistrable(assetReferendum).submit(assetId);
-        vm.prank(governor);
+        
+        vm.prank(contentCouncil);
         IAssetRegistrable(assetReferendum).approve(assetId);
 
         vm.prank(to);
