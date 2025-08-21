@@ -125,6 +125,7 @@ contract AssetOwnership is
     /// @dev Requires approval before an asset can be registered.
     /// @param to The address that will own the minted NFT.
     /// @param assetId The unique identifier for the asset, serving as the NFT ID.
+    // TODO pause
     function register(address to, uint256 assetId) external onlyApprovedAsset(to, assetId) {
         _mint(to, assetId);
         _enableAsset(assetId);

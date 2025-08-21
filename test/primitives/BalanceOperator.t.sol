@@ -11,7 +11,19 @@ import { IBalanceTransferable } from "contracts/core/interfaces/base/IBalanceTra
 import { IBalanceWithdrawable } from "contracts/core/interfaces/base/IBalanceWithdrawable.sol";
 import { BalanceOperatorUpgradeable } from "contracts/core/primitives/upgradeable/BalanceOperatorUpgradeable.sol";
 
-contract BalanceOperatorWrapper is BalanceOperatorUpgradeable {}
+contract BalanceOperatorWrapper is BalanceOperatorUpgradeable {
+    function deposit(address recipient, uint256 amount, address currency) external returns (uint256) {
+        return _deposit(recipient, amount, currency);
+    }
+
+    function withdraw(address recipient, uint256 amount, address currency) external returns (uint256) {
+        return _withdraw(recipient, amount, currency);
+    }
+
+    function transfer(address recipient, uint256 amount, address currency) external returns (uint256) {
+        return _transfer(recipient, amount, currency);
+    }
+}
 
 contract BalanceOperatorTest is BaseTest {
     address op;

@@ -79,7 +79,6 @@ contract CustodianReferendum is
         // in that way the custodian is omitted during load balancing.
         // in this line we can check if the custodian contract is active custodian.isActive()
         // this is important feature if the custodians want to avoid harm reputation
-
         return _status(uint160(custodian)) == T.Status.Active;
     }
 
@@ -99,7 +98,7 @@ contract CustodianReferendum is
 
     /// @notice Registers a custodian to be approved by council.
     /// @param custodian The address of the custodian to register.
-    function register(address custodian) external onlyValidCustodian(custodian) {
+    function register(address custodian) external whenNotPaused onlyValidCustodian(custodian) {
         // register custodian as pending approval
         _register(uint160(custodian));
         // set the custodian active enrollment period..

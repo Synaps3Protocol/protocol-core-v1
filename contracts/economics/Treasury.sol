@@ -5,6 +5,7 @@ pragma solidity 0.8.26;
 import { Initializable } from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import { UUPSUpgradeable } from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import { AccessControlledUpgradeable } from "@synaps3/core/primitives/upgradeable/AccessControlledUpgradeable.sol";
+import { ReentrancyGuardTransientUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardTransientUpgradeable.sol";
 import { BalanceOperatorUpgradeable } from "@synaps3/core/primitives/upgradeable/BalanceOperatorUpgradeable.sol";
 
 import { ITreasury } from "@synaps3/core/interfaces/economics/ITreasury.sol";
@@ -19,6 +20,7 @@ contract Treasury is
     Initializable,
     UUPSUpgradeable,
     AccessControlledUpgradeable,
+    ReentrancyGuardTransientUpgradeable,
     BalanceOperatorUpgradeable,
     ITreasury
 {
@@ -41,6 +43,7 @@ contract Treasury is
     function initialize(address accessManager) public initializer {
         __UUPSUpgradeable_init();
         __BalanceOperator_init();
+        __ReentrancyGuardTransient_init();
         __AccessControlled_init(accessManager);
     }
 
@@ -52,18 +55,49 @@ contract Treasury is
     // function allocate(address pool, uint256 amount) restricted;
     // eg: proposal: deposit N fees to staking pool, deposit N fees to development pool, rewards, etc
 
-    /// @notice Deposits a specified amount of currency into the treasury for a given recipient.
-    /// @param pool The address of the pool to credit with the deposit.
+    /// @notice Deposits a specified amount of currency into the treasury for a given recipient (pool).
+    /// @dev Only whitelisted accounts (via `restricted`) can interact with this method.
+    ///      This prevents arbitrary accounts from injecting funds into the treasury.
+    /// @param pool The address of the pool credited with the deposit.
     /// @param amount The amount of currency to deposit.
-    /// @param currency The address of the ERC20 token to deposit.
+    /// @param currency The address of the ERC20 token to deposit (use `address(0)` for native).
+    /// @return The confirmed deposited amount.
     function deposit(
         address pool,
         uint256 amount,
         address currency
-    ) public override(BalanceOperatorUpgradeable) restricted returns (uint256) {
-        // restricted deposit to avoid invalid operations
-        // only allowed accounts can interact with this method
-        return super.deposit(pool, amount, currency);
+    ) external whenNotPaused restricted returns (uint256) {
+        return _deposit(pool, amount, currency);
+    }
+
+    /// @notice Withdraws tokens from the treasury to a specified recipient.
+    /// @dev Restricted to authorized accounts (via `restricted`).
+    ///      Ensures treasury funds are only withdrawn under governance-approved flows.
+    /// @param recipient The address receiving the withdrawn tokens.
+    /// @param amount The amount of tokens to withdraw.
+    /// @param currency The token address for the withdrawal (use `address(0)` for native).
+    /// @return The confirmed withdrawn amount.
+    function withdraw(
+        address recipient,
+        uint256 amount,
+        address currency
+    ) external whenNotPaused restricted returns (uint256) {
+        return _withdraw(recipient, amount, currency);
+    }
+
+    /// @notice Transfers tokens internally in the treasury ledger from the caller to a recipient.
+    /// @dev Restricted to authorized accounts (via `restricted`).
+    ///      Unlike `withdraw`, this does not move funds externally but shifts balances inside the ledger.
+    /// @param recipient The address credited with the transfer.
+    /// @param amount The amount to transfer.
+    /// @param currency The token being transferred (use `address(0)` for native).
+    /// @return The confirmed transferred amount.
+    function transfer(
+        address recipient,
+        uint256 amount,
+        address currency
+    ) external whenNotPaused restricted returns (uint256) {
+        return _transfer(recipient, amount, currency);
     }
 
     /// @notice Collects accrued fees for a specified currency from an authorized fee collector. (visitable)
@@ -72,7 +106,7 @@ contract Treasury is
     ///      Only the governor can execute this function, ensuring controlled fee collection.
     /// @param collector The address of an authorized fee collector.
     /// @param currency The address of the ERC20 token for which fees are being collected.
-    function collectFees(address collector, address currency) external restricted nonReentrant {
+    function collectFees(address collector, address currency) external restricted whenNotPaused nonReentrant {
         // TODO update adding amount param on disburse call
         // IFeesCollector feesCollector = IFeesCollector(collector);
         // uint256 collected = feesCollector.disburse(currency);

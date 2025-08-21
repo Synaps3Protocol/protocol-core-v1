@@ -23,7 +23,7 @@ abstract contract AllowanceOperatorUpgradeable is Initializable, LedgerUpgradeab
     /// @dev Storage slot for AllowanceOperatorUpgradeable, calculated using a unique namespace to avoid conflicts.
     /// The `ALLOWANCE_OPERATOR_SLOT` constant is used to point to the location of the storage.
     bytes32 private constant ALLOWANCE_OPERATOR_SLOT =
-        0xa8707513830ffbd3c47e0c83d1f5f0270db240ae37bb1f9a13f077f85b949c00;
+        0x60503404921b66adfd164bd2cecacde1d9102b9421dba47f75ca95001753aa00;
 
     /// @dev Initializes the contract and ensures it is upgradeable.
     /// Even if the initialization is harmless, this ensures the contract follows upgradeable contract patterns.
@@ -53,11 +53,11 @@ abstract contract AllowanceOperatorUpgradeable is Initializable, LedgerUpgradeab
     /// @param to The address of the recipient for whom the funds are being approved.
     /// @param amount The amount of funds to approve.
     /// @param currency The address of the ERC20 token to approve. Use `address(0)` for native tokens.
-    function approve(
+    function _approve(
         address to,
         uint256 amount,
         address currency
-    ) public virtual onlyValidOperation(to, amount) returns (uint256) {
+    ) internal onlyValidOperation(to, amount) returns (uint256) {
         if (msg.sender == to) revert InvalidOperationParameters();
         _sumApprovedAmount(msg.sender, to, amount, currency);
         emit FundsApproved(msg.sender, to, amount, currency);
@@ -68,11 +68,11 @@ abstract contract AllowanceOperatorUpgradeable is Initializable, LedgerUpgradeab
     /// @param to The address of the recipient whose approval is being revoked.
     /// @param currency The address of the ERC20 token associated with the approval. Use `address(0)` for native tokens.
     /// @return The amount of funds that were revoked from the approval.
-    function revoke(
+    function _revoke(
         address to,
         uint256 amount,
         address currency
-    ) public virtual onlyValidOperation(to, amount) returns (uint256) {
+    ) internal onlyValidOperation(to, amount) returns (uint256) {
         if (getApprovedAmount(msg.sender, to, currency) < amount) revert NoFundsToRevoke();
         _subApprovedAmount(msg.sender, to, amount, currency);
         emit FundsRevoked(msg.sender, to, amount, currency);
@@ -83,11 +83,11 @@ abstract contract AllowanceOperatorUpgradeable is Initializable, LedgerUpgradeab
     /// @param from The address of the account from which the approved funds are being collected.
     /// @param amount The amount of funds to collect.
     /// @param currency The address of the ERC20 token to collect. Use `address(0)` for native tokens.
-    function collect(
+    function _collect(
         address from,
         uint256 amount,
         address currency
-    ) public virtual onlyValidOperation(from, amount) returns (uint256) {
+    ) internal onlyValidOperation(from, amount) returns (uint256) {
         if (getApprovedAmount(from, msg.sender, currency) < amount) revert NoFundsToCollect(); //
         if (getLedgerBalance(from, currency) < amount) revert NoFundsToCollect(); // no balance
 
