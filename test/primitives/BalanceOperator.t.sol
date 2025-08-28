@@ -61,7 +61,7 @@ contract Handler is Test {
     function withdraw(uint256 actorIndex, uint256 amount) external {
         vm.assume(actorIndex < actors.length);
         address a = actors[actorIndex];
-        vm.assume(amount > 0 && amount <  operator.getLedgerBalance(a, address(mmc)));
+        vm.assume(amount > 0 && amount < operator.getLedgerBalance(a, address(mmc)));
 
         // as author
         vm.prank(a);
@@ -121,10 +121,9 @@ contract BalanceOperatorTest is BaseTest {
             totalByActor += ILedgerVerifiable(opAddress).getLedgerBalance(actors[i], token);
         }
 
-        // the contract balance must match with the sum of all ledgers 
+        // the contract balance must match with the sum of all ledgers
         assertEq(totalByActor, IBalanceVerifiable(opAddress).getBalance(token));
     }
-
 
     function test_Deposit_ValidDeposit() public {
         // 100 MMC
