@@ -39,12 +39,10 @@ contract AccessManager is Initializable, UUPSUpgradeable, AccessManagerUpgradeab
         //
         // Group/Council Based Roles:
         // - ADMIN_ROLE: Managed by a smart account or council.
-        // Handles protocol upgrades, pause mechanisms, and operational role assignments.
-        // - MOD_ROLE: Managed by a smart account or council.
         // Approves policy submissions and moderates hook operations.
         // - CONTENT_COUNCIL_ROLE: Managed by a smart account or council.
         // Participates in governance referenda for content curation.
-        // - NODE_VALIDATOR_ROLE: Managed by a smart account or council.
+        // - CUSTODY_COUNCIL_ROLE: Managed by a smart account or council.
         // Participates in governance referenda for nodes validation.
         //
         // Individual/Contract Based Roles:
@@ -58,22 +56,18 @@ contract AccessManager is Initializable, UUPSUpgradeable, AccessManagerUpgradeab
             │
             ├── ADMIN_ROLE (Smart Account / Council) 
             │   │
-            │   ├── MOD_ROLE (Smart Account / Council) 
-            │   │
             │   └── OPS_ROLE (Internal Contract Role)  
             │
             ├── CONTENT_COUNCIL_ROLE (Smart Account / Council)
             │
-            ├── NODE_VALIDATOR_ROLE (Smart Account / Council)
+            ├── CUSTODY_COUNCIL_ROLE (Smart Account / Council)
             │
             ├── VER_ROLE (Individual Trusted Creator)
         */
 
-        _setRoleAdmin(C.MOD_ROLE, C.ADMIN_ROLE);
         _setRoleAdmin(C.OPS_ROLE, C.ADMIN_ROLE);
-
         _setRoleAdmin(C.VER_ROLE, C.GOV_ROLE);
-        _setRoleAdmin(C.NODE_VALIDATOR_ROLE, C.GOV_ROLE);
+        _setRoleAdmin(C.CUSTODY_COUNCIL_ROLE, C.GOV_ROLE);
         _setRoleAdmin(C.CONTENT_COUNCIL_ROLE, C.GOV_ROLE);
     }
 

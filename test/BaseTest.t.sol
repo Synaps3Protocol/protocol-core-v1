@@ -103,7 +103,7 @@ abstract contract BaseTest is Test {
         vm.startPrank(governor);
         // add to councils the corresponding role
         authority.grantRole(C.CONTENT_COUNCIL_ROLE, contentCouncil, 0);
-        authority.grantRole(C.NODE_VALIDATOR_ROLE, nodesCouncil, 0);
+        authority.grantRole(C.CUSTODY_COUNCIL_ROLE, nodesCouncil, 0);
         vm.stopPrank();
     }
 
@@ -223,7 +223,7 @@ abstract contract BaseTest is Test {
         vm.startPrank(admin);
         IAccessManager authority = IAccessManager(accessManager);
         // assign permissions to VAL_ROLE for allowed functions to call in target
-        authority.setTargetFunctionRole(target, allowed, C.NODE_VALIDATOR_ROLE);
+        authority.setTargetFunctionRole(target, allowed, C.CUSTODY_COUNCIL_ROLE);
         vm.stopPrank();
     }
 

@@ -2,7 +2,6 @@
 // NatSpec format convention - https://docs.soliditylang.org/en/v0.5.10/natspec-format.html
 pragma solidity 0.8.26;
 
-import { EnumerableSet } from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 import { Initializable } from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import { UUPSUpgradeable } from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import { AccessControlledUpgradeable } from "@synaps3/core/primitives/upgradeable/AccessControlledUpgradeable.sol";
@@ -13,8 +12,7 @@ import { ITollgate } from "@synaps3/core/interfaces/economics/ITollgate.sol";
 import { FinancialOps } from "@synaps3/core/libraries/FinancialOps.sol";
 import { FeesOps } from "@synaps3/core/libraries/FeesOps.sol";
 import { T } from "@synaps3/core/primitives/Types.sol";
-
-// TODO Doc: Trustless escrow system - modular escrow framework - escrow mechanism (agreement <arbitrer> settlement)
+import { C } from "@synaps3/core/primitives/Constants.sol";
 
 /// @title AgreementManager
 /// @notice Manages the lifecycle (trustless escrow system) of agreements, including creation and retrieval.
@@ -23,7 +21,6 @@ import { T } from "@synaps3/core/primitives/Types.sol";
 contract AgreementManager is Initializable, UUPSUpgradeable, AccessControlledUpgradeable, IAgreementManager {
     using FeesOps for uint256;
     using FinancialOps for address;
-    using EnumerableSet for EnumerableSet.UintSet;
 
     /// KIM: any initialization here is ephemeral and not included in bytecode..
     /// so the code within a logic contract’s constructor or global declaration
@@ -38,6 +35,10 @@ contract AgreementManager is Initializable, UUPSUpgradeable, AccessControlledUpg
     ILedgerVault public immutable LEDGER_VAULT;
     //slither-disable-end naming-convention
 
+    uint256 constant MAX_EXCESS = 13;    // 1..13=91%, 14=>105%
+    /// @notice Maximum allowed number of parties per agreement.
+    /// @dev Can be updated by admin to adapt system limits.
+    uint256 private _maxParties;
     /// @dev Holds a bounded key expressing the agreement between the parts.
     mapping(uint256 => T.Agreement) private _agreementsByProof;
 
@@ -54,10 +55,13 @@ contract AgreementManager is Initializable, UUPSUpgradeable, AccessControlledUpg
     /// @notice Error thrown when a currency is not supported by the specified target.
     /// @param target The address or context for which the currency is unsupported.
     /// @param currency The address of the unsupported currency.
-    error UnsupportedAgreementCurrency(address target, address currency);
+    error UnsupportedAgreementTarget(address target, address currency);
 
-    /// @notice Error thrown when an agreement includes no parties.
-    error NoPartiesInAgreement();
+    /// @notice Error thrown when trying to set an invalid maximum number of parties.
+    error InvalidMaxParties(uint256 value);
+
+    /// @notice Error thrown when the number of parties exceeds the protocol limit.
+    error ExceedsMaxParties();
 
     /// @notice Ensures that the specified currency is supported for the given target.
     /// @dev This modifier verifies if the `currency` is accepted under the context of `target`.
@@ -66,7 +70,7 @@ contract AgreementManager is Initializable, UUPSUpgradeable, AccessControlledUpg
     /// @param currency The address of the currency being checked.
     modifier onlySupportedCurrency(address target, address currency) {
         bool isCurrencySupported = TOLLGATE.isSupportedCurrency(target, currency);
-        if (!isCurrencySupported) revert UnsupportedAgreementCurrency(target, currency);
+        if (!isCurrencySupported) revert UnsupportedAgreementTarget(target, currency);
         _;
     }
 
@@ -84,6 +88,19 @@ contract AgreementManager is Initializable, UUPSUpgradeable, AccessControlledUpg
     function initialize(address accessManager) public initializer {
         __UUPSUpgradeable_init();
         __AccessControlled_init(accessManager);
+        _maxParties = 5;
+    }
+
+    /// @notice Updates the maximum number of allowed parties.
+    /// @param newMax The new maximum number of parties.
+    function setMaxParties(uint256 newMax) external onlyAdmin {
+        if (newMax == 0) revert InvalidMaxParties(newMax);
+        _maxParties = newMax;
+    }
+
+    /// @notice Retrieves the current max number of parties.
+    function maxParties() external view returns (uint256) {
+        return _maxParties;
     }
 
     /// @notice Creates and stores a new agreement.
@@ -100,12 +117,13 @@ contract AgreementManager is Initializable, UUPSUpgradeable, AccessControlledUpg
         bytes calldata payload
     ) external onlySupportedCurrency(arbiter, currency) returns (uint256) {
         // IMPORTANT: The process of distributing funds to accounts should be handled within the settlement logic.
-        uint256 confirmed = LEDGER_VAULT.lock(msg.sender, amount, currency);
-        T.Agreement memory agreement = previewAgreement(confirmed, currency, arbiter, parties, payload);
+        T.Agreement memory agreement = previewAgreement(amount, currency, arbiter, parties, payload);
+        uint256 confirmed = LEDGER_VAULT.lock(msg.sender, agreement.locked, currency);
+
         // only the initiator can operate with this agreement proof, or transfer the proof to the other party..
         // each agreement is unique and immutable, ensuring that it cannot be modified or reconstructed.
         uint256 proof = _createAndStoreProof(agreement);
-        emit AgreementCreated(msg.sender, proof, amount, currency);
+        emit AgreementCreated(msg.sender, proof, confirmed, currency);
         return proof;
     }
 
@@ -128,14 +146,6 @@ contract AgreementManager is Initializable, UUPSUpgradeable, AccessControlledUpg
         address[] calldata parties,
         bytes calldata payload
     ) public view onlySupportedCurrency(arbiter, currency) returns (T.Agreement memory) {
-        if (parties.length == 0) {
-            revert NoPartiesInAgreement();
-        }
-
-        // TODO Even if we are covered by gas fees, during execution a good way to avoid abuse
-        // is penalize parties after N length eg. The max parties allowed is 5, any extra
-        // parties are charged with a extra * fee. Denial of Service risk
-
         // IMPORTANT:
         // Agreements transport value and represent a defined commitment between parties.
         // Think of an agreement as similar to a bonus, gift card, prepaid card, or check:
@@ -148,7 +158,13 @@ contract AgreementManager is Initializable, UUPSUpgradeable, AccessControlledUpg
         // By locking in fees during agreement creation, the protocol avoids scenarios
         // where fee structures change (favorably or unfavorably) after creation,
         // which could lead to abuse or exploitation.
-        uint256 deductions = _calcFees(amount, arbiter, currency);
+        uint256 baseFees = _calcFees(amount, arbiter, currency);
+        // Even if we are covered by gas fees, during execution a good way to avoid abuse
+        // is penalize parties after N length eg. The max parties allowed is 5, any extra
+        // parties are charged with a extra * fee. Denial of Service risk mitigation..
+        uint256 penalization = _calculatePenalization(parties.length, amount);
+        uint256 totalToLock = amount + penalization;
+
         // This design ensures fairness and transparency by preventing any future
         // adjustments to fees or protocol conditions from affecting the terms of this agreement.
         return
@@ -157,8 +173,9 @@ contract AgreementManager is Initializable, UUPSUpgradeable, AccessControlledUpg
                 currency: currency, // the currency used in transaction
                 initiator: msg.sender, // the tx initiator
                 total: amount, // the transaction amount
-                fees: deductions, // the protocol fees of the agreement
-                parties: parties, // the accounts related to agreement
+                fees: baseFees, // the protocol fees of the agreement
+                locked: totalToLock, // the total to lock, may contain penalization
+                parties: parties, // the additional accounts related to agreement 1:N agreement
                 payload: payload // any additional data needed during agreement execution
             });
     }
@@ -177,6 +194,33 @@ contract AgreementManager is Initializable, UUPSUpgradeable, AccessControlledUpg
         return proof;
     }
 
+    /// @dev Calculates the penalization based on parties len and total amount
+    function _calculatePenalization(uint256 partiesLen, uint256 amount) private view returns (uint256 penalization) {
+        uint256 hardCap = _maxParties + MAX_EXCESS;
+        if (partiesLen > hardCap) revert ExceedsMaxParties();
+
+        // soft cap validation, economic penalization
+        if (partiesLen > _maxParties) {
+            uint256 excess = partiesLen - _maxParties;
+            uint256 multiplierBps = _penaltyBps(excess);
+            penalization = amount.perOf(multiplierBps);
+        }
+    }
+
+    /// @dev Computes the penalty BPS as a arithmetic succession.
+    ///      1st extra = 1%, 2nd extra = +2%, 3rd extra = +3%, ...
+    ///      Formula: (N * (N + 1) / 2) * 100
+    /// @param excess Number of parties beyond the allowed max.
+    /// @return penaltyBps Total penalty in basis points.
+    function _penaltyBps(uint256 excess) private pure returns (uint256 penaltyBps) {
+        if (excess == 0) return 0;
+        // Formula for the sum of an arithmetic succession: S = n(n + 1) / 2
+        // Example: excess = 3 -> 1 + 2 + 3 = 6 %
+        unchecked {
+            penaltyBps = ((excess * (excess + 1)) / 2) * 100;
+        }
+    }
+
     /// @notice Calculates the fee based on the provided total amount, agent, and currency.
     /// @dev Reverts if the currency is not supported by the Tollgate or if no fee scheme is defined for the agent.
     /// @param total The total amount from which the fee will be calculated.
@@ -185,7 +229,6 @@ contract AgreementManager is Initializable, UUPSUpgradeable, AccessControlledUpg
     /// @return The calculated fee amount based on the applicable fee scheme.
     function _calcFees(uint256 total, address target, address currency) private view returns (uint256) {
         // !IMPORTANT if fees manager does not support the currency or the target, will revert..
-        // TODO avoid revert, just check if the currency is supported and return 0
         (uint256 fees, T.Scheme scheme) = TOLLGATE.getFees(target, currency);
         if (scheme == T.Scheme.BPS) return total.perOf(fees); // bps calc
         if (scheme == T.Scheme.NOMINAL) return total.perOf(fees.calcBps()); // nominal to bps

@@ -47,21 +47,16 @@ contract OrchestrateProtocolHydration is Script {
 
         authority.setTargetFunctionRole(tollgateAddress, tollgateAllowed, C.GOV_ROLE);
         authority.setTargetFunctionRole(treasuryAddress, treasuryAllowed, C.GOV_ROLE);
-        authority.setTargetFunctionRole(assetReferendum, assetReferendumAllowed, C.GOV_ROLE);
-        authority.setTargetFunctionRole(custodianReferendum, custodianReferendumAllowed, C.GOV_ROLE);
-
-        // assign moderation permissions
-        authority.grantRole(C.MOD_ROLE, adminAddress, 0);
-        // bytes4[] memory hookModAllowed = HooksModPermissions();
-        bytes4[] memory auditorAllowed = PolicyAuditorModPermissions();
-        authority.setTargetFunctionRole(auditorAddress, auditorAllowed, C.MOD_ROLE);
-        // authority.setTargetFunctionRole(auditorAddress, hookModAllowed, C.MOD_ROLE);
+        authority.setTargetFunctionRole(assetReferendum, assetReferendumAllowed, C.CONTENT_COUNCIL_ROLE);
+        authority.setTargetFunctionRole(custodianReferendum, custodianReferendumAllowed, C.CUSTODY_COUNCIL_ROLE);
 
         // assign operations permissions
         authority.grantRole(C.OPS_ROLE, agreementManager, 0);
         authority.grantRole(C.OPS_ROLE, agreementSettler, 0);
         bytes4[] memory vaultAllowed = LedgerVaultOpsPermissions();
         authority.setTargetFunctionRole(ledgerVault, vaultAllowed, C.OPS_ROLE);
+
+
 
         // 2 set mmc as the initial currency and fees
         uint256 agrFee = vm.envUint("AGREEMENT_FEES"); // 5% 500 bps

@@ -36,17 +36,30 @@ library T {
     }
 
     /// @title Agreement
-    /// @dev Represents an agreement between multiple parties regarding the distribution and management of asset.
-    /// @notice This struct captures the total amount involved, net amount after deductions, distribution fees,
-    /// and the relevant addresses involved in the agreement.
+    /// @dev Represents an escrow-backed agreement involving payment, distribution or access rights.
+    /// @notice This struct supports flexible interaction models, including 1:1 and 1:N transfers,
+    /// purchases, access control, and delegated rights via arbitration.
     struct Agreement {
-        address arbiter; // the designated escrow agent enforcing the agreement.
-        address currency; // the currency used in transaction
-        address initiator; // the initiator of the transaction
-        uint256 total; // the transaction total amount
-        uint256 fees; // the agreement protocol fees
-        address[] parties; // the accounts or beneficiaries bounded to the agreement
-        bytes payload; // any additional data needed during agreement execution
+        /// @notice The authorized arbiter that enforces the agreement logic (e.g., asset transfer or access).
+        address arbiter;
+        /// @notice The currency used for settlement (e.g., ETH or ERC20 address).
+        address currency;
+        /// @notice The address that initiated the agreement and provided the funds.
+        /// @dev In a purchase scenario, the initiator is the asset buyer and final recipient of the asset.
+        ///      In access-based agreements, the initiator may be the funder but not necessarily the consumer.
+        address initiator;
+        /// @notice Total amount involved in the agreement, including fees.
+        uint256 total;
+        /// @notice Protocol or arbitration fees deducted from the total.
+        uint256 fees;
+        /// @notice Protocol internal property to handle total locked amount during agreement lifecycle
+        uint256 locked;
+        /// @notice List of accounts involved as beneficiaries or consumers of rights.
+        /// @dev In purchase scenarios, this may be empty (use `initiator` as beneficiary).
+        ///      In access-sharing modelsor multiple agreement this may contain multiple users granted access to content or rights.
+        address[] parties;
+        /// @notice Arbitrary data passed for context, such as assetId, license type, content hash, etc.
+        bytes payload;
     }
 
     /// @title TimeFrame

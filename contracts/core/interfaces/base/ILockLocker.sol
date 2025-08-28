@@ -4,7 +4,6 @@ pragma solidity 0.8.26;
 /// @title ILockLocker
 /// @notice Interface for locking funds in an account.
 interface ILockLocker {
-
     /// @notice Emitted when funds are locked.
     /// @param initiator Address that initiates the operation.
     /// @param from Account whose funds are being locked.

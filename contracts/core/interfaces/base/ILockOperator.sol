@@ -8,6 +8,4 @@ import { ILockLocker } from "@synaps3/core/interfaces/base/ILockLocker.sol";
 /// @title ILockOperator
 /// @notice Unified interface that composes locker, releaser, and claimer capabilities.
 /// @dev Adds a common read method to query the locked balance.
-interface ILockOperator is ILockClaimer, ILockLocker, ILockReleaser {
-
-}
+interface ILockOperator is ILockClaimer, ILockLocker, ILockReleaser {}

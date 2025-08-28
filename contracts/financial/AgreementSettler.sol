@@ -152,17 +152,26 @@ contract AgreementSettler is
         // Penalty fees retained here also help maintain the protocol's economic balance
         // and ensure that the system operates sustainably over time.
         uint256 fees = agreement.fees; // keep fees as penalty
-        uint256 available = agreement.total - fees; // initiator rollback
         address initiator = agreement.initiator; // the original initiator
         address currency = agreement.currency;
+        // eg. total = 100;
+        //     locked = 105 (total + penalization)
+        //     penalization = 5 <- paid by initiator during agreement
+        //     fees = 10 <- 10%
+        //
+        //     available =  90
+        //     protocolTake = 10 + 5
+        uint256 penalization = agreement.locked - agreement.total;
+        uint256 available = agreement.total - fees; // initiator rollback
+        uint256 protocolTake = fees + penalization;
 
         _setProofAsSettled(proof);
         // slither-disable-start unused-return
-        LEDGER_VAULT.claim(initiator, fees, currency);
+        LEDGER_VAULT.claim(initiator, protocolTake, currency);
         // part of the agreement locked amount is released to the account
         if (available > 0) LEDGER_VAULT.release(initiator, available, currency);
         // slither-disable-end unused-return
-        emit AgreementCancelled(initiator, proof, fees);
+        emit AgreementCancelled(initiator, proof, protocolTake);
         return agreement;
     }
 
@@ -197,22 +206,27 @@ contract AgreementSettler is
         T.Agreement memory agreement = AGREEMENT_MANAGER.getAgreement(proof);
         if (agreement.arbiter != msg.sender) revert UnauthorizedEscrowAgent();
 
-        uint256 total = agreement.total; // protocol
-        uint256 fees = agreement.fees; // protocol
-        uint256 available = total - fees; // holder earnings
+        uint256 total = agreement.total;
+        uint256 locked = agreement.locked;
+        uint256 fees = agreement.fees;
+        uint256 penalization = locked - total;
+        uint256 available = total - fees;
+
         address initiator = agreement.initiator;
         address currency = agreement.currency;
+        uint256 protocolTake = fees + penalization;
 
         // TODO: Implement a time window to enforce the validity period for agreement settlement.
         // Once the window expires, the agreement should be marked as invalid or revert,
         // then quit is only way to close the agreement.
         _setProofAsSettled(proof);
 
+        // locked may include penalization
         // move the funds to settler and transfer the available to counterparty
-        LEDGER_VAULT.claim(initiator, total, currency);
+        LEDGER_VAULT.claim(initiator, locked, currency);
         // could exists cases where available become zero when fees are flat
         if (available > 0) LEDGER_VAULT.transfer(counterparty, available, currency);
-        emit AgreementSettled(msg.sender, counterparty, proof, fees);
+        emit AgreementSettled(msg.sender, counterparty, proof, protocolTake);
         return agreement;
     }
 

@@ -9,6 +9,4 @@ import { ILockOperator } from "@synaps3/core/interfaces/base/ILockOperator.sol";
 /// @title ILedgerVault
 /// @notice Interface for managing locked funds and their operations.
 /// @dev Extends IBalanceOperator for managing user balances in a vault-like system.
-interface ILedgerVault is IBalanceOperator, IAllowanceOperator, ILockOperator {
-
-}
+interface ILedgerVault is IBalanceOperator, IAllowanceOperator, ILockOperator {}

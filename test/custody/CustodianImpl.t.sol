@@ -67,6 +67,15 @@ contract CustodianImplTest is BaseTest {
         ICustodian(custodian).setEndpoint("mynew.com");
     }
 
+    function test_SetEndpoint_RevertWhen_InvalidEndpoint() public {
+        // created with an initial endpoint
+        address custodian = deployCustodian("1.1.1.1", user);
+
+        vm.prank(user);
+        vm.expectRevert(abi.encodeWithSignature("InvalidEndpoint()"));
+        ICustodian(custodian).setEndpoint("");
+    }
+
     function test_GetBalance_ValidBalance() public {
         // created with an initial endpoint
         address custodian = deployCustodian("1.1.1.1", user);

@@ -31,3 +31,8 @@ polygon-amoy = "${AMOY_RPC_URL}"
 
 [etherscan]
 polygon-amoy = { key = "${AMOY_API_KEY}", url = "https://www.oklink.com/api/explorer/v1/contract/verify/async/api/polygonAmoy" }
+
+[invariant]
+runs = 1000
+depth = 25
+fail_on_revert = true

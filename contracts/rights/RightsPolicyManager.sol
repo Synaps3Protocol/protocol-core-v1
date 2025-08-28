@@ -110,6 +110,10 @@ contract RightsPolicyManager is
         // 1- retrieves the agreement and marks it as settled..
         T.Agreement memory agreement = AGREEMENT_SETTLER.settleAgreement(proof, holder);
         bytes memory callData = abi.encodeCall(IPolicy.enforce, (holder, agreement));
+        if (agreement.parties.length == 0) {
+            revert EnforcementFailed("No parties in agreement: at least one party is required.");
+        }
+
         /// Type-safe low-level call to policy. The policy is registered to the parties.
         /// The policy address is already validated during policy audit and authorization.
         /// During `onlyAuthorizedPolicy`, the policy is verified about safety.

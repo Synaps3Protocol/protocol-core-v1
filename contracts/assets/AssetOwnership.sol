@@ -111,7 +111,6 @@ contract AssetOwnership is
         return super.supportsInterface(interfaceId);
     }
 
-    // TODO: build getURI => from custodian /erc721-metadata
     // TODO: Update asset info control version restricted/approved by governance
     // TODO: Transfer Ownership Fee: Introducing a fee for transferring
     // ownership discourages frequent or unnecessary transfers,
@@ -125,8 +124,7 @@ contract AssetOwnership is
     /// @dev Requires approval before an asset can be registered.
     /// @param to The address that will own the minted NFT.
     /// @param assetId The unique identifier for the asset, serving as the NFT ID.
-    // TODO pause
-    function register(address to, uint256 assetId) external onlyApprovedAsset(to, assetId) {
+    function register(address to, uint256 assetId) external whenNotPaused onlyApprovedAsset(to, assetId) {
         _mint(to, assetId);
         _enableAsset(assetId);
         emit RegisteredAsset(to, assetId);

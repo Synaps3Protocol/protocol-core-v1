@@ -74,8 +74,7 @@ contract HookRegistry is Initializable, UUPSUpgradeable, AccessControlledUpgrade
     /// @param hook The address of the hook contract to register.
     /// @param interfaceId The interface ID that this hook implements.
     /// This allows different kinds of hook logic to be categorized and retrieved by interface ID.
-    // TODO: restricted to MOD_ROLE
-    function submit(address hook, bytes4 interfaceId) external onlyValidHook(hook) restricted {
+    function submit(address hook, bytes4 interfaceId) external onlyValidHook(hook) onlyAdmin {
         _register(uint160(hook));
         _hooks[interfaceId] = hook;
         emit HookRegistered(hook, interfaceId, msg.sender);
@@ -84,7 +83,7 @@ contract HookRegistry is Initializable, UUPSUpgradeable, AccessControlledUpgrade
     /// @notice Approves a registered hook contract.
     /// @param hook The address of the hook to be approved.
     /// Emits a HookApproved event upon success.
-    function approve(address hook) external restricted {
+    function approve(address hook) external onlyAdmin {
         _approve(uint160(hook));
         emit HookApproved(hook, msg.sender);
     }
@@ -92,7 +91,7 @@ contract HookRegistry is Initializable, UUPSUpgradeable, AccessControlledUpgrade
     /// @notice Revokes a previously approved hook contract.
     /// @param hook The address of the hook to revoke.
     /// Emits a HookRevoked event upon success.
-    function reject(address hook) external restricted {
+    function reject(address hook) external onlyAdmin {
         _revoke(uint160(hook));
         emit HookRevoked(hook, msg.sender);
     }

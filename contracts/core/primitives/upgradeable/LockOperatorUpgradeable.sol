@@ -14,13 +14,12 @@ abstract contract LockOperatorUpgradeable is Initializable, LedgerUpgradeable, I
     struct LockOperatorStorage {
         /// @dev Holds the relation between approved funds, the currency, and amount
         /// @dev Holds the registry of locked funds for accounts.
-        mapping(address => mapping(address => uint256))  _locked;
+        mapping(address => mapping(address => uint256)) _locked;
     }
 
     /// @dev Storage slot for LockOperatorUpgradeable, calculated using a unique namespace to avoid conflicts.
     /// The `LOCK_OPERATOR_SLOT` constant is used to point to the location of the storage.
-    bytes32 private constant LOCK_OPERATOR_SLOT =
-        0xece3ff917f3a3127e521e0c3f2f90ff09a3c8199be32f9b40bff79e776960800;
+    bytes32 private constant LOCK_OPERATOR_SLOT = 0xece3ff917f3a3127e521e0c3f2f90ff09a3c8199be32f9b40bff79e776960800;
 
     /// @dev Initializes the contract and ensures it is upgradeable.
     /// Even if the initialization is harmless, this ensures the contract follows upgradeable contract patterns.
