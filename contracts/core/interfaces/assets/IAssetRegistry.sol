@@ -5,11 +5,11 @@ pragma solidity 0.8.26;
 import { IERC721 } from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import { IERC721Metadata } from "@openzeppelin/contracts/token/ERC721/extensions/IERC721Metadata.sol";
 
-/// @title IAssetOwnership
+/// @title IAssetRegistry
 /// @notice Interface for managing asset ownership as ERC721 tokens.
 /// @dev Extends ERC721 and ERC721Metadata to provide full NFT functionality,
 ///      including ownership tracking and metadata retrieval.
-interface IAssetOwnership is IERC721, IERC721Metadata {
+interface IAssetRegistry is IERC721, IERC721Metadata {
     /// @notice Registers a new asset as an NFT.
     /// @dev The asset must have a unique identifier (`assetId`) that serves as the token ID.
     /// @param to The address that will own the minted NFT.

@@ -9,8 +9,8 @@ contract DeployAssetSafe is DeployBase {
 
         vm.startBroadcast(getAdminPK());
         address accessManager = computeCreate3Address("SALT_ACCESS_MANAGER");
-        address AssetOwnership = computeCreate3Address("SALT_ASSET_OWNERSHIP");
-        address impl = address(new AssetSafe(AssetOwnership));
+        address assetRegistry = computeCreate3Address("SALT_ASSET_REGISTRY");
+        address impl = address(new AssetSafe(assetRegistry));
         bytes memory init = abi.encodeCall(AssetSafe.initialize, (accessManager));
         address assetVault = deployUUPS(impl, init, "SALT_ASSET_SAFE");
         vm.stopBroadcast();

@@ -7,7 +7,7 @@ import { IRightsPolicyManagerVerifiable } from "@synaps3/core/interfaces/rights/
 // solhint-disable-next-line max-line-length
 import { IRightsPolicyAuthorizerVerifiable } from "@synaps3/core/interfaces/rights/IRightsPolicyAuthorizerVerifiable.sol";
 import { IAttestationProvider } from "@synaps3/core/interfaces/base/IAttestationProvider.sol";
-import { IAssetOwnership } from "@synaps3/core/interfaces/assets/IAssetOwnership.sol";
+import { IAssetRegistry } from "@synaps3/core/interfaces/assets/IAssetRegistry.sol";
 import { IPolicy } from "@synaps3/core/interfaces/policies/IPolicy.sol";
 import { T } from "@synaps3/core/primitives/Types.sol";
 
@@ -23,7 +23,7 @@ abstract contract PolicyBase is ERC165, IPolicy {
     /// @custom:oz-upgrades-unsafe-allow state-variable-immutable
     IAttestationProvider public immutable ATTESTATION_PROVIDER;
     /// @custom:oz-upgrades-unsafe-allow state-variable-immutable
-    IAssetOwnership public immutable ASSET_OWNERSHIP;
+    IAssetRegistry public immutable ASSET_REGISTRY;
 
     /// @dev Registry to store the relation between (context & account) key => attestation
     mapping(bytes32 => uint256) private _attestations;
@@ -87,13 +87,13 @@ abstract contract PolicyBase is ERC165, IPolicy {
     constructor(
         address rightsPolicyManager,
         address rightsAuthorizer,
-        address assetOwnership,
+        address assetRegistry,
         address providerAddress
     ) {
         RIGHTS_AUTHORIZER = IRightsPolicyAuthorizerVerifiable(rightsAuthorizer);
         RIGHTS_POLICY_MANAGER = IRightsPolicyManagerVerifiable(rightsPolicyManager);
         ATTESTATION_PROVIDER = IAttestationProvider(providerAddress);
-        ASSET_OWNERSHIP = IAssetOwnership(assetOwnership);
+        ASSET_REGISTRY = IAssetRegistry(assetRegistry);
     }
 
     /// @notice Retrieves the address of the attestation provider.
@@ -122,7 +122,7 @@ abstract contract PolicyBase is ERC165, IPolicy {
     /// @notice Returns the asset holder registered in the ownership contract.
     /// @param assetId the asset ID to retrieve the holder.
     function _getHolder(uint256 assetId) internal view returns (address) {
-        return ASSET_OWNERSHIP.ownerOf(assetId); // Returns the registered owner.
+        return ASSET_REGISTRY.ownerOf(assetId); // Returns the registered owner.
     }
 
     /// @dev Internal function to commit an agreement and create an attestation.

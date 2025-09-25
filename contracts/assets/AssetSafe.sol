@@ -5,7 +5,7 @@ import { UUPSUpgradeable } from "@openzeppelin/contracts-upgradeable/proxy/utils
 import { Initializable } from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 
 import { AccessControlledUpgradeable } from "@synaps3/core/primitives/upgradeable/AccessControlledUpgradeable.sol";
-import { IAssetOwnership } from "@synaps3/core/interfaces/assets/IAssetOwnership.sol";
+import { IAssetRegistry } from "@synaps3/core/interfaces/assets/IAssetRegistry.sol";
 import { IAssetSafe } from "@synaps3/core/interfaces/assets/IAssetSafe.sol";
 import { T } from "@synaps3/core/primitives/Types.sol";
 
@@ -17,7 +17,7 @@ contract AssetSafe is Initializable, UUPSUpgradeable, AccessControlledUpgradeabl
     /// @custom:oz-upgrades-unsafe-allow state-variable-immutable
     /// Our immutables behave as constants after deployment
     /// slither-disable-next-line naming-convention
-    IAssetOwnership public immutable ASSET_OWNERSHIP;
+    IAssetRegistry public immutable ASSET_REGISTRY;
 
     /// @dev Mapping to securely store encrypted content using a unique key derived from assetId and cipher type.
     mapping(bytes32 => bytes) private _secured;
@@ -38,16 +38,16 @@ contract AssetSafe is Initializable, UUPSUpgradeable, AccessControlledUpgradeabl
     /// @param assetId The identifier of the asset.
     /// @dev Reverts if the sender is not the owner of the asset based on the Ownership contract.
     modifier onlyHolder(uint256 assetId) {
-        if (ASSET_OWNERSHIP.ownerOf(assetId) != msg.sender) {
+        if (ASSET_REGISTRY.ownerOf(assetId) != msg.sender) {
             revert InvalidAssetRightsHolder();
         }
         _;
     }
 
     /// @custom:oz-upgrades-unsafe-allow constructor
-    constructor(address assetOwnership) {
+    constructor(address assetRegistry) {
         _disableInitializers();
-        ASSET_OWNERSHIP = IAssetOwnership(assetOwnership);
+        ASSET_REGISTRY = IAssetRegistry(assetRegistry);
     }
 
     /// @notice Initializes the proxy state.

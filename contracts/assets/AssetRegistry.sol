@@ -11,23 +11,23 @@ import { ERC721EnumerableUpgradeable } from "@openzeppelin/contracts-upgradeable
 import { ERC721StatefulUpgradeable } from "@synaps3/core/primitives/upgradeable/ERC721StatefulUpgradeable.sol";
 import { AccessControlledUpgradeable } from "@synaps3/core/primitives/upgradeable/AccessControlledUpgradeable.sol";
 import { IAssetReferendumVerifiable } from "@synaps3/core/interfaces/assets/IAssetReferendumVerifiable.sol";
-import { IAssetOwnership } from "@synaps3/core/interfaces/assets/IAssetOwnership.sol";
+import { IAssetRegistry } from "@synaps3/core/interfaces/assets/IAssetRegistry.sol";
 
 // TODO: Evaluate ERC-404 for fractionalization support
 // TODO: Evaluate ERC-2981 for royalty management
 // TODO: Evaluate ERC-4804 for URL-based on-chain asset references
 
-/// @title AssetOwnership
+/// @title AssetRegistry
 /// @notice This contract manages ownership and lifecycle of digital assets using ERC721.
 /// @dev Implements UUPS upgradeability, access control, and stateful asset management.
-contract AssetOwnership is
+contract AssetRegistry is
     Initializable,
     UUPSUpgradeable,
     ERC721Upgradeable,
     AccessControlledUpgradeable,
     ERC721EnumerableUpgradeable,
     ERC721StatefulUpgradeable,
-    IAssetOwnership
+    IAssetRegistry
 {
     /// @custom:oz-upgrades-unsafe-allow state-variable-immutable
     /// @notice Reference to the asset verification contract for content approval.

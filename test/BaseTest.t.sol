@@ -11,7 +11,7 @@ import { DeployTreasury } from "script/deployment/05_Deploy_Economics_Treasury.s
 import { DeployLedgerVault } from "script/deployment/06_Deploy_Financial_LedgerVault.s.sol";
 import { DeployAssetReferendum } from "script/deployment/11_Deploy_Assets_AssetReferendum.s.sol";
 import { DeployAssetSafe } from "script/deployment/13_Deploy_Assets_AssetSafe.s.sol";
-import { DeployAssetOwnership } from "script/deployment/12_Deploy_Assets_AssetOwnership.s.sol";
+import { DeployAssetRegistry } from "script/deployment/12_Deploy_Assets_AssetRegistry.s.sol";
 import { DeployCustodianFactory } from "script/deployment/09_Deploy_Custody_CustodianFactory.s.sol";
 import { DeployCustodianReferendum } from "script/deployment/10_Deploy_Custody_CustodianReferendum.s.sol";
 import { DeployAgreementManager } from "script/deployment/07_Deploy_Financial_AgreementManager.s.sol";
@@ -45,7 +45,7 @@ abstract contract BaseTest is Test {
 
     address assetSafe;
     address assetReferendum;
-    address assetOwnership;
+    address assetRegistry;
 
     address custodianReferendum;
     address custodianFactory;
@@ -172,15 +172,15 @@ abstract contract BaseTest is Test {
         _setContentCouncilPermissions(assetReferendum, referendumAllowed);
     }
 
-    function deployAssetOwnership() public {
+    function deployAssetRegistry() public {
         deployAssetReferendum();
         // set default admin as deployer..
-        DeployAssetOwnership assetOwnershipDeployer = new DeployAssetOwnership();
-        assetOwnership = assetOwnership == address(0) ? assetOwnershipDeployer.run() : assetOwnership;
+        DeployAssetRegistry assetRegistryDeployer = new DeployAssetRegistry();
+        assetRegistry = assetRegistry == address(0) ? assetRegistryDeployer.run() : assetRegistry;
     }
 
     function deployAssetSafe() public {
-        deployAssetOwnership();
+        deployAssetRegistry();
         DeployAssetSafe assetVaultDeployer = new DeployAssetSafe();
         assetSafe = assetSafe == address(0) ? assetVaultDeployer.run() : assetSafe;
     }
