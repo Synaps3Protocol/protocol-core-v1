@@ -22,6 +22,8 @@ library FinancialOps {
     /// @param to The address to which the native cryptocurrency will be transferred.
     /// @param amount The amount of native cryptocurrency to transfer.
     function _nativeTransfer(address to, uint256 amount) internal {
+        // if address is zero fails 
+        // if empty address contract -> success true = unrecoverable funds
         (bool success, ) = payable(to).call{ value: amount }("");
         if (!success) revert FailDuringTransfer("Transfer failed");
     }
@@ -39,7 +41,7 @@ library FinancialOps {
     /// @param amount The amount to deposit.
     /// @return The deposited amount.
     function _nativeDeposit(uint256 amount) internal returns (uint256) {
-        if (amount > msg.value) revert FailDuringDeposit("Amount exceeds balance sent.");
+        if (amount != msg.value) revert FailDuringDeposit("Amount exceeds balance sent.");
         // the transfer is not needed since the transfer is implicit here
         return amount;
     }
