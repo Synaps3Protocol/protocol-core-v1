@@ -1,0 +1,18 @@
+// SPDX-License-Identifier: BUSL-1.1
+// NatSpec format convention - https://docs.soliditylang.org/en/v0.5.10/natspec-format.html
+pragma solidity 0.8.26;
+
+/// @title IAssetReferendumRegistrable Interface
+/// @notice Defines the essential functions for managing asset registration and governance through a referendum process.
+/// @dev This interface mirrors the FSM behavior from `IQuorum`, but scoped to asset governance.
+interface IAssetReferendumRegistrable {
+    /// @notice Submits a new asset proposition for a referendum.
+    /// @dev This function should allow entities to propose an asset for approval.
+    /// @param assetId The unique identifier of the asset being submitted.
+    function submit(uint256 assetId) external;
+
+    /// @notice Approves an asset proposition in the referendum.
+    /// @dev Once approved, the asset is considered verified and usable within the system.
+    /// @param assetId The unique identifier of the asset to be approved.
+    function approve(uint256 assetId) external;
+}
