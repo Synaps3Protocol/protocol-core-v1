@@ -12,11 +12,11 @@ import { BaseTest } from "test/BaseTest.t.sol";
 import { T } from "contracts/core/primitives/Types.sol";
 import { C } from "contracts/core/primitives/Constants.sol";
 
-contract AssetOwnershipTest is BaseTest {
+contract AssetRegistryTest is BaseTest {
     function setUp() public initialize {
         // setup the access manager to use during tests..
-        deployAssetOwnership();
+        deployAssetRegistry();
     }
 
-    
+
 }

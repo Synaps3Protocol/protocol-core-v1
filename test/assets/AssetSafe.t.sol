@@ -5,7 +5,7 @@ import "forge-std/Test.sol";
 import { IAccessControl } from "@openzeppelin/contracts/access/IAccessControl.sol";
 import { IAssetRegistrable } from "contracts/core/interfaces/assets/IAssetRegistrable.sol";
 import { IAssetVerifiable } from "contracts/core/interfaces/assets/IAssetVerifiable.sol";
-import { IAssetOwnership } from "contracts/core/interfaces/assets/IAssetOwnership.sol";
+import { IAssetRegistry } from "contracts/core/interfaces/assets/IAssetRegistry.sol";
 import { IAssetSafe } from "contracts/core/interfaces/assets/IAssetSafe.sol";
 import { AssetSafe } from "contracts/assets/AssetSafe.sol";
 
@@ -102,6 +102,6 @@ contract AssetSafeTest is BaseTest {
         IAssetRegistrable(assetReferendum).approve(assetId);
 
         vm.prank(to);
-        IAssetOwnership(assetOwnership).register(to, assetId);
+        IAssetRegistry(assetRegistry).register(to, assetId);
     }
 }
