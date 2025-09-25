@@ -66,7 +66,7 @@ contract Treasury is
         address pool,
         uint256 amount,
         address currency
-    ) external whenNotPaused restricted returns (uint256) {
+    ) external payable whenNotPaused restricted returns (uint256) {
         return _deposit(pool, amount, currency);
     }
 
