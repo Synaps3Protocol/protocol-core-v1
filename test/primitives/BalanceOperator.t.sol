@@ -12,7 +12,7 @@ import { IBalanceWithdrawable } from "contracts/core/interfaces/base/IBalanceWit
 import { BalanceOperatorUpgradeable } from "contracts/core/primitives/upgradeable/BalanceOperatorUpgradeable.sol";
 
 contract BalanceOperator is BalanceOperatorUpgradeable {
-    function deposit(address recipient, uint256 amount, address currency) external returns (uint256) {
+    function deposit(address recipient, uint256 amount, address currency) external payable returns (uint256) {
         return _deposit(recipient, amount, currency);
     }
 

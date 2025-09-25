@@ -10,7 +10,7 @@ import { ERC721Upgradeable } from "@openzeppelin/contracts-upgradeable/token/ERC
 import { ERC721EnumerableUpgradeable } from "@openzeppelin/contracts-upgradeable/token/ERC721/extensions/ERC721EnumerableUpgradeable.sol";
 import { ERC721StatefulUpgradeable } from "@synaps3/core/primitives/upgradeable/ERC721StatefulUpgradeable.sol";
 import { AccessControlledUpgradeable } from "@synaps3/core/primitives/upgradeable/AccessControlledUpgradeable.sol";
-import { IAssetVerifiable } from "@synaps3/core/interfaces/assets/IAssetVerifiable.sol";
+import { IAssetReferendumVerifiable } from "@synaps3/core/interfaces/assets/IAssetReferendumVerifiable.sol";
 import { IAssetOwnership } from "@synaps3/core/interfaces/assets/IAssetOwnership.sol";
 
 // TODO: Evaluate ERC-404 for fractionalization support
@@ -33,7 +33,7 @@ contract AssetOwnership is
     /// @notice Reference to the asset verification contract for content approval.
     /// Our immutables behave as constants after deployment
     /// slither-disable-next-line naming-convention
-    IAssetVerifiable public immutable ASSET_REFERENDUM;
+    IAssetReferendumVerifiable public immutable ASSET_REFERENDUM;
 
     /// @dev Emitted when a new asset is registered on the platform.
     /// @param owner The address of the creator or owner of the registered asset.
@@ -89,7 +89,7 @@ contract AssetOwnership is
         /// https://forum.openzeppelin.com/t/what-does-disableinitializers-function-mean/28730/5
         _disableInitializers();
         // we need to verify that asset has passed the community approval.
-        ASSET_REFERENDUM = IAssetVerifiable(assetReferendum);
+        ASSET_REFERENDUM = IAssetReferendumVerifiable(assetReferendum);
     }
 
     /// @notice Initializes the upgradeable contract.

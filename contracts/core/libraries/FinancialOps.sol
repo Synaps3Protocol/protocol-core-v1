@@ -22,10 +22,12 @@ library FinancialOps {
     /// @param to The address to which the native cryptocurrency will be transferred.
     /// @param amount The amount of native cryptocurrency to transfer.
     function _nativeTransfer(address to, uint256 amount) internal {
-        // if address is zero fails 
+        // if address is zero fails
         // if empty address contract -> success true = unrecoverable funds
         (bool success, ) = payable(to).call{ value: amount }("");
-        if (!success) revert FailDuringTransfer("Transfer failed");
+        if (!success) {
+            revert FailDuringTransfer("Transfer failed");
+        }
     }
 
     /// @notice Handles the transfer of ERC20 tokens.
@@ -41,9 +43,12 @@ library FinancialOps {
     /// @param amount The amount to deposit.
     /// @return The deposited amount.
     function _nativeDeposit(uint256 amount) internal returns (uint256) {
-        if (amount != msg.value) revert FailDuringDeposit("Amount exceeds balance sent.");
+        if (amount != msg.value) {
+            revert FailDuringDeposit("Amount exceeds balance sent.");
+        }
+
         // the transfer is not needed since the transfer is implicit here
-        return amount;
+        return msg.value;
     }
 
     /// @notice Deposits ERC20 tokens from a specified address.
@@ -53,7 +58,10 @@ library FinancialOps {
     /// @param token The address of the ERC20 token contract.
     /// @return The deposited amount.
     function _erc20Deposit(address from, uint256 amount, address token) internal returns (uint256) {
-        if (amount > allowance(from, token)) revert FailDuringDeposit("Amount exceeds allowance.");
+        if (amount > allowance(from, token)) {
+            revert FailDuringDeposit("Amount exceeds allowance.");
+        }
+
         // disable slitter use 'arbitrary transfer form' since the use of `safeDeposit` is handled in a safe manner.
         // eg. msg.sender.safeDeposit(total, currency); <- Use msg.sender as from in transferFrom.
         // slither-disable-next-line arbitrary-send-erc20
@@ -68,7 +76,10 @@ library FinancialOps {
     /// @param token The address of the ERC20 token contract for which the allowance is increased.
     ///              Use `address(0)` for native tokens, where this function will have no effect.
     function increaseAllowance(address spender, uint256 amount, address token) internal {
-        if (token == address(0) || amount == 0) revert FailDuringDeposit("Invalid spender or allowance attempt");
+        if (token == address(0) || amount == 0) {
+            revert FailDuringDeposit("Invalid spender or allowance attempt");
+        }
+
         IERC20(token).safeIncreaseAllowance(spender, amount);
     }
 
@@ -79,7 +90,10 @@ library FinancialOps {
     /// @param token The address of the ERC20 token contract or `address(0)` for native tokens.
     /// @return The allowance amount for ERC20 tokens, or `msg.value` if it’s a native token.
     function allowance(address owner, address token) internal view returns (uint256) {
-        if (token == address(0)) return msg.value;
+        if (token == address(0)) {
+            return msg.value;
+        }
+
         return IERC20(token).allowance(owner, address(this));
     }
 
@@ -90,8 +104,14 @@ library FinancialOps {
     /// @param amount The amount of tokens to deposit.
     /// @param token The address of the token to deposit.
     function safeDeposit(address from, uint256 amount, address token) internal returns (uint256) {
-        if (amount == 0) revert FailDuringDeposit("Invalid zero amount.");
-        if (token == address(0)) return _nativeDeposit(amount);
+        if (amount == 0) {
+            revert FailDuringDeposit("Invalid zero amount.");
+        }
+
+        if (token == address(0)) {
+            return _nativeDeposit(amount);
+        }
+        
         return _erc20Deposit(from, amount, token);
     }
 
@@ -99,7 +119,10 @@ library FinancialOps {
     /// @param target The address whose balance will be retrieved.
     /// @param token The address of the token to check. Use address(0) for native tokens.
     function balanceOf(address target, address token) internal view returns (uint256) {
-        if (token == address(0)) return target.balance;
+        if (token == address(0)) {
+            return target.balance;
+        }
+
         return IERC20(token).balanceOf(target);
     }
 
@@ -109,9 +132,18 @@ library FinancialOps {
     /// @param amount The amount of tokens to transfer.
     /// @param token The address of the ERC20 token to transfer or address(0) for native token.
     function transfer(address to, uint256 amount, address token) internal {
-        if (amount == 0) revert FailDuringTransfer("Invalid zero amount to transfer.");
-        if (balanceOf(address(this), token) < amount) revert FailDuringTransfer("Insufficient balance.");
-        if (token == address(0)) return _nativeTransfer(to, amount);
+        if (amount == 0) {
+            revert FailDuringTransfer("Invalid zero amount to transfer.");
+        }
+
+        if (balanceOf(address(this), token) < amount) {
+            revert FailDuringTransfer("Insufficient balance.");
+        }
+
+        if (token == address(0)) {
+            return _nativeTransfer(to, amount);
+        }
+
         _erc20Transfer(to, amount, token);
     }
 }

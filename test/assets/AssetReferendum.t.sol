@@ -3,9 +3,9 @@ pragma solidity 0.8.26;
 
 import "forge-std/Test.sol";
 import { IAccessControl } from "@openzeppelin/contracts/access/IAccessControl.sol";
-import { IAssetRegistrable } from "contracts/core/interfaces/assets/IAssetRegistrable.sol";
-import { IAssetRevokable } from "contracts/core/interfaces/assets/IAssetRevokable.sol";
-import { IAssetVerifiable } from "contracts/core/interfaces/assets/IAssetVerifiable.sol";
+import { IAssetReferendumRegistrable } from "contracts/core/interfaces/assets/IAssetReferendumRegistrable.sol";
+import { IAssetReferendumRevokable } from "contracts/core/interfaces/assets/IAssetReferendumRevokable.sol";
+import { IAssetReferendumVerifiable } from "contracts/core/interfaces/assets/IAssetReferendumVerifiable.sol";
 import { AssetReferendum } from "contracts/assets/AssetReferendum.sol";
 
 import { BaseTest } from "test/BaseTest.t.sol";
@@ -23,12 +23,12 @@ contract AssetReferendumTest is BaseTest {
         vm.prank(user);
         vm.expectEmit(true, true, false, true, address(assetReferendum));
         emit AssetReferendum.Submitted(user, 1);
-        IAssetRegistrable(assetReferendum).submit(1);
+        IAssetReferendumRegistrable(assetReferendum).submit(1);
     }
 
     function test_Submit_SubmittedValidStates() public {
         _submitContentAsUser(1);
-        IAssetVerifiable referendum =  IAssetVerifiable(assetReferendum);
+        IAssetReferendumVerifiable referendum =  IAssetReferendumVerifiable(assetReferendum);
         assertFalse(referendum.isActive(1), "Asset should not be active yet");
         assertFalse(referendum.isApproved(user, 1), "Asset should not be approved yet");
     }
@@ -40,7 +40,7 @@ contract AssetReferendumTest is BaseTest {
         vm.startPrank(contentCouncil); // approve by council..
         vm.expectEmit(true, false, false, true, address(assetReferendum));
         emit AssetReferendum.Approved(assetId);
-        IAssetRegistrable(assetReferendum).approve(assetId);
+        IAssetReferendumRegistrable(assetReferendum).approve(assetId);
         vm.stopPrank();
     }
 
@@ -50,9 +50,9 @@ contract AssetReferendumTest is BaseTest {
         _submitContentAsUser(assetId);
         
         vm.prank(contentCouncil); // approve by council..
-        IAssetRegistrable(assetReferendum).approve(assetId);
+        IAssetReferendumRegistrable(assetReferendum).approve(assetId);
         
-        IAssetVerifiable referendum =  IAssetVerifiable(assetReferendum);
+        IAssetReferendumVerifiable referendum =  IAssetReferendumVerifiable(assetReferendum);
         assertTrue(referendum.isActive(assetId), "Asset should be active");
         assertTrue(referendum.isApproved(user, assetId), "Asset should be approved");
     }
@@ -65,7 +65,7 @@ contract AssetReferendumTest is BaseTest {
         vm.expectEmit(true, false, false, true, address(assetReferendum));
         emit AssetReferendum.Rejected(assetId);
 
-        IAssetRevokable(assetReferendum).reject(assetId);
+        IAssetReferendumRevokable(assetReferendum).reject(assetId);
     }
 
     function test_Reject_RejectedValidStates() public {
@@ -73,9 +73,9 @@ contract AssetReferendumTest is BaseTest {
         _submitContentAsUser(assetId);
 
         vm.prank(contentCouncil); // approve by council..
-        IAssetRevokable(assetReferendum).reject(assetId);
+        IAssetReferendumRevokable(assetReferendum).reject(assetId);
         
-        IAssetVerifiable referendum =  IAssetVerifiable(assetReferendum);
+        IAssetReferendumVerifiable referendum =  IAssetReferendumVerifiable(assetReferendum);
         assertFalse(referendum.isActive(assetId), "Asset should not be active");
         assertFalse(referendum.isApproved(user, assetId), "Asset should not be approved");
     }
@@ -88,11 +88,11 @@ contract AssetReferendumTest is BaseTest {
         vm.startPrank(contentCouncil); // approve by council..
         // first an approval should ve done
         // then a revoke 
-        IAssetRegistrable(assetReferendum).approve(assetId);
+        IAssetReferendumRegistrable(assetReferendum).approve(assetId);
 
         vm.expectEmit(true, false, false, true, address(assetReferendum));
         emit AssetReferendum.Revoked(assetId);
-        IAssetRevokable(assetReferendum).revoke(assetId);
+        IAssetReferendumRevokable(assetReferendum).revoke(assetId);
         vm.stopPrank(); // reject by governance..
     }
 
@@ -100,9 +100,9 @@ contract AssetReferendumTest is BaseTest {
         uint256 assetId = 1;
         _submitAndApproveContent(assetId);
         vm.prank(contentCouncil); // approve by council..
-        IAssetRevokable(assetReferendum).revoke(assetId);
+        IAssetReferendumRevokable(assetReferendum).revoke(assetId);
 
-        IAssetVerifiable referendum =  IAssetVerifiable(assetReferendum);
+        IAssetReferendumVerifiable referendum =  IAssetReferendumVerifiable(assetReferendum);
         assertFalse(referendum.isActive(assetId), "Asset should not be active");
         assertFalse(referendum.isApproved(user, assetId), "Asset should not be approved");
     }
@@ -111,12 +111,12 @@ contract AssetReferendumTest is BaseTest {
         _submitContentAsUser(assetId);
         vm.warp(1641070805);
         vm.prank(contentCouncil); // approve by council..
-        IAssetRegistrable(assetReferendum).approve(assetId);
+        IAssetReferendumRegistrable(assetReferendum).approve(assetId);
         vm.stopPrank(); // approve by governance..
     }
 
     function _submitContentAsUser(uint256 assetId) internal {
         vm.prank(user); // the default user submitting content..
-        IAssetRegistrable(assetReferendum).submit(assetId);
+        IAssetReferendumRegistrable(assetReferendum).submit(assetId);
     }
 }

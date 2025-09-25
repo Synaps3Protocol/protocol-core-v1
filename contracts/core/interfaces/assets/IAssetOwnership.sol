@@ -15,4 +15,14 @@ interface IAssetOwnership is IERC721, IERC721Metadata {
     /// @param to The address that will own the minted NFT.
     /// @param assetId The unique identifier for the asset, serving as the NFT ID.
     function register(address to, uint256 assetId) external;
+
+    /// @notice Revokes an asset, permanently disabling it within the system.
+    /// @dev This action is irreversible and restricted to governance control.
+    /// @param assetId The unique identifier of the asset to be revoked.
+    function revoke(uint256 assetId) external;
+
+    /// @notice Transfers an asset to a new owner.
+    /// @param to The address of the new owner.
+    /// @param assetId The unique identifier of the asset being transferred.
+    function transfer(address to, uint256 assetId) external;
 }
