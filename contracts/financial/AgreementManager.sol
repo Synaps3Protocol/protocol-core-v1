@@ -35,7 +35,6 @@ contract AgreementManager is Initializable, UUPSUpgradeable, AccessControlledUpg
     ILedgerVault public immutable LEDGER_VAULT;
     //slither-disable-end naming-convention
 
-    uint256 constant MAX_EXCESS = 13;    // 1..13=91%, 14=>105%
     /// @notice Maximum allowed number of parties per agreement.
     /// @dev Can be updated by admin to adapt system limits.
     uint256 private _maxParties;
@@ -160,8 +159,8 @@ contract AgreementManager is Initializable, UUPSUpgradeable, AccessControlledUpg
         // which could lead to abuse or exploitation.
         uint256 baseFees = _calcFees(amount, arbiter, currency);
         // Even if we are covered by gas fees, during execution a good way to avoid abuse
-        // is penalize parties after N length eg. The max parties allowed is 5, any extra
-        // parties are charged with a extra * fee. Denial of Service risk mitigation..
+        // is penalize parties after N length eg. The initial max parties allowed is 5, any extra
+        // parties are charged with an extra. Denial of Service risk mitigation..
         uint256 penalization = _calculatePenalization(parties.length, amount);
         uint256 totalToLock = amount + penalization;
 
@@ -196,15 +195,10 @@ contract AgreementManager is Initializable, UUPSUpgradeable, AccessControlledUpg
 
     /// @dev Calculates the penalization based on parties len and total amount
     function _calculatePenalization(uint256 partiesLen, uint256 amount) private view returns (uint256 penalization) {
-        uint256 hardCap = _maxParties + MAX_EXCESS;
-        if (partiesLen > hardCap) revert ExceedsMaxParties();
-
-        // soft cap validation, economic penalization
-        if (partiesLen > _maxParties) {
-            uint256 excess = partiesLen - _maxParties;
-            uint256 multiplierBps = _penaltyBps(excess);
-            penalization = amount.perOf(multiplierBps);
-        }
+        if (partiesLen <= _maxParties) return 0;
+        uint256 excess = partiesLen - _maxParties;
+        uint256 multiplierBps = _penaltyBps(excess);
+        penalization = amount.perOf(multiplierBps);
     }
 
     /// @dev Computes the penalty BPS as a arithmetic succession.
@@ -218,6 +212,11 @@ contract AgreementManager is Initializable, UUPSUpgradeable, AccessControlledUpg
         // Example: excess = 3 -> 1 + 2 + 3 = 6 %
         unchecked {
             penaltyBps = ((excess * (excess + 1)) / 2) * 100;
+        }
+
+        // strict hard cap revert if bps > 10_0000
+        if (penaltyBps > C.BPS_MAX) {
+            revert ExceedsMaxParties();
         }
     }
 
