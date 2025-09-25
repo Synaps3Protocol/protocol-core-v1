@@ -113,7 +113,7 @@ contract LedgerVault is
     /// @param recipient The address of the account to credit with the deposit.
     /// @param amount The amount of currency to deposit.
     /// @param currency The address of the ERC20 token to deposit.
-    function deposit(address recipient, uint256 amount, address currency) external whenNotPaused returns (uint256) {
+    function deposit(address recipient, uint256 amount, address currency) external payable whenNotPaused returns (uint256) {
         return _deposit(recipient, amount, currency);
     }
 
