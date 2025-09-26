@@ -84,12 +84,7 @@ abstract contract PolicyBase is ERC165, IPolicy {
         _;
     }
 
-    constructor(
-        address rightsPolicyManager,
-        address rightsAuthorizer,
-        address assetRegistry,
-        address providerAddress
-    ) {
+    constructor(address rightsPolicyManager, address rightsAuthorizer, address assetRegistry, address providerAddress) {
         RIGHTS_AUTHORIZER = IRightsPolicyAuthorizerVerifiable(rightsAuthorizer);
         RIGHTS_POLICY_MANAGER = IRightsPolicyManagerVerifiable(rightsPolicyManager);
         ATTESTATION_PROVIDER = IAttestationProvider(providerAddress);

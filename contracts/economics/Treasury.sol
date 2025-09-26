@@ -9,7 +9,7 @@ import { ReentrancyGuardTransientUpgradeable } from "@openzeppelin/contracts-upg
 import { BalanceOperatorUpgradeable } from "@synaps3/core/primitives/upgradeable/BalanceOperatorUpgradeable.sol";
 
 import { ITreasury } from "@synaps3/core/interfaces/economics/ITreasury.sol";
-// import { IFeesCollector } from "@synaps3/core/interfaces/economics/IFeesCollector.sol";
+import { IFeesCollector } from "@synaps3/core/interfaces/economics/IFeesCollector.sol";
 import { FinancialOps } from "@synaps3/core/libraries/FinancialOps.sol";
 import { LoopOps } from "@synaps3/core/libraries/LoopOps.sol";
 
@@ -104,14 +104,18 @@ contract Treasury is
     /// @dev This function requests the given collector to disburse its collected fees
     ///      for the specified currency. The collected funds are then credited to the treasury pool.
     ///      Only the governor can execute this function, ensuring controlled fee collection.
-    /// @param collector The address of an authorized fee collector.
+    /// @param amount The amount to collect from fee collector.
     /// @param currency The address of the ERC20 token for which fees are being collected.
-    function collectFees(address collector, address currency) external restricted whenNotPaused nonReentrant {
-        // TODO update adding amount param on disburse call
-        // IFeesCollector feesCollector = IFeesCollector(collector);
-        // uint256 collected = feesCollector.disburse(currency);
-        // _sumLedgerEntry(address(this), collected, currency);
-        // emit FeesCollected(collector, collected, currency);
+    /// @param collector The address of an authorized fee collector.
+    function collectFees(
+        uint256 amount,
+        address currency,
+        address collector
+    ) external restricted whenNotPaused nonReentrant {
+        IFeesCollector feesCollector = IFeesCollector(collector);
+        uint256 collected = feesCollector.disburse(amount, currency);
+        _sumLedgerEntry(address(this), collected, currency);
+        emit FeesCollected(collector, collected, currency);
     }
 
     /// @notice Function that should revert when msg.sender is not authorized to upgrade the contract.

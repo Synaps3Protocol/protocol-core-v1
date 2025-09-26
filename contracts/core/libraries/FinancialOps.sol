@@ -111,7 +111,7 @@ library FinancialOps {
         if (token == address(0)) {
             return _nativeDeposit(amount);
         }
-        
+
         return _erc20Deposit(from, amount, token);
     }
 
