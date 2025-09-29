@@ -181,7 +181,7 @@ contract RightsPolicyManager is
         return filtered;
     }
 
-    /// @notice Retrieves the list of policies associated with a specific account and content ID.
+    /// @notice Retrieves the list of policies associated with a specific account.
     /// @param account The address of the account for which policies are being retrieved.
     function getPolicies(address account) public view returns (address[] memory) {
         // https://docs.openzeppelin.com/contracts/5.x/api/utils#EnumerableSet-values-struct-EnumerableSet-AddressSet-
@@ -219,7 +219,7 @@ contract RightsPolicyManager is
     /// @dev Verifies access permissions by calling the policy contract.
     /// @param account The address of the user requesting access.
     /// @param policy The address of the policy contract.
-    /// @param criteria Encoded parameters required for access verification.
+    /// @param criteria Encoded parameters required for access verification. eg. assetId, rightsHolder
     /// @return `true` if the policy grants access, otherwise `false`.
     function _verifyPolicyAccess(address account, address policy, bytes memory criteria) private view returns (bool) {
         bytes memory callData = abi.encodeCall(IPolicy.isAccessAllowed, (account, criteria));

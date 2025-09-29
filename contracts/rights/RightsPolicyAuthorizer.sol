@@ -11,7 +11,6 @@ import { ReentrancyGuardTransientUpgradeable } from "@openzeppelin/contracts-upg
 import { IRightsPolicyAuthorizer } from "@synaps3/core/interfaces/rights/IRightsPolicyAuthorizer.sol";
 import { IPolicyAuditorVerifiable } from "@synaps3/core/interfaces/policies/IPolicyAuditorVerifiable.sol";
 import { IPolicy } from "@synaps3/core/interfaces/policies/IPolicy.sol";
-import { ArrayOps } from "@synaps3/core/libraries/ArrayOps.sol";
 import { LoopOps } from "@synaps3/core/libraries/LoopOps.sol";
 
 /// @title RightsPolicyAuthorizer
@@ -26,7 +25,6 @@ contract RightsPolicyAuthorizer is
     IRightsPolicyAuthorizer
 {
     using LoopOps for uint256;
-    using ArrayOps for address[];
     using EnumerableSet for EnumerableSet.AddressSet;
 
     /// KIM: any initialization here is ephemeral and not included in bytecode..
@@ -41,6 +39,10 @@ contract RightsPolicyAuthorizer is
 
     /// @dev Mapping to store the delegated rights for each policy contract (address)
     mapping(address => EnumerableSet.AddressSet) private _authorizedPolicies;
+    mapping(address => uint256) private _planIdx; // pos+1
+    mapping(address => address[]) private _plan;
+
+
     /// @notice Emitted when rights are granted to a policy for content.
     /// @param policy The policy contract address granted rights.
     /// @param holder The address of the asset rights holder.
@@ -147,7 +149,7 @@ contract RightsPolicyAuthorizer is
         //   it may contain uninitialized elements (`address(0)`) if some policies were invalid.
         // - The variable `j` represents the number of valid policies that passed the filtering process.
         // - To ensure that the returned array contains only these valid policies and no extra default values,
-        //   we call `slice(j)`, which creates a new array of exact length `j` and copies only
+        //   we slice, which creates a new array of exact length `j` and copies only
         //   the first `j` elements from `filtered`.
         // - This prevents returning an array with trailing `address(0)` values, ensuring data integrity
         //   and reducing unnecessary gas costs when the array is processed elsewhere.

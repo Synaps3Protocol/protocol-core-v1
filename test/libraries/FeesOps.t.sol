@@ -84,8 +84,8 @@ contract FeesOpsTest is Test {
 contract FeesOpsHandler is Test {
     FeesOpsHarness public immutable harness;
 
-    uint256 internal totalAmount;
-    uint256 internal lastPercentage;
+    uint256 internal _totalAmount;
+    uint256 internal _lastCalcBps;
 
     constructor(FeesOpsHarness harness_) {
         harness = harness_;
@@ -95,17 +95,25 @@ contract FeesOpsHandler is Test {
         bps = bound(bps, 0, C.BPS_MAX);
         amount = bound(amount, 0, type(uint128).max);
         uint256 result = harness.perOf(amount, bps);
-        totalAmount += result;
+        _totalAmount += result;
     }
 
     function recordCalcBps(uint256 per) external {
         per = bound(per, 0, 1_000_000);
-        lastPercentage = harness.calcBps(per);
+        _lastCalcBps = harness.calcBps(per);
     }
 
     function reset() external {
-        totalAmount = 0;
-        lastPercentage = 0;
+        _totalAmount = 0;
+        _lastCalcBps = 0;
+    }
+
+    function totalAmount() external view returns (uint256) {
+        return _totalAmount;
+    }
+
+    function lastCalcBps() external view returns (uint256) {
+        return _lastCalcBps;
     }
 }
 
@@ -124,6 +132,6 @@ contract FeesOpsInvariantTest is Test {
     }
 
     function invariant_LastPercentageValid() external view {
-        assertEq(handler.lastPercentage() % C.SCALE_FACTOR, 0, "calcBps outputs should be multiples of scale factor");
+        assertEq(handler.lastCalcBps() % C.SCALE_FACTOR, 0, "calcBps outputs should be multiples of scale factor");
     }
 }

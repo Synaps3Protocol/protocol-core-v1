@@ -223,6 +223,7 @@ contract AgreementManagerHandler is Test {
     uint256[] private _proofs;
     mapping(uint256 => AgreementInfo) private _agreements;
     uint256 private _totalLocked;
+    uint256 private _nonce;
 
     constructor(
         address manager_,
@@ -259,7 +260,7 @@ contract AgreementManagerHandler is Test {
 
         uint256 amount = bound(amountSeed, 1e18, maxAmount);
         address[] memory parties = _buildParties(partiesLen);
-        bytes memory payload = abi.encode(amountSeed, partiesSeed);
+        bytes memory payload = abi.encode(amountSeed, partiesSeed, _nonce++);
 
         vm.prank(initiator);
         uint256 proof = manager.createAgreement(amount, token, arbiter, parties, payload);
@@ -372,4 +373,3 @@ contract AgreementManagerInvariantTest is BaseTest {
         assertEq(handler.totalLocked(), handler.recomputeLocked(), "Tracked locked total mismatch");
     }
 }
-
