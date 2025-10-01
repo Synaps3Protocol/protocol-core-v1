@@ -17,6 +17,8 @@ import { DeployCustodianReferendum } from "script/deployment/10_Deploy_Custody_C
 import { DeployAgreementManager } from "script/deployment/07_Deploy_Financial_AgreementManager.s.sol";
 import { DeployAgreementSettler } from "script/deployment/08_Deploy_Financial_AgreementSettler.s.sol";
 import { DeployRightsAssetCustodian } from "script/deployment/15_Deploy_RightsManager_AssetCustodian.s.sol";
+import { DeployRightsPolicyAuthorizer } from "script/deployment/18_Deploy_RightsManager_PolicyAuthorizer.s.sol";
+import { DeployPolicyAudit } from "script/deployment/14_Deploy_Policies_PolicyAudit.s.sol";
 
 import { getGovPermissions as TollgateGovPermissions } from "script/permissions/Permissions_Tollgate.sol";
 import { getGovPermissions as TreasuryGovPermissions } from "script/permissions/Permissions_Treasury.sol";
@@ -51,6 +53,9 @@ abstract contract BaseTest is Test {
     address custodianFactory;
 
     address rightAssetCustodian;
+    address policyAudit;
+    address rightsPolicyAuthorizer;
+    address rightsPolicyManager;
 
     address tollgate;
     address treasury;
@@ -209,6 +214,20 @@ abstract contract BaseTest is Test {
         // set default admin as deployer..
         DeployRightsAssetCustodian rightAssetCustodianDeployer = new DeployRightsAssetCustodian();
         rightAssetCustodian = rightAssetCustodian == address(0) ? rightAssetCustodianDeployer.run() : rightAssetCustodian;
+    }
+
+    function deployPolicyAudit() public {
+        DeployPolicyAudit policyAuditDeployer = new DeployPolicyAudit();
+        policyAudit = policyAudit == address(0) ? policyAuditDeployer.run() : policyAudit;
+    }
+
+    function deployRightsPolicyAuthorizer() public {
+        deployPolicyAudit();
+
+        DeployRightsPolicyAuthorizer rightsAuthorizerDeployer = new DeployRightsPolicyAuthorizer();
+        rightsPolicyAuthorizer = rightsPolicyAuthorizer == address(0)
+            ? rightsAuthorizerDeployer.run(policyAudit, accessManager)
+            : rightsPolicyAuthorizer;
     }
 
      function _setContentCouncilPermissions(address target, bytes4[] memory allowed) public {

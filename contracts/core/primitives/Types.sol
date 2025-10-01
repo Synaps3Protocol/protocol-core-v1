@@ -35,6 +35,15 @@ library T {
         EC // Elliptic Curve cryptography
     }
 
+    /// @title TimeFrame
+    /// @notice Enum representing the time frame for calculations or actions.
+    enum TimeFrame {
+        NONE, // Default value indicating "unset" or "no limit"
+        HOURLY, // Indicates a rate basis of per hour
+        DAILY, // Indicates a rate basis of per day
+        MONTHLY // Indicates a rate basis of per month
+    }
+
     /// @title Agreement
     /// @dev Represents an escrow-backed agreement involving payment, distribution or access rights.
     /// @notice This struct supports flexible interaction models, including 1:1 and 1:N transfers,
@@ -60,15 +69,6 @@ library T {
         address[] parties;
         /// @notice Arbitrary data passed for context, such as assetId, license type, content hash, etc.
         bytes payload;
-    }
-
-    /// @title TimeFrame
-    /// @notice Enum representing the time frame for calculations or actions.
-    enum TimeFrame {
-        NONE, // Default value indicating "unset" or "no limit"
-        HOURLY, // Indicates a rate basis of per hour
-        DAILY, // Indicates a rate basis of per day
-        MONTHLY // Indicates a rate basis of per month
     }
 
     /// @title Terms

@@ -39,10 +39,6 @@ contract RightsPolicyAuthorizer is
 
     /// @dev Mapping to store the delegated rights for each policy contract (address)
     mapping(address => EnumerableSet.AddressSet) private _authorizedPolicies;
-    mapping(address => uint256) private _planIdx; // pos+1
-    mapping(address => address[]) private _plan;
-
-
     /// @notice Emitted when rights are granted to a policy for content.
     /// @param policy The policy contract address granted rights.
     /// @param holder The address of the asset rights holder.
@@ -97,9 +93,16 @@ contract RightsPolicyAuthorizer is
     /// @param data The data to initialize policy. e.g., prices, timeframes..
     function authorizePolicy(address policy, bytes calldata data) external onlyAuditedPolicies(policy) nonReentrant {
         // type safe low level call to policy, call policy initialization with provided data..
-        (bool success, ) = policy.call(abi.encodeCall(IPolicy.setup, (msg.sender, data)));
-        if (!success) revert InvalidPolicyInitialization("Error during policy initialization call");
-        _authorizedPolicies[msg.sender].add(policy);
+        (bool success, bytes memory result) = policy.call(abi.encodeCall(IPolicy.setup, (msg.sender, data)));
+        if (!success && result.length == 0) {
+            revert InvalidPolicyInitialization("Error during policy initialization call");
+        }
+
+        bool authorized = _authorizedPolicies[msg.sender].add(policy);
+        if (!authorized) {
+            revert InvalidPolicyInitialization("Error during duplicated policy registration");
+        }
+
         emit RightsGranted(policy, msg.sender, data);
     }
 
@@ -108,7 +111,10 @@ contract RightsPolicyAuthorizer is
     function revokePolicy(address policy) external {
         // if the policy is not authorized revoke fails
         bool revoked = _authorizedPolicies[msg.sender].remove(policy);
-        if (!revoked) revert RevocationFailed(msg.sender, policy);
+        if (!revoked) {
+            revert RevocationFailed(msg.sender, policy);
+        }
+
         emit RightsRevoked(policy, msg.sender);
     }
 
