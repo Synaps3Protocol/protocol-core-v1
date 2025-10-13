@@ -112,7 +112,6 @@ Synapse Protocol provides a deterministic coordination layer for digital asset r
 | Economics Distribution | `Tollgate` / `Treasury` → Finance & Governance | Tollgate manages fee schedules; Treasury receives protocol take after settlement. | Fee events in `Tollgate`; Treasury distributions (if implemented). |
 | Attestation Integration | `PolicyBase` → `IAttestationProvider` | Issues attestation IDs for parties; stored for `isActivePolicy`. | Future SEP integration noted. |
 | Upgrade Authorization | `AccessControlledUpgradeable` → `AccessManager` | `_authorizeUpgrade` restricted to admin. | UUPS proxy. |
-| Standards & TODOs | Future compatibility (ERC-1271, ERC-404, ERC-2981, ERC-4804). | Documented as TODOs in contracts. | n/a |
 
 ---
 
@@ -357,7 +356,7 @@ sequenceDiagram
 ### 14. References & Notes
 
 - **Libraries & Standards**: OpenZeppelin Upgradeable suite, custom `FinancialOps`, `FeesOps`, `QuorumUpgradeable`, `ERC721StatefulUpgradeable`.  
-- **Future Standards (planned)**: ERC-1271 (custodian signatures), ERC-404 (fractionalization), ERC-2981 (royalties), ERC-4804 (on-chain URLs), SEP-001/002 (asset metadata), SEP-004 (license metadata), EAS attestation registry.  
+- **Future Standards (planned)**: SEP-001/002 (asset metadata), SEP-004 (license metadata), EAS attestation registry.  
 - **Event Catalog**:  
   - Assets: `RegisteredAsset`, `RevokedAsset`, `AssetEnabled`, `AssetDisabled`.  
   - Policies: `PolicySubmitted`, `PolicyApproved`, `PolicyRevoked`, `AttestedAgreement`, `AgreementCommitted`.  
