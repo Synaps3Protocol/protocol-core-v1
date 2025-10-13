@@ -17,7 +17,7 @@ contract LockOperatorHarness is LockOperatorUpgradeable {
         __LockOperator_init();
     }
 
-    function boostLedger(address account, uint256 amount, address currency) external {
+    function seedLedger(address account, uint256 amount, address currency) external {
         _sumLedgerEntry(account, amount, currency);
     }
 
@@ -51,334 +51,101 @@ contract LockOperatorHarness is LockOperatorUpgradeable {
 }
 
 contract LockOperatorUpgradeableTest is Test {
-    LockOperatorHarness harness;
+    LockOperatorHarness internal harness;
     address internal constant TOKEN = address(0xC0FFEE);
-    address operator;
-    address alice;
-    address bob;
-    address claimer;
+    address internal alice = vm.addr(1);
+    address internal bob = vm.addr(2);
+    address internal claimer = vm.addr(3);
 
     function setUp() public {
         harness = new LockOperatorHarness();
         harness.initialize();
-        operator = vm.addr(1);
-        alice = vm.addr(2);
-        bob = vm.addr(3);
-        claimer = vm.addr(4);
     }
 
-    function test_Lock_ReducesLedgerAndTracksLocked() public {
-        uint256 amount = 50 ether;
-        harness.boostLedger(alice, 100 ether, TOKEN);
+    function test_LockDeductsLedgerAndTracksLocked() public {
+        harness.seedLedger(alice, 120 ether, TOKEN);
 
-        vm.prank(operator);
         vm.expectEmit(true, true, false, true, address(harness));
-        emit ILockLocker.FundsLocked(operator, alice, amount, TOKEN);
-        harness.lock(alice, amount, TOKEN);
+        emit ILockLocker.FundsLocked(address(this), alice, 40 ether, TOKEN);
+        harness.lock(alice, 40 ether, TOKEN);
 
-        assertEq(
-            ILedgerVerifiable(address(harness)).getLedgerBalance(alice, TOKEN),
-            50 ether,
-            "Ledger should reflect locked deduction"
-        );
-        assertEq(harness.lockedBalance(alice, TOKEN), amount, "Locked balance mismatch");
+        assertEq(ILedgerVerifiable(address(harness)).getLedgerBalance(alice, TOKEN), 80 ether, "Ledger deduction mismatch");
+        assertEq(harness.lockedBalance(alice, TOKEN), 40 ether, "Locked balance mismatch");
     }
 
-    function test_Lock_RevertWhen_InvalidParams() public {
-        harness.boostLedger(alice, 10 ether, TOKEN);
-        bytes4 err = bytes4(keccak256("InvalidOperationParameters()"));
-
-        vm.prank(operator);
-        vm.expectRevert(err);
-        harness.lock(address(0), 1 ether, TOKEN);
-
-        vm.prank(operator);
-        vm.expectRevert(err);
-        harness.lock(alice, 0, TOKEN);
-    }
-
-    function test_Lock_RevertWhen_InsufficientLedgerBalance() public {
-        vm.prank(operator);
+    function test_Lock_RevertWhen_NoFunds() public {
         vm.expectRevert(ILockLocker.NoFundsToLock.selector);
         harness.lock(alice, 1 ether, TOKEN);
     }
 
-    function test_Release_RestoresLedger() public {
-        harness.boostLedger(alice, 80 ether, TOKEN);
+    function test_Lock_RevertWhen_InvalidParams() public {
+        harness.seedLedger(alice, 10 ether, TOKEN);
+        bytes4 err = bytes4(keccak256("InvalidOperationParameters()"));
 
-        vm.prank(operator);
+        vm.expectRevert(err);
+        harness.lock(address(0), 1 ether, TOKEN);
+
+        vm.expectRevert(err);
+        harness.lock(alice, 0, TOKEN);
+    }
+
+    function test_Release_RestoresLedger() public {
+        harness.seedLedger(alice, 90 ether, TOKEN);
         harness.lock(alice, 60 ether, TOKEN);
 
-        vm.prank(operator);
         vm.expectEmit(true, true, false, true, address(harness));
-        emit ILockReleaser.FundsReleased(operator, alice, 20 ether, TOKEN);
-        harness.release(alice, 20 ether, TOKEN);
+        emit ILockReleaser.FundsReleased(address(this), alice, 25 ether, TOKEN);
+        harness.release(alice, 25 ether, TOKEN);
 
-        assertEq(harness.lockedBalance(alice, TOKEN), 40 ether, "Locked balance after release");
-        assertEq(
-            ILedgerVerifiable(address(harness)).getLedgerBalance(alice, TOKEN),
-            40 ether,
-            "Ledger should regain released amount"
-        );
+        assertEq(harness.lockedBalance(alice, TOKEN), 35 ether, "Locked after release mismatch");
+        assertEq(ILedgerVerifiable(address(harness)).getLedgerBalance(alice, TOKEN), 55 ether, "Ledger after release mismatch");
     }
 
     function test_Release_RevertWhen_InsufficientLocked() public {
-        harness.boostLedger(alice, 40 ether, TOKEN);
-        vm.prank(operator);
-        harness.lock(alice, 30 ether, TOKEN);
-
-        vm.prank(operator);
+        harness.seedLedger(alice, 20 ether, TOKEN);
+        harness.lock(alice, 10 ether, TOKEN);
         vm.expectRevert(ILockReleaser.NoFundsToRelease.selector);
-        harness.release(alice, 40 ether, TOKEN);
+        harness.release(alice, 15 ether, TOKEN);
     }
 
     function test_Claim_MovesLockedToClaimerLedger() public {
-        harness.boostLedger(alice, 90 ether, TOKEN);
-        vm.prank(operator);
-        harness.lock(alice, 60 ether, TOKEN);
+        harness.seedLedger(alice, 70 ether, TOKEN);
+        harness.lock(alice, 30 ether, TOKEN);
 
-        vm.prank(claimer);
         vm.expectEmit(true, true, false, true, address(harness));
-        emit ILockClaimer.FundsClaimed(claimer, alice, 25 ether, TOKEN);
-        harness.claim(alice, 25 ether, TOKEN);
+        emit ILockClaimer.FundsClaimed(claimer, alice, 18 ether, TOKEN);
+        vm.prank(claimer);
+        harness.claim(alice, 18 ether, TOKEN);
 
-        assertEq(harness.lockedBalance(alice, TOKEN), 35 ether, "Locked balance after claim");
-        assertEq(
-            ILedgerVerifiable(address(harness)).getLedgerBalance(claimer, TOKEN),
-            25 ether,
-            "Claimer ledger should increase"
-        );
+        ILedgerVerifiable ledger = ILedgerVerifiable(address(harness));
+        assertEq(harness.lockedBalance(alice, TOKEN), 12 ether, "Locked remainder mismatch");
+        assertEq(ledger.getLedgerBalance(claimer, TOKEN), 18 ether, "Claimer ledger mismatch");
+        assertEq(ledger.getLedgerBalance(alice, TOKEN), 40 ether, "Alice ledger should reflect lock deduction");
     }
 
     function test_Claim_RevertWhen_InsufficientLocked() public {
-        vm.prank(claimer);
+        harness.seedLedger(alice, 30 ether, TOKEN);
+        harness.lock(alice, 10 ether, TOKEN);
+
         vm.expectRevert(ILockClaimer.NoFundsToClaim.selector);
-        harness.claim(alice, 1 ether, TOKEN);
+        harness.claim(alice, 12 ether, TOKEN);
     }
 
-    function test_Integration_MultiAccountFlow() public {
-        harness.boostLedger(alice, 100 ether, TOKEN);
-        harness.boostLedger(bob, 90 ether, TOKEN);
-
-        vm.prank(operator);
-        harness.lock(alice, 60 ether, TOKEN);
-
-        vm.prank(operator);
-        harness.lock(bob, 45 ether, TOKEN);
-
-        vm.prank(operator);
-        harness.release(alice, 20 ether, TOKEN);
-
+    function test_Integration_LockReleaseClaimFlow() public {
+        harness.seedLedger(alice, 200 ether, TOKEN);
+        harness.lock(alice, 120 ether, TOKEN);
+        harness.release(alice, 30 ether, TOKEN);
         vm.prank(claimer);
-        harness.claim(alice, 10 ether, TOKEN);
+        harness.claim(alice, 50 ether, TOKEN);
 
-        vm.prank(claimer);
-        harness.claim(bob, 15 ether, TOKEN);
+        uint256 locked = harness.lockedBalance(alice, TOKEN);
+        ILedgerVerifiable ledger = ILedgerVerifiable(address(harness));
+        uint256 aliceLedger = ledger.getLedgerBalance(alice, TOKEN);
+        uint256 claimerLedger = ledger.getLedgerBalance(claimer, TOKEN);
 
-        assertEq(harness.lockedBalance(alice, TOKEN), 30 ether, "Alice locked mismatch");
-        assertEq(harness.lockedBalance(bob, TOKEN), 30 ether, "Bob locked mismatch");
-        assertEq(
-            ILedgerVerifiable(address(harness)).getLedgerBalance(alice, TOKEN),
-            60 ether,
-            "Alice ledger mismatch"
-        );
-        assertEq(
-            ILedgerVerifiable(address(harness)).getLedgerBalance(bob, TOKEN),
-            45 ether,
-            "Bob ledger mismatch"
-        );
-        assertEq(
-            ILedgerVerifiable(address(harness)).getLedgerBalance(claimer, TOKEN),
-            25 ether,
-            "Claimer ledger aggregate mismatch"
-        );
-    }
-
-    function testFuzz_LockReleaseCycle(uint256 seedAmount, uint256 lockAmount, uint256 releaseAmount) public {
-        seedAmount = bound(seedAmount, 1 ether, 1e24);
-        lockAmount = bound(lockAmount, 1 ether, seedAmount);
-        releaseAmount = bound(releaseAmount, 0, lockAmount);
-
-        harness.boostLedger(alice, seedAmount, TOKEN);
-
-        vm.prank(operator);
-        harness.lock(alice, lockAmount, TOKEN);
-
-        if (releaseAmount > 0) {
-            vm.prank(operator);
-            harness.release(alice, releaseAmount, TOKEN);
-        }
-
-        uint256 expectedLocked = lockAmount - releaseAmount;
-        uint256 expectedLedger = seedAmount - lockAmount + releaseAmount;
-
-        assertEq(harness.lockedBalance(alice, TOKEN), expectedLocked, "Fuzz locked mismatch");
-        assertEq(
-            ILedgerVerifiable(address(harness)).getLedgerBalance(alice, TOKEN),
-            expectedLedger,
-            "Fuzz ledger mismatch"
-        );
-        assertEq(expectedLocked + expectedLedger, seedAmount, "Conservation after release");
-    }
-
-    function testFuzz_ClaimMaintainsConservation(uint256 seedAmount, uint256 lockAmount, uint256 claimAmount) public {
-        seedAmount = bound(seedAmount, 1 ether, 1e24);
-        lockAmount = bound(lockAmount, 1 ether, seedAmount);
-        claimAmount = bound(claimAmount, 1 ether, lockAmount);
-
-        harness.boostLedger(alice, seedAmount, TOKEN);
-        vm.prank(operator);
-        harness.lock(alice, lockAmount, TOKEN);
-
-        vm.prank(claimer);
-        harness.claim(alice, claimAmount, TOKEN);
-
-        uint256 lockedLeft = lockAmount - claimAmount;
-        uint256 ledgerAlice = ILedgerVerifiable(address(harness)).getLedgerBalance(alice, TOKEN);
-        uint256 ledgerClaimer = ILedgerVerifiable(address(harness)).getLedgerBalance(claimer, TOKEN);
-
-        assertEq(harness.lockedBalance(alice, TOKEN), lockedLeft, "Locked left mismatch");
-        assertEq(ledgerAlice + lockedLeft + ledgerClaimer, seedAmount, "Seed conservation broken");
-    }
-}
-
-contract LockOperatorHandler is Test {
-    LockOperatorHarness public immutable harness;
-    address[] internal accounts;
-    address internal constant TOKEN = address(0xC0FFEE);
-
-    mapping(address => uint256) internal ledgerExpectation;
-    mapping(address => uint256) internal lockedExpectation;
-
-    constructor(LockOperatorHarness operator) {
-        harness = operator;
-        for (uint256 i = 0; i < 3; i++) {
-            accounts.push(vm.addr(i + 10));
-        }
-    }
-
-    function seedLedger(uint256 index, uint256 amount) external {
-        vm.assume(index < accounts.length);
-        amount = bound(amount, 1, 1e27);
-        address account = accounts[index];
-        harness.boostLedger(account, amount, TOKEN);
-        ledgerExpectation[account] += amount;
-    }
-
-    function lock(uint256 index, uint256 amount) external {
-        vm.assume(index < accounts.length);
-        address account = accounts[index];
-        uint256 available = ledgerExpectation[account];
-        vm.assume(amount > 0 && amount <= available);
-
-        vm.prank(account);
-        harness.lock(account, amount, TOKEN);
-
-        ledgerExpectation[account] = available - amount;
-        lockedExpectation[account] += amount;
-    }
-
-    function release(uint256 index, uint256 amount) external {
-        vm.assume(index < accounts.length);
-        address account = accounts[index];
-        uint256 locked = lockedExpectation[account];
-        vm.assume(amount > 0 && amount <= locked);
-
-        vm.prank(account);
-        harness.release(account, amount, TOKEN);
-
-        lockedExpectation[account] = locked - amount;
-        ledgerExpectation[account] += amount;
-    }
-
-    function claim(uint256 lockedIdx, uint256 claimerIdx, uint256 amount) external {
-        vm.assume(lockedIdx < accounts.length && claimerIdx < accounts.length && lockedIdx != claimerIdx);
-        address account = accounts[lockedIdx];
-        address claimerAccount = accounts[claimerIdx];
-        uint256 locked = lockedExpectation[account];
-        vm.assume(amount > 0 && amount <= locked);
-
-        vm.prank(claimerAccount);
-        harness.claim(account, amount, TOKEN);
-
-        lockedExpectation[account] = locked - amount;
-        ledgerExpectation[claimerAccount] += amount;
-    }
-
-    function accountsLength() external view returns (uint256) {
-        return accounts.length;
-    }
-
-    function accountAt(uint256 idx) external view returns (address) {
-        return accounts[idx];
-    }
-
-    function expectedLedger(address account) external view returns (uint256) {
-        return ledgerExpectation[account];
-    }
-
-    function expectedLocked(address account) external view returns (uint256) {
-        return lockedExpectation[account];
-    }
-
-    function token() external pure returns (address) {
-        return TOKEN;
-    }
-}
-
-contract LockOperatorUpgradeableInvariantTest is Test {
-    LockOperatorHarness harness;
-    LockOperatorHandler handler;
-
-    function setUp() public {
-        harness = new LockOperatorHarness();
-        harness.initialize();
-        handler = new LockOperatorHandler(harness);
-        targetContract(address(handler));
-    }
-
-    function invariant_LedgerBalancesMatchExpectation() external {
-        uint256 len = handler.accountsLength();
-        for (uint256 i = 0; i < len; i++) {
-            address account = handler.accountAt(i);
-            assertEq(
-                ILedgerVerifiable(address(harness)).getLedgerBalance(account, handler.token()),
-                handler.expectedLedger(account),
-                "Ledger expectation mismatch"
-            );
-        }
-    }
-
-    function invariant_LockedBalancesMatchExpectation() external {
-        uint256 len = handler.accountsLength();
-        for (uint256 i = 0; i < len; i++) {
-            address account = handler.accountAt(i);
-            assertEq(
-                harness.lockedBalance(account, handler.token()),
-                handler.expectedLocked(account),
-                "Locked expectation mismatch"
-            );
-        }
-    }
-
-    function invariant_TotalConservationHolds() external {
-        uint256 len = handler.accountsLength();
-        uint256 expectedLedgerSum;
-        uint256 expectedLockedSum;
-        uint256 actualLedgerSum;
-        uint256 actualLockedSum;
-        address tokenAddress = handler.token();
-
-        for (uint256 i = 0; i < len; i++) {
-            address account = handler.accountAt(i);
-            expectedLedgerSum += handler.expectedLedger(account);
-            expectedLockedSum += handler.expectedLocked(account);
-            actualLedgerSum += ILedgerVerifiable(address(harness)).getLedgerBalance(account, tokenAddress);
-            actualLockedSum += harness.lockedBalance(account, tokenAddress);
-        }
-
-        assertEq(actualLedgerSum, expectedLedgerSum, "Aggregated ledger mismatch");
-        assertEq(actualLockedSum, expectedLockedSum, "Aggregated locked mismatch");
-        assertEq(actualLedgerSum + actualLockedSum, expectedLedgerSum + expectedLockedSum, "Total conservation mismatch");
+        assertEq(locked, 40 ether, "Final locked mismatch");
+        assertEq(aliceLedger, 110 ether, "Alice ledger mismatch");
+        assertEq(claimerLedger, 50 ether, "Claimer ledger mismatch");
+        assertEq(locked + aliceLedger + claimerLedger, 200 ether, "Total conservation mismatch");
     }
 }

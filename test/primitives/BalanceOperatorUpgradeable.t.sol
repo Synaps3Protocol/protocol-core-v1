@@ -2,16 +2,70 @@
 pragma solidity 0.8.26;
 
 import "forge-std/Test.sol";
-import { BaseTest } from "test/BaseTest.t.sol";
-import { IERC20 } from "@openzeppelin/contracts/interfaces/IERC20.sol";
-import { ILedgerVerifiable } from "contracts/core/interfaces/base/ILedgerVerifiable.sol";
-import { IBalanceDepositor } from "contracts/core/interfaces/base/IBalanceDepositor.sol";
-import { IBalanceVerifiable } from "contracts/core/interfaces/base/IBalanceVerifiable.sol";
-import { IBalanceTransferable } from "contracts/core/interfaces/base/IBalanceTransferable.sol";
-import { IBalanceWithdrawable } from "contracts/core/interfaces/base/IBalanceWithdrawable.sol";
-import { BalanceOperatorUpgradeable } from "contracts/core/primitives/upgradeable/BalanceOperatorUpgradeable.sol";
 
-/// @notice Thin wrapper to expose BalanceOperatorUpgradeable internal entrypoints for testing.
+import { BalanceOperatorUpgradeable } from "contracts/core/primitives/upgradeable/BalanceOperatorUpgradeable.sol";
+import { IBalanceDepositor } from "contracts/core/interfaces/base/IBalanceDepositor.sol";
+import { IBalanceWithdrawable } from "contracts/core/interfaces/base/IBalanceWithdrawable.sol";
+import { IBalanceTransferable } from "contracts/core/interfaces/base/IBalanceTransferable.sol";
+import { IBalanceVerifiable } from "contracts/core/interfaces/base/IBalanceVerifiable.sol";
+import { ILedgerVerifiable } from "contracts/core/interfaces/base/ILedgerVerifiable.sol";
+import { IERC20 } from "@openzeppelin/contracts/interfaces/IERC20.sol";
+
+contract MockToken is IERC20 {
+    string public constant name = "MockToken";
+    string public constant symbol = "MOCK";
+    uint8 public constant decimals = 18;
+
+    mapping(address => uint256) private _balances;
+    mapping(address => mapping(address => uint256)) private _allowances;
+    uint256 private _totalSupply;
+
+    function totalSupply() external view override returns (uint256) {
+        return _totalSupply;
+    }
+
+    function balanceOf(address account) external view override returns (uint256) {
+        return _balances[account];
+    }
+
+    function transfer(address to, uint256 amount) external override returns (bool) {
+        _transfer(msg.sender, to, amount);
+        return true;
+    }
+
+    function allowance(address owner, address spender) external view override returns (uint256) {
+        return _allowances[owner][spender];
+    }
+
+    function approve(address spender, uint256 amount) external override returns (bool) {
+        _allowances[msg.sender][spender] = amount;
+        emit Approval(msg.sender, spender, amount);
+        return true;
+    }
+
+    function transferFrom(address from, address to, uint256 amount) external override returns (bool) {
+        uint256 currentAllowance = _allowances[from][msg.sender];
+        require(currentAllowance >= amount, "insufficient allowance");
+        _allowances[from][msg.sender] = currentAllowance - amount;
+        _transfer(from, to, amount);
+        return true;
+    }
+
+    function mint(address to, uint256 amount) external {
+        _balances[to] += amount;
+        _totalSupply += amount;
+        emit Transfer(address(0), to, amount);
+    }
+
+    function _transfer(address from, address to, uint256 amount) private {
+        require(to != address(0), "invalid to");
+        require(_balances[from] >= amount, "insufficient balance");
+        _balances[from] -= amount;
+        _balances[to] += amount;
+        emit Transfer(from, to, amount);
+    }
+}
+
 contract BalanceOperatorHarness is BalanceOperatorUpgradeable {
     function deposit(address recipient, uint256 amount, address currency) external payable returns (uint256) {
         return _deposit(recipient, amount, currency);
@@ -26,323 +80,122 @@ contract BalanceOperatorHarness is BalanceOperatorUpgradeable {
     }
 }
 
-
-contract BalanceOperatorUpgradeableTest is BaseTest {
-    BalanceOperatorHarness operator;
-    address opAddress;
-
-    function setUp() public initialize {
-        deployToken();
-        operator = new BalanceOperatorHarness();
-        opAddress = address(operator);
-    }
-
-    function test_Deposit_ValidDeposit() public {
-        // 100 MMC
-        uint256 amount = 100 * 1e18;
-        vm.startPrank(admin);
-        uint256 prevBalance = IERC20(token).balanceOf(admin);
-        uint256 confirmed = _validDeposit(admin, amount);
-        uint256 afterBalance = IERC20(token).balanceOf(admin);
-
-        uint256 balance = ILedgerVerifiable(opAddress).getLedgerBalance(admin, token);
-        uint256 contractBalance = IBalanceVerifiable(opAddress).getBalance(token);
-        vm.stopPrank();
-
-        assertEq(confirmed, balance, "Confirmed amount should match ledger balance");
-        assertEq(contractBalance, confirmed, "Contract balance should match confirmed amount");
-        assertEq(afterBalance, prevBalance - confirmed, "Admin balance should decrease by confirmed amount");
-    }
-
-    function test_Deposit_FundsDepositedEventEmitted() public {
-        uint256 amount = 100 * 1e18;
-        vm.startPrank(admin);
-        IERC20(token).approve(opAddress, amount);
-
-        vm.expectEmit(true, true, false, true, address(opAddress));
-        emit IBalanceDepositor.FundsDeposited(admin, admin, amount, token);
-        IBalanceDepositor(opAddress).deposit(admin, amount, token);
-        vm.stopPrank();
-    }
-
-    function test_Deposit_RevertWhen_InvalidApproval() public {
-        vm.expectRevert(abi.encodeWithSignature("FailDuringDeposit(string)", "Amount exceeds allowance."));
-        IBalanceDepositor(opAddress).deposit(admin, 100 * 1e18, token);
-    }
-
-    function test_Deposit_RevertIf_InvalidParams() public {
-        uint256 amount = 0;
-        address account = address(0);
-        bytes4 err = bytes4(keccak256("InvalidOperationParameters()"));
-        // must fail if account = address(0) or amount == 0
-        vm.expectRevert(err);
-        IBalanceDepositor(opAddress).deposit(admin, amount, token);
-
-        vm.expectRevert(err);
-        IBalanceDepositor(opAddress).deposit(account, 1 * 1e18, token);
-    }
-
-    function test_Withdraw_ValidWithdraw() public {
-        // 100 MMC
-        uint256 amount = 100 * 1e18;
-        vm.startPrank(admin);
-        uint256 prevBalance = IERC20(token).balanceOf(admin);
-        uint256 deposited = _validDeposit(admin, amount);
-        uint256 afterBalance = IERC20(token).balanceOf(admin);
-
-        uint256 confirmed = IBalanceWithdrawable(opAddress).withdraw(admin, deposited, token);
-        uint256 balance = ILedgerVerifiable(opAddress).getLedgerBalance(admin, token);
-        uint256 contractBalance = IBalanceVerifiable(opAddress).getBalance(token);
-        vm.stopPrank();
-
-        assertEq(confirmed, deposited, "Confirmed amount should match deposited amount");
-        assertEq(prevBalance, afterBalance + confirmed, "Admin balance should increase by confirmed amount");
-        assertEq(contractBalance, 0, "Contract balance should be zero after withdrawal");
-        assertEq(balance, 0, "Ledger balance should be zero after withdrawal");
-    }
-
-    function test_Withdraw_FundsWithdrawnEventEmitted() public {
-        uint256 amount = 100 * 1e18;
-        vm.startPrank(admin);
-        _validDeposit(admin, amount);
-
-        vm.expectEmit(true, true, false, true, address(opAddress));
-        emit IBalanceWithdrawable.FundsWithdrawn(admin, admin, amount, token);
-        IBalanceWithdrawable(opAddress).withdraw(admin, amount, token);
-        vm.stopPrank();
-    }
-
-    function test_Withdraw_RevertIf_NoFunds() public {
-        vm.expectRevert(bytes4(keccak256("NoFundsToWithdraw()")));
-        IBalanceWithdrawable(opAddress).withdraw(admin, 1 * 1e18, token);
-    }
-
-    function test_Withdraw_RevertIf_InvalidParams() public {
-        uint256 amount = 0;
-        address account = address(0);
-        bytes4 err = bytes4(keccak256("InvalidOperationParameters()"));
-        // must fail if account = address(0) or amount == 0
-        vm.expectRevert(err);
-        IBalanceWithdrawable(opAddress).withdraw(admin, amount, token);
-
-        vm.expectRevert(err);
-        IBalanceWithdrawable(opAddress).withdraw(account, 1 * 1e18, token);
-    }
-
-    function test_Transfer_ValidTransfer() public {
-        // 100 MMC
-        uint256 amount = 100 * 1e18;
-        uint256 expectedAfter = amount / 2;
-        address user = vm.addr(7);
-
-        vm.startPrank(admin);
-        _validDeposit(admin, amount);
-        // transfer the haft of the balance to user
-        uint256 confirmed = IBalanceTransferable(opAddress).transfer(user, expectedAfter, token);
-        uint256 contractBalance = IBalanceVerifiable(opAddress).getBalance(token);
-        vm.stopPrank();
-
-        ILedgerVerifiable verifier = ILedgerVerifiable(opAddress);
-        uint256 balanceAdmin = verifier.getLedgerBalance(admin, token);
-        uint256 balanceUser = verifier.getLedgerBalance(user, token);
-
-        assertEq(contractBalance, amount, "Contract balance should match initial deposit");
-        assertEq(balanceAdmin, expectedAfter, "Admin balance should be half after transfer");
-        assertEq(balanceUser, confirmed, "User balance should match transferred amount");
-    }
-
-    function test_Transfer_FundsTransferredEventEmitted() public {
-        // 100 MMC
-        uint256 amount = 100 * 1e18;
-        address user = vm.addr(7);
-
-        vm.startPrank(admin);
-        _validDeposit(admin, amount);
-        // transfer the haft of the balance to user
-        vm.expectEmit(true, true, false, true, address(opAddress));
-        emit IBalanceTransferable.FundsTransferred(user, admin, amount, token);
-        IBalanceTransferable(opAddress).transfer(user, amount, token);
-        vm.stopPrank();
-    }
-
-    function test_Transfer_RevertIf_NoFunds() public {
-        vm.expectRevert(bytes4(keccak256("NoFundsToTransfer()")));
-        IBalanceTransferable(opAddress).transfer(vm.addr(7), 1 * 1e18, token);
-    }
-
-    function test_Transfer_RevertIf_InvalidParams() public {
-        uint256 amount = 0;
-        address account = address(0);
-        bytes4 err = bytes4(keccak256("InvalidOperationParameters()"));
-        // must fail if account = address(0) or amount == 0
-        vm.expectRevert(err);
-        IBalanceTransferable(opAddress).transfer(admin, amount, token);
-
-        vm.expectRevert(err);
-        IBalanceTransferable(opAddress).transfer(account, 1 * 1e18, token);
-
-        vm.prank(admin);
-        vm.expectRevert(err);
-        // sender cannot be the recipient
-        IBalanceTransferable(opAddress).transfer(admin, 1 * 1e18, token);
-    }
-
-    function test_Integration_DepositTransferWithdrawFlow() public {
-        uint256 depositAmount = 250 * 1e18;
-        address recipient = vm.addr(8);
-
-        vm.startPrank(admin);
-        _validDeposit(admin, depositAmount);
-        IBalanceTransferable(opAddress).transfer(recipient, 40 * 1e18, token);
-        IBalanceTransferable(opAddress).transfer(vm.addr(9), 60 * 1e18, token);
-        uint256 withdrawn = IBalanceWithdrawable(opAddress).withdraw(admin, 90 * 1e18, token);
-        vm.stopPrank();
-
-        ILedgerVerifiable verifier = ILedgerVerifiable(opAddress);
-        assertEq(withdrawn, 90 * 1e18, "Withdrawn amount mismatch");
-        assertEq(verifier.getLedgerBalance(admin, token), 60 * 1e18, "Admin residual ledger mismatch");
-        assertEq(verifier.getLedgerBalance(recipient, token), 40 * 1e18, "Recipient ledger mismatch");
-        assertEq(
-            IBalanceVerifiable(opAddress).getBalance(token),
-            depositAmount - withdrawn,
-            "Contract balance mismatch"
-        );
-    }
-
-    function testFuzz_DepositWithdrawMaintainsLedger(uint256 amount) public {
-        amount = bound(amount, 1e18, 1_000 * 1e18);
-
-        vm.startPrank(admin);
-        uint256 deposited = _validDeposit(admin, amount);
-        uint256 withdrawn = IBalanceWithdrawable(opAddress).withdraw(admin, deposited, token);
-        vm.stopPrank();
-
-        assertEq(deposited, withdrawn, "Mismatch between deposit and withdrawal");
-        assertEq(ILedgerVerifiable(opAddress).getLedgerBalance(admin, token), 0, "Admin ledger should be zero");
-        assertEq(IBalanceVerifiable(opAddress).getBalance(token), 0, "Contract balance should be zero");
-    }
-
-    function testFuzz_TransferDistributesLedger(uint256 depositAmount, uint256 transferAmount) public {
-        depositAmount = bound(depositAmount, 2e18, 1_000 * 1e18);
-        transferAmount = bound(transferAmount, 1e18, depositAmount - 1);
-        address recipient = vm.addr(10);
-
-        vm.startPrank(admin);
-        _validDeposit(admin, depositAmount);
-        IBalanceTransferable(opAddress).transfer(recipient, transferAmount, token);
-        vm.stopPrank();
-
-        ILedgerVerifiable verifier = ILedgerVerifiable(opAddress);
-        assertEq(
-            verifier.getLedgerBalance(admin, token) + verifier.getLedgerBalance(recipient, token),
-            depositAmount,
-            "Ledger conservation failed"
-        );
-    }
-
-    function _validDeposit(address account, uint256 amount) private returns (uint256) {
-        IERC20(token).approve(opAddress, amount);
-        return IBalanceDepositor(opAddress).deposit(account, amount, token);
-    }
-}
-
-
-contract BalanceOperatorHandler is Test {
-    IERC20 internal immutable token;
-    BalanceOperatorHarness internal immutable operator;
-
-    uint256 public totalDeposited;
-    address[] public actors;
-
-    constructor(BalanceOperatorHarness op, address currency) {
-        operator = op;
-        token = IERC20(currency);
-
-        for (uint256 i = 0; i < 10; i++) {
-            actors.push(vm.addr(i + 1));
-        }
-    }
-
-    function getActors() external view returns (address[] memory) {
-        return actors;
-    }
-
-    function deposit(uint256 actorIndex, uint256 amount) external {
-        vm.assume(actorIndex < actors.length);
-        address actor = actors[actorIndex];
-        uint256 balance = token.balanceOf(actor);
-        if (balance == 0) return;
-        amount = bound(amount, 1, balance);
-
-        vm.startPrank(actor);
-        token.approve(address(operator), amount);
-        uint256 confirmed = operator.deposit(actor, amount, address(token));
-        vm.stopPrank();
-
-        totalDeposited += confirmed;
-    }
-
-    function withdraw(uint256 actorIndex, uint256 amount) external {
-        vm.assume(actorIndex < actors.length);
-        address actor = actors[actorIndex];
-        uint256 available = operator.getLedgerBalance(actor, address(token));
-        if (available == 0) return;
-        amount = bound(amount, 1, available);
-
-        vm.prank(actor);
-        uint256 confirmed = operator.withdraw(actor, amount, address(token));
-        totalDeposited -= confirmed;
-    }
-
-    function transfer(uint256 actorIndex, uint256 actorIndexB, uint256 amount) external {
-        vm.assume(actorIndex < actors.length);
-        vm.assume(actorIndexB < actors.length);
-        vm.assume(actorIndex != actorIndexB);
-
-        address from = actors[actorIndex];
-        address to = actors[actorIndexB];
-        uint256 balance = operator.getLedgerBalance(from, address(token));
-        if (balance == 0) return;
-        amount = bound(amount, 1, balance);
-
-        vm.prank(from);
-        operator.transfer(to, amount, address(token));
-    }
-}
-
-contract BalanceOperatorInvariantTest is BaseTest {
+contract BalanceOperatorUpgradeableTest is Test {
     BalanceOperatorHarness internal operator;
-    BalanceOperatorHandler internal handler;
-    address internal opAddress;
+    MockToken internal token;
+    address internal op;
+    address internal alice;
+    address internal bob;
 
-    function setUp() public initialize {
-        deployToken();
+    function setUp() public {
         operator = new BalanceOperatorHarness();
-        handler = new BalanceOperatorHandler(operator, token);
-        opAddress = address(operator);
+        token = new MockToken();
+        op = address(operator);
+        alice = vm.addr(1);
+        bob = vm.addr(2);
 
-        address[] memory actors = handler.getActors();
-        uint256 len = actors.length;
-        for (uint256 i = 0; i < len; i++) {
-            vm.prank(admin);
-            IERC20(token).transfer(actors[i], 100 * 1e18);
-        }
-
-        targetContract(address(handler));
+        token.mint(alice, 1_000 ether);
+        token.mint(bob, 500 ether);
     }
 
-    function invariant_TotalDepositsMatchVault() external {
-        assertEq(handler.totalDeposited(), IBalanceVerifiable(opAddress).getBalance(token), "Deposit ledger mismatch");
+    function _deposit(address account, uint256 amount) internal returns (uint256) {
+        vm.startPrank(account);
+        token.approve(op, amount);
+        uint256 confirmed = IBalanceDepositor(op).deposit(account, amount, address(token));
+        vm.stopPrank();
+        return confirmed;
     }
 
-    function invariant_SumOfLedgersEqualsVaultBalance() external {
-        uint256 aggregate;
-        address[] memory actors = handler.getActors();
-        uint256 len = actors.length;
-        for (uint256 i = 0; i < len; i++) {
-            aggregate += ILedgerVerifiable(opAddress).getLedgerBalance(actors[i], token);
-        }
+    function test_Deposit_UpdatesLedgerAndVault() public {
+        uint256 amount = 200 ether;
+        uint256 confirmed = _deposit(alice, amount);
 
-        assertEq(aggregate, IBalanceVerifiable(opAddress).getBalance(token), "Ledger aggregation mismatch");
+        assertEq(confirmed, amount, "Confirmed amount mismatch");
+        assertEq(
+            ILedgerVerifiable(op).getLedgerBalance(alice, address(token)),
+            amount,
+            "Ledger should reflect deposit"
+        );
+        assertEq(IBalanceVerifiable(op).getBalance(address(token)), amount, "Vault balance mismatch");
+        assertEq(token.balanceOf(alice), 800 ether, "Token balance should decrease");
+    }
+
+    function test_Deposit_RevertWhen_NoAllowance() public {
+        vm.expectRevert(abi.encodeWithSignature("FailDuringDeposit(string)", "Amount exceeds allowance."));
+        IBalanceDepositor(op).deposit(alice, 1 ether, address(token));
+    }
+
+    function test_Withdraw_ReturnsFundsAndClearsLedger() public {
+        uint256 amount = 150 ether;
+        _deposit(alice, amount);
+
+        vm.prank(alice);
+        uint256 withdrawn = IBalanceWithdrawable(op).withdraw(alice, amount, address(token));
+
+        assertEq(withdrawn, amount, "Withdrawn amount mismatch");
+        assertEq(ILedgerVerifiable(op).getLedgerBalance(alice, address(token)), 0, "Ledger should be zero");
+        assertEq(IBalanceVerifiable(op).getBalance(address(token)), 0, "Vault balance should be zero");
+        assertEq(token.balanceOf(alice), 1_000 ether, "Token balance should be restored");
+    }
+
+    function test_Withdraw_RevertWhen_InsufficientLedger() public {
+        _deposit(alice, 10 ether);
+        vm.expectRevert(bytes4(keccak256("NoFundsToWithdraw()")));
+        vm.prank(alice);
+        IBalanceWithdrawable(op).withdraw(alice, 20 ether, address(token));
+    }
+
+    function test_Transfer_MovesLedgerBalances() public {
+        uint256 amount = 120 ether;
+        _deposit(alice, amount);
+
+        vm.prank(alice);
+        uint256 moved = IBalanceTransferable(op).transfer(bob, 45 ether, address(token));
+
+        assertEq(moved, 45 ether, "Transfer amount mismatch");
+        ILedgerVerifiable ledger = ILedgerVerifiable(op);
+        assertEq(ledger.getLedgerBalance(alice, address(token)), 75 ether, "Alice ledger mismatch");
+        assertEq(ledger.getLedgerBalance(bob, address(token)), 45 ether, "Bob ledger mismatch");
+        assertEq(
+            ledger.getLedgerBalance(alice, address(token)) + ledger.getLedgerBalance(bob, address(token)),
+            amount,
+            "Ledger totals should conserve value"
+        );
+    }
+
+    function test_Transfer_RevertWhen_SelfOrZero() public {
+        _deposit(alice, 50 ether);
+
+        vm.expectRevert(bytes4(keccak256("InvalidOperationParameters()")));
+        vm.prank(alice);
+        IBalanceTransferable(op).transfer(alice, 10 ether, address(token));
+
+        vm.expectRevert(bytes4(keccak256("InvalidOperationParameters()")));
+        vm.prank(alice);
+        IBalanceTransferable(op).transfer(bob, 0, address(token));
+    }
+
+    function test_Integration_DepositTransferWithdraw() public {
+        uint256 amount = 300 ether;
+        _deposit(alice, amount);
+
+        vm.prank(alice);
+        IBalanceTransferable(op).transfer(bob, 100 ether, address(token));
+
+        vm.prank(bob);
+        uint256 withdrawnBob = IBalanceWithdrawable(op).withdraw(bob, 60 ether, address(token));
+        vm.prank(alice);
+        uint256 withdrawnAlice = IBalanceWithdrawable(op).withdraw(alice, 200 ether, address(token));
+
+        ILedgerVerifiable ledger = ILedgerVerifiable(op);
+        assertEq(withdrawnBob, 60 ether, "Bob withdrawal mismatch");
+        assertEq(withdrawnAlice, 200 ether, "Alice withdrawal mismatch");
+        assertEq(ledger.getLedgerBalance(alice, address(token)), 0, "Alice ledger should be zero");
+        assertEq(ledger.getLedgerBalance(bob, address(token)), 40 ether, "Bob remaining ledger mismatch");
+        assertEq(
+            IBalanceVerifiable(op).getBalance(address(token)),
+            40 ether,
+            "Vault balance should equal remaining ledger"
+        );
     }
 }

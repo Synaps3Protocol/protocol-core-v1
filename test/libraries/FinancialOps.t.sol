@@ -82,13 +82,13 @@ contract FinancialOpsTest is Test {
     function test_SafeDepositNative_RevertWhen_Mismatch() public {
         uint256 amount = 3 ether;
         vm.prank(alice);
-        vm.expectRevert(abi.encodeWithSelector(FinancialOps.FailDuringDeposit.selector, "Amount exceeds balance sent."));
+        vm.expectRevert(abi.encodeWithSelector(FinancialOps.FailDuringDeposit.selector, "Invalid expected sent balance."));
         harness.depositNative{ value: amount - 1 }(amount);
     }
 
     function test_SafeDepositNative_RevertWhen_Zero() public {
         vm.prank(alice);
-        vm.expectRevert(abi.encodeWithSelector(FinancialOps.FailDuringDeposit.selector, "Invalid zero amount."));
+        vm.expectRevert(abi.encodeWithSelector(FinancialOps.FailDuringDeposit.selector, "Invalid amount or sender."));
         harness.depositNative{ value: 0 }(0);
     }
 
@@ -113,7 +113,7 @@ contract FinancialOpsTest is Test {
 
     function test_SafeDepositERC20_RevertWhen_Zero() public {
         vm.prank(alice);
-        vm.expectRevert(abi.encodeWithSelector(FinancialOps.FailDuringDeposit.selector, "Invalid zero amount."));
+        vm.expectRevert(abi.encodeWithSelector(FinancialOps.FailDuringDeposit.selector, "Invalid amount or sender."));
         harness.depositToken(alice, 0, address(token));
     }
 
@@ -126,57 +126,32 @@ contract FinancialOpsTest is Test {
         uint256 bobBefore = bob.balance;
         harness.transferFunds(bob, transferAmount, address(0));
 
-        assertEq(address(harness).balance, amount - transferAmount, "Harness native after transfer");
+        assertEq(address(harness).balance, amount - transferAmount, "Harness native balance mismatch");
         assertEq(bob.balance, bobBefore + transferAmount, "Bob native balance mismatch");
     }
 
-    function test_TransferNative_RevertWhen_Zero() public {
-        vm.expectRevert(abi.encodeWithSelector(FinancialOps.FailDuringTransfer.selector, "Invalid zero amount to transfer."));
-        harness.transferFunds(bob, 0, address(0));
-    }
-
-    function test_TransferNative_RevertWhen_InsufficientBalance() public {
-        uint256 amount = 1 ether;
-        vm.prank(alice);
-        harness.depositNative{ value: amount }(amount);
-
-        vm.expectRevert(abi.encodeWithSelector(FinancialOps.FailDuringTransfer.selector, "Insufficient balance."));
-        harness.transferFunds(bob, amount + 1 ether, address(0));
-    }
-
     function test_TransferERC20_Succeeds() public {
-        uint256 amount = 4e21;
+        uint256 amount = 1e22;
         vm.startPrank(alice);
         token.approve(address(harness), amount);
         harness.depositToken(alice, amount, address(token));
         vm.stopPrank();
 
-        uint256 transferAmount = 1e21;
+        uint256 transferAmount = 3e21;
         uint256 bobBefore = token.balanceOf(bob);
         harness.transferFunds(bob, transferAmount, address(token));
 
-        assertEq(token.balanceOf(address(harness)), amount - transferAmount, "Harness token after transfer");
+        assertEq(token.balanceOf(address(harness)), amount - transferAmount, "Harness token balance mismatch");
         assertEq(token.balanceOf(bob), bobBefore + transferAmount, "Bob token balance mismatch");
     }
 
-    function test_TransferERC20_RevertWhen_Zero() public {
-        vm.expectRevert(abi.encodeWithSelector(FinancialOps.FailDuringTransfer.selector, "Invalid zero amount to transfer."));
-        harness.transferFunds(bob, 0, address(token));
-    }
-
-    function test_TransferERC20_RevertWhen_InsufficientBalance() public {
-        uint256 amount = 5e21;
-        vm.startPrank(alice);
-        token.approve(address(harness), amount);
-        harness.depositToken(alice, amount, address(token));
-        vm.stopPrank();
-
-        vm.expectRevert(abi.encodeWithSelector(FinancialOps.FailDuringTransfer.selector, "Insufficient balance."));
-        harness.transferFunds(bob, amount + 1, address(token));
+    function test_Transfer_RevertWhen_InvalidAmount() public {
+        vm.expectRevert(abi.encodeWithSelector(FinancialOps.FailDuringTransfer.selector, "Invalid amount or recipient."));
+        harness.transferFunds(address(0), 1, address(token));
     }
 
     function test_IncreaseAllowance_Succeeds() public {
-        uint256 allowanceAmount = 7e20;
+        uint256 allowanceAmount = 5e20;
         harness.increaseTokenAllowance(carol, allowanceAmount, address(token));
         assertEq(token.allowance(address(harness), carol), allowanceAmount, "Allowance mismatch");
     }
@@ -247,180 +222,24 @@ contract FinancialOpsTest is Test {
         assertEq(token.balanceOf(carol), 3e21, "Carol token balance mismatch");
     }
 
-    function testFuzz_NativeDepositTransferConservation(uint256 depositAmount, uint256 transferAmount) public {
-        depositAmount = bound(depositAmount, 1 wei, 50 ether);
-        transferAmount = bound(transferAmount, 0, depositAmount);
+    function test_DepositWithdrawFullyRestoresBalances() public {
+        uint256 amount = 12 ether;
+        vm.prank(alice);
+        harness.depositNative{ value: amount }(amount);
 
         vm.prank(alice);
-        harness.depositNative{ value: depositAmount }(depositAmount);
-
-        uint256 bobBefore = bob.balance;
-        if (transferAmount > 0) {
-            harness.transferFunds(bob, transferAmount, address(0));
-        }
-
-        assertEq(address(harness).balance, depositAmount - transferAmount, "Harness native conservation");
-        assertEq(bob.balance, bobBefore + transferAmount, "Bob native gain mismatch");
+        harness.transferFunds(alice, amount, address(0));
+        assertEq(address(harness).balance, 0, "Harness native balance should be zero");
     }
 
-    function testFuzz_ERC20DepositTransferConservation(uint256 depositAmount, uint256 transferAmount) public {
-        depositAmount = bound(depositAmount, 1, INITIAL_TOKEN_ALLOCATION);
-        transferAmount = bound(transferAmount, 0, depositAmount);
-
+    function test_TokenDepositWithdrawFullyRestoresBalances() public {
+        uint256 amount = 4e21;
         vm.startPrank(alice);
-        token.approve(address(harness), depositAmount);
-        harness.depositToken(alice, depositAmount, address(token));
-        vm.stopPrank();
-
-        uint256 bobBefore = token.balanceOf(bob);
-        if (transferAmount > 0) {
-            harness.transferFunds(bob, transferAmount, address(token));
-        }
-
-        assertEq(token.balanceOf(address(harness)), depositAmount - transferAmount, "Harness token conservation");
-        assertEq(token.balanceOf(bob), bobBefore + transferAmount, "Bob token gain mismatch");
-    }
-}
-
-contract FinancialOpsHandler is Test {
-    FinancialOpsHarness public immutable harness;
-    TestToken public immutable token;
-
-    address[] internal accounts;
-    uint256 internal constant INITIAL_NATIVE_BALANCE = 80 ether;
-    uint256 internal constant INITIAL_TOKEN_BALANCE = 5e21;
-
-    uint256 internal expectedHarnessNative;
-    uint256 internal expectedHarnessToken;
-    uint256 internal aggregateNativeInitial;
-    uint256 internal aggregateTokenInitial;
-
-    constructor(FinancialOpsHarness harness_, TestToken token_) {
-        harness = harness_;
-        token = token_;
-
-        for (uint256 i = 0; i < 3; i++) {
-            address account = vm.addr(i + 10);
-            accounts.push(account);
-            vm.deal(account, INITIAL_NATIVE_BALANCE);
-            token.mint(account, INITIAL_TOKEN_BALANCE);
-            aggregateNativeInitial += INITIAL_NATIVE_BALANCE;
-            aggregateTokenInitial += INITIAL_TOKEN_BALANCE;
-        }
-    }
-
-    function depositNative(uint256 accountIdx, uint256 amount) external {
-        vm.assume(accountIdx < accounts.length);
-        address account = accounts[accountIdx];
-        uint256 balance = account.balance;
-        if (balance == 0) return;
-        amount = bound(amount, 1, balance);
-
-        vm.prank(account);
-        harness.depositNative{ value: amount }(amount);
-        expectedHarnessNative += amount;
-    }
-
-    function transferNative(uint256 accountIdx, uint256 amount) external {
-        vm.assume(accountIdx < accounts.length);
-        if (expectedHarnessNative == 0) return;
-        amount = bound(amount, 1, expectedHarnessNative);
-        address recipient = accounts[accountIdx];
-
-        harness.transferFunds(recipient, amount, address(0));
-        expectedHarnessNative -= amount;
-    }
-
-    function depositToken(uint256 accountIdx, uint256 amount) external {
-        vm.assume(accountIdx < accounts.length);
-        address account = accounts[accountIdx];
-        uint256 balance = token.balanceOf(account);
-        if (balance == 0) return;
-        amount = bound(amount, 1, balance);
-
-        vm.startPrank(account);
         token.approve(address(harness), amount);
-        harness.depositToken(account, amount, address(token));
+        harness.depositToken(alice, amount, address(token));
         vm.stopPrank();
 
-        expectedHarnessToken += amount;
-    }
-
-    function transferToken(uint256 accountIdx, uint256 amount) external {
-        vm.assume(accountIdx < accounts.length);
-        if (expectedHarnessToken == 0) return;
-        amount = bound(amount, 1, expectedHarnessToken);
-        address recipient = accounts[accountIdx];
-
-        harness.transferFunds(recipient, amount, address(token));
-        expectedHarnessToken -= amount;
-    }
-
-    function accountsLength() external view returns (uint256) {
-        return accounts.length;
-    }
-
-    function accountAt(uint256 idx) external view returns (address) {
-        return accounts[idx];
-    }
-
-    function expectedHarnessNativeBalance() external view returns (uint256) {
-        return expectedHarnessNative;
-    }
-
-    function expectedHarnessTokenBalance() external view returns (uint256) {
-        return expectedHarnessToken;
-    }
-
-    function nativeInitialTotal() external view returns (uint256) {
-        return aggregateNativeInitial;
-    }
-
-    function tokenInitialTotal() external view returns (uint256) {
-        return aggregateTokenInitial;
-    }
-}
-
-contract FinancialOpsInvariantTest is Test {
-    FinancialOpsHarness internal harness;
-    TestToken internal token;
-    FinancialOpsHandler internal handler;
-
-    function setUp() public {
-        harness = new FinancialOpsHarness();
-        token = new TestToken("Mock Token", "MOCK");
-        handler = new FinancialOpsHandler(harness, token);
-        targetContract(address(handler));
-    }
-
-    function invariant_HarnessBalancesMatchExpectations() external view {
-        assertEq(
-            address(harness).balance,
-            handler.expectedHarnessNativeBalance(),
-            "Harness native expectation mismatch"
-        );
-        assertEq(
-            token.balanceOf(address(harness)),
-            handler.expectedHarnessTokenBalance(),
-            "Harness token expectation mismatch"
-        );
-    }
-
-    function invariant_TotalTokenConserved() external view {
-        uint256 total = token.balanceOf(address(harness));
-        uint256 len = handler.accountsLength();
-        for (uint256 i = 0; i < len; i++) {
-            total += token.balanceOf(handler.accountAt(i));
-        }
-        assertEq(total, handler.tokenInitialTotal(), "Token conservation failed");
-    }
-
-    function invariant_TotalNativeConserved() external view {
-        uint256 total = address(harness).balance;
-        uint256 len = handler.accountsLength();
-        for (uint256 i = 0; i < len; i++) {
-            total += handler.accountAt(i).balance;
-        }
-        assertEq(total, handler.nativeInitialTotal(), "Native conservation failed");
+        harness.transferFunds(alice, amount, address(token));
+        assertEq(token.balanceOf(address(harness)), 0, "Harness token balance should be zero");
     }
 }

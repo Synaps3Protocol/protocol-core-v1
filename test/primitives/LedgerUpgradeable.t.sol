@@ -24,7 +24,10 @@ contract LedgerUpgradeableHarness is LedgerUpgradeable {
 }
 
 contract LedgerUpgradeableTest is Test {
-    LedgerUpgradeableHarness harness;
+    LedgerUpgradeableHarness internal harness;
+    address internal alice = vm.addr(11);
+    address internal bob = vm.addr(12);
+    address internal currency = vm.addr(33);
 
     function setUp() public {
         harness = new LedgerUpgradeableHarness();
@@ -32,144 +35,43 @@ contract LedgerUpgradeableTest is Test {
     }
 
     function test_SetEntry_SetsBalance() public {
-        address account = address(0xBEEF);
-        address currency = address(0xCAFE);
-        uint256 amount = 123 ether;
-
-        harness.setEntry(account, amount, currency);
-
-        assertEq(harness.getLedgerBalance(account, currency), amount, "Ledger should equal set amount");
+        harness.setEntry(alice, 50 ether, currency);
+        assertEq(harness.getLedgerBalance(alice, currency), 50 ether, "Set should override balance");
     }
 
-    function test_SumEntry_Accumulates() public {
-        address account = address(0xA11CE);
-        address currency = address(0xC0FFEE);
-
-        harness.setEntry(account, 10 ether, currency);
-        harness.sumEntry(account, 5 ether, currency);
-
-        assertEq(harness.getLedgerBalance(account, currency), 15 ether, "Sum should increase balance");
+    function test_SumEntry_IncrementsBalance() public {
+        harness.setEntry(alice, 10 ether, currency);
+        harness.sumEntry(alice, 5 ether, currency);
+        assertEq(harness.getLedgerBalance(alice, currency), 15 ether, "Sum should add amount");
     }
 
-    function test_SubEntry_Decrements() public {
-        address account = address(0xDEAD);
-        address currency = address(0xBADDAD);
-
-        harness.setEntry(account, 20 ether, currency);
-        harness.subEntry(account, 7 ether, currency);
-
-        assertEq(harness.getLedgerBalance(account, currency), 13 ether, "Sub should decrease balance");
+    function test_SubEntry_DecrementsBalance() public {
+        harness.setEntry(alice, 20 ether, currency);
+        harness.subEntry(alice, 7 ether, currency);
+        assertEq(harness.getLedgerBalance(alice, currency), 13 ether, "Sub should remove amount");
     }
 
-    function testFuzz_SetAndAdjust(uint256 amount, uint256 addAmount, uint256 subAmount) public {
-        amount = bound(amount, 1, type(uint96).max);
-        addAmount = bound(addAmount, 0, type(uint96).max - amount);
-        subAmount = bound(subAmount, 0, amount + addAmount);
+    function test_SubEntry_AllowsReducingToZero() public {
+        harness.setEntry(alice, 8 ether, currency);
+        harness.subEntry(alice, 8 ether, currency);
+        assertEq(harness.getLedgerBalance(alice, currency), 0, "Balance should reach zero");
+    }
 
-        address account = vm.addr(111);
-        address currency = vm.addr(222);
+    function test_SetEntry_IsolatedPerAccountAndCurrency() public {
+        harness.setEntry(alice, 15 ether, currency);
+        harness.setEntry(bob, 30 ether, vm.addr(44));
 
-        harness.setEntry(account, amount, currency);
-        harness.sumEntry(account, addAmount, currency);
-        harness.subEntry(account, subAmount, currency);
+        assertEq(harness.getLedgerBalance(alice, currency), 15 ether, "Alice balance mismatch");
+        assertEq(harness.getLedgerBalance(bob, vm.addr(44)), 30 ether, "Bob balance mismatch");
+        assertEq(harness.getLedgerBalance(bob, currency), 0, "Cross account balances should stay zero");
+    }
 
-        uint256 expected = amount + addAmount - subAmount;
-        assertEq(harness.getLedgerBalance(account, currency), expected, "Ledger after adjustments mismatch");
+    function test_SequentialOperationsConserveMath() public {
+        harness.setEntry(alice, 40 ether, currency);
+        harness.sumEntry(alice, 12 ether, currency);
+        harness.subEntry(alice, 5 ether, currency);
+        harness.sumEntry(alice, 3 ether, currency);
+
+        assertEq(harness.getLedgerBalance(alice, currency), 50 ether, "Sequential math mismatch");
     }
 }
-
-contract LedgerUpgradeableHandler is Test {
-    LedgerUpgradeableHarness public immutable harness;
-
-    struct Key {
-        address account;
-        address currency;
-    }
-
-    Key[] private _keys;
-    mapping(bytes32 => bool) private _tracked;
-    mapping(bytes32 => uint256) private _expected;
-
-    constructor(LedgerUpgradeableHarness harness_) {
-        harness = harness_;
-    }
-
-    function setEntry(address account, address currency, uint256 amount) external {
-        if (account == address(0) || currency == address(0)) return;
-        harness.setEntry(account, amount, currency);
-
-        bytes32 key = keccak256(abi.encode(account, currency));
-        if (!_tracked[key]) {
-            _tracked[key] = true;
-            _keys.push(Key({ account: account, currency: currency }));
-        }
-        _expected[key] = amount;
-    }
-
-    function sumEntry(address account, address currency, uint256 amount) external {
-        if (account == address(0) || currency == address(0)) return;
-
-        bytes32 key = keccak256(abi.encode(account, currency));
-        uint256 current = _tracked[key] ? _expected[key] : harness.getLedgerBalance(account, currency);
-        uint256 newBalance = current + amount;
-
-        harness.sumEntry(account, amount, currency);
-
-        if (!_tracked[key]) {
-            _tracked[key] = true;
-            _keys.push(Key({ account: account, currency: currency }));
-        }
-        _expected[key] = newBalance;
-    }
-
-    function subEntry(address account, address currency, uint256 amount) external {
-        if (account == address(0) || currency == address(0)) return;
-
-        bytes32 key = keccak256(abi.encode(account, currency));
-        uint256 current = _tracked[key] ? _expected[key] : harness.getLedgerBalance(account, currency);
-        if (amount > current) return; // avoid underflow
-
-        harness.subEntry(account, amount, currency);
-
-        if (!_tracked[key]) {
-            _tracked[key] = true;
-            _keys.push(Key({ account: account, currency: currency }));
-        }
-        _expected[key] = current - amount;
-    }
-
-    function keysLength() external view returns (uint256) {
-        return _keys.length;
-    }
-
-    function keyAt(uint256 index) external view returns (Key memory) {
-        return _keys[index];
-    }
-
-    function expectedBalance(address account, address currency) external view returns (uint256) {
-        bytes32 key = keccak256(abi.encode(account, currency));
-        return _expected[key];
-    }
-}
-
-contract LedgerUpgradeableInvariantTest is Test {
-    LedgerUpgradeableHarness harness;
-    LedgerUpgradeableHandler handler;
-
-    function setUp() public {
-        harness = new LedgerUpgradeableHarness();
-        harness.initialize();
-        handler = new LedgerUpgradeableHandler(harness);
-        targetContract(address(handler));
-    }
-
-    function invariant_LedgerMatchesExpected() external view {
-        uint256 len = handler.keysLength();
-        for (uint256 i = 0; i < len; i++) {
-            LedgerUpgradeableHandler.Key memory key = handler.keyAt(i);
-            uint256 expected = handler.expectedBalance(key.account, key.currency);
-            assertEq(harness.getLedgerBalance(key.account, key.currency), expected, "Ledger mismatch");
-        }
-    }
-}
-

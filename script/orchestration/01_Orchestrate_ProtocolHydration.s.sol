@@ -14,6 +14,7 @@ import { getGovPermissions as AssetReferendumGovPermissions } from "script/permi
 import { getModPermissions as PolicyAuditorModPermissions } from "script/permissions/Permissions_PolicyAuditor.sol";
 import { getOpsPermissions as LedgerVaultOpsPermissions } from "script/permissions/Permissions_LedgerVault.sol";
 import { getModPermissions as HooksModPermissions } from "script/permissions/Permissions_HookRegistry.sol";
+import { getPauserPermissions as PauserPermissions } from "script/permissions/Permissions_AccessControlled.sol";
 
 contract OrchestrateProtocolHydration is Script {
     function run() external {
@@ -22,6 +23,7 @@ contract OrchestrateProtocolHydration is Script {
         address treasuryAddress = vm.envAddress("TREASURY");
         address auditorAddress = vm.envAddress("POLICY_AUDIT");
         address accessManager = vm.envAddress("ACCESS_MANAGER");
+        address assetRegistry = vm.envAddress("ASSET_REGISTRY");
         address assetReferendum = vm.envAddress("ASSET_REFERENDUM");
         address agreementManager = vm.envAddress("AGREEMENT_MANAGER");
         address agreementSettler = vm.envAddress("AGREEMENT_SETTLER");
@@ -35,28 +37,41 @@ contract OrchestrateProtocolHydration is Script {
         // initially the admin will be the mod to setup policies
         address adminAddress = vm.addr(admin);
         IAccessManager authority = IAccessManager(accessManager);
+
         // the governor is set to admin to handle initial setup..
-        // after this can be revoked and assign the governance as governor
+        // after this can be revoked and assign the governance timelock as governor
+        // https://docs.openzeppelin.com/contracts/5.x/access-control#role-admins-and-guardians
         authority.grantRole(C.GOV_ROLE, adminAddress, 0);
 
+        authority.grantRole(C.OPS_ROLE, agreementManager, 0);
+        authority.grantRole(C.OPS_ROLE, agreementSettler, 0);
+
         // assign governance permissions
+        bytes4[] memory pauserAllowed = PauserPermissions();
+        bytes4[] memory vaultAllowed = LedgerVaultOpsPermissions();
         bytes4[] memory tollgateAllowed = TollgateGovPermissions();
         bytes4[] memory treasuryAllowed = TreasuryGovPermissions();
+        bytes4[] memory auditorAllowed = PolicyAuditorModPermissions();
         bytes4[] memory assetReferendumAllowed = AssetReferendumGovPermissions();
         bytes4[] memory custodianReferendumAllowed = CustodianReferendumGovPermissions();
 
+        // pausable list of contracts
+        authority.setTargetFunctionRole(assetRegistry, pauserAllowed, C.SEC_ROLE);
+        authority.setTargetFunctionRole(ledgerVault, pauserAllowed, C.SEC_ROLE);
+        authority.setTargetFunctionRole(treasuryAddress, pauserAllowed, C.SEC_ROLE);
+        authority.setTargetFunctionRole(custodianReferendum, pauserAllowed, C.SEC_ROLE);
+
         authority.setTargetFunctionRole(tollgateAddress, tollgateAllowed, C.GOV_ROLE);
         authority.setTargetFunctionRole(treasuryAddress, treasuryAllowed, C.GOV_ROLE);
+
+        authority.setTargetFunctionRole(treasuryAddress, treasuryAllowed, C.TREASURER_ROLE);
         authority.setTargetFunctionRole(assetReferendum, assetReferendumAllowed, C.CONTENT_COUNCIL_ROLE);
         authority.setTargetFunctionRole(custodianReferendum, custodianReferendumAllowed, C.CUSTODY_COUNCIL_ROLE);
 
-        // assign operations permissions
-        authority.grantRole(C.OPS_ROLE, agreementManager, 0);
-        authority.grantRole(C.OPS_ROLE, agreementSettler, 0);
-        bytes4[] memory vaultAllowed = LedgerVaultOpsPermissions();
         authority.setTargetFunctionRole(ledgerVault, vaultAllowed, C.OPS_ROLE);
-
-
+        authority.setTargetFunctionRole(auditorAddress, auditorAllowed, C.ADMIN_ROLE);
+        // bytes4[] memory hookModAllowed = HooksModPermissions();
+        // authority.setTargetFunctionRole(auditorAddress, hookModAllowed, C.MOD_ROLE);
 
         // 2 set mmc as the initial currency and fees
         uint256 agrFee = vm.envUint("AGREEMENT_FEES"); // 5% 500 bps

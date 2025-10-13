@@ -129,10 +129,20 @@ abstract contract PolicyBase is ERC165, IPolicy {
         T.Agreement memory agreement,
         uint256 expireAt
     ) internal returns (uint256[] memory) {
+        uint256 fees = agreement.fees;
+        uint256 total = agreement.total;
+        address initiator = agreement.initiator;
+        address[] memory parties = agreement.parties;
+        
         bytes memory payload = abi.encode(agreement);
-        bytes memory data = abi.encode(holder, agreement.initiator, address(this), agreement.parties, payload);
-        emit AgreementCommitted(holder, agreement.parties.length, agreement.total, agreement.fees);
-        return ATTESTATION_PROVIDER.attest(agreement.parties, expireAt, data);
+        bytes memory data = abi.encode(holder, initiator, address(this), parties, payload);
+
+        // expected invariant results 1:1 between attestations <> parties relation
+        uint256[] memory attestationIds = ATTESTATION_PROVIDER.attest(parties, expireAt, data);
+        assert(attestationIds.length == parties.length);
+
+        emit AgreementCommitted(holder, parties.length, total, fees);
+        return attestationIds;
     }
 
     /// @notice Internal function to create and register an attestation.

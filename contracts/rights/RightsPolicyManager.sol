@@ -16,7 +16,6 @@ import { IRightsPolicyManager } from "@synaps3/core/interfaces/rights/IRightsPol
 // solhint-disable-next-line max-line-length
 import { IRightsPolicyAuthorizerVerifiable } from "@synaps3/core/interfaces/rights/IRightsPolicyAuthorizerVerifiable.sol";
 import { LoopOps } from "@synaps3/core/libraries/LoopOps.sol";
-import { ArrayOps } from "@synaps3/core/libraries/ArrayOps.sol";
 import { T } from "@synaps3/core/primitives/Types.sol";
 
 /// @title RightsPolicyManager
@@ -32,7 +31,6 @@ contract RightsPolicyManager is
     IRightsPolicyManager
 {
     using EnumerableSet for EnumerableSet.AddressSet;
-    using ArrayOps for address[];
     using LoopOps for uint256;
 
     /// Our immutables behave as constants after deployment
@@ -147,7 +145,7 @@ contract RightsPolicyManager is
     /// @notice Retrieves the list of active policies matching the criteria for an account.
     /// @dev This function filters out policies that are not active, ensuring the returned array
     ///      contains only valid policies. It first creates a temporary array of the same size as `policies`,
-    ///      then filters and resizes it to the exact number of valid policies using `slice()`.
+    ///      then filters and resizes it to the exact number of valid policies using `slicing`.
     /// @param account Address of the account to evaluate.
     /// @param criteria Encoded data containing parameters for access verification. eg: assetId, holder, groups, etc
     function getActivePolicies(address account, bytes memory criteria) external view returns (address[] memory) {
@@ -171,7 +169,7 @@ contract RightsPolicyManager is
         //   it may contain uninitialized elements (`address(0)`) if some policies were invalid.
         // - The variable `j` represents the number of valid policies that passed the filtering process.
         // - To ensure that the returned array contains only these valid policies and no extra default values,
-        //   we call `slice(j)`, which creates a new array of exact length `j` and copies only
+        //   we slice, which creates a new array of exact length `j` and copies only
         //   the first `j` elements from `filtered`.
         // - This prevents returning an array with trailing `address(0)` values, ensuring data integrity
         //   and reducing unnecessary gas costs when the array is processed elsewhere.

@@ -18,6 +18,7 @@ import { DeployAgreementManager } from "script/deployment/07_Deploy_Financial_Ag
 import { DeployAgreementSettler } from "script/deployment/08_Deploy_Financial_AgreementSettler.s.sol";
 import { DeployRightsAssetCustodian } from "script/deployment/15_Deploy_RightsManager_AssetCustodian.s.sol";
 import { DeployRightsPolicyAuthorizer } from "script/deployment/18_Deploy_RightsManager_PolicyAuthorizer.s.sol";
+import { DeployRightsPolicyManager } from "script/deployment/17_Deploy_RightsManager_PolicyManager.s.sol";
 import { DeployPolicyAudit } from "script/deployment/14_Deploy_Policies_PolicyAudit.s.sol";
 
 import { getGovPermissions as TollgateGovPermissions } from "script/permissions/Permissions_Tollgate.sol";
@@ -228,6 +229,14 @@ abstract contract BaseTest is Test {
         rightsPolicyAuthorizer = rightsPolicyAuthorizer == address(0)
             ? rightsAuthorizerDeployer.run(policyAudit, accessManager)
             : rightsPolicyAuthorizer;
+    }
+
+    function deployRightsPolicyManager() public {
+        deployAgreementSettler();
+        deployRightsPolicyAuthorizer();
+
+        DeployRightsPolicyManager rightsManagerDeployer = new DeployRightsPolicyManager();
+        rightsPolicyManager = rightsPolicyManager == address(0) ? rightsManagerDeployer.run() : rightsPolicyManager;
     }
 
      function _setContentCouncilPermissions(address target, bytes4[] memory allowed) public {

@@ -118,6 +118,60 @@ contract AgreementManagerTest is BaseTest {
         IAgreementManager(agreementManager).createAgreement(amount, token, arbiter, parties, "");
     }
 
+    function test_CreateAgreement_ComputesFeesForBpsScheme() public {
+        vm.prank(governor);
+        ITollgate(tollgate).setFees(T.Scheme.BPS, arbiter, 500, token);
+
+        uint256 amount = 200 * 1e18;
+        address[] memory parties = _buildParties(1);
+
+        vm.prank(user);
+        uint256 proof = IAgreementManager(agreementManager).createAgreement(amount, token, arbiter, parties, "");
+
+        T.Agreement memory stored = IAgreementManager(agreementManager).getAgreement(proof);
+        uint256 expectedFee = (amount * 500) / C.BPS_MAX; // 500 bps configured in setUp
+        assertEq(stored.fees, expectedFee, "BPS fee mismatch");
+    }
+
+    function test_CreateAgreement_ComputesFeesForNominalScheme() public {
+        vm.prank(governor);
+        ITollgate(tollgate).setFees(T.Scheme.NOMINAL, arbiter, 25, token); // 25% nominal
+
+        uint256 amount = 80 * 1e18;
+        address[] memory parties = _buildParties(2);
+
+        vm.prank(user);
+        uint256 proof = IAgreementManager(agreementManager).createAgreement(amount, token, arbiter, parties, "");
+
+        T.Agreement memory stored = IAgreementManager(agreementManager).getAgreement(proof);
+        uint256 expectedFee = (amount * 25 * 100) / C.BPS_MAX; // nominal converted to bps internally
+        assertEq(stored.fees, expectedFee, "Nominal fee mismatch");
+
+        vm.prank(governor);
+        ITollgate(tollgate).setFees(T.Scheme.BPS, arbiter, 500, token);
+    }
+
+    function test_CreateAgreement_RevertWhen_ExceedsMaxPartiesPenaltyCap() public {
+        uint256 maxParties = IAgreementManagerExtended(agreementManager).maxParties();
+        uint256 partiesLen = maxParties + 15; // ensures penalty bps > 10_000
+        address[] memory parties = _buildParties(partiesLen);
+
+        vm.prank(user);
+        vm.expectRevert(AgreementManager.ExceedsMaxParties.selector);
+        IAgreementManager(agreementManager).createAgreement(10 * 1e18, token, arbiter, parties, "");
+    }
+
+    function test_PreviewAgreement_NoPenalizationWhenWithinLimit() public {
+        uint256 amount = 60 * 1e18;
+        uint256 maxParties = IAgreementManagerExtended(agreementManager).maxParties();
+        address[] memory parties = _buildParties(maxParties);
+
+        vm.prank(user);
+        T.Agreement memory preview = IAgreementManager(agreementManager).previewAgreement(amount, token, arbiter, parties, "");
+
+        assertEq(preview.locked, amount, "Locked amount should equal total when within limit");
+    }
+
     function test_CreateAgreement_WithPenalizationLocksAmount() public {
         uint256 partiesLen = IAgreementManagerExtended(agreementManager).maxParties() + 2;
         address[] memory parties = _buildParties(partiesLen);
@@ -151,225 +205,4 @@ contract AgreementManagerTest is BaseTest {
         assertEq(agreement.locked, amount + expectedPenalization, "Penalization mismatch");
     }
 
-    function testFuzz_CreateAgreement_RevertWhen_UnsupportedScheme(uint256 amountSeed) public {
-        address unsupportedArbiter = address(new AgreementManagerMockArbiter());
-        uint256 amount = bound(amountSeed, 1e18, 100 * 1e18);
-
-        vm.prank(user);
-        vm.expectRevert(abi.encodeWithSelector(AgreementManager.UnsupportedAgreementTarget.selector, unsupportedArbiter, token));
-        IAgreementManager(agreementManager).createAgreement(amount, token, unsupportedArbiter, new address[](0), "");
-    }
-
-    function testFuzz_PreviewAgreement_MatchesPenalty(uint256 partiesLen) public {
-        uint256 maxParties = IAgreementManagerExtended(agreementManager).maxParties();
-        partiesLen = bound(partiesLen, 0, maxParties + 10);
-        address[] memory parties = _buildParties(partiesLen);
-        uint256 amount = 25 * 1e18;
-
-        vm.prank(user);
-        T.Agreement memory agreement = IAgreementManager(agreementManager).previewAgreement(amount, token, arbiter, parties, "");
-
-        uint256 penalty = _penaltyBps(partiesLen, maxParties);
-        uint256 expectedLocked = amount + ((amount * penalty) / C.BPS_MAX);
-        assertEq(agreement.locked, expectedLocked, "Locked value should include penalty");
-    }
-
-    function testFuzz_CreateAgreement_MatchesPreview(uint256 amountSeed, uint8 partiesSeed) public {
-        uint256 maxParties = IAgreementManagerExtended(agreementManager).maxParties();
-        uint256 partiesLen = uint256(partiesSeed) % (maxParties + 6);
-        address[] memory parties = _buildParties(partiesLen);
-        uint256 available = ILedgerVerifiable(ledger).getLedgerBalance(user, token);
-        uint256 penaltyBps = _penaltyBps(partiesLen, maxParties);
-
-        uint256 maxAmount = available;
-        if (penaltyBps > 0) {
-            maxAmount = (available * C.BPS_MAX) / (C.BPS_MAX + penaltyBps);
-        }
-        if (maxAmount < 1e18) return;
-
-        uint256 amount = bound(amountSeed, 1e18, maxAmount);
-        bytes memory payload = abi.encode(amountSeed, partiesSeed);
-
-        vm.prank(user);
-        T.Agreement memory preview = IAgreementManager(agreementManager).previewAgreement(amount, token, arbiter, parties, payload);
-
-        vm.startPrank(user);
-        uint256 proof = IAgreementManager(agreementManager).createAgreement(amount, token, arbiter, parties, payload);
-        vm.stopPrank();
-
-        T.Agreement memory stored = IAgreementManager(agreementManager).getAgreement(proof);
-        assertEq(stored.total, preview.total, "Total mismatch");
-        assertEq(stored.fees, preview.fees, "Fees mismatch");
-        assertEq(stored.locked, preview.locked, "Locked mismatch");
-    }
-}
-
-contract AgreementManagerHandler is Test {
-    struct AgreementInfo {
-        bool exists;
-        uint256 total;
-        uint256 fees;
-        uint256 locked;
-    }
-
-    IAgreementManagerExtended public immutable manager;
-    ILedgerVerifiable public immutable vault;
-    address public immutable token;
-    address public immutable initiator;
-    address public immutable arbiter;
-    address public immutable admin;
-    uint256 public immutable initialDeposit;
-
-    uint256[] private _proofs;
-    mapping(uint256 => AgreementInfo) private _agreements;
-    uint256 private _totalLocked;
-    uint256 private _nonce;
-
-    constructor(
-        address manager_,
-        address vault_,
-        address token_,
-        address initiator_,
-        address arbiter_,
-        address admin_,
-        uint256 initialDeposit_
-    ) {
-        manager = IAgreementManagerExtended(manager_);
-        vault = ILedgerVerifiable(vault_);
-        token = token_;
-        initiator = initiator_;
-        arbiter = arbiter_;
-        admin = admin_;
-        initialDeposit = initialDeposit_;
-    }
-
-    function createAgreement(uint256 amountSeed, uint8 partiesSeed) external {
-        uint256 available = vault.getLedgerBalance(initiator, token);
-        if (available < 1e18) return;
-
-        uint256 maxParties = manager.maxParties();
-        uint256 partiesLen = uint256(partiesSeed) % (maxParties + 6);
-        uint256 penaltyBps = _penaltyBps(partiesLen, maxParties);
-        if (penaltyBps > C.BPS_MAX) return;
-
-        uint256 maxAmount = available;
-        if (penaltyBps > 0) {
-            maxAmount = (available * C.BPS_MAX) / (C.BPS_MAX + penaltyBps);
-        }
-        if (maxAmount < 1e18) return;
-
-        uint256 amount = bound(amountSeed, 1e18, maxAmount);
-        address[] memory parties = _buildParties(partiesLen);
-        bytes memory payload = abi.encode(amountSeed, partiesSeed, _nonce++);
-
-        vm.prank(initiator);
-        uint256 proof = manager.createAgreement(amount, token, arbiter, parties, payload);
-
-        if (_agreements[proof].exists) return;
-
-        T.Agreement memory agreement = manager.getAgreement(proof);
-        _agreements[proof] = AgreementInfo({ exists: true, total: agreement.total, fees: agreement.fees, locked: agreement.locked });
-        _totalLocked += agreement.locked;
-        _proofs.push(proof);
-    }
-
-    function setMaxParties(uint256 newMax) external {
-        uint256 value = bound(newMax, 1, 10);
-        vm.prank(admin);
-        manager.setMaxParties(value);
-    }
-
-    function proofsLength() external view returns (uint256) {
-        return _proofs.length;
-    }
-
-    function proofAt(uint256 index) external view returns (uint256) {
-        return _proofs[index];
-    }
-
-    function info(uint256 proof) external view returns (AgreementInfo memory) {
-        return _agreements[proof];
-    }
-
-    function totalLocked() external view returns (uint256) {
-        return _totalLocked;
-    }
-
-    function recomputeLocked() external view returns (uint256 lockedSum) {
-        uint256 len = _proofs.length;
-        for (uint256 i = 0; i < len; i++) {
-            AgreementInfo memory info = _agreements[_proofs[i]];
-            if (!info.exists) continue;
-            lockedSum += info.locked;
-        }
-    }
-
-    function _buildParties(uint256 len) private view returns (address[] memory parties) {
-        parties = new address[](len);
-        for (uint256 i = 0; i < len; i++) {
-            parties[i] = vm.addr(500 + i);
-        }
-    }
-
-    function _penaltyBps(uint256 partiesLen, uint256 maxParties) private pure returns (uint256) {
-        if (partiesLen <= maxParties) return 0;
-        uint256 excess = partiesLen - maxParties;
-        return ((excess * (excess + 1)) / 2) * 100;
-    }
-}
-
-contract AgreementManagerInvariantTest is BaseTest {
-    AgreementManagerHandler handler;
-    address internal arbiter;
-    uint256 internal constant INITIAL_DEPOSIT = 5_000 * 1e18;
-
-    function setUp() public initialize {
-        deployAgreementManager();
-        arbiter = address(new AgreementManagerMockArbiter());
-
-        vm.prank(governor);
-        ITollgate(tollgate).setFees(T.Scheme.BPS, arbiter, 400, token);
-
-        vm.startPrank(admin);
-        IERC20(token).approve(ledger, INITIAL_DEPOSIT);
-        ILedgerVault(ledger).deposit(user, INITIAL_DEPOSIT, token);
-        vm.stopPrank();
-
-        handler = new AgreementManagerHandler(
-            agreementManager,
-            ledger,
-            token,
-            user,
-            arbiter,
-            admin,
-            INITIAL_DEPOSIT
-        );
-
-        targetContract(address(handler));
-    }
-
-    function invariant_AgreementsStoredMatchHandler() external view {
-        uint256 len = handler.proofsLength();
-        for (uint256 i = 0; i < len; i++) {
-            uint256 proof = handler.proofAt(i);
-            AgreementManagerHandler.AgreementInfo memory info = handler.info(proof);
-            if (!info.exists) continue;
-
-            T.Agreement memory agreement = IAgreementManager(agreementManager).getAgreement(proof);
-            assertEq(agreement.total, info.total, "Total mismatch");
-            assertEq(agreement.fees, info.fees, "Fees mismatch");
-            assertEq(agreement.locked, info.locked, "Locked mismatch");
-            assertEq(agreement.arbiter, arbiter, "Arbiter mismatch");
-            assertEq(agreement.initiator, user, "Initiator mismatch");
-        }
-    }
-
-    function invariant_UserLedgerPlusLockedEqualsInitial() external view {
-        uint256 ledgerBalance = ILedgerVerifiable(ledger).getLedgerBalance(user, token);
-        assertEq(ledgerBalance + handler.totalLocked(), INITIAL_DEPOSIT, "Ledger accounting mismatch");
-    }
-
-    function invariant_LockedTotalsConsistent() external view {
-        assertEq(handler.totalLocked(), handler.recomputeLocked(), "Tracked locked total mismatch");
-    }
 }

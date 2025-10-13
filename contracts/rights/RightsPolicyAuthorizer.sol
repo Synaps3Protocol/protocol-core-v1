@@ -93,15 +93,11 @@ contract RightsPolicyAuthorizer is
     /// @param data The data to initialize policy. e.g., prices, timeframes..
     function authorizePolicy(address policy, bytes calldata data) external onlyAuditedPolicies(policy) nonReentrant {
         // type safe low level call to policy, call policy initialization with provided data..
-        (bool success, bytes memory result) = policy.call(abi.encodeCall(IPolicy.setup, (msg.sender, data)));
-        if (!success && result.length == 0) {
-            revert InvalidPolicyInitialization("Error during policy initialization call");
-        }
+        (bool success, ) = policy.call(abi.encodeCall(IPolicy.setup, (msg.sender, data)));
+        if (!success) revert InvalidPolicyInitialization("Error during policy initialization call");
 
         bool authorized = _authorizedPolicies[msg.sender].add(policy);
-        if (!authorized) {
-            revert InvalidPolicyInitialization("Error during duplicated policy registration");
-        }
+        if (!authorized) revert InvalidPolicyInitialization("Error during duplicated policy registration");
 
         emit RightsGranted(policy, msg.sender, data);
     }
@@ -111,10 +107,7 @@ contract RightsPolicyAuthorizer is
     function revokePolicy(address policy) external {
         // if the policy is not authorized revoke fails
         bool revoked = _authorizedPolicies[msg.sender].remove(policy);
-        if (!revoked) {
-            revert RevocationFailed(msg.sender, policy);
-        }
-
+        if (!revoked) revert RevocationFailed(msg.sender, policy);
         emit RightsRevoked(policy, msg.sender);
     }
 
@@ -175,6 +168,6 @@ contract RightsPolicyAuthorizer is
     ///      and that the policy has been audited.
     /// @param policy The address of the policy contract to verify.
     function _isValidPolicy(address policy) private view returns (bool) {
-        return (policy != address(0) && POLICY_AUDIT.isAudited(policy));
+        return (policy != address(0) && POLICY_AUDIT.isApproved(policy));
     }
 }

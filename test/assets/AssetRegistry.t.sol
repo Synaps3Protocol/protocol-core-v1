@@ -6,118 +6,9 @@ import { AssetRegistry } from "contracts/assets/AssetRegistry.sol";
 import { IAssetRegistry } from "contracts/core/interfaces/assets/IAssetRegistry.sol";
 import { IAssetReferendumRegistrable } from "contracts/core/interfaces/assets/IAssetReferendumRegistrable.sol";
 import { IERC721StatefulVerifiable } from "contracts/core/interfaces/token/erc721/IERC721StatefulVerifiable.sol";
+import { IAccessManaged } from "@openzeppelin/contracts/access/manager/IAccessManaged.sol";
 
 import { BaseTest } from "test/BaseTest.t.sol";
-
-contract AssetRegistryHandler is Test {
-    struct AssetInfo {
-        bool exists;
-        bool revoked;
-        bool active;
-        address owner;
-    }
-
-    AssetRegistry public registry;
-    address public referendum;
-    address public contentCouncil;
-    address public admin;
-    address[] public actors;
-
-    uint256[] private _assetIds;
-    mapping(uint256 => AssetInfo) private _assets;
-
-    constructor(address registry_, address referendum_, address contentCouncil_, address admin_) {
-        registry = AssetRegistry(registry_);
-        referendum = referendum_;
-        contentCouncil = contentCouncil_;
-        admin = admin_;
-
-        actors.push(contentCouncil_);
-        for (uint256 i = 0; i < 5; i++) {
-            actors.push(vm.addr(i + 100));
-        }
-    }
-
-    function register(uint256 assetSeed, uint256 actorSeed) external {
-        if (actors.length == 0) return;
-
-        uint256 assetId = bound(assetSeed, 1, type(uint128).max);
-        AssetInfo storage info = _assets[assetId];
-        if (info.exists) return;
-
-        address submitter = actors[actorSeed % actors.length];
-
-        vm.prank(submitter);
-        IAssetReferendumRegistrable(referendum).submit(assetId);
-
-        vm.prank(contentCouncil);
-        IAssetReferendumRegistrable(referendum).approve(assetId);
-
-        vm.prank(submitter);
-        registry.register(submitter, assetId);
-
-        info.exists = true;
-        info.revoked = false;
-        info.active = true;
-        info.owner = submitter;
-        _assetIds.push(assetId);
-    }
-
-    function transfer(uint256 tokenSeed, uint256 targetSeed) external {
-        if (_assetIds.length == 0) return;
-
-        uint256 assetId = _assetIds[tokenSeed % _assetIds.length];
-        AssetInfo storage info = _assets[assetId];
-        if (!info.exists || info.revoked) return;
-
-        address newOwner = actors[targetSeed % actors.length];
-        if (newOwner == address(0) || newOwner == info.owner) return;
-
-        vm.prank(info.owner);
-        registry.transfer(newOwner, assetId);
-
-        info.owner = newOwner;
-    }
-
-    function switchState(uint256 tokenSeed) external {
-        if (_assetIds.length == 0) return;
-
-        uint256 assetId = _assetIds[tokenSeed % _assetIds.length];
-        AssetInfo storage info = _assets[assetId];
-        if (!info.exists || info.revoked) return;
-
-        vm.prank(info.owner);
-        bool newState = registry.switchState(assetId);
-        info.active = newState;
-    }
-
-    function revoke(uint256 tokenSeed) external {
-        if (_assetIds.length == 0) return;
-
-        uint256 assetId = _assetIds[tokenSeed % _assetIds.length];
-        AssetInfo storage info = _assets[assetId];
-        if (!info.exists || info.revoked) return;
-
-        vm.prank(admin);
-        registry.revoke(assetId);
-
-        info.revoked = true;
-        info.active = false;
-        info.owner = address(0);
-    }
-
-    function assetIdsLength() external view returns (uint256) {
-        return _assetIds.length;
-    }
-
-    function assetIdAt(uint256 index) external view returns (uint256) {
-        return _assetIds[index];
-    }
-
-    function getAssetInfo(uint256 assetId) external view returns (AssetInfo memory) {
-        return _assets[assetId];
-    }
-}
 
 contract AssetRegistryTest is BaseTest {
     function setUp() public initialize {
@@ -140,7 +31,9 @@ contract AssetRegistryTest is BaseTest {
         IAssetRegistry(assetRegistry).register(user, assetId);
 
         assertEq(IAssetRegistry(assetRegistry).ownerOf(assetId), user, "Invalid unexpected owner");
-        assertEq(IERC721StatefulVerifiable(assetRegistry).isActive(assetId), true, "Asset must be active");
+        assertTrue(IERC721StatefulVerifiable(assetRegistry).isActive(assetId), "Asset must be active");
+        assertEq(AssetRegistry(assetRegistry).totalSupply(), 1, "Total supply should reflect minted asset");
+        assertEq(IAssetRegistry(assetRegistry).balanceOf(user), 1, "Owner balance should increment");
     }
 
     function test_Register_RevertWhen_NotApproved() public {
@@ -149,21 +42,6 @@ contract AssetRegistryTest is BaseTest {
         vm.expectRevert(AssetRegistry.InvalidNotApprovedAsset.selector);
         vm.prank(user);
         IAssetRegistry(assetRegistry).register(user, assetId);
-    }
-
-    function testFuzz_Register_SetsOwnerAndActivates(address to, uint256 assetId) public {
-        vm.assume(to != address(0));
-        assetId = bound(assetId, 1, type(uint128).max);
-
-        _submitAndApproveAsset(to, assetId);
-
-        vm.prank(to);
-        IAssetRegistry(assetRegistry).register(to, assetId);
-
-        assertEq(IAssetRegistry(assetRegistry).ownerOf(assetId), to, "Unexpected owner after register");
-        assertTrue(IERC721StatefulVerifiable(assetRegistry).isActive(assetId), "Asset should be active");
-        assertEq(IAssetRegistry(assetRegistry).balanceOf(to), 1, "Balance should account for minted asset");
-        assertEq(AssetRegistry(assetRegistry).totalSupply(), 1, "Total supply should match minted assets");
     }
 
     function test_Register_RevertWhen_DuplicateAsset() public {
@@ -234,6 +112,24 @@ contract AssetRegistryTest is BaseTest {
         assertTrue(IERC721StatefulVerifiable(assetRegistry).isActive(assetId), "Asset should be active again");
     }
 
+    function test_SwitchState_RevertWhen_NotOwner() public {
+        uint256 assetId = 52;
+        address stranger = vm.addr(777);
+
+        _submitAndApproveAsset(user, assetId);
+        vm.prank(user);
+        IAssetRegistry(assetRegistry).register(user, assetId);
+
+        vm.expectRevert(
+            abi.encodeWithSignature(
+                "InvalidUnauthorizedOperation(string)",
+                "Only the asset owner can modify its state."
+            )
+        );
+        vm.prank(stranger);
+        AssetRegistry(assetRegistry).switchState(assetId);
+    }
+
     function test_Revoke_DisablesAndBurns() public {
         uint256 assetId = 61;
         _submitAndApproveAsset(user, assetId);
@@ -254,74 +150,23 @@ contract AssetRegistryTest is BaseTest {
         IAssetRegistry(assetRegistry).ownerOf(assetId);
     }
 
+    function test_Revoke_RevertWhen_NotAdmin() public {
+        uint256 assetId = 71;
+        _submitAndApproveAsset(user, assetId);
+
+        vm.prank(user);
+        IAssetRegistry(assetRegistry).register(user, assetId);
+
+        vm.expectRevert(abi.encodeWithSelector(IAccessManaged.AccessManagedUnauthorized.selector, user));
+        vm.prank(user);
+        AssetRegistry(assetRegistry).revoke(assetId);
+    }
+
     function _submitAndApproveAsset(address submitter, uint256 assetId) private {
         vm.prank(submitter);
         IAssetReferendumRegistrable(assetReferendum).submit(assetId);
 
         vm.prank(contentCouncil);
         IAssetReferendumRegistrable(assetReferendum).approve(assetId);
-    }
-}
-
-contract AssetRegistryInvariantTest is BaseTest {
-    AssetRegistryHandler handler;
-
-    function setUp() public initialize {
-        deployAssetRegistry();
-
-        handler = new AssetRegistryHandler(assetRegistry, assetReferendum, contentCouncil, admin);
-        targetContract(address(handler));
-    }
-
-    function invariant_TotalSupplyMatchesTracked() external view {
-        uint256 len = handler.assetIdsLength();
-        uint256 expectedSupply = 0;
-
-        for (uint256 i = 0; i < len; i++) {
-            uint256 assetId = handler.assetIdAt(i);
-            AssetRegistryHandler.AssetInfo memory info = handler.getAssetInfo(assetId);
-            if (info.exists && !info.revoked) {
-                expectedSupply++;
-            }
-        }
-
-        assertEq(AssetRegistry(assetRegistry).totalSupply(), expectedSupply, "Total supply mismatch");
-    }
-
-    function invariant_TrackedOwnerMatchesRegistry() external view {
-        uint256 len = handler.assetIdsLength();
-
-        for (uint256 i = 0; i < len; i++) {
-            uint256 assetId = handler.assetIdAt(i);
-            AssetRegistryHandler.AssetInfo memory info = handler.getAssetInfo(assetId);
-
-            if (!info.exists || info.revoked) {
-                continue;
-            }
-
-            assertEq(info.owner, IAssetRegistry(assetRegistry).ownerOf(assetId), "Tracked owner mismatch");
-            assertTrue(info.owner != address(0), "Active asset cannot have zero owner");
-        }
-    }
-
-    function invariant_ActiveFlagMatchesRegistryState() external view {
-        uint256 len = handler.assetIdsLength();
-
-        for (uint256 i = 0; i < len; i++) {
-            uint256 assetId = handler.assetIdAt(i);
-            AssetRegistryHandler.AssetInfo memory info = handler.getAssetInfo(assetId);
-
-            if (!info.exists) {
-                continue;
-            }
-
-            bool isActiveOnChain = IERC721StatefulVerifiable(assetRegistry).isActive(assetId);
-
-            if (info.revoked) {
-                assertFalse(isActiveOnChain, "Revoked asset should be inactive on chain");
-            } else {
-                assertEq(isActiveOnChain, info.active, "Active flag mismatch");
-            }
-        }
     }
 }

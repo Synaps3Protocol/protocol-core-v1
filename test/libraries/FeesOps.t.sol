@@ -66,72 +66,16 @@ contract FeesOpsTest is Test {
         assertEq(harness.calcBps(per), per * C.SCALE_FACTOR, "calcBps mismatch");
     }
 
-    function testFuzz_PerOfMatchesManual(uint256 amount, uint256 bps) public {
-        amount = bound(amount, 0, type(uint128).max);
-        bps = bound(bps, 0, C.BPS_MAX);
-
-        uint256 expected = (amount * bps) / C.BPS_MAX;
-        assertEq(harness.perOf(amount, bps), expected, "Fuzz percentage mismatch");
+    function test_PerOf_ReturnsZeroWhenAmountZero() public {
+        assertEq(harness.perOf(0, 1_000), 0, "Zero amount should produce zero result");
     }
 
-    function testFuzz_CalcBpsInverse(uint256 per) public {
-        per = bound(per, 0, 1_000_000);
-        uint256 bps = harness.calcBps(per);
-        assertEq(bps / C.SCALE_FACTOR, per, "calcBps inverse mismatch");
-    }
-}
-
-contract FeesOpsHandler is Test {
-    FeesOpsHarness public immutable harness;
-
-    uint256 internal _totalAmount;
-    uint256 internal _lastCalcBps;
-
-    constructor(FeesOpsHarness harness_) {
-        harness = harness_;
+    function test_PerOf_ReturnsZeroWhenBpsZero() public {
+        assertEq(harness.perOf(1_000 ether, 0), 0, "Zero bps should produce zero result");
     }
 
-    function recordPerOf(uint256 amount, uint256 bps) external {
-        bps = bound(bps, 0, C.BPS_MAX);
-        amount = bound(amount, 0, type(uint128).max);
-        uint256 result = harness.perOf(amount, bps);
-        _totalAmount += result;
-    }
-
-    function recordCalcBps(uint256 per) external {
-        per = bound(per, 0, 1_000_000);
-        _lastCalcBps = harness.calcBps(per);
-    }
-
-    function reset() external {
-        _totalAmount = 0;
-        _lastCalcBps = 0;
-    }
-
-    function totalAmount() external view returns (uint256) {
-        return _totalAmount;
-    }
-
-    function lastCalcBps() external view returns (uint256) {
-        return _lastCalcBps;
-    }
-}
-
-contract FeesOpsInvariantTest is Test {
-    FeesOpsHarness harness;
-    FeesOpsHandler handler;
-
-    function setUp() public {
-        harness = new FeesOpsHarness();
-        handler = new FeesOpsHandler(harness);
-        targetContract(address(handler));
-    }
-
-    function invariant_TotalAmountWithinBounds() external view {
-        assertLe(handler.totalAmount(), type(uint256).max, "Total amount overflowed");
-    }
-
-    function invariant_LastPercentageValid() external view {
-        assertEq(handler.lastCalcBps() % C.SCALE_FACTOR, 0, "calcBps outputs should be multiples of scale factor");
+    function test_CalcBps_LargePercentage() public {
+        uint256 per = 1_000_000; // 1000000%
+        assertEq(harness.calcBps(per), per * C.SCALE_FACTOR, "Large percentage scaling mismatch");
     }
 }

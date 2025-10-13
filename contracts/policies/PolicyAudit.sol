@@ -88,10 +88,22 @@ contract PolicyAudit is Initializable, UUPSUpgradeable, AccessControlledUpgradea
         emit PolicyRevoked(policy, msg.sender);
     }
 
-    /// @notice Checks if a specific policy contract has been audited.
+    /// @notice Checks if a policy has been approved and remains active.
     /// @param policy The address of the policy contract to verify.
-    function isAudited(address policy) external view returns (bool) {
+    function isApproved(address policy) external view returns (bool) {
         return _status(uint160(policy)) == T.Status.Active;
+    }
+
+    /// @notice Checks if a policy has been rejected or blocked by the auditor.
+    /// @param policy The address of the policy contract to verify.
+    function isRejected(address policy) external view returns (bool) {
+        return _status(uint160(policy)) == T.Status.Blocked;
+    }
+
+    /// @notice Checks if a policy is awaiting approval.
+    /// @param policy The address of the policy contract to verify.
+    function isPending(address policy) external view returns (bool) {
+        return _status(uint160(policy)) == T.Status.Waiting;
     }
 
     /// @dev Authorizes the upgrade of the contract.

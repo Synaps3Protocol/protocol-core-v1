@@ -44,7 +44,7 @@ library FinancialOps {
     /// @return The deposited amount.
     function _nativeDeposit(uint256 amount) internal returns (uint256) {
         if (amount != msg.value) {
-            revert FailDuringDeposit("Amount exceeds balance sent.");
+            revert FailDuringDeposit("Invalid expected sent balance.");
         }
 
         // the transfer is not needed since the transfer is implicit here
@@ -104,8 +104,8 @@ library FinancialOps {
     /// @param amount The amount of tokens to deposit.
     /// @param token The address of the token to deposit.
     function safeDeposit(address from, uint256 amount, address token) internal returns (uint256) {
-        if (amount == 0) {
-            revert FailDuringDeposit("Invalid zero amount.");
+        if (amount == 0 || from == address(0)) {
+            revert FailDuringDeposit("Invalid amount or sender.");
         }
 
         if (token == address(0)) {
@@ -132,8 +132,8 @@ library FinancialOps {
     /// @param amount The amount of tokens to transfer.
     /// @param token The address of the ERC20 token to transfer or address(0) for native token.
     function transfer(address to, uint256 amount, address token) internal {
-        if (amount == 0) {
-            revert FailDuringTransfer("Invalid zero amount to transfer.");
+        if (amount == 0 || to == address(0)) {
+            revert FailDuringTransfer("Invalid amount or recipient.");
         }
 
         if (balanceOf(address(this), token) < amount) {

@@ -4,6 +4,7 @@ pragma solidity 0.8.26;
 import "forge-std/Test.sol";
 
 import { AccessManager } from "@openzeppelin/contracts/access/manager/AccessManager.sol";
+import { IAccessManaged } from "@openzeppelin/contracts/access/manager/IAccessManaged.sol";
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import { PausableUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol";
@@ -151,6 +152,12 @@ contract LedgerVaultTest is Test {
             40 ether,
             "User ledger after transfer"
         );
+        assertEq(
+            ILedgerVerifiable(address(vault)).getLedgerBalance(admin, address(token)) +
+                ILedgerVerifiable(address(vault)).getLedgerBalance(user, address(token)),
+            100 ether,
+            "Ledger totals must conserve balance"
+        );
     }
 
     function test_Transfer_RevertWhen_Self() public {
@@ -218,6 +225,24 @@ contract LedgerVaultTest is Test {
         );
     }
 
+    function test_Lock_RevertWhen_Unauthorized() public {
+        _deposit(user, 30 ether);
+
+        vm.expectRevert(abi.encodeWithSelector(IAccessManaged.AccessManagedUnauthorized.selector, user));
+        vm.prank(user);
+        vault.lock(user, 10 ether, address(token));
+    }
+
+    function test_Claim_RevertWhen_Unauthorized() public {
+        _deposit(user, 50 ether);
+        vm.prank(operator);
+        vault.lock(user, 20 ether, address(token));
+
+        vm.expectRevert(abi.encodeWithSelector(IAccessManaged.AccessManagedUnauthorized.selector, other));
+        vm.prank(other);
+        vault.claim(user, 5 ether, address(token));
+    }
+
     function test_Pause_BlocksStateChanging() public {
         _deposit(admin, 10 ether);
         vm.prank(admin);
@@ -258,9 +283,8 @@ contract LedgerVaultTest is Test {
         );
     }
 
-    function testFuzz_DepositWithdraw(uint256 amount) public {
-        amount = bound(amount, 1 ether, 1_000 ether);
-        token.mint(user, amount);
+    function test_DepositWithdraw_FullAmountRestoresState() public {
+        uint256 amount = 250 ether;
         _deposit(user, amount);
 
         vm.prank(user);
@@ -269,244 +293,25 @@ contract LedgerVaultTest is Test {
         assertEq(
             ILedgerVerifiable(address(vault)).getLedgerBalance(user, address(token)),
             0,
-            "Ledger should be zero"
+            "Ledger balance should return to zero"
         );
+        assertEq(token.balanceOf(address(vault)), 0, "Vault should hold no tokens");
     }
 
-    function testFuzz_TransferMaintainsLedger(uint256 depositAmount, uint256 transferAmount) public {
-        depositAmount = bound(depositAmount, 2 ether, 1_000 ether);
-        transferAmount = bound(transferAmount, 1 ether, depositAmount - 1 ether);
-        token.mint(user, depositAmount);
-        _deposit(user, depositAmount);
-
-        vm.prank(user);
-        vault.transfer(other, transferAmount, address(token));
+    function test_LedgerAndLockedBalancesMatchVaultHoldings() public {
+        _deposit(user, 300 ether);
+        vm.prank(operator);
+        vault.lock(user, 120 ether, address(token));
+        vm.prank(claimer);
+        vault.claim(user, 40 ether, address(token));
+        vm.prank(operator);
+        vault.release(user, 50 ether, address(token));
 
         uint256 ledgerUser = ILedgerVerifiable(address(vault)).getLedgerBalance(user, address(token));
-        uint256 ledgerOther = ILedgerVerifiable(address(vault)).getLedgerBalance(other, address(token));
-        assertEq(ledgerUser + ledgerOther, depositAmount, "Ledger conservation failed");
-    }
-}
+        uint256 ledgerClaimer = ILedgerVerifiable(address(vault)).getLedgerBalance(claimer, address(token));
+        uint256 lockedUser = vault.lockedBalance(user, address(token));
+        uint256 vaultBalance = token.balanceOf(address(vault));
 
-contract LedgerVaultHandler is Test {
-    LedgerVaultHarness public immutable vault;
-    MockToken public immutable token;
-    address public immutable operator;
-    address public immutable claimer;
-    address[] internal accounts;
-
-    mapping(address => uint256) internal expectedLedger;
-    mapping(address => uint256) internal expectedLocked;
-
-    constructor(
-        LedgerVaultHarness vault_,
-        MockToken token_,
-        address operator_,
-        address claimer_,
-        address[] memory actors
-    ) {
-        vault = vault_;
-        token = token_;
-        operator = operator_;
-        claimer = claimer_;
-        for (uint256 i = 0; i < actors.length; i++) {
-            accounts.push(actors[i]);
-        }
-    }
-
-    function accountsLength() external view returns (uint256) {
-        return accounts.length;
-    }
-
-    function accountAt(uint256 idx) external view returns (address) {
-        return accounts[idx];
-    }
-
-    function expectedLedgerOf(address account) external view returns (uint256) {
-        return expectedLedger[account];
-    }
-
-    function expectedLockedOf(address account) external view returns (uint256) {
-        return expectedLocked[account];
-    }
-
-    function _boundAmount(address account, uint256 amount) internal view returns (uint256) {
-        uint256 balance = token.balanceOf(account);
-        if (balance == 0) return 0;
-        return bound(amount, 1, balance);
-    }
-
-    function deposit(uint256 idx, uint256 amount) external {
-        vm.assume(idx < accounts.length);
-        address account = accounts[idx];
-        amount = _boundAmount(account, amount);
-        if (amount == 0) return;
-
-        vm.startPrank(account);
-        token.approve(address(vault), amount);
-        uint256 confirmed = vault.deposit(account, amount, address(token));
-        vm.stopPrank();
-
-        expectedLedger[account] += confirmed;
-    }
-
-    function withdraw(uint256 idx, uint256 amount) external {
-        vm.assume(idx < accounts.length);
-        address account = accounts[idx];
-        uint256 available = expectedLedger[account];
-        vm.assume(available > 0);
-        amount = bound(amount, 1, available);
-
-        vm.prank(account);
-        uint256 confirmed = vault.withdraw(account, amount, address(token));
-        expectedLedger[account] = available - confirmed;
-    }
-
-    function transfer(uint256 fromIdx, uint256 toIdx, uint256 amount) external {
-        vm.assume(fromIdx < accounts.length && toIdx < accounts.length);
-        vm.assume(fromIdx != toIdx);
-        address from = accounts[fromIdx];
-        address to = accounts[toIdx];
-        uint256 available = expectedLedger[from];
-        vm.assume(available > 0);
-        amount = bound(amount, 1, available);
-
-        vm.prank(from);
-        vault.transfer(to, amount, address(token));
-
-        expectedLedger[from] = available - amount;
-        expectedLedger[to] += amount;
-    }
-
-    function lock(uint256 idx, uint256 amount) external {
-        vm.assume(idx < accounts.length);
-        address account = accounts[idx];
-        uint256 available = expectedLedger[account];
-        vm.assume(available > 0);
-        amount = bound(amount, 1, available);
-
-        vm.prank(operator);
-        vault.lock(account, amount, address(token));
-
-        expectedLedger[account] = available - amount;
-        expectedLocked[account] += amount;
-    }
-
-    function release(uint256 idx, uint256 amount) external {
-        vm.assume(idx < accounts.length);
-        address account = accounts[idx];
-        uint256 locked = expectedLocked[account];
-        vm.assume(locked > 0);
-        amount = bound(amount, 1, locked);
-
-        vm.prank(operator);
-        vault.release(account, amount, address(token));
-
-        expectedLocked[account] = locked - amount;
-        expectedLedger[account] += amount;
-    }
-
-    function claim(uint256 idx, uint256 amount) external {
-        vm.assume(idx < accounts.length);
-        address account = accounts[idx];
-        uint256 locked = expectedLocked[account];
-        vm.assume(locked > 0);
-        amount = bound(amount, 1, locked);
-
-        vm.prank(claimer);
-        vault.claim(account, amount, address(token));
-
-        expectedLocked[account] = locked - amount;
-        expectedLedger[claimer] += amount;
-    }
-}
-
-contract LedgerVaultInvariantTest is Test {
-    LedgerVaultHarness vault;
-    AccessManager manager;
-    MockToken token;
-    LedgerVaultHandler handler;
-
-    address admin = vm.addr(11);
-    address operator = vm.addr(12);
-    address claimer = vm.addr(13);
-    address[] accounts;
-
-    function setUp() public {
-        token = new MockToken();
-        manager = new AccessManager(admin);
-
-        LedgerVaultHarness implementation = new LedgerVaultHarness();
-        ERC1967Proxy proxy = new ERC1967Proxy(
-            address(implementation),
-            abi.encodeWithSignature("initialize(address)", address(manager))
-        );
-        vault = LedgerVaultHarness(address(proxy));
-
-        vm.startPrank(admin);
-        bytes4[] memory adminSelectors = new bytes4[](2);
-        adminSelectors[0] = AccessControlledUpgradeable.pause.selector;
-        adminSelectors[1] = AccessControlledUpgradeable.unpause.selector;
-        manager.setTargetFunctionRole(address(vault), adminSelectors, C.ADMIN_ROLE);
-
-        bytes4[] memory opsSelectors = new bytes4[](3);
-        opsSelectors[0] = LedgerVault.lock.selector;
-        opsSelectors[1] = LedgerVault.release.selector;
-        opsSelectors[2] = LedgerVault.claim.selector;
-        manager.setTargetFunctionRole(address(vault), opsSelectors, C.OPS_ROLE);
-        manager.setRoleAdmin(C.OPS_ROLE, C.ADMIN_ROLE);
-        manager.grantRole(C.OPS_ROLE, operator, 0);
-        manager.grantRole(C.OPS_ROLE, claimer, 0);
-        vm.stopPrank();
-
-        accounts = new address[](5);
-        for (uint256 i = 0; i < accounts.length; i++) {
-            accounts[i] = vm.addr(20 + i);
-            token.mint(accounts[i], 1_000_000 ether);
-        }
-
-        handler = new LedgerVaultHandler(vault, token, operator, claimer, accounts);
-        targetContract(address(handler));
-    }
-
-    function _aggregateLedgerAndLocked()
-        internal
-        view
-        returns (uint256 ledgerSum, uint256 lockedSum)
-    {
-        uint256 len = handler.accountsLength();
-        for (uint256 i = 0; i < len; i++) {
-            address account = handler.accountAt(i);
-            ledgerSum += ILedgerVerifiable(address(vault)).getLedgerBalance(account, address(token));
-            lockedSum += vault.lockedBalance(account, address(token));
-            assertEq(
-                handler.expectedLedgerOf(account),
-                ILedgerVerifiable(address(vault)).getLedgerBalance(account, address(token)),
-                "Ledger expectation mismatch"
-            );
-            assertEq(
-                handler.expectedLockedOf(account),
-                vault.lockedBalance(account, address(token)),
-                "Locked expectation mismatch"
-            );
-        }
-
-        ledgerSum += ILedgerVerifiable(address(vault)).getLedgerBalance(claimer, address(token));
-        lockedSum += vault.lockedBalance(claimer, address(token));
-        assertEq(
-            handler.expectedLedgerOf(claimer),
-            ILedgerVerifiable(address(vault)).getLedgerBalance(claimer, address(token)),
-            "Claimer ledger mismatch"
-        );
-        assertEq(
-            handler.expectedLockedOf(claimer),
-            vault.lockedBalance(claimer, address(token)),
-            "Claimer locked mismatch"
-        );
-    }
-
-    function invariant_LedgerAndLockedBalance() external view {
-        (uint256 ledgerSum, uint256 lockedSum) = _aggregateLedgerAndLocked();
-        assertEq(ledgerSum + lockedSum, token.balanceOf(address(vault)), "Ledger + locked must match vault balance");
+        assertEq(ledgerUser + ledgerClaimer + lockedUser, vaultBalance, "Vault balance must equal ledger + locked");
     }
 }

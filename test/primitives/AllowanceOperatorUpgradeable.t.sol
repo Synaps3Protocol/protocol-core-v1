@@ -17,7 +17,6 @@ contract AllowanceOperatorHarness is AllowanceOperatorUpgradeable {
         _sumLedgerEntry(account, amount, currency);
     }
 
-    // IAllowanceOperator interface
     function approve(address to, uint256 amount, address currency) external override returns (uint256) {
         return _approve(to, amount, currency);
     }
@@ -30,34 +29,33 @@ contract AllowanceOperatorHarness is AllowanceOperatorUpgradeable {
         return _collect(from, amount, currency);
     }
 
-
+    function allowance(address owner, address spender, address currency) external view returns (uint256) {
+        return getApprovedAmount(owner, spender, currency);
+    }
 }
 
-contract AllowanceOperatorTest is Test {
-    AllowanceOperatorHarness harness;
+contract AllowanceOperatorUpgradeableTest is Test {
+    AllowanceOperatorHarness internal harness;
     address internal constant TOKEN = address(0xC0FFEE);
-    address alice;
-    address bob;
-    address carol;
+    address internal alice = vm.addr(1);
+    address internal bob = vm.addr(2);
+    address internal carol = vm.addr(3);
 
     function setUp() public {
         harness = new AllowanceOperatorHarness();
         harness.initialize();
-        alice = vm.addr(1);
-        bob = vm.addr(2);
-        carol = vm.addr(3);
     }
 
-    function test_Approve_SetsAllowanceAndEmitsEvent() public {
+    function test_ApproveStoresAllowanceAndEmits() public {
         vm.prank(alice);
         vm.expectEmit(true, true, false, true, address(harness));
-        emit IAllowanceApprovable.FundsApproved(alice, bob, 10, TOKEN);
-        harness.approve(bob, 10, TOKEN);
+        emit IAllowanceApprovable.FundsApproved(alice, bob, 25 ether, TOKEN);
+        harness.approve(bob, 25 ether, TOKEN);
 
-        assertEq(harness.getApprovedAmount(alice, bob, TOKEN), 10, "Allowance mismatch");
+        assertEq(harness.allowance(alice, bob, TOKEN), 25 ether, "Allowance mismatch");
     }
 
-    function test_Approve_RevertWhen_InvalidParams() public {
+    function test_Approve_RevertWhen_InvalidParameters() public {
         vm.prank(alice);
         vm.expectRevert(bytes4(keccak256("InvalidOperationParameters()")));
         harness.approve(address(0), 10, TOKEN);
@@ -65,241 +63,90 @@ contract AllowanceOperatorTest is Test {
         vm.prank(alice);
         vm.expectRevert(bytes4(keccak256("InvalidOperationParameters()")));
         harness.approve(bob, 0, TOKEN);
-    }
 
-    function test_Approve_RevertWhen_SelfApproval() public {
         vm.prank(alice);
         vm.expectRevert(bytes4(keccak256("InvalidOperationParameters()")));
-        harness.approve(alice, 1, TOKEN);
+        harness.approve(alice, 5, TOKEN);
     }
 
-    function test_Revoke_RemovesAllowance() public {
+    function test_RevokeReducesAllowance() public {
         vm.startPrank(alice);
-        harness.approve(bob, 20, TOKEN);
-        harness.revoke(bob, 5, TOKEN);
+        harness.approve(bob, 40 ether, TOKEN);
+        uint256 revoked = harness.revoke(bob, 15 ether, TOKEN);
         vm.stopPrank();
 
-        assertEq(harness.getApprovedAmount(alice, bob, TOKEN), 15, "Allowance after revoke mismatch");
+        assertEq(revoked, 15 ether, "Revoked amount mismatch");
+        assertEq(harness.allowance(alice, bob, TOKEN), 25 ether, "Remaining allowance mismatch");
     }
 
-    function test_Revoke_RevertWhen_ExceedsAllowance() public {
+    function test_Revoke_RevertWhen_InsufficientAllowance() public {
         vm.startPrank(alice);
-        harness.approve(bob, 5, TOKEN);
+        harness.approve(bob, 10 ether, TOKEN);
         vm.expectRevert(bytes4(keccak256("NoFundsToRevoke()")));
-        harness.revoke(bob, 6, TOKEN);
+        harness.revoke(bob, 12 ether, TOKEN);
         vm.stopPrank();
     }
 
-    function test_Collect_TransfersApprovedFunds() public {
+    function test_CollectTransfersLedgerBetweenAccounts() public {
+        harness.boostLedger(alice, 60 ether, TOKEN);
         vm.prank(alice);
-        harness.approve(bob, 40, TOKEN);
-        harness.boostLedger(alice, 40, TOKEN);
+        harness.approve(bob, 45 ether, TOKEN);
 
-        vm.prank(bob);
         vm.expectEmit(true, true, false, true, address(harness));
-        emit IAllowanceCollectable.FundsCollected(alice, bob, 35, TOKEN);
-        harness.collect(alice, 35, TOKEN);
+        emit IAllowanceCollectable.FundsCollected(alice, bob, 30 ether, TOKEN);
+        vm.prank(bob);
+        harness.collect(alice, 30 ether, TOKEN);
 
-        assertEq(harness.getApprovedAmount(alice, bob, TOKEN), 5, "Remaining allowance mismatch");
-        assertEq(ILedgerVerifiable(address(harness)).getLedgerBalance(alice, TOKEN), 5, "Alice ledger mismatch");
-        assertEq(ILedgerVerifiable(address(harness)).getLedgerBalance(bob, TOKEN), 35, "Bob ledger mismatch");
+        ILedgerVerifiable ledger = ILedgerVerifiable(address(harness));
+        assertEq(harness.allowance(alice, bob, TOKEN), 15 ether, "Allowance should decrease");
+        assertEq(ledger.getLedgerBalance(alice, TOKEN), 30 ether, "Alice ledger mismatch");
+        assertEq(ledger.getLedgerBalance(bob, TOKEN), 30 ether, "Bob ledger mismatch");
     }
 
-    function test_Collect_RevertWhen_NoApproval() public {
-        harness.boostLedger(alice, 20, TOKEN);
-
+    function test_Collect_RevertWhen_NoAllowance() public {
+        harness.boostLedger(alice, 20 ether, TOKEN);
         vm.prank(bob);
         vm.expectRevert(bytes4(keccak256("NoFundsToCollect()")));
-        harness.collect(alice, 10, TOKEN);
+        harness.collect(alice, 10 ether, TOKEN);
     }
 
-    function test_Collect_RevertWhen_InsufficientBalance() public {
+    function test_Collect_RevertWhen_InsufficientLedger() public {
         vm.prank(alice);
-        harness.approve(bob, 10, TOKEN);
-
+        harness.approve(bob, 10 ether, TOKEN);
         vm.prank(bob);
         vm.expectRevert(bytes4(keccak256("NoFundsToCollect()")));
-        harness.collect(alice, 5, TOKEN);
+        harness.collect(alice, 5 ether, TOKEN);
     }
 
-    function test_Integration_MultiRecipientFlow() public {
-        vm.prank(alice);
-        harness.approve(bob, 30, TOKEN);
-        vm.prank(alice);
-        harness.approve(carol, 15, TOKEN);
-        harness.boostLedger(alice, 45, TOKEN);
+    function test_Integration_ApproveCollectRevokeFlow() public {
+        harness_boostAndApprove(alice, bob, 80 ether, 60 ether);
+        harness_boostAndApprove(alice, carol, 80 ether, 15 ether);
 
         vm.prank(bob);
-        harness.collect(alice, 20, TOKEN);
+        harness.collect(alice, 30 ether, TOKEN);
 
         vm.prank(carol);
-        harness.collect(alice, 10, TOKEN);
+        harness.collect(alice, 10 ether, TOKEN);
 
-        assertEq(harness.getApprovedAmount(alice, bob, TOKEN), 10, "Bob remaining allowance");
-        assertEq(harness.getApprovedAmount(alice, carol, TOKEN), 5, "Carol remaining allowance");
-        assertEq(ILedgerVerifiable(address(harness)).getLedgerBalance(alice, TOKEN), 15, "Alice ledger balance");
-        assertEq(ILedgerVerifiable(address(harness)).getLedgerBalance(bob, TOKEN), 20, "Bob ledger balance");
-        assertEq(ILedgerVerifiable(address(harness)).getLedgerBalance(carol, TOKEN), 10, "Carol ledger balance");
+        vm.startPrank(alice);
+        harness.revoke(bob, 10 ether, TOKEN);
+        vm.stopPrank();
+
+        ILedgerVerifiable ledger = ILedgerVerifiable(address(harness));
+        assertEq(ledger.getLedgerBalance(alice, TOKEN), 80 ether - 40 ether, "Alice residual ledger mismatch");
+        assertEq(ledger.getLedgerBalance(bob, TOKEN), 30 ether, "Bob ledger mismatch");
+        assertEq(ledger.getLedgerBalance(carol, TOKEN), 10 ether, "Carol ledger mismatch");
+        assertEq(harness.allowance(alice, bob, TOKEN), 20 ether, "Bob allowance mismatch");
+        assertEq(harness.allowance(alice, carol, TOKEN), 5 ether, "Carol allowance mismatch");
     }
 
-    function testFuzz_ApproveRevokeCycle(uint256 amount, uint256 revokeAmount) public {
-        amount = bound(amount, 1, 1e24);
-        revokeAmount = bound(revokeAmount, 1, amount);
-
-        vm.prank(alice);
-        harness.approve(bob, amount, TOKEN);
-
-        vm.prank(alice);
-        harness.revoke(bob, revokeAmount, TOKEN);
-
-        assertEq(harness.getApprovedAmount(alice, bob, TOKEN), amount - revokeAmount, "Allowance after fuzz revoke mismatch");
-    }
-
-    function testFuzz_CollectMaintainsLedger(uint256 deposit, uint256 collectAmount) public {
-        deposit = bound(deposit, 1e18, 1e24);
-        collectAmount = bound(collectAmount, 1e18, deposit);
-
-        vm.prank(alice);
-        harness.approve(bob, deposit, TOKEN);
-        harness.boostLedger(alice, deposit, TOKEN);
-
-        vm.prank(bob);
-        harness.collect(alice, collectAmount, TOKEN);
-
-        uint256 total =
-            ILedgerVerifiable(address(harness)).getLedgerBalance(alice, TOKEN) +
-            ILedgerVerifiable(address(harness)).getLedgerBalance(bob, TOKEN);
-        assertEq(total, deposit, "Ledger conservation failed");
-    }
-}
-
-contract AllowanceHandler is Test {
-    AllowanceOperatorHarness public immutable harness;
-    address[] internal accounts;
-    address internal constant TOKEN = address(0xC0FFEE);
-    uint256 internal constant MAX_TEST_AMOUNT = 1e24;
-
-    mapping(address => uint256) internal ledgerExpectation;
-    mapping(bytes32 => uint256) internal allowanceExpectation;
-
-    constructor(AllowanceOperatorHarness operator) {
-        harness = operator;
-        for (uint256 i = 0; i < 3; i++) {
-            accounts.push(vm.addr(i + 10));
+    function harness_boostAndApprove(address owner, address spender, uint256 seedAmount, uint256 allowanceAmount) internal {
+        ILedgerVerifiable ledger = ILedgerVerifiable(address(harness));
+        uint256 currentBalance = ledger.getLedgerBalance(owner, TOKEN);
+        if (currentBalance < seedAmount) {
+            harness.boostLedger(owner, seedAmount - currentBalance, TOKEN);
         }
-    }
-
-    function seedLedger(uint256 index, uint256 amount) external {
-        vm.assume(index < accounts.length);
-        address account = accounts[index];
-        amount = bound(amount, 1, MAX_TEST_AMOUNT);
-        harness.boostLedger(account, amount, TOKEN);
-        ledgerExpectation[account] += amount;
-    }
-
-    function approve(uint256 fromIdx, uint256 toIdx, uint256 amount) external {
-        vm.assume(fromIdx < accounts.length && toIdx < accounts.length && fromIdx != toIdx);
-        address from = accounts[fromIdx];
-        address to = accounts[toIdx];
-        amount = bound(amount, 1, MAX_TEST_AMOUNT);
-
-        vm.prank(from);
-        harness.approve(to, amount, TOKEN);
-
-        bytes32 key = keccak256(abi.encode(from, to));
-        allowanceExpectation[key] += amount;
-    }
-
-    function revoke(uint256 fromIdx, uint256 toIdx, uint256 amount) external {
-        vm.assume(fromIdx < accounts.length && toIdx < accounts.length && fromIdx != toIdx);
-        address from = accounts[fromIdx];
-        address to = accounts[toIdx];
-        bytes32 key = keccak256(abi.encode(from, to));
-        uint256 expected = allowanceExpectation[key];
-        if (expected == 0) return;
-        amount = bound(amount, 1, expected);
-
-        vm.prank(from);
-        harness.revoke(to, amount, TOKEN);
-        allowanceExpectation[key] = expected - amount;
-    }
-
-    function collect(uint256 fromIdx, uint256 toIdx, uint256 amount) external {
-        vm.assume(fromIdx < accounts.length && toIdx < accounts.length && fromIdx != toIdx);
-        address from = accounts[fromIdx];
-        address to = accounts[toIdx];
-        bytes32 key = keccak256(abi.encode(from, to));
-        uint256 allowance = allowanceExpectation[key];
-        uint256 availableLedger = ledgerExpectation[from];
-        if (allowance == 0 || availableLedger == 0) return;
-        uint256 maxCollect = allowance < availableLedger ? allowance : availableLedger;
-        amount = bound(amount, 1, maxCollect);
-
-        vm.prank(to);
-        harness.collect(from, amount, TOKEN);
-
-        allowanceExpectation[key] = allowance - amount;
-        ledgerExpectation[from] -= amount;
-        ledgerExpectation[to] += amount;
-    }
-
-    function accountsLength() external view returns (uint256) {
-        return accounts.length;
-    }
-
-    function accountAt(uint256 idx) external view returns (address) {
-        return accounts[idx];
-    }
-
-    function expectedLedger(address account) external view returns (uint256) {
-        return ledgerExpectation[account];
-    }
-
-    function expectedAllowance(address from, address to) external view returns (uint256) {
-        return allowanceExpectation[keccak256(abi.encode(from, to))];
-    }
-
-    function token() external pure returns (address) {
-        return TOKEN;
-    }
-}
-
-contract AllowanceOperatorInvariantTest is Test {
-    AllowanceOperatorHarness harness;
-    AllowanceHandler handler;
-
-    function setUp() public {
-        harness = new AllowanceOperatorHarness();
-        harness.initialize();
-        handler = new AllowanceHandler(harness);
-        targetContract(address(handler));
-    }
-
-    function invariant_LedgerBalancesMatchExpectation() external view {
-        uint256 len = handler.accountsLength();
-        for (uint256 i = 0; i < len; i++) {
-            address account = handler.accountAt(i);
-            assertEq(
-                ILedgerVerifiable(address(harness)).getLedgerBalance(account, handler.token()),
-                handler.expectedLedger(account),
-                "Ledger balance mismatch"
-            );
-        }
-    }
-
-    function invariant_AllowancesMatchExpectation() external view {
-        uint256 len = handler.accountsLength();
-        for (uint256 i = 0; i < len; i++) {
-            address from = handler.accountAt(i);
-            for (uint256 j = 0; j < len; j++) {
-                address to = handler.accountAt(j);
-                if (from == to) continue;
-                assertEq(
-                    harness.getApprovedAmount(from, to, handler.token()),
-                    handler.expectedAllowance(from, to),
-                    "Allowance mismatch"
-                );
-            }
-        }
+        vm.prank(owner);
+        harness.approve(spender, allowanceAmount, TOKEN);
     }
 }

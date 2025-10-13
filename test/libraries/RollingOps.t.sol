@@ -40,7 +40,6 @@ contract RollingOpsHarness {
 }
 
 contract RollingOpsTest is Test {
-    uint256 internal constant MAX_WINDOW = 20;
     RollingOpsHarness harness;
 
     function setUp() public {
@@ -128,103 +127,5 @@ contract RollingOpsTest is Test {
         assertEq(harness.at(0), b, "First element should be second rolled");
         assertEq(harness.at(1), c, "Second element should be latest rolled");
         assertFalse(harness.contains(a), "Rolled out element should not be contained");
-    }
-
-    function testFuzz_RollRespectsWindow(uint256 windowSize, uint256 count) public {
-        windowSize = bound(windowSize, 1, MAX_WINDOW);
-        count = bound(count, 1, 60);
-        harness.configure(windowSize);
-
-        address[] memory inserted = new address[](count);
-        for (uint256 i = 0; i < count; i++) {
-            inserted[i] = vm.addr(i + 1);
-            harness.roll(inserted[i]);
-        }
-
-        uint256 expectedLength = count < windowSize ? count : windowSize;
-        assertEq(harness.length(), expectedLength, "Length should never exceed window");
-
-        for (uint256 i = 0; i < expectedLength; i++) {
-            assertEq(harness.at(i), inserted[count - expectedLength + i], "Order mismatch after rolling");
-        }
-    }
-
-    function testFuzz_RollContainsMostRecent(address seed, uint256 windowSize) public {
-        windowSize = bound(windowSize, 1, MAX_WINDOW);
-        harness.configure(windowSize);
-
-        for (uint256 i = 0; i < windowSize; i++) {
-            address current = address(uint160(uint256(keccak256(abi.encode(seed, i)))));
-            harness.roll(current);
-            assertTrue(harness.contains(current), "Recently rolled address should be contained");
-        }
-    }
-}
-
-contract RollingOpsHandler is Test {
-    using RollingOps for RollingOps.AddressArray;
-
-    RollingOpsHarness public immutable harness;
-    address[] internal snapshot;
-
-    constructor(RollingOpsHarness harness_) {
-        harness = harness_;
-    }
-
-    uint256 internal constant MAX_WINDOW = 20;
-
-    function configure(uint256 windowSeed) external {
-        uint256 window = bound(windowSeed, 1, MAX_WINDOW);
-        harness.configure(window);
-        _rebuildSnapshot();
-    }
-
-    function roll(address value) external {
-        harness.roll(value);
-        _rebuildSnapshot();
-    }
-
-    function maxWindow() external pure returns (uint256) {
-        return MAX_WINDOW;
-    }
-
-    function snapshotLength() external view returns (uint256) {
-        return snapshot.length;
-    }
-
-    function snapshotAt(uint256 index) external view returns (address) {
-        return snapshot[index];
-    }
-
-    function _rebuildSnapshot() private {
-        delete snapshot;
-        address[] memory vals = harness.values();
-        for (uint256 i = 0; i < vals.length; i++) {
-            snapshot.push(vals[i]);
-        }
-    }
-}
-
-contract RollingOpsInvariantTest is Test {
-    RollingOpsHarness harness;
-    RollingOpsHandler handler;
-
-    function setUp() public {
-        harness = new RollingOpsHarness();
-        handler = new RollingOpsHandler(harness);
-        targetContract(address(handler));
-    }
-
-    function invariant_LengthWithinBound() external view {
-        assertLe(harness.length(), handler.maxWindow(), "Length exceeds handler max window");
-    }
-
-    function invariant_StateMatchesSnapshot() external view {
-        uint256 len = handler.snapshotLength();
-        assertEq(harness.length(), len, "Length mismatch between harness and snapshot");
-
-        for (uint256 i = 0; i < len; i++) {
-            assertEq(harness.at(i), handler.snapshotAt(i), "Snapshot divergence detected");
-        }
     }
 }

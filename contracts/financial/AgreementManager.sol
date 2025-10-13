@@ -118,7 +118,6 @@ contract AgreementManager is Initializable, UUPSUpgradeable, AccessControlledUpg
         // IMPORTANT: The process of distributing funds to accounts should be handled within the settlement logic.
         T.Agreement memory agreement = previewAgreement(amount, currency, arbiter, parties, payload);
         uint256 confirmed = LEDGER_VAULT.lock(msg.sender, agreement.locked, currency);
-
         // only the initiator can operate with this agreement proof, or transfer the proof to the other party..
         // each agreement is unique and immutable, ensuring that it cannot be modified or reconstructed.
         uint256 proof = _createAndStoreProof(agreement);

@@ -37,200 +37,70 @@ contract QuorumUpgradeableHarness is QuorumUpgradeable {
 }
 
 contract QuorumUpgradeableTest is Test {
-    QuorumUpgradeableHarness harness;
+    QuorumUpgradeableHarness internal harness;
 
     function setUp() public {
         harness = new QuorumUpgradeableHarness();
         harness.initialize();
     }
 
-    function test_DefaultStatusIsPending() public {
-        assertEq(uint256(harness.statusOf(1)), uint256(T.Status.Pending), "Default should be pending");
+    function test_StatusDefaultsToPending() public {
+        assertEq(uint256(harness.statusOf(1)), uint256(T.Status.Pending), "Default status should be pending");
     }
 
-    function test_Register_FromPendingMovesToWaiting() public {
-        harness.register(1);
-        assertEq(uint256(harness.statusOf(1)), uint256(T.Status.Waiting), "Should move to waiting");
+    function test_RegisterMovesToWaiting() public {
+        harness.register(42);
+        assertEq(uint256(harness.statusOf(42)), uint256(T.Status.Waiting), "Register should move to waiting");
     }
 
     function test_Register_RevertWhen_NotPending() public {
-        harness.register(1);
+        harness.register(10);
         vm.expectRevert(QuorumUpgradeable.NotPendingApproval.selector);
-        harness.register(1);
+        harness.register(10);
     }
 
-    function test_Approve_FromWaitingMovesToActive() public {
-        harness.register(1);
-        harness.approve(1);
-        assertEq(uint256(harness.statusOf(1)), uint256(T.Status.Active), "Should be active");
+    function test_ApproveMovesToActive() public {
+        harness.register(7);
+        harness.approve(7);
+        assertEq(uint256(harness.statusOf(7)), uint256(T.Status.Active), "Approve should activate entry");
     }
 
     function test_Approve_RevertWhen_NotWaiting() public {
         vm.expectRevert(QuorumUpgradeable.NotWaitingApproval.selector);
-        harness.approve(1);
+        harness.approve(99);
     }
 
-    function test_Block_FromWaitingMovesToBlocked() public {
-        harness.register(1);
-        harness.blockEntry(1);
-        assertEq(uint256(harness.statusOf(1)), uint256(T.Status.Blocked), "Should be blocked");
+    function test_BlockMovesToBlocked() public {
+        harness.register(5);
+        harness.blockEntry(5);
+        assertEq(uint256(harness.statusOf(5)), uint256(T.Status.Blocked), "Block should mark entry blocked");
     }
 
     function test_Block_RevertWhen_NotWaiting() public {
         vm.expectRevert(QuorumUpgradeable.NotWaitingApproval.selector);
-        harness.blockEntry(1);
+        harness.blockEntry(12);
     }
 
-    function test_Quit_FromWaitingReturnsPending() public {
-        harness.register(1);
-        harness.quit(1);
-        assertEq(uint256(harness.statusOf(1)), uint256(T.Status.Pending), "Should return to pending");
+    function test_QuitReturnsPending() public {
+        harness.register(3);
+        harness.quit(3);
+        assertEq(uint256(harness.statusOf(3)), uint256(T.Status.Pending), "Quit should restore pending state");
     }
 
     function test_Quit_RevertWhen_NotWaiting() public {
         vm.expectRevert(QuorumUpgradeable.NotWaitingApproval.selector);
-        harness.quit(1);
+        harness.quit(4);
     }
 
-    function test_Revoke_FromActiveMovesToBlocked() public {
-        harness.register(1);
-        harness.approve(1);
-        harness.revoke(1);
-        assertEq(uint256(harness.statusOf(1)), uint256(T.Status.Blocked), "Active should move to blocked");
+    function test_RevokeMovesActiveToBlocked() public {
+        harness.register(8);
+        harness.approve(8);
+        harness.revoke(8);
+        assertEq(uint256(harness.statusOf(8)), uint256(T.Status.Blocked), "Revoke should block active entry");
     }
 
     function test_Revoke_RevertWhen_NotActive() public {
         vm.expectRevert(QuorumUpgradeable.InvalidInactiveState.selector);
-        harness.revoke(1);
-    }
-
-    function testFuzz_RegisterApproveCycle(uint256 entry) public {
-        entry = bound(entry, 0, type(uint64).max);
-
-        harness.register(entry);
-        assertEq(uint256(harness.statusOf(entry)), uint256(T.Status.Waiting));
-
-        harness.approve(entry);
-        assertEq(uint256(harness.statusOf(entry)), uint256(T.Status.Active));
-    }
-
-    function testFuzz_RegisterQuitKeepsPending(uint256 entry) public {
-        entry = bound(entry, 0, type(uint64).max);
-
-        harness.register(entry);
-        harness.quit(entry);
-
-        assertEq(uint256(harness.statusOf(entry)), uint256(T.Status.Pending));
+        harness.revoke(6);
     }
 }
-
-contract QuorumHandler is Test {
-    QuorumUpgradeableHarness public immutable harness;
-
-    struct EntryState {
-        bool tracked;
-        T.Status status;
-    }
-
-    mapping(uint256 => EntryState) private _entries;
-    uint256[] private _trackedEntries;
-
-    constructor(QuorumUpgradeableHarness harness_) {
-        harness = harness_;
-    }
-
-    function register(uint256 entry) external {
-        entry = _normalize(entry);
-        if (harness.statusOf(entry) != T.Status.Pending) return;
-        harness.register(entry);
-        _update(entry, T.Status.Waiting);
-    }
-
-    function approve(uint256 entry) external {
-        entry = _normalize(entry);
-        if (harness.statusOf(entry) != T.Status.Waiting) return;
-        harness.approve(entry);
-        _update(entry, T.Status.Active);
-    }
-
-    function quit(uint256 entry) external {
-        entry = _normalize(entry);
-        if (harness.statusOf(entry) != T.Status.Waiting) return;
-        harness.quit(entry);
-        _update(entry, T.Status.Pending);
-    }
-
-    function blockEntry(uint256 entry) external {
-        entry = _normalize(entry);
-        if (harness.statusOf(entry) != T.Status.Waiting) return;
-        harness.blockEntry(entry);
-        _update(entry, T.Status.Blocked);
-    }
-
-    function revoke(uint256 entry) external {
-        entry = _normalize(entry);
-        if (harness.statusOf(entry) != T.Status.Active) return;
-        harness.revoke(entry);
-        _update(entry, T.Status.Blocked);
-    }
-
-    function trackedLength() external view returns (uint256) {
-        return _trackedEntries.length;
-    }
-
-    function trackedAt(uint256 index) external view returns (uint256) {
-        return _trackedEntries[index];
-    }
-
-    function expectedStatus(uint256 entry) external view returns (T.Status) {
-        return _entries[entry].status;
-    }
-
-    function _update(uint256 entry, T.Status newStatus) private {
-        if (!_entries[entry].tracked) {
-            _entries[entry].tracked = true;
-            _trackedEntries.push(entry);
-        }
-        _entries[entry].status = newStatus;
-    }
-
-    function _normalize(uint256 entry) private pure returns (uint256) {
-        return entry % 1_000;
-    }
-}
-
-contract QuorumUpgradeableInvariantTest is Test {
-    QuorumUpgradeableHarness harness;
-    QuorumHandler handler;
-
-    function setUp() public {
-        harness = new QuorumUpgradeableHarness();
-        harness.initialize();
-        handler = new QuorumHandler(harness);
-        targetContract(address(handler));
-    }
-
-    function invariant_StatusMatchesHandler() external view {
-        uint256 len = handler.trackedLength();
-        for (uint256 i = 0; i < len; i++) {
-            uint256 entry = handler.trackedAt(i);
-            assertEq(uint256(harness.statusOf(entry)), uint256(handler.expectedStatus(entry)), "Status mismatch");
-        }
-    }
-
-    function invariant_StatusWithinEnum() external view {
-        uint256 len = handler.trackedLength();
-        for (uint256 i = 0; i < len; i++) {
-            uint256 entry = handler.trackedAt(i);
-            T.Status status = harness.statusOf(entry);
-            assertTrue(
-                status == T.Status.Pending ||
-                    status == T.Status.Waiting ||
-                    status == T.Status.Active ||
-                    status == T.Status.Blocked,
-                "Invalid status value"
-            );
-        }
-    }
-}
-

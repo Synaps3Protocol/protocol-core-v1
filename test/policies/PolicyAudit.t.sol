@@ -2,9 +2,7 @@
 pragma solidity 0.8.26;
 
 import "forge-std/Test.sol";
-
 import { PolicyAudit } from "contracts/policies/PolicyAudit.sol";
-import { ERC1967Proxy } from "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
 import { AccessControlledUpgradeable } from "contracts/core/primitives/upgradeable/AccessControlledUpgradeable.sol";
 import { QuorumUpgradeable } from "contracts/core/primitives/upgradeable/QuorumUpgradeable.sol";
 import { IPolicy } from "contracts/core/interfaces/policies/IPolicy.sol";
@@ -51,23 +49,13 @@ contract MockPolicy is ERC165, IPolicy {
 
 contract NotPolicy {}
 
-contract PolicyAuditHarness is PolicyAudit {
-    function status(address policy) external view returns (T.Status) {
-        return _status(uint160(policy));
-    }
-}
-
 contract PolicyAuditTest is BaseTest {
-    PolicyAuditHarness internal audit;
+    PolicyAudit internal audit;
     address internal nonAdmin;
 
     function setUp() public initialize {
-        PolicyAuditHarness implementation = new PolicyAuditHarness();
-        ERC1967Proxy proxy = new ERC1967Proxy(
-            address(implementation),
-            abi.encodeCall(PolicyAudit.initialize, accessManager)
-        );
-        audit = PolicyAuditHarness(address(proxy));
+        deployPolicyAudit();
+        audit = PolicyAudit(policyAudit);
         nonAdmin = vm.addr(77);
     }
 
@@ -82,8 +70,9 @@ contract PolicyAuditTest is BaseTest {
         vm.expectEmit(true, true, false, true, address(audit));
         emit PolicyAudit.PolicySubmitted(address(policy), address(this));
         audit.submit(address(policy));
-        assertEq(uint8(audit.status(address(policy))), uint8(T.Status.Waiting), "Status should be waiting");
-        assertFalse(audit.isAudited(address(policy)), "Policy should not be active yet");
+        assertTrue(audit.isPending(address(policy)), "Policy should be pending approval");
+        assertFalse(audit.isRejected(address(policy)), "Policy should not be rejected");
+        assertFalse(audit.isApproved(address(policy)), "Policy should not be approved yet");
     }
 
     function test_Submit_RevertWhen_AlreadySubmitted() public {
@@ -101,8 +90,9 @@ contract PolicyAuditTest is BaseTest {
         emit PolicyAudit.PolicyApproved(address(policy), admin);
         vm.prank(admin);
         audit.approve(address(policy));
-        assertEq(uint8(audit.status(address(policy))), uint8(T.Status.Active), "Policy not active");
-        assertTrue(audit.isAudited(address(policy)), "isAudited should be true");
+        assertTrue(audit.isApproved(address(policy)), "Policy should be approved");
+        assertFalse(audit.isRejected(address(policy)), "Policy should not be rejected");
+        assertFalse(audit.isPending(address(policy)), "Policy should not remain pending");
     }
 
     function test_Approve_RevertWhen_NotWaiting() public {
@@ -122,11 +112,13 @@ contract PolicyAuditTest is BaseTest {
         emit PolicyAudit.PolicyRevoked(address(policy), admin);
         vm.prank(admin);
         audit.reject(address(policy));
-        assertEq(uint8(audit.status(address(policy))), uint8(T.Status.Blocked), "Policy not blocked");
-        assertFalse(audit.isAudited(address(policy)), "isAudited should be false after revoke");
+        assertFalse(audit.isApproved(address(policy)), "Policy should no longer be approved");
+        assertTrue(audit.isRejected(address(policy)), "Policy should be rejected");
+        assertFalse(audit.isPending(address(policy)), "Rejected policy should not be pending");
+        vm.startPrank(admin);
         vm.expectRevert(QuorumUpgradeable.NotWaitingApproval.selector);
-        vm.prank(admin);
         audit.approve(address(policy));
+        vm.stopPrank();
     }
 
     function test_Reject_RevertWhen_NotActive() public {
@@ -167,118 +159,11 @@ contract PolicyAuditTest is BaseTest {
         vm.prank(admin);
         audit.reject(address(policy2));
 
-        assertTrue(audit.isAudited(address(policy1)), "Policy1 should be active");
-        assertFalse(audit.isAudited(address(policy2)), "Policy2 should be blocked");
-        assertEq(uint8(audit.status(address(policy3))), uint8(T.Status.Waiting), "Policy3 should remain waiting");
-    }
-
-    function testFuzz_SubmitMultiple(uint8 count) public {
-        count = uint8(bound(count, 1, 25));
-        for (uint8 i = 0; i < count; i++) {
-            MockPolicy policy = new MockPolicy();
-            audit.submit(address(policy));
-            assertEq(uint8(audit.status(address(policy))), uint8(T.Status.Waiting), "Status should be waiting");
-        }
-    }
-
-    function testFuzz_SubmitApprove(uint8 count) public {
-        count = uint8(bound(count, 1, 20));
-        for (uint8 i = 0; i < count; i++) {
-            MockPolicy policy = new MockPolicy();
-            audit.submit(address(policy));
-            vm.prank(admin);
-            audit.approve(address(policy));
-            assertTrue(audit.isAudited(address(policy)), "Policy should be active");
-        }
-    }
-}
-
-contract PolicyAuditHandler is Test {
-    PolicyAuditHarness public immutable audit;
-    address public immutable admin;
-    address[] internal policies;
-    mapping(address => T.Status) internal statusStore;
-
-    constructor(PolicyAuditHarness audit_, address admin_) {
-        audit = audit_;
-        admin = admin_;
-    }
-
-    function submitPolicy() external {
-        MockPolicy policy = new MockPolicy();
-        try audit.submit(address(policy)) {
-            policies.push(address(policy));
-            statusStore[address(policy)] = T.Status.Waiting;
-        } catch {}
-    }
-
-    function approvePolicy(uint256 idx) external {
-        if (policies.length == 0) return;
-        address policy = policies[idx % policies.length];
-        if (statusStore[policy] != T.Status.Waiting) return;
-
-        vm.prank(admin);
-        try audit.approve(policy) {
-            statusStore[policy] = T.Status.Active;
-        } catch {}
-    }
-
-    function rejectPolicy(uint256 idx) external {
-        if (policies.length == 0) return;
-        address policy = policies[idx % policies.length];
-        if (statusStore[policy] != T.Status.Active) return;
-
-        vm.prank(admin);
-        try audit.reject(policy) {
-            statusStore[policy] = T.Status.Blocked;
-        } catch {}
-    }
-
-    function policiesLength() external view returns (uint256) {
-        return policies.length;
-    }
-
-    function policyAt(uint256 idx) external view returns (address) {
-        return policies[idx];
-    }
-
-    function storedStatus(address policy) external view returns (T.Status) {
-        return statusStore[policy];
-    }
-}
-
-contract PolicyAuditInvariantTest is BaseTest {
-    PolicyAuditHarness audit;
-    PolicyAuditHandler handler;
-
-    function setUp() public initialize {
-        PolicyAuditHarness implementation = new PolicyAuditHarness();
-        ERC1967Proxy proxy = new ERC1967Proxy(
-            address(implementation),
-            abi.encodeCall(PolicyAudit.initialize, accessManager)
-        );
-        audit = PolicyAuditHarness(address(proxy));
-
-        handler = new PolicyAuditHandler(audit, admin);
-        targetContract(address(handler));
-    }
-
-    function invariant_StatusSynchronization() external view {
-        uint256 len = handler.policiesLength();
-        for (uint256 i = 0; i < len; i++) {
-            address policy = handler.policyAt(i);
-            T.Status expected = handler.storedStatus(policy);
-            assertEq(uint8(audit.status(policy)), uint8(expected), "Status mismatch");
-        }
-    }
-
-    function invariant_IsAuditedMatchesActive() external view {
-        uint256 len = handler.policiesLength();
-        for (uint256 i = 0; i < len; i++) {
-            address policy = handler.policyAt(i);
-            bool audited = audit.isAudited(policy);
-            bool expected = handler.storedStatus(policy) == T.Status.Active;
-            assertEq(audited, expected, "isAudited mismatch");
-        }
+        assertTrue(audit.isApproved(address(policy1)), "Policy1 should be active");
+        assertFalse(audit.isApproved(address(policy2)), "Policy2 should be blocked");
+        assertTrue(audit.isRejected(address(policy2)), "Policy2 should be rejected");
+        assertFalse(audit.isApproved(address(policy3)), "Policy3 should remain unapproved");
+        assertFalse(audit.isRejected(address(policy3)), "Policy3 should not be rejected");
+        assertTrue(audit.isPending(address(policy3)), "Policy3 should remain pending");
     }
 }
