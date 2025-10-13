@@ -19,7 +19,7 @@ Synapse Protocol provides a deterministic coordination layer for digital asset r
 | Layer | Purpose | Key Components | Notes |
 | --- | --- | --- | --- |
 | **Blockchain Layer** | Anchors protocol state on EVM networks; executes verifiable rights and settlement logic. | Deployed contracts for Assets, Rights, Policies, Finance, Economics, Governance, Access Control. | Deterministic calldata interactions enable auditability and integrations. |
-| **Coordination Layer** | Core execution environment managing registries, policies, governance, and economics modules. | Asset registry, referendum, policy authorizer/manager, settlement engines, economics controllers (fees/tollgate, treasury). | Primary audit focus; ensures modules compose deterministically. |
+| **Coordination Layer** | Core execution environment managing registries, policies, governance, financial ops and economics modules. | Asset registry, referendum, policy authorizer/manager, settlement engines, economics controllers (fees/tollgate, treasury). | Primary audit focus; ensures modules compose deterministically. |
 | **Integration Layer / Peripheral Layer** | Bridges external applications, attestation services, marketplaces. | Peripheral contracts such as `SubscriptionPolicy`, `IAttestationProvider` adapters (e.g., EAS), future SEP integrations. | Minimal in current scope; policies/attestors plug into the coordination layer via `PolicyBase`. |
 
 ---
