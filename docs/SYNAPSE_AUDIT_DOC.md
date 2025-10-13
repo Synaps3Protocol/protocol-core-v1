@@ -8,7 +8,7 @@
 ### 1. Overview
 
 Synapse Protocol provides a deterministic coordination layer for digital asset registration, licensing, and monetization. Creators define programmable access rules enforced on-chain, with all state transitions governed by role-based permissions and quorum-driven governance. This document summarizes architecture, modules, dependencies, and key audit checkpoints.
-<img width="834" height="422" alt="Captura desde 2025-10-13 11-59-01" src="https://github.com/user-attachments/assets/f3b5dcc0-7c02-401a-9429-2a6bed151f9e" />
+<img width="100%" alt="Captura desde 2025-10-13 11-59-01" src="https://github.com/user-attachments/assets/f3b5dcc0-7c02-401a-9429-2a6bed151f9e" />
 
 ---
 
