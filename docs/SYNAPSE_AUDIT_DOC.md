@@ -52,7 +52,7 @@ Synapse Protocol provides a deterministic coordination layer for digital asset r
 
 | Role | Description | Responsibilities | Assigned Entities |
 | --- | --- | --- | --- |
-| `ADMIN_ROLE` | Core administrators controlling upgrades, pause/unpause, and role granting. | `_authorizeUpgrade`, `setTargetFunctionRole`, `setTargetClosed`, emergency actions. | Multisig / governance executor (per deployment). |
+| `ADMIN_ROLE` | Core administrators controlling upgrades, and role granting. | `_authorizeUpgrade`, `setTargetFunctionRole`, `setTargetClosed`, emergency actions. | Multisig / governance executor (per deployment). |
 | `GOV_ROLE` | Community governance authority. | Approves council compositions, economics changes, policy & asset referendums. | DAO governance process. |
 | `CONTENT_COUNCIL_ROLE` | Oversees content curation and asset approvals. | Voting on `AssetReferendum` submissions. | Council multisig. |
 | `CUSTODY_COUNCIL_ROLE` | Manages custodial operations and related referendums. | Approving custodial contracts, emergency custodial actions. | Custody council. |
@@ -61,7 +61,7 @@ Synapse Protocol provides a deterministic coordination layer for digital asset r
 | `TREASURER_ROLE` | Treasury management. | `Treasury` withdrawals/distributions, economic adjustments. | Treasury multisig. |
 | `VER_ROLE` | Verified creators/participants. | Bypass certain checks (e.g., asset verification) when designated. | Trusted creators or nodes. |
 
-*Hierarchy*: `GOV_ROLE` (community governance) → councils (`CONTENT_COUNCIL_ROLE`, `CUSTODY_COUNCIL_ROLE`, `TREASURER_ROLE`) → ops roles (`OPS_ROLE`, `SEC_ROLE`) → contracts/users. `ADMIN_ROLE` executes governance-approved actions (upgrades, role assignments) within `AccessManager`.
+*Hierarchy*: `GOV_ROLE` (community governance) → councils (`ADMIN_ROLE`,`CONTENT_COUNCIL_ROLE`, `CUSTODY_COUNCIL_ROLE`, `TREASURER_ROLE`) → ops roles (`OPS_ROLE`, `SEC_ROLE`) → contracts/users. `ADMIN_ROLE` executes governance-approved actions (upgrades, role assignments) within `AccessManager`.
 
 
 ---
