@@ -1,4 +1,4 @@
-## Synapse Protocol – Auditor Documentation (v1)
+## Synapse Protocol – Auditor Documentation (draft)
 
 > **Scope**: Assets, Rights & Policies, Finance (Escrow & Settlements), Economics, Governance, Access Control  
 > **Out of Scope**: Custodian Network (DePIN), DWRR routing, replication/delivery infrastructure
