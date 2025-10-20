@@ -8,7 +8,7 @@ import { C } from "contracts/core/primitives/Constants.sol";
 
 contract DeployTollgate is DeployBase {
     function run() external returns (address) {
-        vm.startBroadcast(getAdminPK());
+        vm.startBroadcast(getDeployerPK());
         address impl = address(new Tollgate());
         address accessManager = computeCreate3Address("SALT_ACCESS_MANAGER");
         bytes memory init = abi.encodeCall(Tollgate.initialize, (accessManager));

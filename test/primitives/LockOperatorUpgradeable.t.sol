@@ -10,9 +10,6 @@ import { ILockReleaser } from "contracts/core/interfaces/base/ILockReleaser.sol"
 import { ILockClaimer } from "contracts/core/interfaces/base/ILockClaimer.sol";
 
 contract LockOperatorHarness is LockOperatorUpgradeable {
-    bytes32 private constant LOCK_SLOT =
-        0xece3ff917f3a3127e521e0c3f2f90ff09a3c8199be32f9b40bff79e776960800;
-
     function initialize() external initializer {
         __LockOperator_init();
     }
@@ -31,22 +28,6 @@ contract LockOperatorHarness is LockOperatorUpgradeable {
 
     function claim(address account, uint256 amount, address currency) external override returns (uint256) {
         return _claim(account, amount, currency);
-    }
-
-    function lockedBalance(address account, address currency) external view returns (uint256 balance_) {
-        bytes32 first;
-        bytes32 second;
-        assembly {
-            mstore(0x00, account)
-            mstore(0x20, LOCK_SLOT)
-            first := keccak256(0x00, 0x40)
-
-            mstore(0x00, currency)
-            mstore(0x20, first)
-            second := keccak256(0x00, 0x40)
-
-            balance_ := sload(second)
-        }
     }
 }
 
@@ -70,7 +51,7 @@ contract LockOperatorUpgradeableTest is Test {
         harness.lock(alice, 40 ether, TOKEN);
 
         assertEq(ILedgerVerifiable(address(harness)).getLedgerBalance(alice, TOKEN), 80 ether, "Ledger deduction mismatch");
-        assertEq(harness.lockedBalance(alice, TOKEN), 40 ether, "Locked balance mismatch");
+        assertEq(harness.getLockedBalance(alice, TOKEN), 40 ether, "Locked balance mismatch");
     }
 
     function test_Lock_RevertWhen_NoFunds() public {
@@ -97,7 +78,7 @@ contract LockOperatorUpgradeableTest is Test {
         emit ILockReleaser.FundsReleased(address(this), alice, 25 ether, TOKEN);
         harness.release(alice, 25 ether, TOKEN);
 
-        assertEq(harness.lockedBalance(alice, TOKEN), 35 ether, "Locked after release mismatch");
+        assertEq(harness.getLockedBalance(alice, TOKEN), 35 ether, "Locked after release mismatch");
         assertEq(ILedgerVerifiable(address(harness)).getLedgerBalance(alice, TOKEN), 55 ether, "Ledger after release mismatch");
     }
 
@@ -118,7 +99,7 @@ contract LockOperatorUpgradeableTest is Test {
         harness.claim(alice, 18 ether, TOKEN);
 
         ILedgerVerifiable ledger = ILedgerVerifiable(address(harness));
-        assertEq(harness.lockedBalance(alice, TOKEN), 12 ether, "Locked remainder mismatch");
+        assertEq(harness.getLockedBalance(alice, TOKEN), 12 ether, "Locked remainder mismatch");
         assertEq(ledger.getLedgerBalance(claimer, TOKEN), 18 ether, "Claimer ledger mismatch");
         assertEq(ledger.getLedgerBalance(alice, TOKEN), 40 ether, "Alice ledger should reflect lock deduction");
     }
@@ -138,7 +119,7 @@ contract LockOperatorUpgradeableTest is Test {
         vm.prank(claimer);
         harness.claim(alice, 50 ether, TOKEN);
 
-        uint256 locked = harness.lockedBalance(alice, TOKEN);
+        uint256 locked = harness.getLockedBalance(alice, TOKEN);
         ILedgerVerifiable ledger = ILedgerVerifiable(address(harness));
         uint256 aliceLedger = ledger.getLedgerBalance(alice, TOKEN);
         uint256 claimerLedger = ledger.getLedgerBalance(claimer, TOKEN);

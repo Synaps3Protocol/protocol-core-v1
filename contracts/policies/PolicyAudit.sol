@@ -67,7 +67,7 @@ contract PolicyAudit is Initializable, UUPSUpgradeable, AccessControlledUpgradea
     /// @notice Submits an audit request for the given policy.
     /// This registers the policy for audit within the system.
     /// @param policy The address of the policy to be submitted for auditing.
-    function submit(address policy) external onlyValidPolicy(policy) {
+    function submit(address policy) external whenNotPaused onlyValidPolicy(policy) {
         _register(uint160(policy));
         emit PolicySubmitted(policy, msg.sender);
     }
@@ -75,7 +75,7 @@ contract PolicyAudit is Initializable, UUPSUpgradeable, AccessControlledUpgradea
     /// @notice Approves the audit of a given policy by a specified auditor.
     /// @param policy The address of the policy to be audited.
     /// @dev This function emits the PolicyApproved event upon successful audit approval.
-    function approve(address policy) external onlyAdmin {
+    function approve(address policy) external whenNotPaused onlyAdmin {
         _approve(uint160(policy));
         emit PolicyApproved(policy, msg.sender);
     }
@@ -83,7 +83,7 @@ contract PolicyAudit is Initializable, UUPSUpgradeable, AccessControlledUpgradea
     /// @notice Revokes the audit of a given policy by a specified auditor.
     /// @param policy The address of the policy whose audit is to be revoked.
     /// @dev This function emits the PolicyRevoked event upon successful audit revocation.
-    function reject(address policy) external onlyAdmin {
+    function reject(address policy) external whenNotPaused onlyAdmin {
         _revoke(uint160(policy));
         emit PolicyRevoked(policy, msg.sender);
     }

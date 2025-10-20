@@ -62,11 +62,17 @@ library FinancialOps {
             revert FailDuringDeposit("Amount exceeds allowance.");
         }
 
+        // Reconcile balances to block fee-on-transfer tokens that would deliver less than the requested amount.
         // disable slitter use 'arbitrary transfer form' since the use of `safeDeposit` is handled in a safe manner.
         // eg. msg.sender.safeDeposit(total, currency); <- Use msg.sender as from in transferFrom.
         // slither-disable-next-line arbitrary-send-erc20
+        uint256 balanceBefore = IERC20(token).balanceOf(address(this));
         IERC20(token).safeTransferFrom(from, address(this), amount);
-        return amount;
+        uint256 balanceAfter = IERC20(token).balanceOf(address(this));
+
+        uint256 received = balanceAfter - balanceBefore;
+        if (received != amount) revert FailDuringDeposit("Token not supported.");
+        return received;
     }
 
     /// @notice Increases the allowance of a given `spender` for a specified ERC20 `token`.

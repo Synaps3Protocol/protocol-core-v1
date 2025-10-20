@@ -222,7 +222,7 @@ contract RightsPolicyManagerTest is BaseTest {
     }
 
     function _seedLedgerBalance(address account, uint256 amount) internal {
-        vm.startPrank(admin);
+        vm.startPrank(governor);
         currency.approve(address(ledgerVault), amount);
         ledgerVault.deposit(account, amount, address(currency));
         vm.stopPrank();

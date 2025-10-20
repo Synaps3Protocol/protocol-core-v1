@@ -136,7 +136,7 @@ contract AccessManager is Initializable, UUPSUpgradeable, AccessManagerUpgradeab
 
         // Governance domain controls councils & treasury/community-facing roles:
         _setRoleAdmin(C.VER_ROLE, C.GOV_ROLE);
-        // _setRoleAdmin(C.ADMIN_ROLE, C.GOV_ROLE);
+        _setRoleAdmin(C.ADMIN_ROLE, C.GOV_ROLE); // locked role
         _setRoleAdmin(C.TREASURER_ROLE, C.GOV_ROLE);
         _setRoleAdmin(C.CUSTODY_COUNCIL_ROLE, C.GOV_ROLE);
         _setRoleAdmin(C.CONTENT_COUNCIL_ROLE, C.GOV_ROLE);

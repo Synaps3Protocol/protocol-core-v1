@@ -7,7 +7,7 @@ import { C } from "contracts/core/primitives/Constants.sol";
 
 contract DeployCustodianReferendum is DeployBase {
     function run() external returns (address) {
-        vm.startBroadcast(getAdminPK());
+        vm.startBroadcast(getDeployerPK());
         address custodianFactory = computeCreate3Address("SALT_CUSTODIAN_FACTORY");
         address accessManager = computeCreate3Address("SALT_ACCESS_MANAGER");
         address impl = address(new CustodianReferendum(custodianFactory));

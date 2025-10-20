@@ -4,6 +4,7 @@ import "forge-std/Script.sol";
 
 import { IAccessManager } from "contracts/core/interfaces/access/IAccessManager.sol";
 import { ITollgate } from "contracts/core/interfaces/economics/ITollgate.sol";
+import { ILedgerVault } from "contracts/core/interfaces/financial/ILedgerVault.sol";
 import { C } from "contracts/core/primitives/Constants.sol";
 import { T } from "contracts/core/primitives/Types.sol";
 
@@ -18,7 +19,7 @@ import { getPauserPermissions as PauserPermissions } from "script/permissions/Pe
 
 contract OrchestrateProtocolHydration is Script {
     function run() external {
-        uint256 admin = vm.envUint("PRIVATE_KEY");
+        uint256 governor = vm.envUint("PRIVATE_KEY");
         address tollgateAddress = vm.envAddress("TOLLGATE");
         address treasuryAddress = vm.envAddress("TREASURY");
         address auditorAddress = vm.envAddress("POLICY_AUDIT");
@@ -31,17 +32,17 @@ contract OrchestrateProtocolHydration is Script {
         address custodianReferendum = vm.envAddress("CUSTODIAN_REFERENDUM");
         address ledgerVault = vm.envAddress("LEDGER_VAULT");
 
-        vm.startBroadcast(admin);
+        vm.startBroadcast(governor);
         // 1 set the initial governor to operate over the protocol configuration
         // initially the admin will have the role of "governor"
         // initially the admin will be the mod to setup policies
-        address adminAddress = vm.addr(admin);
+        // address adminAddress = vm.addr(governor);
         IAccessManager authority = IAccessManager(accessManager);
 
         // the governor is set to admin to handle initial setup..
         // after this can be revoked and assign the governance timelock as governor
         // https://docs.openzeppelin.com/contracts/5.x/access-control#role-admins-and-guardians
-        authority.grantRole(C.GOV_ROLE, adminAddress, 0);
+        // authority.grantRole(C.GOV_ROLE, adminAddress, 0);
 
         authority.grantRole(C.OPS_ROLE, agreementManager, 0);
         authority.grantRole(C.OPS_ROLE, agreementSettler, 0);
@@ -78,11 +79,13 @@ contract OrchestrateProtocolHydration is Script {
         address currency = vm.envAddress("MMC");
 
         ITollgate tollgate = ITollgate(tollgateAddress);
+        ILedgerVault vault = ILedgerVault(ledgerVault);
         // assign bps scheme to right policy manager + fees + mmc
+        vault.allowCurrency(currency); // the currency needs whitelisting
         tollgate.setFees(T.Scheme.BPS, rightPolicyManager, agrFee, currency);
 
         (uint256 feeA, ) = tollgate.getFees(rightPolicyManager, currency);
-        require(feeA == agrFee);
+        assert(feeA == agrFee);
         vm.stopBroadcast();
     }
 }

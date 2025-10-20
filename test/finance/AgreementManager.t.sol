@@ -28,10 +28,8 @@ contract AgreementManagerTest is BaseTest {
         deployAgreementManager();
         arbiter = address(new AgreementManagerMockArbiter());
 
-        vm.prank(governor);
+        vm.startPrank(governor);
         ITollgate(tollgate).setFees(T.Scheme.BPS, arbiter, 500, token);
-
-        vm.startPrank(admin);
         IERC20(token).approve(ledger, INITIAL_DEPOSIT);
         ILedgerVault(ledger).deposit(user, INITIAL_DEPOSIT, token);
         vm.stopPrank();

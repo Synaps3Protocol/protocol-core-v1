@@ -7,7 +7,7 @@ import { AssetSafe } from "contracts/assets/AssetSafe.sol";
 contract DeployAssetSafe is DeployBase {
     function run() external returns (address) {
 
-        vm.startBroadcast(getAdminPK());
+        vm.startBroadcast(getDeployerPK());
         address accessManager = computeCreate3Address("SALT_ACCESS_MANAGER");
         address assetRegistry = computeCreate3Address("SALT_ASSET_REGISTRY");
         address impl = address(new AssetSafe(assetRegistry));

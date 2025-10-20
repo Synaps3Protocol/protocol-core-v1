@@ -27,6 +27,25 @@ contract LedgerVault is
     LockOperatorUpgradeable,
     ILedgerVault
 {
+    /// @dev Tracks which currencies are approved for ledger operations.
+    mapping(address => bool) private _approvedCurrencies;
+
+    /// @notice Emitted when a currency approval state changes.
+    /// @param currency The address of the currency whose approval status changed.
+    /// @param allowed The new approval status.
+    /// @param admin The admin that triggered the change.
+    event CurrencyApprovalUpdated(address indexed currency, bool allowed, address indexed admin);
+
+    /// @notice Error thrown when attempting to use an unapproved currency.
+    /// @param currency The currency that is not approved.
+    error CurrencyNotAllowed(address currency);
+
+    /// @dev Ensures that the provided currency has been approved for ledger operations.
+    modifier onlyAllowedCurrency(address currency) {
+        if (!_isCurrencyAllowed(currency)) revert CurrencyNotAllowed(currency);
+        _;
+    }
+
     /// @custom:oz-upgrades-unsafe-allow constructor
     constructor() {
         /// https://forum.openzeppelin.com/t/uupsupgradeable-vulnerability-post-mortem/15680
@@ -55,7 +74,13 @@ contract LedgerVault is
         address account,
         uint256 amount,
         address currency
-    ) external restricted whenNotPaused onlyValidOperation(account, amount) returns (uint256) {
+    ) external
+        restricted
+        whenNotPaused
+        onlyValidOperation(account, amount)
+        onlyAllowedCurrency(currency)
+        returns (uint256)
+    {
         return _lock(account, amount, currency);
     }
 
@@ -67,7 +92,13 @@ contract LedgerVault is
         address account,
         uint256 amount,
         address currency
-    ) external restricted whenNotPaused onlyValidOperation(account, amount) returns (uint256) {
+    ) external
+        restricted
+        whenNotPaused
+        onlyValidOperation(account, amount)
+        onlyAllowedCurrency(currency)
+        returns (uint256)
+    {
         return _release(account, amount, currency);
     }
 
@@ -81,7 +112,13 @@ contract LedgerVault is
         address account,
         uint256 amount,
         address currency
-    ) external restricted whenNotPaused onlyValidOperation(account, amount) returns (uint256) {
+    ) external
+        restricted
+        whenNotPaused
+        onlyValidOperation(account, amount)
+        onlyAllowedCurrency(currency)
+        returns (uint256)
+    {
         return _claim(account, amount, currency);
     }
 
@@ -89,7 +126,11 @@ contract LedgerVault is
     /// @param to The address of the recipient for whom the funds are being approved.
     /// @param amount The amount of funds to approve.
     /// @param currency The address of the ERC20 token to approve. Use `address(0)` for native tokens.
-    function approve(address to, uint256 amount, address currency) external whenNotPaused returns (uint256) {
+    function approve(
+        address to,
+        uint256 amount,
+        address currency
+    ) external whenNotPaused onlyAllowedCurrency(currency) returns (uint256) {
         return _approve(to, amount, currency);
     }
 
@@ -97,7 +138,11 @@ contract LedgerVault is
     /// @param to The address of the recipient whose approval is being revoked.
     /// @param currency The address of the ERC20 token associated with the approval. Use `address(0)` for native tokens.
     /// @return The amount of funds that were revoked from the approval.
-    function revoke(address to, uint256 amount, address currency) external whenNotPaused returns (uint256) {
+    function revoke(
+        address to,
+        uint256 amount,
+        address currency
+    ) external whenNotPaused onlyAllowedCurrency(currency) returns (uint256) {
         return _revoke(to, amount, currency);
     }
 
@@ -105,7 +150,11 @@ contract LedgerVault is
     /// @param from The address of the account from which the approved funds are being collected.
     /// @param amount The amount of funds to collect.
     /// @param currency The address of the ERC20 token to collect. Use `address(0)` for native tokens.
-    function collect(address from, uint256 amount, address currency) external whenNotPaused returns (uint256) {
+    function collect(
+        address from,
+        uint256 amount,
+        address currency
+    ) external whenNotPaused onlyAllowedCurrency(currency) returns (uint256) {
         return _collect(from, amount, currency);
     }
 
@@ -117,7 +166,7 @@ contract LedgerVault is
         address recipient,
         uint256 amount,
         address currency
-    ) external payable whenNotPaused returns (uint256) {
+    ) external payable whenNotPaused onlyAllowedCurrency(currency) returns (uint256) {
         return _deposit(recipient, amount, currency);
     }
 
@@ -129,7 +178,7 @@ contract LedgerVault is
         address recipient,
         uint256 amount,
         address currency
-    ) external whenNotPaused nonReentrant returns (uint256) {
+    ) external whenNotPaused onlyAllowedCurrency(currency) nonReentrant returns (uint256) {
         return _withdraw(recipient, amount, currency);
     }
 
@@ -137,12 +186,46 @@ contract LedgerVault is
     /// @param recipient The address of the account to credit with the transfer.
     /// @param amount The amount of tokens to transfer.
     /// @param currency The address of the currency to transfer. Use `address(0)` for the native coin.
-    function transfer(address recipient, uint256 amount, address currency) external whenNotPaused returns (uint256) {
+    function transfer(
+        address recipient,
+        uint256 amount,
+        address currency
+    ) external whenNotPaused onlyAllowedCurrency(currency) returns (uint256) {
         return _transfer(recipient, amount, currency);
+    }
+
+    /// @notice Allows a currency to be used within the ledger operations.
+    /// @param currency The address of the currency to allow. Use address(0) for the native coin.
+    function allowCurrency(address currency) external restricted {
+        _setCurrencyState(currency, true);
+    }
+
+    /// @notice Blocks a currency from being used within the ledger operations.
+    /// @param currency The address of the currency to block. Use address(0) for the native coin.
+    function blockCurrency(address currency) external restricted {
+        _setCurrencyState(currency, false);
+    }
+
+    /// @notice Returns whether a currency is approved for ledger operations.
+    /// @param currency The address of the currency to verify.
+    function isCurrencyAllowed(address currency) external view returns (bool) {
+        return _isCurrencyAllowed(currency);
     }
 
     /// @notice Function that should revert when msg.sender is not authorized to upgrade the contract.
     /// @param newImplementation The address of the new implementation contract.
     /// @dev See https://docs.openzeppelin.com/contracts/4.x/api/proxy#UUPSUpgradeable-_authorizeUpgrade-address-
     function _authorizeUpgrade(address newImplementation) internal override onlyAdmin {}
+
+    /// @dev Registers the approval status for a currency and emits an event if the value changes.
+    function _setCurrencyState(address currency, bool allowed) private {
+        if (_approvedCurrencies[currency] == allowed) return;
+        _approvedCurrencies[currency] = allowed;
+        emit CurrencyApprovalUpdated(currency, allowed, msg.sender);
+    }
+
+    /// @dev Returns true when the currency is currently approved, false otherwise.
+    function _isCurrencyAllowed(address currency) private view returns (bool) {
+        return _approvedCurrencies[currency];
+    }
 }

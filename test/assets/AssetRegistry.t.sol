@@ -140,8 +140,8 @@ contract AssetRegistryTest is BaseTest {
         vm.expectEmit(true, true, false, true, assetRegistry);
         emit AssetRegistry.RevokedAsset(user, assetId);
 
-        vm.prank(admin);
-        AssetRegistry(assetRegistry).revoke(assetId);
+        vm.prank(governor);
+        IAssetRegistry(assetRegistry).revoke(assetId);
 
         assertFalse(IERC721StatefulVerifiable(assetRegistry).isActive(assetId), "Revoked asset should be inactive");
         assertEq(AssetRegistry(assetRegistry).totalSupply(), 0, "Total supply should decrease after burn");

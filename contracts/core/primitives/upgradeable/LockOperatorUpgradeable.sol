@@ -34,6 +34,15 @@ abstract contract LockOperatorUpgradeable is Initializable, LedgerUpgradeable, I
     /// slither-disable-next-line naming-convention
     function __LockOperator_init_unchained() internal onlyInitializing {}
 
+    /// @notice Retrieves the locked balance of an account for a specific currency.
+    /// @dev Returns the value stored in the `_locked` mapping for the given `account` and `currency`.
+    /// @param account The address of the account whose locked balance is being queried.
+    /// @param currency The address of the currency to check the locked balance for.
+    /// @return The locked balance of the specified account for the given currency.
+    function getLockedBalance(address account, address currency) external view returns (uint256) {
+        return _getLockedBalance(account, currency);
+    }
+
     /// @notice Locks a specific amount of funds for a given account.
     /// @dev The funds are immobilized and cannot be withdrawn or transferred until released.
     ///      Only operator role can handle this methods.
@@ -62,7 +71,7 @@ abstract contract LockOperatorUpgradeable is Initializable, LedgerUpgradeable, I
         uint256 amount,
         address currency
     ) internal onlyValidOperation(account, amount) returns (uint256) {
-        if (_getLockedAmount(account, currency) < amount) revert NoFundsToRelease();
+        if (_getLockedBalance(account, currency) < amount) revert NoFundsToRelease();
         _subLockedAmount(account, amount, currency);
         _sumLedgerEntry(account, amount, currency);
         emit FundsReleased(msg.sender, account, amount, currency);
@@ -80,7 +89,7 @@ abstract contract LockOperatorUpgradeable is Initializable, LedgerUpgradeable, I
         uint256 amount,
         address currency
     ) internal onlyValidOperation(account, amount) returns (uint256) {
-        if (_getLockedAmount(account, currency) < amount) revert NoFundsToClaim();
+        if (_getLockedBalance(account, currency) < amount) revert NoFundsToClaim();
         _subLockedAmount(account, amount, currency); //
         _sumLedgerEntry(msg.sender, amount, currency);
         emit FundsClaimed(msg.sender, account, amount, currency);
@@ -112,7 +121,7 @@ abstract contract LockOperatorUpgradeable is Initializable, LedgerUpgradeable, I
     /// @param account The address of the account whose locked balance is being queried.
     /// @param currency The address of the currency to check the locked balance for.
     /// @return The locked balance of the specified account for the given currency.
-    function _getLockedAmount(address account, address currency) private view returns (uint256) {
+    function _getLockedBalance(address account, address currency) internal view returns (uint256) {
         LockOperatorStorage storage $ = _getLockOperatorStorage();
         return $._locked[account][currency];
     }

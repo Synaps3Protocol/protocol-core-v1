@@ -22,8 +22,8 @@ library C {
     /// @dev Encoded as `uint256` value `1`.
     uint256 internal constant ASSET_CRITERIA = 1;
 
-    uint64 internal constant ADMIN_ROLE = 0; // alias type(uint64).min AccessManager
-    uint64 internal constant GOV_ROLE = 1; // governance role
+    uint64 internal constant GOV_ROLE = 0; // alias type(uint64).min AccessManager
+    uint64 internal constant ADMIN_ROLE = 1; // admin role
     uint64 internal constant OPS_ROLE = 2; // operations roles
     uint64 internal constant VER_ROLE = 3; // account verified role
     uint64 internal constant SEC_ROLE = 4; // protocol security council

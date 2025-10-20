@@ -26,9 +26,11 @@ import { getGovPermissions as TreasuryGovPermissions } from "script/permissions/
 import { getGovPermissions as CustodianReferendumGovPermissions } from "script/permissions/Permissions_CustodianReferendum.sol";
 import { getGovPermissions as AssetReferendumGovPermissions } from "script/permissions/Permissions_AssetReferendum.sol";
 import { getOpsPermissions as LedgerVaultOpsPermissions } from "script/permissions/Permissions_LedgerVault.sol";
+import { getGovPermissions as LedgerVaultGovPermissions } from "script/permissions/Permissions_LedgerVault.sol";
 
 import { IAccessManager } from "contracts/core/interfaces/access/IAccessManager.sol";
 import { C } from "contracts/core/primitives/Constants.sol";
+import { ILedgerVault } from "contracts/core/interfaces/financial/ILedgerVault.sol";
 
 import { console } from "forge-std/console.sol";
 
@@ -38,6 +40,7 @@ import { console } from "forge-std/console.sol";
 abstract contract BaseTest is Test {
     address admin;
     address user;
+    address sec;
     address governor;
     address contentCouncil;
     address nodesCouncil;
@@ -65,11 +68,12 @@ abstract contract BaseTest is Test {
 
     modifier initialize() {
         // setup the admin to operate in tests..
+        admin = vm.addr(1);
         user = vm.addr(2);
-        governor = vm.addr(1);
-        contentCouncil = vm.addr(2);
-        nodesCouncil = vm.addr(2);
-        admin = vm.addr(vm.envUint("PRIVATE_KEY"));
+        governor = vm.addr(vm.envUint("PRIVATE_KEY"));
+        contentCouncil = vm.addr(3);
+        nodesCouncil = vm.addr(4);
+        sec = vm.addr(5);
 
         deployCreate3Factory();
         deployAccessManager();
@@ -101,16 +105,17 @@ abstract contract BaseTest is Test {
         DeployAccessManager accessManagerDeployer = new DeployAccessManager();
         accessManager = accessManager == address(0) ? accessManagerDeployer.run() : accessManager;
 
-        vm.prank(admin);
+        vm.startPrank(governor);
         // add to governor the gov role
         IAccessManager authority = IAccessManager(accessManager);
-        authority.grantRole(C.GOV_ROLE, governor, 0);
-        
-        vm.startPrank(governor);
+        authority.grantRole(C.ADMIN_ROLE, admin, 0);
         // add to councils the corresponding role
         authority.grantRole(C.CONTENT_COUNCIL_ROLE, contentCouncil, 0);
         authority.grantRole(C.CUSTODY_COUNCIL_ROLE, nodesCouncil, 0);
         vm.stopPrank();
+
+        vm.prank(admin);
+        authority.grantRole(C.SEC_ROLE, sec, 0);
     }
 
     // 02_DeployTollgate
@@ -130,12 +135,16 @@ abstract contract BaseTest is Test {
         // set default admin as deployer..
         DeployLedgerVault ledgerDeployer = new DeployLedgerVault();
         bytes4[] memory ledgerAllowed = LedgerVaultOpsPermissions();
+        bytes4[] memory ledgerGovAllowed = LedgerVaultGovPermissions();
         ledger = ledger == address(0) ? ledgerDeployer.run() : ledger;
 
-        vm.prank(admin);
         // op role needed to call functions in ledger contract
-        IAccessManager authority = IAccessManager(accessManager);
-        authority.setTargetFunctionRole(ledger, ledgerAllowed, C.OPS_ROLE);
+        _setOpsPermissions(ledger, ledgerAllowed);
+        _setGovPermissions(ledger, ledgerGovAllowed);
+
+        vm.prank(governor);
+        ILedgerVault(ledger).allowCurrency(token);
+
         return ledger;
     }
 
@@ -209,12 +218,13 @@ abstract contract BaseTest is Test {
         _setNodesCouncilPermissions(custodianReferendum, custodianReferendumAllowed);
     }
 
-
     function deployRightsAssetCustodian() public {
         deployCustodianReferendum();
         // set default admin as deployer..
         DeployRightsAssetCustodian rightAssetCustodianDeployer = new DeployRightsAssetCustodian();
-        rightAssetCustodian = rightAssetCustodian == address(0) ? rightAssetCustodianDeployer.run() : rightAssetCustodian;
+        rightAssetCustodian = rightAssetCustodian == address(0)
+            ? rightAssetCustodianDeployer.run()
+            : rightAssetCustodian;
     }
 
     function deployPolicyAudit() public {
@@ -239,8 +249,8 @@ abstract contract BaseTest is Test {
         rightsPolicyManager = rightsPolicyManager == address(0) ? rightsManagerDeployer.run() : rightsPolicyManager;
     }
 
-     function _setContentCouncilPermissions(address target, bytes4[] memory allowed) public {
-        vm.startPrank(admin);
+    function _setContentCouncilPermissions(address target, bytes4[] memory allowed) public {
+        vm.startPrank(governor);
         IAccessManager authority = IAccessManager(accessManager);
         // assign permissions to VAL_ROLE for allowed functions to call in target
         authority.setTargetFunctionRole(target, allowed, C.CONTENT_COUNCIL_ROLE);
@@ -248,18 +258,34 @@ abstract contract BaseTest is Test {
     }
 
     function _setNodesCouncilPermissions(address target, bytes4[] memory allowed) public {
-        vm.startPrank(admin);
+        vm.startPrank(governor);
         IAccessManager authority = IAccessManager(accessManager);
         // assign permissions to VAL_ROLE for allowed functions to call in target
         authority.setTargetFunctionRole(target, allowed, C.CUSTODY_COUNCIL_ROLE);
         vm.stopPrank();
     }
 
+    function _setOpsPermissions(address target, bytes4[] memory allowed) public {
+        vm.startPrank(governor);
+        IAccessManager authority = IAccessManager(accessManager);
+        // assign permissions to OPS_ROLE for allowed functions to call in target
+        authority.setTargetFunctionRole(target, allowed, C.OPS_ROLE);
+        vm.stopPrank();
+    }
+
     function _setGovPermissions(address target, bytes4[] memory allowed) public {
-        vm.startPrank(admin);
+        vm.startPrank(governor);
         IAccessManager authority = IAccessManager(accessManager);
         // assign permissions to GOV_ROLE for allowed functions to call in target
         authority.setTargetFunctionRole(target, allowed, C.GOV_ROLE);
+        vm.stopPrank();
+    }
+
+    function _setSecPermissions(address target, bytes4[] memory allowed) public {
+        vm.startPrank(governor);
+        IAccessManager authority = IAccessManager(accessManager);
+        // assign permissions to ADMIN_ROLE for allowed functions to call in target
+        authority.setTargetFunctionRole(target, allowed, C.SEC_ROLE);
         vm.stopPrank();
     }
 
@@ -267,6 +293,13 @@ abstract contract BaseTest is Test {
         vm.startPrank(admin);
         IAccessManager authority = IAccessManager(accessManager);
         authority.grantRole(C.OPS_ROLE, target, 0);
+        vm.stopPrank();
+    }
+
+    function _grantRole(uint64 role, address account) public {
+        vm.startPrank(admin);
+        IAccessManager authority = IAccessManager(accessManager);
+        authority.grantRole(role, account, 0);
         vm.stopPrank();
     }
 }

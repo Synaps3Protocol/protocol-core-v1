@@ -6,7 +6,7 @@ import { AssetReferendum } from "contracts/assets/AssetReferendum.sol";
 
 contract DeployAssetReferendum is DeployBase {
     function run() external returns (address) {
-        vm.startBroadcast(getAdminPK());
+        vm.startBroadcast(getDeployerPK());
         address impl = address(new AssetReferendum());
         address accessManager = computeCreate3Address("SALT_ACCESS_MANAGER");
         bytes memory init = abi.encodeCall(AssetReferendum.initialize, (accessManager));

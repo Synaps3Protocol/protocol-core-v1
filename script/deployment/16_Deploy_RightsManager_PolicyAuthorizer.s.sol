@@ -7,7 +7,7 @@ import { RightsPolicyAuthorizer } from "contracts/rights/RightsPolicyAuthorizer.
 contract DeployRightsPolicyAuthorizer is DeployBase {
     function run() external returns (address) {
 
-        vm.startBroadcast(getAdminPK());
+        vm.startBroadcast(getDeployerPK());
         address accessManager = computeCreate3Address("SALT_ACCESS_MANAGER");
         address policyAudit = computeCreate3Address("SALT_POLICY_AUDIT");
         address impl = address(new RightsPolicyAuthorizer(policyAudit));

@@ -7,7 +7,7 @@ import { AssetRegistry } from "contracts/assets/AssetRegistry.sol";
 contract DeployAssetRegistry is DeployBase {
     function run() external returns (address) {
 
-        vm.startBroadcast(getAdminPK());
+        vm.startBroadcast(getDeployerPK());
         address accessManager = computeCreate3Address("SALT_ACCESS_MANAGER");
         address assetReferendum = computeCreate3Address("SALT_ASSET_REFERENDUM");
         address impl = address(new AssetRegistry(assetReferendum));

@@ -38,6 +38,9 @@ contract AgreementManager is Initializable, UUPSUpgradeable, AccessControlledUpg
     /// @notice Maximum allowed number of parties per agreement.
     /// @dev Can be updated by admin to adapt system limits.
     uint256 private _maxParties;
+    /// @notice The incremental number of proofs generated
+    /// @dev After each proof nonce increments.
+    uint256 private _proofNonce;
     /// @dev Holds a bounded key expressing the agreement between the parts.
     mapping(uint256 => T.Agreement) private _agreementsByProof;
 
@@ -186,7 +189,8 @@ contract AgreementManager is Initializable, UUPSUpgradeable, AccessControlledUpg
     /// @dev Generates a unique proof for an agreement using keccak256 hashing.
     function _createAndStoreProof(T.Agreement memory agreement) private returns (uint256) {
         // yes, we can encode full struct as abi.encode with extra overhead..
-        bytes memory rawProof = abi.encode(agreement, block.number, address(this));
+        uint256 nonce = _proofNonce++; // each proof MUST be unique
+        bytes memory rawProof = abi.encode(agreement, blockhash(block.number - 1), address(this), nonce);
         uint256 proof = uint256(keccak256(rawProof));
         _agreementsByProof[proof] = agreement;
         return proof;
@@ -226,11 +230,12 @@ contract AgreementManager is Initializable, UUPSUpgradeable, AccessControlledUpg
     /// @param currency The address of the currency for which the fee is being calculated.
     /// @return The calculated fee amount based on the applicable fee scheme.
     function _calcFees(uint256 total, address target, address currency) private view returns (uint256) {
-        // !IMPORTANT if fees manager does not support the currency or the target, will revert..
         (uint256 fees, T.Scheme scheme) = TOLLGATE.getFees(target, currency);
+
         if (scheme == T.Scheme.BPS) return total.perOf(fees); // bps calc
         if (scheme == T.Scheme.NOMINAL) return total.perOf(fees.calcBps()); // nominal to bps
         if (total < fees) revert FlatFeeExceedsTotal(total, fees); // if flat fee
+        
         return fees; // ok flat fee is safe
     }
 }

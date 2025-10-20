@@ -42,10 +42,8 @@ contract AgreementSettlerTest is BaseTest {
         deployAgreementSettler();
         arbiter = new SettlerMockArbiter(agreementSettler);
 
-        vm.prank(governor);
+        vm.startPrank(governor);
         ITollgate(tollgate).setFees(T.Scheme.BPS, address(arbiter), 500, token);
-
-        vm.startPrank(admin);
         IERC20(token).approve(ledger, INITIAL_DEPOSIT);
         ILedgerVault(ledger).deposit(user, INITIAL_DEPOSIT, token);
         vm.stopPrank();

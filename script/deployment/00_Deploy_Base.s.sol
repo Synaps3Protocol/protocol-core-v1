@@ -15,7 +15,7 @@ abstract contract DeployBase is Script {
         return vm.envAddress("CREATE3_FACTORY");
     }
 
-    function getAdminPK() public view returns (uint256) {
+    function getDeployerPK() public view returns (uint256) {
         return vm.envUint("PRIVATE_KEY");
     }
 

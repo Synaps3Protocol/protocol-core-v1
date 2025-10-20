@@ -8,7 +8,7 @@ import { C } from "contracts/core/primitives/Constants.sol";
 
 contract DeployTreasury is DeployBase {
     function run() external returns (address) {
-        vm.startBroadcast(getAdminPK());
+        vm.startBroadcast(getDeployerPK());
         address impl = address(new Treasury());
         address accessManager = computeCreate3Address("SALT_ACCESS_MANAGER");
         bytes memory init = abi.encodeCall(Treasury.initialize, (accessManager));

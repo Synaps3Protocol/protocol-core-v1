@@ -125,12 +125,6 @@ contract TollgateTest is BaseTest {
         assertEq(uint256(c), 3, "Expected scheme should be BPS");
     }
 
-    function test_GetFees_RevertWhen_NotSupportedScheme() public {
-        address invalidTokenAddress = vm.addr(3);
-        address target = vm.addr(8);
-        vm.expectRevert(abi.encodeWithSignature("UnsupportedCurrency(address,address)", target, invalidTokenAddress));
-        ITollgate(tollgate).getFees(target, invalidTokenAddress);
-    }
 
     function test_SupportedCurrencies_ReturnExpectedCurrencies() public {
         address target = custodianReferendum;

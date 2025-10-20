@@ -7,7 +7,7 @@ import { RightsPolicyManager } from "contracts/rights/RightsPolicyManager.sol";
 contract DeployRightsPolicyManager is DeployBase {
     function run() external returns (address) {
 
-        vm.startBroadcast(getAdminPK());
+        vm.startBroadcast(getDeployerPK());
         address accessManager = computeCreate3Address("SALT_ACCESS_MANAGER");
         address agreementSettler = computeCreate3Address("SALT_AGREEMENT_SETTLER");
         address rightsAuthorizer = computeCreate3Address("SALT_RIGHT_POLICY_AUTHORIZER");

@@ -8,7 +8,7 @@ import { RightsPolicyAuthorizer } from "contracts/rights/RightsPolicyAuthorizer.
 /// @dev Mirrors the production deployment but allows injecting custom dependencies when needed.
 contract DeployRightsPolicyAuthorizer is DeployBase {
     function run(address policyAudit, address accessManager) external returns (address) {
-        vm.startBroadcast(getAdminPK());
+        vm.startBroadcast(getDeployerPK());
 
         address implementation = address(new RightsPolicyAuthorizer(policyAudit));
         bytes memory initData = abi.encodeCall(RightsPolicyAuthorizer.initialize, accessManager);

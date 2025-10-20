@@ -167,7 +167,7 @@ contract AgreementSettler is
 
         _setProofAsSettled(proof);
         // slither-disable-start unused-return
-        LEDGER_VAULT.claim(initiator, protocolTake, currency);
+        if (protocolTake > 0) LEDGER_VAULT.claim(initiator, protocolTake, currency);
         // part of the agreement locked amount is released to the account
         if (available > 0) LEDGER_VAULT.release(initiator, available, currency);
         // slither-disable-end unused-return
@@ -202,6 +202,7 @@ contract AgreementSettler is
         uint256 proof,
         address counterparty
     ) public onlyValidAgreement(proof) /**hookExec(counterParty) */ returns (T.Agreement memory) {
+        // Arbiter contracts encapsulate distribution logic, so the counterparty can be any address the arbiter authorizes.
         // retrieve the agreement to storage to inactivate it and return it
         T.Agreement memory agreement = AGREEMENT_MANAGER.getAgreement(proof);
         if (agreement.arbiter != msg.sender) revert UnauthorizedEscrowAgent();
@@ -219,6 +220,7 @@ contract AgreementSettler is
         // TODO: Implement a time window to enforce the validity period for agreement settlement.
         // Once the window expires, the agreement should be marked as invalid or revert,
         // then quit is only way to close the agreement.
+
         _setProofAsSettled(proof);
 
         // locked may include penalization
