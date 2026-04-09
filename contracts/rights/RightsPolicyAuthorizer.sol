@@ -11,7 +11,6 @@ import { ReentrancyGuardTransientUpgradeable } from "@openzeppelin/contracts-upg
 import { IRightsPolicyAuthorizer } from "@synaps3/core/interfaces/rights/IRightsPolicyAuthorizer.sol";
 import { IPolicyAuditorVerifiable } from "@synaps3/core/interfaces/policies/IPolicyAuditorVerifiable.sol";
 import { IPolicy } from "@synaps3/core/interfaces/policies/IPolicy.sol";
-import { ArrayOps } from "@synaps3/core/libraries/ArrayOps.sol";
 import { LoopOps } from "@synaps3/core/libraries/LoopOps.sol";
 
 /// @title RightsPolicyAuthorizer
@@ -26,7 +25,6 @@ contract RightsPolicyAuthorizer is
     IRightsPolicyAuthorizer
 {
     using LoopOps for uint256;
-    using ArrayOps for address[];
     using EnumerableSet for EnumerableSet.AddressSet;
 
     /// KIM: any initialization here is ephemeral and not included in bytecode..
@@ -97,7 +95,10 @@ contract RightsPolicyAuthorizer is
         // type safe low level call to policy, call policy initialization with provided data..
         (bool success, ) = policy.call(abi.encodeCall(IPolicy.setup, (msg.sender, data)));
         if (!success) revert InvalidPolicyInitialization("Error during policy initialization call");
-        _authorizedPolicies[msg.sender].add(policy);
+
+        bool authorized = _authorizedPolicies[msg.sender].add(policy);
+        if (!authorized) revert InvalidPolicyInitialization("Error during duplicated policy registration");
+
         emit RightsGranted(policy, msg.sender, data);
     }
 
@@ -147,7 +148,7 @@ contract RightsPolicyAuthorizer is
         //   it may contain uninitialized elements (`address(0)`) if some policies were invalid.
         // - The variable `j` represents the number of valid policies that passed the filtering process.
         // - To ensure that the returned array contains only these valid policies and no extra default values,
-        //   we call `slice(j)`, which creates a new array of exact length `j` and copies only
+        //   we slice, which creates a new array of exact length `j` and copies only
         //   the first `j` elements from `filtered`.
         // - This prevents returning an array with trailing `address(0)` values, ensuring data integrity
         //   and reducing unnecessary gas costs when the array is processed elsewhere.
@@ -167,6 +168,6 @@ contract RightsPolicyAuthorizer is
     ///      and that the policy has been audited.
     /// @param policy The address of the policy contract to verify.
     function _isValidPolicy(address policy) private view returns (bool) {
-        return (policy != address(0) && POLICY_AUDIT.isAudited(policy));
+        return (policy != address(0) && POLICY_AUDIT.isApproved(policy));
     }
 }

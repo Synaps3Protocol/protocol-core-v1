@@ -7,7 +7,7 @@ import { CREATE3Factory } from "script/create3/CREATE3Factory.sol";
 contract DeployCreate3Factory is DeployBase {
     function run() external returns (address factory) {
 
-        vm.startBroadcast(getAdminPK());
+        vm.startBroadcast(getDeployerPK());
         bytes32 salt = getSalt("SALT_CREATE3_FACTORY");
         bytes memory bytecode = type(CREATE3Factory).creationCode;
 

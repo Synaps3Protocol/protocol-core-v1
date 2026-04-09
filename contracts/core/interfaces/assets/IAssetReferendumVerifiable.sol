@@ -2,10 +2,10 @@
 // NatSpec format convention - https://docs.soliditylang.org/en/v0.5.10/natspec-format.html
 pragma solidity 0.8.26;
 
-/// @title IAssetVerifiable
+/// @title IAssetReferendumVerifiable
 /// @notice Interface for verifying the approval and active status of assets.
 /// @dev This interface is used to check whether an asset has been approved and whether it is currently active.
-interface IAssetVerifiable {
+interface IAssetReferendumVerifiable {
     /// @notice Checks if a given asset has been approved.
     /// @dev This function verifies if the asset has passed the necessary approval process.
     /// @param initiator The address that submitted the asset for approval.

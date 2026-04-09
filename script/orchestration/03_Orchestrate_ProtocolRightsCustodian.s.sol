@@ -6,11 +6,11 @@ import { IRightsAssetCustodian } from "contracts/core/interfaces/rights/IRightsA
 
 contract OrchestrateRightsCustodian is Script {
     function run() external {
-        uint256 admin = vm.envUint("PRIVATE_KEY");
+        uint256 governor = vm.envUint("PRIVATE_KEY");
         address rightsCustodian = vm.envAddress("RIGHT_ASSET_CUSTODIAN");
         address defaultCustodian = vm.envAddress("DEFAULT_CUSTODIAN_ADDRESS");
 
-        vm.startBroadcast(admin);
+        vm.startBroadcast(governor);
         // approve initial custodian
         IRightsAssetCustodian custodian = IRightsAssetCustodian(rightsCustodian);
         custodian.grantCustody(defaultCustodian); // assign my content custody to custodian

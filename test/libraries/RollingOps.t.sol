@@ -2,244 +2,130 @@
 pragma solidity 0.8.26;
 
 import "forge-std/Test.sol";
-import { RollingOps } from "contracts/core/libraries/RollingOps.sol";
-import { console } from "forge-std/console.sol";
 
-/// @title RollingOpsWrapper
-/// @notice A wrapper contract to test the RollingOps library using Foundry.
-contract RollingOpsWrapper {
+import { RollingOps } from "contracts/core/libraries/RollingOps.sol";
+
+contract RollingOpsHarness {
     using RollingOps for RollingOps.AddressArray;
 
-    RollingOps.AddressArray private rollingArray;
+    RollingOps.AddressArray internal set;
 
-    /// @notice Configures the max window size of the rolling array.
-    /// @param window The new max size of the array.
-    function configureWindow(uint256 window) external {
-        rollingArray.configure(window);
+    function configure(uint256 window) external {
+        set.configure(window);
     }
 
-    /// @notice Returns the maximum window size.
-    function getWindow() external view returns (uint256) {
-        return rollingArray.window();
+    function roll(address value) external {
+        set.roll(value);
     }
 
-    /// @notice Adds a new address to the rolling array.
-    /// @param value The address to be added.
-    function add(address value) external {
-        rollingArray.roll(value);
+    function contains(address value) external view returns (bool) {
+        return set.contains(value);
     }
 
-    /// @notice Checks if an address exists in the rolling array.
-    /// @param value The address to check.
-    /// @return exists True if the address is in the rolling array, false otherwise.
-    function exists(address value) external view returns (bool) {
-        return rollingArray.contains(value);
+    function length() external view returns (uint256) {
+        return set.length();
     }
 
-    /// @notice Gets the length of the rolling array.
-    /// @return The number of stored addresses.
-    function getLength() external view returns (uint256) {
-        return rollingArray.length();
+    function window() external view returns (uint256) {
+        return set.window();
     }
 
-    /// @notice Gets an address at a specific index.
-    /// @param index The index (1-based) to retrieve.
-    /// @return The address stored at the given index.
-    function getAt(uint256 index) external view returns (address) {
-        return rollingArray.at(index);
+    function at(uint256 index) external view returns (address) {
+        return set.at(index);
     }
 
-    /// @notice Retrieves all addresses currently stored in the rolling array.
-    /// @return An array of all addresses in the rolling array.
-    function getAll() external view returns (address[] memory) {
-        return rollingArray.values();
+    function values() external view returns (address[] memory) {
+        return set.values();
     }
 }
 
 contract RollingOpsTest is Test {
-    RollingOpsWrapper private rolling;
+    RollingOpsHarness harness;
 
     function setUp() public {
-        rolling = new RollingOpsWrapper();
+        harness = new RollingOpsHarness();
     }
 
-    function test_Window_ReturnDefaultWindowSize() public view {
-        assertEq(rolling.getWindow(), 3, "Default window size should be 3");
+    function test_DefaultWindow_IsThree() public {
+        assertEq(harness.window(), 3, "Default window mismatch");
+        assertEq(harness.length(), 0, "Initial length should be zero");
     }
 
-    function test_Configure_SetValidWindowSize() public {
-        rolling.configureWindow(5);
-        assertEq(rolling.getWindow(), 5, "Expected window size should be 5");
+    function test_Configure_SetsCustomWindow() public {
+        harness.configure(5);
+        assertEq(harness.window(), 5, "Window should update to configured value");
     }
 
-    function test_Configure_MaximumWindowSize() public {
-        uint256 maxWindow = type(uint256).max;
-        rolling.configureWindow(maxWindow);
-        assertEq(rolling.getWindow(), maxWindow, "Expected window size should be max uint256");
+    function test_Configure_RevertWhen_ZeroWindow() public {
+        vm.expectRevert(RollingOps.InvalidZeroWindowSize.selector);
+        harness.configure(0);
     }
 
-    function test_RevertIf_SetZeroWindowSize() public {
-        vm.expectRevert();
-        rolling.configureWindow(0);
+    function test_Roll_AppendsUntilWindow() public {
+        address a = vm.addr(1);
+        address b = vm.addr(2);
+        harness.roll(a);
+        harness.roll(b);
+        assertEq(harness.length(), 2, "Length mismatch after roll");
+        assertEq(harness.at(0), a, "First element mismatch");
+        assertEq(harness.at(1), b, "Second element mismatch");
     }
 
-    function test_Add_NotRollingElements() public {
-        address addr1 = vm.addr(1);
-        address addr2 = vm.addr(2);
-        address addr3 = vm.addr(3);
-        // using default window
-        rolling.add(addr1);
-        rolling.add(addr2);
-        rolling.add(addr3);
+    function test_Roll_RollsOutOldestWhenWindowExceeded() public {
+        harness.configure(3);
+        address[4] memory addrs = [vm.addr(1), vm.addr(2), vm.addr(3), vm.addr(4)];
+        for (uint256 i = 0; i < addrs.length; i++) {
+            harness.roll(addrs[i]);
+        }
 
-        address[] memory got = rolling.getAll();
-        address[] memory expected = new address[](3);
-        expected[0] = addr1;
-        expected[1] = addr2;
-        expected[2] = addr3;
-
-        assertEq(got, expected, "Expected addresses should match");
+        assertEq(harness.length(), 3, "Length should not exceed window");
+        assertEq(harness.at(0), addrs[1], "Oldest element not rolled out");
+        assertEq(harness.at(1), addrs[2], "Order mismatch after roll");
+        assertEq(harness.at(2), addrs[3], "Newest element missing");
     }
 
-    function test_Add_RollingOldestElement() public {
-        address addr1 = vm.addr(1);
-        address addr2 = vm.addr(2);
-        address addr3 = vm.addr(3);
-        address addr4 = vm.addr(4);
-
-        // using default window
-        rolling.add(addr1);
-        rolling.add(addr2);
-        rolling.add(addr3);
-
-        // before = [addr1, addr2, addr3]
-        // after = [ addr2, addr3, addr4]
-        rolling.add(addr4);
-
-        address[] memory got = rolling.getAll();
-        address[] memory expected = new address[](3);
-        expected[0] = addr2;
-        expected[1] = addr3;
-        expected[2] = addr4;
-
-        assertEq(got, expected, "Expected addresses should match after rolling");
+    function test_Contains_ReturnsFalseWhenMissing() public {
+        assertFalse(harness.contains(vm.addr(99)), "Contains should be false for missing value");
     }
 
-    function test_Add_SizeOne() public {
-        rolling.configureWindow(1);
-        address addr1 = vm.addr(1);
-        address addr2 = vm.addr(2);
-
-        rolling.add(addr1);
-        assertEq(rolling.getAt(0), addr1, "First address should be addr1");
-
-        rolling.add(addr2);
-        assertEq(rolling.getAt(0), addr2, "Last address should be addr2 after rolling");
+    function test_Contains_ReturnsTrueAfterRoll() public {
+        address value = vm.addr(42);
+        harness.roll(value);
+        assertTrue(harness.contains(value), "Contains should be true after roll");
     }
 
-    function test_Add_MultipleRollovers() public {
-        // using window = 5
-        rolling.configureWindow(5);
-
-        address addr1 = vm.addr(1);
-        address addr2 = vm.addr(2);
-        address addr3 = vm.addr(3);
-        address addr4 = vm.addr(4);
-        address addr5 = vm.addr(5);
-        address addr6 = vm.addr(6);
-        address addr7 = vm.addr(7);
-
-        rolling.add(addr1); // out
-        rolling.add(addr2); // out
-        rolling.add(addr3);
-        rolling.add(addr4);
-        rolling.add(addr5);
-        rolling.add(addr6);
-        rolling.add(addr7);
-
-        address[] memory got = rolling.getAll();
-        address[] memory expected = new address[](5);
-        expected[0] = addr3;
-        expected[1] = addr4;
-        expected[2] = addr5;
-        expected[3] = addr6;
-        expected[4] = addr7;
-
-        assertEq(got, expected, "Expected addresses should match after multiple rollovers");
+    function test_At_RevertWhen_IndexOutOfBounds() public {
+        vm.expectRevert(RollingOps.IndexOutOfBounds.selector);
+        harness.at(0);
     }
 
-    function test_Exists_ReturnTrueIfExists() public {
-        address addr1 = vm.addr(1);
-        address addr2 = vm.addr(2);
-        address addr3 = vm.addr(3);
-        address addr4 = vm.addr(4);
-        address addr5 = vm.addr(5);
-        address addr6 = vm.addr(6);
+    function test_Values_ReturnsAllInOrder() public {
+        harness.configure(3);
+        address[3] memory addrs = [vm.addr(1), vm.addr(2), vm.addr(3)];
+        for (uint256 i = 0; i < addrs.length; i++) {
+            harness.roll(addrs[i]);
+        }
 
-        // using default window
-        rolling.add(addr1);
-        rolling.add(addr2);
-        rolling.add(addr3);
-        rolling.add(addr4);
-        rolling.add(addr5);
-        rolling.add(addr6);
-
-        // rolled out should return false
-        assertFalse(rolling.exists(addr1), "Address should not exist after rolling out");
-        assertFalse(rolling.exists(addr2), "Address should not exist after rolling out");
-        assertFalse(rolling.exists(addr3), "Address should not exist after rolling out");
-        assertTrue(rolling.exists(addr4), "Address should not exist after rolling out");
-        assertTrue(rolling.exists(addr5), "Address should not exist after rolling out");
-        assertTrue(rolling.exists(addr6), "Address should not exist after rolling out");
+        address[] memory vals = harness.values();
+        assertEq(vals.length, 3, "Values length mismatch");
+        for (uint256 i = 0; i < vals.length; i++) {
+            assertEq(vals[i], addrs[i], "Values order mismatch");
+        }
     }
 
-    function test_Length_ReturnValidLen() public {
-        address addr1 = vm.addr(1);
-        address addr2 = vm.addr(2);
+    function test_Integration_ConfiguredWindowFlow() public {
+        harness.configure(2);
+        address a = vm.addr(1);
+        address b = vm.addr(2);
+        address c = vm.addr(3);
 
-        rolling.add(addr1);
-        rolling.add(addr2);
-        assertEq(rolling.getLength(), 2, "Expected length should be 2");
+        harness.roll(a);
+        harness.roll(b);
+        harness.roll(c);
 
-        address addr3 = vm.addr(3);
-        address addr4 = vm.addr(4);
-        address addr5 = vm.addr(5);
-        rolling.add(addr3);
-        rolling.add(addr4);
-        rolling.add(addr5);
-        // do not grow; default window is 3
-        // must keep the same window size
-        assertEq(rolling.getLength(), 3, "Expected length should be 3 after rolling");
-    }
-
-    function test_At_ReturnCorrespondingValue() public {
-        address addr1 = vm.addr(1);
-        address addr2 = vm.addr(2);
-
-        rolling.add(addr1);
-        rolling.add(addr2);
-
-        assertEq(rolling.getAt(0), addr1, "First address should be addr1");
-        assertEq(rolling.getAt(1), addr2, "Second address should be addr2");
-    }
-
-    function test_At_ReturnLastElement() public {
-        rolling.configureWindow(3);
-        address addr1 = vm.addr(1);
-        address addr2 = vm.addr(2);
-        address addr3 = vm.addr(3);
-        rolling.add(addr1);
-        rolling.add(addr2);
-        rolling.add(addr3);
-
-        assertEq(rolling.getAt(2), addr3, "Last address should be addr3");
-    }
-
-    function test_At_RevertIf_InvalidIndex() public {
-        address addr1 = vm.addr(1);
-        rolling.add(addr1);
-        // only index 0 existing
-        vm.expectRevert();
-        rolling.getAt(1);
+        assertEq(harness.length(), 2, "Length should clamp to window size");
+        assertEq(harness.at(0), b, "First element should be second rolled");
+        assertEq(harness.at(1), c, "Second element should be latest rolled");
+        assertFalse(harness.contains(a), "Rolled out element should not be contained");
     }
 }

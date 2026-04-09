@@ -9,3 +9,10 @@ function getOpsPermissions() pure returns (bytes4[] memory) {
     vaultAllowed[2] = LedgerVault.claim.selector;
     return vaultAllowed;
 }
+
+function getGovPermissions() pure returns (bytes4[] memory) {
+    bytes4[] memory vaultAllowed = new bytes4[](2);
+    vaultAllowed[0] = LedgerVault.allowCurrency.selector;
+    vaultAllowed[1] = LedgerVault.blockCurrency.selector;
+    return vaultAllowed;
+}

@@ -1,10 +1,12 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity 0.8.26;
 
+import "forge-std/Test.sol";
 import { BaseTest } from "test/BaseTest.t.sol";
 import { Tollgate } from "contracts/economics/Tollgate.sol";
 import { ITollgate } from "contracts/core/interfaces/economics/ITollgate.sol";
 import { T } from "contracts/core/primitives/Types.sol";
+import { IAccessManaged } from "@openzeppelin/contracts/access/manager/IAccessManaged.sol";
 
 contract TargetA {}
 
@@ -75,6 +77,19 @@ contract TollgateTest is BaseTest {
         ITollgate(tollgate).setFees(T.Scheme.NOMINAL, target, invalidFees, token);
     }
 
+    function test_SetFees_RevertWhen_UnauthorizedCaller() public {
+        address target = address(new TargetA());
+        vm.expectRevert(abi.encodeWithSelector(IAccessManaged.AccessManagedUnauthorized.selector, user));
+        vm.prank(user);
+        ITollgate(tollgate).setFees(T.Scheme.FLAT, target, 1, token);
+    }
+
+    function test_SetFees_RevertWhen_TargetZero() public {
+        vm.prank(governor);
+        vm.expectRevert(abi.encodeWithSignature("InvalidTargetScheme(address)", address(0)));
+        ITollgate(tollgate).setFees(T.Scheme.FLAT, address(0), 1, token);
+    }
+
     function test_SetFees_RevertIf_NotSupportedSchemeByTarget() public {
         vm.startPrank(governor);
         // expected revert if not valid allowance
@@ -110,12 +125,6 @@ contract TollgateTest is BaseTest {
         assertEq(uint256(c), 3, "Expected scheme should be BPS");
     }
 
-    function test_GetFees_RevertWhen_NotSupportedScheme() public {
-        address invalidTokenAddress = vm.addr(3);
-        address target = vm.addr(8);
-        vm.expectRevert(abi.encodeWithSignature("UnsupportedCurrency(address,address)", target, invalidTokenAddress));
-        ITollgate(tollgate).getFees(target, invalidTokenAddress);
-    }
 
     function test_SupportedCurrencies_ReturnExpectedCurrencies() public {
         address target = custodianReferendum;

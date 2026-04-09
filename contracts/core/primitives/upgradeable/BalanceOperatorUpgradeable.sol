@@ -4,7 +4,6 @@ pragma solidity 0.8.26;
 
 import { Initializable } from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 // solhint-disable-next-line max-line-length
-import { ReentrancyGuardTransientUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardTransientUpgradeable.sol";
 import { LedgerUpgradeable } from "@synaps3/core/primitives/upgradeable/LedgerUpgradeable.sol";
 import { IBalanceOperator } from "@synaps3/core/interfaces/base/IBalanceOperator.sol";
 import { FinancialOps } from "@synaps3/core/libraries/FinancialOps.sol";
@@ -13,12 +12,7 @@ import { FinancialOps } from "@synaps3/core/libraries/FinancialOps.sol";
 /// @dev Abstract contract for managing deposits and withdrawals with ledger tracking capabilities.
 ///      Provides core functionalities to handle funds in an upgradeable system.
 ///      This contract integrates with the ledger system to record balances and transactions.
-abstract contract BalanceOperatorUpgradeable is
-    Initializable,
-    LedgerUpgradeable,
-    ReentrancyGuardTransientUpgradeable,
-    IBalanceOperator
-{
+abstract contract BalanceOperatorUpgradeable is Initializable, LedgerUpgradeable, IBalanceOperator {
     using FinancialOps for address;
 
     /// @custom:storage-location erc7201:balanceoperatorupgradeable
@@ -36,7 +30,6 @@ abstract contract BalanceOperatorUpgradeable is
     /// This is the method to initialize this contract and any other extended contracts.
     function __BalanceOperator_init() internal onlyInitializing {
         __Ledger_init();
-        __ReentrancyGuardTransient_init();
     }
 
     /// @dev Function to initialize the contract without chaining, typically used in child contracts.
@@ -54,11 +47,11 @@ abstract contract BalanceOperatorUpgradeable is
     /// @param recipient The address of the account to credit with the deposit.
     /// @param amount The amount of currency to deposit.
     /// @param currency The address of the ERC20 token to deposit.
-    function deposit(
+    function _deposit(
         address recipient,
         uint256 amount,
         address currency
-    ) public virtual onlyValidOperation(recipient, amount) returns (uint256) {
+    ) internal onlyValidOperation(recipient, amount) returns (uint256) {
         uint256 confirmed = msg.sender.safeDeposit(amount, currency);
         _sumLedgerEntry(recipient, confirmed, currency);
         emit FundsDeposited(recipient, msg.sender, confirmed, currency);
@@ -69,11 +62,11 @@ abstract contract BalanceOperatorUpgradeable is
     /// @param recipient The address that will receive the withdrawn tokens.
     /// @param amount The amount of tokens to withdraw.
     /// @param currency The currency to associate fees with. Use address(0) for the native coin.
-    function withdraw(
+    function _withdraw(
         address recipient,
         uint256 amount,
         address currency
-    ) public virtual onlyValidOperation(recipient, amount) nonReentrant returns (uint256) {
+    ) internal onlyValidOperation(recipient, amount) returns (uint256) {
         if (getLedgerBalance(msg.sender, currency) < amount) revert NoFundsToWithdraw();
         _subLedgerEntry(msg.sender, amount, currency);
         recipient.transfer(amount, currency); // transfer fund to recipient
@@ -85,11 +78,11 @@ abstract contract BalanceOperatorUpgradeable is
     /// @param recipient The address of the account to credit with the transfer.
     /// @param amount The amount of tokens to transfer.
     /// @param currency The address of the currency to transfer. Use `address(0)` for the native coin.
-    function transfer(
+    function _transfer(
         address recipient,
         uint256 amount,
         address currency
-    ) public virtual onlyValidOperation(recipient, amount) returns (uint256) {
+    ) internal onlyValidOperation(recipient, amount) returns (uint256) {
         if (msg.sender == recipient) revert InvalidOperationParameters();
         if (getLedgerBalance(msg.sender, currency) < amount) revert NoFundsToTransfer();
 

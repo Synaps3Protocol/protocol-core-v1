@@ -24,10 +24,10 @@ contract Tollgate is Initializable, UUPSUpgradeable, AccessControlledUpgradeable
     /// @dev Tracks registered currencies for specific targets.
     /// Uses EnumerableSet for efficient storage and querying of currency addresses.
     mapping(address => EnumerableSet.AddressSet) private _registeredCurrencies;
-    /// @dev Stores fees associated with specific target and currencies..
-    mapping(bytes32 => uint256) private _currencyFees;
-    /// @dev Stores the target supported schema.
-    mapping(address => T.Scheme) private _targetScheme;
+    /// @dev Stores fees associated with specific target and currencies.
+    mapping(address => mapping(address => uint256)) private _currencyFees;
+    /// @dev Stores the target supported scheme per currency.
+    mapping(address => mapping(address => T.Scheme)) private _targetScheme;
 
     /// @notice Emitted when fees are set or updated.
     /// @param target The address or context where the fee applies.
@@ -120,14 +120,8 @@ contract Tollgate is Initializable, UUPSUpgradeable, AccessControlledUpgradeable
     /// @param currency The address of the currency.
     /// @return The fee value.
     function getFees(address target, address currency) external view returns (uint256, T.Scheme) {
-        // if scheme is supported return the fee and scheme
-        if (!_isSchemeSupported(target, currency)) {
-            revert UnsupportedCurrency(target, currency);
-        }
-
-        T.Scheme scheme = _targetScheme[target];
-        bytes32 composedKey = _computeComposedKey(target, currency, scheme);
-        uint256 fee = _currencyFees[composedKey];
+        T.Scheme scheme = _targetScheme[target][currency];
+        uint256 fee = _currencyFees[target][currency];
         return (fee, scheme);
     }
 
@@ -142,18 +136,10 @@ contract Tollgate is Initializable, UUPSUpgradeable, AccessControlledUpgradeable
         uint256 fee,
         address currency
     ) external onlySupportedScheme(scheme, target) onlyValidFeeRepresentation(scheme, fee) restricted {
-        // Compute a unique composed key based on the target, currency, and scheme.
-        // The composed key uniquely identifies a deterministic combination of these parameters
-        // in a flat storage mapping. This avoids nested mappings, improving gas efficiency
-        // and simplifying data access through deterministic association.
-        // Example: If the target is the policy manager contract, the currency is MMC (ERC20 token),
-        // and the scheme is NOMINAL, setting a fee of 10% means:
-        // "In the policy manager contract, for MMC, using a nominal scheme, the fee is 10%."
+        // Each (target, currency) pair maintains its own scheme and fee entry.
         if (target == address(0)) revert InvalidTargetScheme(target);
-        bytes32 composedKey = _computeComposedKey(target, currency, scheme);
-
-        _targetScheme[target] = scheme; // eg: rights manager => FLAT
-        _currencyFees[composedKey] = fee; // target + currency + scheme = fee
+        _targetScheme[target][currency] = scheme; // eg: rights manager => FLAT per currency
+        _currencyFees[target][currency] = fee; // store fee per target/currency
         _registeredCurrencies[target].add(currency);
         emit FeesSet(target, currency, scheme, fee);
     }
@@ -167,17 +153,7 @@ contract Tollgate is Initializable, UUPSUpgradeable, AccessControlledUpgradeable
     /// @param currency The address of the currency to verify.
     /// @return `true` if the currency is supported, otherwise `false`.
     function _isSchemeSupported(address target, address currency) private view returns (bool) {
-        T.Scheme scheme = _targetScheme[target];
-        bytes32 composedKey = _computeComposedKey(target, currency, scheme);
-        return _registeredCurrencies[target].contains(currency) && _currencyFees[composedKey] > 0;
+        return _registeredCurrencies[target].contains(currency);
     }
 
-    /// @notice Computes a unique key for a currency and scheme combination.
-    /// @param target The target context.
-    /// @param currency The currency associated with the fee.
-    /// @param scheme The fee scheme.
-    /// @return The computed key as a `bytes32` hash.
-    function _computeComposedKey(address target, address currency, T.Scheme scheme) private pure returns (bytes32) {
-        return keccak256(abi.encodePacked(target, currency, scheme));
-    }
 }

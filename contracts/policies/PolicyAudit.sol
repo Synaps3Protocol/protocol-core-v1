@@ -67,7 +67,7 @@ contract PolicyAudit is Initializable, UUPSUpgradeable, AccessControlledUpgradea
     /// @notice Submits an audit request for the given policy.
     /// This registers the policy for audit within the system.
     /// @param policy The address of the policy to be submitted for auditing.
-    function submit(address policy) external onlyValidPolicy(policy) {
+    function submit(address policy) external whenNotPaused onlyValidPolicy(policy) {
         _register(uint160(policy));
         emit PolicySubmitted(policy, msg.sender);
     }
@@ -75,7 +75,7 @@ contract PolicyAudit is Initializable, UUPSUpgradeable, AccessControlledUpgradea
     /// @notice Approves the audit of a given policy by a specified auditor.
     /// @param policy The address of the policy to be audited.
     /// @dev This function emits the PolicyApproved event upon successful audit approval.
-    function approve(address policy) external restricted {
+    function approve(address policy) external whenNotPaused onlyAdmin {
         _approve(uint160(policy));
         emit PolicyApproved(policy, msg.sender);
     }
@@ -83,15 +83,27 @@ contract PolicyAudit is Initializable, UUPSUpgradeable, AccessControlledUpgradea
     /// @notice Revokes the audit of a given policy by a specified auditor.
     /// @param policy The address of the policy whose audit is to be revoked.
     /// @dev This function emits the PolicyRevoked event upon successful audit revocation.
-    function reject(address policy) external restricted {
+    function reject(address policy) external whenNotPaused onlyAdmin {
         _revoke(uint160(policy));
         emit PolicyRevoked(policy, msg.sender);
     }
 
-    /// @notice Checks if a specific policy contract has been audited.
+    /// @notice Checks if a policy has been approved and remains active.
     /// @param policy The address of the policy contract to verify.
-    function isAudited(address policy) external view returns (bool) {
+    function isApproved(address policy) external view returns (bool) {
         return _status(uint160(policy)) == T.Status.Active;
+    }
+
+    /// @notice Checks if a policy has been rejected or blocked by the auditor.
+    /// @param policy The address of the policy contract to verify.
+    function isRejected(address policy) external view returns (bool) {
+        return _status(uint160(policy)) == T.Status.Blocked;
+    }
+
+    /// @notice Checks if a policy is awaiting approval.
+    /// @param policy The address of the policy contract to verify.
+    function isPending(address policy) external view returns (bool) {
+        return _status(uint160(policy)) == T.Status.Waiting;
     }
 
     /// @dev Authorizes the upgrade of the contract.

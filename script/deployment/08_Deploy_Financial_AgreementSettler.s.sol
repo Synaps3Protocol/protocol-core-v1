@@ -7,7 +7,7 @@ import { AgreementSettler } from "contracts/financial/AgreementSettler.sol";
 contract DeployAgreementSettler is DeployBase {
     function run() external returns (address) {
 
-        vm.startBroadcast(getAdminPK());
+        vm.startBroadcast(getDeployerPK());
         address treasury = computeCreate3Address("SALT_TREASURY");
         address vault = computeCreate3Address("SALT_LEDGER_VAULT");
         address agreementManager = computeCreate3Address("SALT_AGREEMENT_MANAGER");

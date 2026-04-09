@@ -2,10 +2,10 @@
 // NatSpec format convention - https://docs.soliditylang.org/en/v0.5.10/natspec-format.html
 pragma solidity 0.8.26;
 
-/// @title IAssetRegistrable Interface
+/// @title IAssetReferendumRegistrable Interface
 /// @notice Defines the essential functions for managing asset registration and governance through a referendum process.
 /// @dev This interface mirrors the FSM behavior from `IQuorum`, but scoped to asset governance.
-interface IAssetRegistrable {
+interface IAssetReferendumRegistrable {
     /// @notice Submits a new asset proposition for a referendum.
     /// @dev This function should allow entities to propose an asset for approval.
     /// @param assetId The unique identifier of the asset being submitted.

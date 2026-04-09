@@ -2,10 +2,10 @@
 // NatSpec format convention - https://docs.soliditylang.org/en/v0.5.10/natspec-format.html
 pragma solidity 0.8.26;
 
-/// @title IAssetRevokable Interface
+/// @title IAssetReferendumRevokable Interface
 /// @notice Defines the functions for invalidating or withdrawing assets from the system.
 /// @dev This interface focuses on asset rejection and revocation, used in the governance lifecycle.
-interface IAssetRevokable {
+interface IAssetReferendumRevokable {
     /// @notice Rejects an asset proposition in the referendum.
     /// @dev If rejected, the asset cannot be used in the system unless resubmitted.
     /// @param assetId The unique identifier of the asset to be rejected.

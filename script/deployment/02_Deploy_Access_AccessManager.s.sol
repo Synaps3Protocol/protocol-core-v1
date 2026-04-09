@@ -7,7 +7,7 @@ import { AccessManager } from "contracts/access/AccessManager.sol";
 
 contract DeployAccessManager is DeployBase {
     function run() external returns (address) {
-        uint256 privateKey = getAdminPK();
+        uint256 privateKey = getDeployerPK();
         address publicKey = vm.addr(privateKey);
 
         vm.startBroadcast(privateKey);

@@ -3,6 +3,7 @@
 pragma solidity 0.8.26;
 
 import { Initializable } from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
+import { PausableUpgradeable } from "@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol";
 // solhint-disable-next-line max-line-length
 import { AccessManagedUpgradeable } from "@openzeppelin/contracts-upgradeable/access/manager/AccessManagedUpgradeable.sol";
 import { IAccessManager } from "@synaps3/core/interfaces/access/IAccessManager.sol";
@@ -11,7 +12,7 @@ import { C } from "@synaps3/core/primitives/Constants.sol";
 /// @title AccessControlledUpgradeable
 /// @dev Abstract contract that provides role-based access control functionality to upgradeable contracts.
 /// This contract requires an AccessManager to manage roles.
-abstract contract AccessControlledUpgradeable is Initializable, AccessManagedUpgradeable {
+abstract contract AccessControlledUpgradeable is Initializable, AccessManagedUpgradeable, PausableUpgradeable {
     /// @custom:storage-location erc7201:accesscontrolledupgradeable
     struct AccessControlStorage {
         address _accessManager;
@@ -36,7 +37,21 @@ abstract contract AccessControlledUpgradeable is Initializable, AccessManagedUpg
         _;
     }
 
-    // @dev Initializes the contract and ensures it is upgradeable.
+    /// @notice Pauses the contract, disabling state-changing operations.
+    /// @dev Can only be called by an account with the operator/admin role (`restricted`).
+    ///      Once paused, functions guarded by `whenNotPaused` will revert until `unpause` is called.
+    function pause() external restricted {
+        _pause();
+    }
+
+    /// @notice Unpauses the contract, re-enabling state-changing operations.
+    /// @dev Can only be called by an account with the operator/admin role (`restricted`).
+    ///      Once unpaused, functions guarded by `whenNotPaused` will operate normally again.
+    function unpause() external restricted {
+        _unpause();
+    }
+
+    /// @dev Initializes the contract and ensures it is upgradeable.
     /// Even if the initialization is harmless, this ensures the contract follows upgradeable contract patterns.
     /// This is the method to initialize this contract and any other extended contracts.
     /// @param accessManager The address of the AccessManager contract.

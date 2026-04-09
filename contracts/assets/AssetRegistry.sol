@@ -10,30 +10,30 @@ import { ERC721Upgradeable } from "@openzeppelin/contracts-upgradeable/token/ERC
 import { ERC721EnumerableUpgradeable } from "@openzeppelin/contracts-upgradeable/token/ERC721/extensions/ERC721EnumerableUpgradeable.sol";
 import { ERC721StatefulUpgradeable } from "@synaps3/core/primitives/upgradeable/ERC721StatefulUpgradeable.sol";
 import { AccessControlledUpgradeable } from "@synaps3/core/primitives/upgradeable/AccessControlledUpgradeable.sol";
-import { IAssetVerifiable } from "@synaps3/core/interfaces/assets/IAssetVerifiable.sol";
-import { IAssetOwnership } from "@synaps3/core/interfaces/assets/IAssetOwnership.sol";
+import { IAssetReferendumVerifiable } from "@synaps3/core/interfaces/assets/IAssetReferendumVerifiable.sol";
+import { IAssetRegistry } from "@synaps3/core/interfaces/assets/IAssetRegistry.sol";
 
 // TODO: Evaluate ERC-404 for fractionalization support
 // TODO: Evaluate ERC-2981 for royalty management
 // TODO: Evaluate ERC-4804 for URL-based on-chain asset references
 
-/// @title AssetOwnership
+/// @title AssetRegistry
 /// @notice This contract manages ownership and lifecycle of digital assets using ERC721.
 /// @dev Implements UUPS upgradeability, access control, and stateful asset management.
-contract AssetOwnership is
+contract AssetRegistry is
     Initializable,
     UUPSUpgradeable,
     ERC721Upgradeable,
     AccessControlledUpgradeable,
     ERC721EnumerableUpgradeable,
     ERC721StatefulUpgradeable,
-    IAssetOwnership
+    IAssetRegistry
 {
     /// @custom:oz-upgrades-unsafe-allow state-variable-immutable
     /// @notice Reference to the asset verification contract for content approval.
     /// Our immutables behave as constants after deployment
     /// slither-disable-next-line naming-convention
-    IAssetVerifiable public immutable ASSET_REFERENDUM;
+    IAssetReferendumVerifiable public immutable ASSET_REFERENDUM;
 
     /// @dev Emitted when a new asset is registered on the platform.
     /// @param owner The address of the creator or owner of the registered asset.
@@ -89,7 +89,7 @@ contract AssetOwnership is
         /// https://forum.openzeppelin.com/t/what-does-disableinitializers-function-mean/28730/5
         _disableInitializers();
         // we need to verify that asset has passed the community approval.
-        ASSET_REFERENDUM = IAssetVerifiable(assetReferendum);
+        ASSET_REFERENDUM = IAssetReferendumVerifiable(assetReferendum);
     }
 
     /// @notice Initializes the upgradeable contract.
@@ -111,12 +111,11 @@ contract AssetOwnership is
         return super.supportsInterface(interfaceId);
     }
 
-    // TODO: build getURI => from custodian /erc721-metadata
     // TODO: Update asset info control version restricted/approved by governance
     // TODO: Transfer Ownership Fee: Introducing a fee for transferring
     // ownership discourages frequent or unnecessary transfers,
     // adding an economic cost to any potential abuse of the system. Like bypassing content
-    //  verification by governance using a verified account.
+    // verification by governance using a verified account.
 
     // TODO: approved content get an incentive: a cooling mechanism is needed eg:
     // log decay, max registered asset rate, etc
@@ -125,7 +124,7 @@ contract AssetOwnership is
     /// @dev Requires approval before an asset can be registered.
     /// @param to The address that will own the minted NFT.
     /// @param assetId The unique identifier for the asset, serving as the NFT ID.
-    function register(address to, uint256 assetId) external onlyApprovedAsset(to, assetId) {
+    function register(address to, uint256 assetId) external whenNotPaused onlyApprovedAsset(to, assetId) {
         _mint(to, assetId);
         _enableAsset(assetId);
         emit RegisteredAsset(to, assetId);
@@ -135,15 +134,17 @@ contract AssetOwnership is
     /// @dev This action is irreversible and restricted to governance control.
     /// @param assetId The unique identifier of the asset to be revoked.
     function revoke(uint256 assetId) external restricted {
+        address previousOwner = ownerOf(assetId);
+
         _burn(assetId);
         _disableAsset(assetId);
-        emit RevokedAsset(ownerOf(assetId), assetId);
+        emit RevokedAsset(previousOwner, assetId);
     }
 
     /// @notice Transfers an asset to a new owner.
     /// @param to The address of the new owner.
     /// @param assetId The unique identifier of the asset being transferred.
-    function transfer(address to, uint256 assetId) external {
+    function transfer(address to, uint256 assetId) external onlyOwner(assetId) {
         _transfer(msg.sender, to, assetId);
         emit TransferredAsset(msg.sender, to, assetId);
     }

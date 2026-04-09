@@ -16,7 +16,6 @@ import { IRightsPolicyManager } from "@synaps3/core/interfaces/rights/IRightsPol
 // solhint-disable-next-line max-line-length
 import { IRightsPolicyAuthorizerVerifiable } from "@synaps3/core/interfaces/rights/IRightsPolicyAuthorizerVerifiable.sol";
 import { LoopOps } from "@synaps3/core/libraries/LoopOps.sol";
-import { ArrayOps } from "@synaps3/core/libraries/ArrayOps.sol";
 import { T } from "@synaps3/core/primitives/Types.sol";
 
 /// @title RightsPolicyManager
@@ -32,7 +31,6 @@ contract RightsPolicyManager is
     IRightsPolicyManager
 {
     using EnumerableSet for EnumerableSet.AddressSet;
-    using ArrayOps for address[];
     using LoopOps for uint256;
 
     /// Our immutables behave as constants after deployment
@@ -110,6 +108,10 @@ contract RightsPolicyManager is
         // 1- retrieves the agreement and marks it as settled..
         T.Agreement memory agreement = AGREEMENT_SETTLER.settleAgreement(proof, holder);
         bytes memory callData = abi.encodeCall(IPolicy.enforce, (holder, agreement));
+        if (agreement.parties.length == 0) {
+            revert EnforcementFailed("No parties in agreement: at least one party is required.");
+        }
+
         /// Type-safe low-level call to policy. The policy is registered to the parties.
         /// The policy address is already validated during policy audit and authorization.
         /// During `onlyAuthorizedPolicy`, the policy is verified about safety.
@@ -143,7 +145,7 @@ contract RightsPolicyManager is
     /// @notice Retrieves the list of active policies matching the criteria for an account.
     /// @dev This function filters out policies that are not active, ensuring the returned array
     ///      contains only valid policies. It first creates a temporary array of the same size as `policies`,
-    ///      then filters and resizes it to the exact number of valid policies using `slice()`.
+    ///      then filters and resizes it to the exact number of valid policies using `slicing`.
     /// @param account Address of the account to evaluate.
     /// @param criteria Encoded data containing parameters for access verification. eg: assetId, holder, groups, etc
     function getActivePolicies(address account, bytes memory criteria) external view returns (address[] memory) {
@@ -167,7 +169,7 @@ contract RightsPolicyManager is
         //   it may contain uninitialized elements (`address(0)`) if some policies were invalid.
         // - The variable `j` represents the number of valid policies that passed the filtering process.
         // - To ensure that the returned array contains only these valid policies and no extra default values,
-        //   we call `slice(j)`, which creates a new array of exact length `j` and copies only
+        //   we slice, which creates a new array of exact length `j` and copies only
         //   the first `j` elements from `filtered`.
         // - This prevents returning an array with trailing `address(0)` values, ensuring data integrity
         //   and reducing unnecessary gas costs when the array is processed elsewhere.
@@ -177,7 +179,7 @@ contract RightsPolicyManager is
         return filtered;
     }
 
-    /// @notice Retrieves the list of policies associated with a specific account and content ID.
+    /// @notice Retrieves the list of policies associated with a specific account.
     /// @param account The address of the account for which policies are being retrieved.
     function getPolicies(address account) public view returns (address[] memory) {
         // https://docs.openzeppelin.com/contracts/5.x/api/utils#EnumerableSet-values-struct-EnumerableSet-AddressSet-
@@ -215,7 +217,7 @@ contract RightsPolicyManager is
     /// @dev Verifies access permissions by calling the policy contract.
     /// @param account The address of the user requesting access.
     /// @param policy The address of the policy contract.
-    /// @param criteria Encoded parameters required for access verification.
+    /// @param criteria Encoded parameters required for access verification. eg. assetId, rightsHolder
     /// @return `true` if the policy grants access, otherwise `false`.
     function _verifyPolicyAccess(address account, address policy, bytes memory criteria) private view returns (bool) {
         bytes memory callData = abi.encodeCall(IPolicy.isAccessAllowed, (account, criteria));

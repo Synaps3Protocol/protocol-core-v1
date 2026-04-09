@@ -196,6 +196,7 @@ contract RightsAssetCustodian is Initializable, UUPSUpgradeable, AccessControlle
     /// @notice Selects a custodian for the given holder using weighted randomness.
     /// @dev Balancing is based on priority, demand, and economic backing (balance).
     ///      Not cryptographically secure randomness; avoid for critical paths.
+    ///      Intended purely as an off-chain hint for frontends or operators, and must not gate on-chain logic.
     /// @param holder Address of the rights holder.
     /// @param currency Token used for economic weight evaluation.
     /// @return chosen The address of the selected custodian.
@@ -375,7 +376,7 @@ contract RightsAssetCustodian is Initializable, UUPSUpgradeable, AccessControlle
 
     /// @dev Calculates a pseudo-random value based on the block hash, holder address, currency address,
     /// and a total weight. The randomness is derived using keccak256 hashing and modulo operation.
-    /// Note: This method is not suitable for secure randomness as it relies on blockhash, which can be influenced.
+    /// IMPORTANT: This method is not suitable for secure randomness as it relies on blockhash, which can be influenced.
     ///
     /// @param holder The address of the holder involved in the calculation.
     /// @param currency The address of the currency involved in the calculation.

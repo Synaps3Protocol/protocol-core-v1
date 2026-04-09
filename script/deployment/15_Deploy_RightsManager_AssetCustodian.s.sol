@@ -7,7 +7,7 @@ import { RightsAssetCustodian } from "contracts/rights/RightsAssetCustodian.sol"
 contract DeployRightsAssetCustodian is DeployBase {
     function run() external returns (address) {
 
-        vm.startBroadcast(getAdminPK());
+        vm.startBroadcast(getDeployerPK());
         address accessManager = computeCreate3Address("SALT_ACCESS_MANAGER");
         address custodianReferendum = computeCreate3Address("SALT_CUSTODIAN_REFERENDUM");
         address impl = address(new RightsAssetCustodian(custodianReferendum));

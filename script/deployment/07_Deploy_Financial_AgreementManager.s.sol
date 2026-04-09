@@ -6,7 +6,7 @@ import { AgreementManager } from "contracts/financial/AgreementManager.sol";
 
 contract DeployAgreementManager is DeployBase {
     function run() external returns (address) {
-        vm.startBroadcast(getAdminPK());
+        vm.startBroadcast(getDeployerPK());
         address tollgate = computeCreate3Address("SALT_TOLLGATE");
         address vault = computeCreate3Address("SALT_LEDGER_VAULT");
         address accessManager = computeCreate3Address("SALT_ACCESS_MANAGER");

@@ -4,28 +4,21 @@ pragma solidity 0.8.26;
 
 import { IBalanceOperator } from "@synaps3/core/interfaces/base/IBalanceOperator.sol";
 import { IAllowanceOperator } from "@synaps3/core/interfaces/base/IAllowanceOperator.sol";
+import { ILockOperator } from "@synaps3/core/interfaces/base/ILockOperator.sol";
 
 /// @title ILedgerVault
 /// @notice Interface for managing locked funds and their operations.
 /// @dev Extends IBalanceOperator for managing user balances in a vault-like system.
-interface ILedgerVault is IBalanceOperator, IAllowanceOperator {
-    /// @notice Locks a specific amount of funds for a given account.
-    /// @dev The funds are immobilized and cannot be withdrawn or transferred until released or claimed.
-    /// @param account The address of the account for which the funds will be locked.
-    /// @param amount The amount of funds to lock.
-    /// @param currency The currency to associate fees with. Use address(0) for the native coin.
-    function lock(address account, uint256 amount, address currency) external returns (uint256);
+interface ILedgerVault is IBalanceOperator, IAllowanceOperator, ILockOperator {
+    /// @notice Allows a currency to be used within the ledger operations.
+    /// @param currency The address of the currency to allow. Use address(0) for the native coin.
+    function allowCurrency(address currency) external;
 
-    /// @notice Claims a specific amount of locked funds on behalf of a claimer.
-    /// @dev The claimer is authorized to withdraw or process the funds from the account.
-    /// @param account The address of the account whose funds are being claimed.
-    /// @param amount The amount of funds to claim.
-    /// @param currency The currency to associate fees with. Use address(0) for the native coin.
-    function claim(address account, uint256 amount, address currency) external returns (uint256);
+    /// @notice Blocks a currency from being used within the ledger operations.
+    /// @param currency The address of the currency to block. Use address(0) for the native coin.
+    function blockCurrency(address currency) external;
 
-    /// @notice Release a specific amount of funds from locked pool.
-    /// @param account The address of the account for which the funds will be released.
-    /// @param amount The amount of funds to release.
-    /// @param currency The currency to associate release with. Use address(0) for the native coin.
-    function release(address account, uint256 amount, address currency) external returns (uint256);
+    /// @notice Returns whether a currency is approved for ledger operations.
+    /// @param currency The address of the currency to verify.
+    function isCurrencyAllowed(address currency) external view returns (bool);
 }

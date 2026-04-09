@@ -8,14 +8,6 @@ import { T } from "@synaps3/core/primitives/Types.sol";
 /// @notice Interface for managing access to content based on licensing terms.
 /// @dev This interface defines the basic information about the policy, such as its name and description.
 interface IPolicy {
-    /// @notice Returns the string identifier associated with the policy.
-    /// @dev This function provides a way to identify the specific policy being used.
-    function name() external pure returns (string memory);
-
-    /// @notice Returns the business/strategy model implemented by the policy.
-    /// @dev A description of the business model as bytes, allowing more complex representations (such as encoded data).
-    function description() external pure returns (string memory);
-
     /// @notice Initializes the policy with specific data for a given holder.
     /// @dev Only the Rights Policies Authorizer contract has permission to call this function.
     /// @param holder The address of the holder for whom the policy is being initialized.
@@ -46,4 +38,12 @@ interface IPolicy {
     /// @notice Retrieves the address of the attestation provider.
     /// @return The address of the provider associated with the policy.
     function getAttestationProvider() external view returns (address);
+
+    /// @notice Returns the string identifier associated with the policy.
+    /// @dev This function provides a way to identify the specific policy being used.
+    function name() external pure returns (string memory);
+
+    /// @notice Returns the business/strategy model implemented by the policy.
+    /// @dev A description of the business model as bytes, allowing more complex representations (such as encoded data).
+    function description() external pure returns (string memory);
 }
